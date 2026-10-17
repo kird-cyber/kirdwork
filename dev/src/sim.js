@@ -246,15 +246,16 @@ function cmdItem(m, slot, tx, ty) {
 function inputOf(m, extra) {
   return Object.assign({ turnNo: m.turnNo, seat: curTank(m).id, actions: m.turn.actions.map(a => Object.assign({}, a)) }, extra);
 }
-// Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1. Returns the TurnInput.
-function cmdFire(m, angle, power, weapon) {
+// Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1, used = ticks spent on the turn. Returns the TurnInput.
+function cmdFire(m, angle, power, weapon, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   const d = CONFIG.tanks[t.tankId];
   angle = clampN(Math.round(angle), d.angleMin, d.angleMax);
   power = clampN(Math.round(power), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
-  const input = inputOf(m, { angle, power, weapon });
+  used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
+  const input = inputOf(m, { angle, power, weapon, used });
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
   const berserk = d.traits.berserk && t.hp < t.maxhp * d.traits.berserk.hpBelow;
@@ -270,9 +271,18 @@ function cmdFire(m, angle, power, weapon) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0);
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon });
+  return input;
+}
+// A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
+function cmdForfeit(m, team) {
+  if (m.phase !== 'aim' || (team !== 'red' && team !== 'blue')) return null;
+  const input = inputOf(m, { forfeit: team });
+  m.phase = 'over'; m.winner = team === 'red' ? 'blue' : 'red'; m.forfeit = team;
+  m.events.push({ type: 'over', winner: m.winner, forfeit: team });
   return input;
 }
 function cmdTimeout(m) {
@@ -280,7 +290,8 @@ function cmdTimeout(m) {
   if (m.phase !== 'aim' || !t) return null;
   const input = inputOf(m, { timeout: true });
   const d = CONFIG.tanks[t.tankId];
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx;
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
+    + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
   m.phase = 'settle'; m.settle = 0;
   m.events.push({ type: 'timeout', idx: t.idx });
   return input;
@@ -298,7 +309,8 @@ function applyTurnInput(m, input) {
     if (m.phase !== 'aim') break;
   }
   if (m.phase === 'aim') {
-    if (input.timeout) cmdTimeout(m); else cmdFire(m, input.angle, input.power, input.weapon);
+    if (input.forfeit) cmdForfeit(m, input.forfeit);
+    else if (input.timeout) cmdTimeout(m); else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
   return true;
 }

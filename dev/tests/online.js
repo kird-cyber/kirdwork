@@ -124,6 +124,12 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
       await sleep(500);
       const [a, b] = await Promise.all([P, O].map(x => x.evaluate(() => { const t = __pg.match.tanks[__pg.match.cur]; return t.aim + '/' + t.x.toFixed(1); })));
       ok(a === b, `다른 사람 화면에도 각도·이동이 실시간 반영 (${a} vs ${b})`);
+      await P.keyboard.down('Space'); await sleep(600);
+      const spec = await O.evaluate(() => ({ pw: document.getElementById('pw').style.width, who: document.getElementById('whoName').textContent, me: __pg.ON.nick }));
+      const act = await P.evaluate(() => document.getElementById('pw').style.width);
+      ok(spec.pw === '0%' && act !== '0%', `상대가 충전 중일 때 내 게이지는 비어 있음 (내 화면 ${spec.pw}, 쏘는 사람 ${act})`);
+      ok(spec.who.startsWith(spec.me), `아래 조작판은 내 탱크 표시 (${spec.who})`);
+      await P.keyboard.up('Space');
       await O.screenshot({ path: SP + 'm4_spectator_view.png' });
       await P.screenshot({ path: SP + 'm4_active_view.png' });
     }

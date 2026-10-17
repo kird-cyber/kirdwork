@@ -228,6 +228,23 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   let s2 = 0; while (m2.tanks[0].alive && s2 < 200) { A.cmdMove(m2, 1); s2++; }
   check('공통', '맵 밖으로 떨어지면 낙사', '탈락', m2.tanks[0].alive ? '생존' : '탈락(' + m2.tanks[0].deathCause + ')', !m2.tanks[0].alive);
 }
+{ // turn delay: time spent, timeout, movement (+30%)
+  const d0 = (used) => { const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdFire(m, 20, 300, 0, used); return m.tanks[0].delay; };
+  const fast = d0(0), slow = d0(30 * 120);
+  check('공통', '시간 딜레이: 30초 쓰면 +120', '+120', '+' + (slow - fast), slow - fast === 120);
+  const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdTimeout(mt);
+  check('공통', '시간 초과: 기본+150+240', CONFIG.turn.baseDelay[3] + 150 + 240, mt.tanks[0].delay, mt.tanks[0].delay === CONFIG.turn.baseDelay[3] + 150 + 240);
+  // two turns in a row: a slow, item-using, far-moving turn lets a quick opponent go twice
+  const m2 = field([{ tank: 'boulder', x: 1000 }, { tank: 'prism', x: 3000 }]);
+  m2.tanks[1].delay = 0; m2.tanks[0].items = ['heal']; m2.tanks[0].hp = 500; A.cmdItem(m2, 0);
+  for (let k = 0; k < 300; k++) A.cmdMove(m2, 1);
+  A.cmdFire(m2, 40, 200, 1, 50 * 120);
+  const order = []; let g = 0;
+  while (order.length < 3 && g++ < 200000) { if (m2.phase === 'aim') { order.push(m2.tanks[m2.cur].tankId); A.cmdFire(m2, 30, 200, 0, 5 * 120); } else A.step(m2); }
+  check('공통', '느린 턴(아이템·이동·시간) 뒤 상대가 2번 연속', 'prism, prism', order.slice(0, 2).join(', '), order[0] === 'prism' && order[1] === 'prism');
+  const ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); let n = 0; while (A.cmdMove(ms, 1) !== false && n < 5000 && ms.tanks[0].fuel > 0) n++;
+  check('공통', '이동력 30% 증가 (루키 190→247px)', 247, Math.round(ms.tanks[0].x - 1000), Math.abs(ms.tanks[0].x - 1000 - 247) < 1);
+}
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'out', 'spec.json'), JSON.stringify(rows, null, 1));

@@ -26,7 +26,8 @@ function createRoomLink(o) {
   r.me = () => r.room && r.room.players.find(p => p.id === r.myId);
   r.online = id => !!(r.presence[id] && r.presence[id].on);
 
-  function pub(sub, obj, retain) { return r.mq && r.mq.publish(base + sub, obj === null ? '' : JSON.stringify(obj), retain); }
+  // QoS 1 (confirmed by the broker) for everything except the high-rate cosmetic feed
+  function pub(sub, obj, retain, qos) { return r.mq && r.mq.publish(base + sub, obj === null ? '' : JSON.stringify(obj), retain, qos === undefined ? 1 : qos); }
   function publishRoom() { r.room.ver++; r.room.t = Date.now(); pub('room', r.room, true); cb('onChange', r.room); }
   r.publishRoom = publishRoom;
 
@@ -74,12 +75,13 @@ function createRoomLink(o) {
       if (!msg) return;
       if (msg.type === 'kick' && msg.id === r.myId) { r.kicked = true; cb('onKicked'); return; }
       if (msg.type === 'logreq') { if (msg.gid === r.gid && msg.from !== r.myId && r.log.length) pub('g/' + r.gid + '/logx', r.log); return; }
+      if (msg.type === 'need') { if (msg.gid === r.gid && msg.from !== r.myId) answerNeed(msg.turnNo); return; }
       return cb('onCmd', msg);
     }
     const g = sub.match(/^g\/([a-z0-9]+)\/(in|log|logx|live|hash)$/);
     if (g && msg && g[1] === r.gid) {
       if (g[2] === 'in') acceptInput(msg);
-      else if (g[2] === 'log' || g[2] === 'logx') mergeLog(msg);
+      else if (g[2] === 'log' || g[2] === 'logx') { if (Array.isArray(msg)) for (const x of msg) if (x) r.seenAt[x.turnNo] = Date.now(); mergeLog(msg); }
       else if (g[2] === 'live') { if (msg.from !== r.myId) cb('onLive', msg); }
       else if (g[2] === 'hash') onHash(msg);
     }
@@ -90,10 +92,12 @@ function createRoomLink(o) {
     if (cur && (msg.ver < cur.ver || (msg.ver === cur.ver && msg.host >= cur.host && msg.host !== cur.host))) return;
     if (cur && msg.ver === cur.ver && msg.host === cur.host && msg.t === cur.t) return;
     const prevGid = cur && cur.game ? cur.game.gid : null;
+    // late = we did not see this game start (page reload / joined mid-game): the device must catch up from the log first
+    const late = !cur || cur.state === 'game';
     r.room = msg;
     if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
       r.gid = msg.game.gid; r.log = []; r.hashes = {};
-      cb('onGame', msg.game);
+      cb('onGame', msg.game, late);
     }
     if (msg.state === 'lobby') r.gid = null;
     cb('onChange', msg);
@@ -191,7 +195,7 @@ function createRoomLink(o) {
     r.room.state = 'game';
     r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};
     publishRoom();
-    cb('onGame', r.room.game); // our own echo is ignored, so start locally
+    cb('onGame', r.room.game, false); // our own echo is ignored, so start locally
     return true;
   };
   r.backToLobby = function () {
@@ -244,8 +248,19 @@ function createRoomLink(o) {
     r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo));
     for (const o of r.outbox) pub('g/' + o.gid + '/in', o.inp);
   }
-  r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live));
-  r.sendHash = (turnNo, h) => pub('g/' + r.gid + '/hash', { id: r.myId, turnNo, h });
+  r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live), false, 0);
+  r.sendHash = (turnNo, h) => pub('g/' + r.gid + '/hash', { id: r.myId, turnNo, h }, false, 0);
+  // stall recovery: a device stuck waiting for a turn asks; whoever has it answers (one answer is enough)
+  r.seenAt = {};
+  r.requestTurn = turnNo => pub('cmd', { type: 'need', gid: r.gid, turnNo, from: r.myId });
+  function answerNeed(turnNo) {
+    const have = r.log.filter(x => x.turnNo >= turnNo);
+    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo)) have.push(o.inp);
+    have.sort((a, b) => a.turnNo - b.turnNo);
+    if (!have.length) return;
+    const asked = Date.now(), wait = r.isHost() ? 0 : 150 + Math.random() * 400;
+    setTimeout(() => { if ((r.seenAt[turnNo] || 0) < asked) pub('g/' + r.gid + '/logx', have); }, wait);
+  }
   r.myHash = {};
   function onHash(msg) {
     if (!r.isHost() || msg.id === r.myId) return;

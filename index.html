@@ -46,6 +46,24 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .chip.now.red { background: var(--red); } .chip.now.blue { background: var(--blue); }
 .chip.dead { opacity: 0.35; text-decoration: line-through; }
 .sep { color: var(--muted); font-size: 12px; }
+/* top status bar: one row per team */
+.statusbar { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 12px; background: var(--panel); max-width: 46vw; }
+.srow { display: flex; gap: 4px; }
+.sc { position: relative; display: flex; align-items: center; gap: 5px; width: 128px; padding: 3px 6px 3px 4px; border-radius: 8px; background: rgba(255,255,255,0.04); border-left: 3px solid; min-width: 0; }
+.sc.red { border-color: var(--red); } .sc.blue { border-color: var(--blue); }
+.sc.now { background: rgba(255,210,74,0.16); box-shadow: inset 0 0 0 1.5px var(--gold); }
+.sc.me b { color: var(--gold); }
+.sc .no { width: 14px; font-size: 11px; font-weight: 900; color: var(--muted); text-align: center; flex-shrink: 0; }
+.sc.now .no { color: var(--gold); }
+.sc .sth { width: 34px; height: 25px; flex-shrink: 0; }
+.sc .sm { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.sc b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
+.sc .hp { display: block; height: 4px; border-radius: 2px; background: #2A3348; overflow: hidden; }
+.sc .hp > i { display: block; height: 100%; transition: width .3s; }
+.sc.red .hp > i { background: var(--red); } .sc.blue .hp > i { background: var(--blue); }
+.sc .st { font-size: 10px; color: var(--muted); line-height: 1; font-variant-numeric: tabular-nums; }
+.sc.dead { opacity: 0.45; } .sc.dead .sth { filter: grayscale(1); } .sc.dead b { text-decoration: line-through; }
+.sc.off .st { color: #FFB4A4; }
 .wind { display: flex; flex-direction: column; gap: 5px; padding: 8px 12px; border-radius: 12px; background: var(--panel); width: 230px; }
 .wind .row { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; }
 .wind .row span:first-child { color: var(--muted); }
@@ -153,11 +171,21 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .over { align-items: center; background: rgba(8, 10, 18, 0.72); }
 .overbox { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 40px; border-radius: 20px; background: var(--panel-solid); border: 1px solid var(--line); text-align: center; }
 .overbox h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 48px; }
+.overbox .ot { font-size: clamp(56px, 12vw, 88px); line-height: 1; }
+.ot.win { color: var(--gold); text-shadow: 0 0 30px rgba(255,210,74,0.45); } .ot.lose { color: #9AA4B8; } .ot.red { color: #FF9A86; } .ot.blue { color: #8CC2FF; } .ot.draw { color: #FFFFFF; }
+.roster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(560px, 80vw); text-align: left; }
+.orcol { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #0E1220; border: 2px solid var(--line); }
+.orcol.red { border-color: var(--red-deep); } .orcol.blue { border-color: var(--blue-deep); } .orcol.won { box-shadow: 0 0 0 2px rgba(255,210,74,0.35); }
+.orh { font-size: 13px; font-weight: 900; } .orcol.red .orh { color: #FF9A86; } .orcol.blue .orh { color: #8CC2FF; }
+.orr { display: flex; flex-direction: column; padding: 6px 8px; border-radius: 8px; background: var(--panel-solid); }
+.orr b { font-size: 14px; } .orr span { font-size: 12px; color: var(--muted); }
+.orr.dead { opacity: 0.5; } .orr.me { outline: 1px solid var(--gold); }
+@media (max-width: 600px) { .roster { grid-template-columns: 1fr; } .overbox { padding: 22px 18px; } }
 .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,10,18,0.8); font-family: var(--font-display); font-size: 26px; }
 @media (max-width: 820px) {
   .maps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .help { grid-template-columns: 1fr; }
-  .chipbar { max-width: 60vw; }
+  .statusbar { max-width: 52vw; } .sc { width: 104px; }
   .wind { width: 150px; }
   .hud-bottom { gap: 10px; padding: 10px; }
   .who { min-width: 0; }
@@ -168,7 +196,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .item .t { display: none; }
 }
 @media (max-width: 600px) {
-  .chipbar { display: none; }
+  .statusbar { position: fixed; top: max(6px, env(safe-area-inset-top, 0px)); left: 6px; right: 6px; max-width: none; flex-direction: row; padding: 4px; gap: 6px; }
+  .srow { flex: 1; min-width: 0; gap: 3px; }
+  .sc { width: auto; flex: 1; padding: 2px 3px; gap: 2px; }
+  .sc .sth, .sc .st { display: none; } .sc .no { width: 9px; font-size: 9px; } .sc b { font-size: 10px; }
+  .hud-top { top: calc(max(6px, env(safe-area-inset-top, 0px)) + 50px); }
   .wind { width: 120px; padding: 6px 10px; }
   .timer { width: 44px; height: 44px; font-size: 18px; }
   #portrait { display: none; }
@@ -224,12 +256,32 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .mapc:disabled { cursor: default; opacity: 0.55; }
 .mapc.sel:disabled { opacity: 1; }
 #waitTag { position: absolute; left: 50%; transform: translateX(-50%); top: 84px; padding: 7px 16px; border-radius: 999px; background: var(--panel); font-size: 14px; font-weight: 700; pointer-events: none; white-space: nowrap; }
+#diag { position: absolute; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 1px); font-size: 10px; color: rgba(169,179,198,0.6); pointer-events: none; font-variant-numeric: tabular-nums; }
 #netState { position: absolute; left: 50%; transform: translateX(-50%); top: 124px; padding: 7px 16px; border-radius: 999px; background: #5A1E16; color: #FFD4CA; font-size: 13px; font-weight: 700; pointer-events: none; }
 .probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .probe::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #6B7590; flex-shrink: 0; }
 .probe[data-s="ok"]::before { background: var(--good); } .probe[data-s="fail"] { color: #FFB4A4; } .probe[data-s="fail"]::before { background: var(--red); }
 .lobbybar { position: sticky; bottom: -40px; margin: 0 -16px -40px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, rgba(14,18,32,0) 0, rgba(14,18,32,0.94) 22%); }
 @media (max-width: 700px) { .teams { grid-template-columns: 1fr; } .pc.empty { min-height: 30px; padding: 4px; font-size: 12px; } .mapbox .iconbtn { padding: 5px 7px; font-size: 11px; } .mapbox { gap: 4px; } #mini { width: 150px; height: auto; } .lt { font-size: 30px; } #waitTag { top: 70px; font-size: 12px; } }
+/* landscape phones: short screens get a one-line bottom panel and a compact status bar */
+@media (max-height: 520px) and (min-width: 601px) {
+  .hud-top { top: 6px; left: 8px; right: 8px; }
+  .statusbar { padding: 4px; gap: 3px; max-width: 40vw; }
+  .sc { width: 74px; padding: 2px 4px 2px 2px; gap: 3px; }
+  .sc .sth, .sc .st { display: none; } .sc b { font-size: 10px; } .sc .no { width: 10px; font-size: 9px; }
+  .wind { width: 140px; padding: 5px 8px; gap: 3px; }
+  #mini { width: 140px; height: auto; } .mapbox { gap: 3px; } .mapbox .iconbtn { padding: 4px 6px; font-size: 10px; }
+  .timer { width: 40px; height: 40px; font-size: 16px; border-width: 2px; }
+  .hud-bottom { bottom: 6px; left: 8px; right: 8px; padding: 6px 10px; gap: 10px; flex-wrap: nowrap; border-radius: 12px; }
+  #portrait { display: none; } .who { min-width: 0; gap: 0; } .who .nm { font-size: 14px; } .who .sub { font-size: 10px; } .who .sub[style] { display: none; }
+  .bar { width: 84px; height: 5px; margin-top: 2px; }
+  .weps { gap: 3px; } .wep { padding: 3px 8px; font-size: 11px; }
+  .angle { width: auto; gap: 4px; } #angDial { width: 58px; height: 32px; } .angle .v { font-size: 20px; } .angle .r { display: none; } .angnum { min-width: 40px; }
+  .power { min-width: 110px; flex: 1 1 120px; gap: 2px; } .power .row { font-size: 10px; } .power .row:last-child { display: none; } .gauge { height: 14px; }
+  .items { gap: 4px; } .item { width: 36px; height: 36px; border-radius: 8px; } .item .t, .item .key { display: none; } .item .ic { font-size: 12px; }
+  .tb { width: 48px; height: 48px; } .touch > div { grid-template-columns: repeat(2, 48px); gap: 6px; } .fire { width: 80px; height: 80px; font-size: 20px; }
+  #waitTag { top: 70px; font-size: 12px; padding: 5px 12px; } #banner { font-size: 20px; top: 30%; }
+}
 @media (prefers-reduced-motion: reduce) { #banner { transition: none; } #banner.show.turnin { animation: none; } }
 </style>
 </head>
@@ -240,7 +292,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   <canvas id="cv" aria-label="전장"></canvas>
 
   <div class="hud-top" id="hudTop" hidden>
-    <div class="chipbar" id="order" aria-label="턴 순서"></div>
+    <div class="statusbar" id="status" aria-label="플레이어 상태"></div>
     <div class="wind" aria-label="바람">
       <div class="row"><span>바람</span><span id="windTxt">0</span></div>
       <div class="windbar" id="windBar"></div>
@@ -258,6 +310,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="waitTag" hidden></div>
+  <div id="diag" aria-hidden="true"></div>
   <div id="netState" role="status" hidden></div>
   <div id="hint" hidden>← → 이동 · ↑ ↓ 각도 · 스페이스를 누르고 있다가 떼면 발사 · 드래그나 A/D로 맵 둘러보기</div>
 
@@ -404,6 +457,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="overbox">
       <h2 id="overTitle">레드 팀 승리</h2>
       <div class="note" id="overSub"></div>
+      <div class="roster" id="overRoster"></div>
       <div class="cta" style="justify-content:center">
         <button class="start" id="again" type="button">한 판 더</button>
         <button class="ghost" id="toSetup" type="button">설정으로</button>
@@ -427,7 +481,7 @@ const SPR = {"boulder": {"body": "<svg xmlns=\"http://www.w3.org/2000/svg\" view
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, degrees, ticks (1 tick = 1/120 s). Tank numbers are approved values — do not change without sign-off.
 const CONFIG = {
-  version: '0.6.0',
+  version: '0.7.0',
   physics: {
     tickRate: 120,
     gravity: 600,          // px/s^2
@@ -447,6 +501,7 @@ const CONFIG = {
     delayPerMovePx: 0.6,
     itemDelay: 80,
     skipDelay: 150,
+    delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
     crateEveryTurns: 3,
     windMax: 10,
     maxPlayers: 8,
@@ -458,7 +513,7 @@ const CONFIG = {
 
   tanks: {
     boulder: {
-      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 140, speedClass: 1, angleMin: 15, angleMax: 80, powerMul: 1,
+      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 15, angleMax: 80, powerMul: 1,
       traits: { heavyShot: true },
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
@@ -467,7 +522,7 @@ const CONFIG = {
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 190, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
@@ -476,7 +531,7 @@ const CONFIG = {
       ],
     },
     hammer: {
-      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 140, speedClass: 1, angleMin: 25, angleMax: 70, powerMul: 1,
+      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 25, angleMax: 70, powerMul: 1,
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
@@ -485,7 +540,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 190, speedClass: 3, angleMin: 5, angleMax: 40, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 5, angleMax: 40, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -494,7 +549,7 @@ const CONFIG = {
       ],
     },
     trapper: {
-      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 140, speedClass: 3, angleMin: 10, angleMax: 45, powerMul: 1,
+      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 182, speedClass: 3, angleMin: 10, angleMax: 45, powerMul: 1,
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
@@ -503,7 +558,7 @@ const CONFIG = {
       ],
     },
     swarm: {
-      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 190, speedClass: 3, angleMin: 30, angleMax: 70, powerMul: 1.15,
+      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 30, angleMax: 70, powerMul: 1.15,
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
@@ -512,7 +567,7 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
@@ -521,7 +576,7 @@ const CONFIG = {
       ],
     },
     rage: {
-      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 250, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
+      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 325, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
@@ -988,15 +1043,16 @@ function cmdItem(m, slot, tx, ty) {
 function inputOf(m, extra) {
   return Object.assign({ turnNo: m.turnNo, seat: curTank(m).id, actions: m.turn.actions.map(a => Object.assign({}, a)) }, extra);
 }
-// Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1. Returns the TurnInput.
-function cmdFire(m, angle, power, weapon) {
+// Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1, used = ticks spent on the turn. Returns the TurnInput.
+function cmdFire(m, angle, power, weapon, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   const d = CONFIG.tanks[t.tankId];
   angle = clampN(Math.round(angle), d.angleMin, d.angleMax);
   power = clampN(Math.round(power), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
-  const input = inputOf(m, { angle, power, weapon });
+  used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
+  const input = inputOf(m, { angle, power, weapon, used });
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
   const berserk = d.traits.berserk && t.hp < t.maxhp * d.traits.berserk.hpBelow;
@@ -1012,9 +1068,18 @@ function cmdFire(m, angle, power, weapon) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0);
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon });
+  return input;
+}
+// A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
+function cmdForfeit(m, team) {
+  if (m.phase !== 'aim' || (team !== 'red' && team !== 'blue')) return null;
+  const input = inputOf(m, { forfeit: team });
+  m.phase = 'over'; m.winner = team === 'red' ? 'blue' : 'red'; m.forfeit = team;
+  m.events.push({ type: 'over', winner: m.winner, forfeit: team });
   return input;
 }
 function cmdTimeout(m) {
@@ -1022,7 +1087,8 @@ function cmdTimeout(m) {
   if (m.phase !== 'aim' || !t) return null;
   const input = inputOf(m, { timeout: true });
   const d = CONFIG.tanks[t.tankId];
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx;
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
+    + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
   m.phase = 'settle'; m.settle = 0;
   m.events.push({ type: 'timeout', idx: t.idx });
   return input;
@@ -1040,7 +1106,8 @@ function applyTurnInput(m, input) {
     if (m.phase !== 'aim') break;
   }
   if (m.phase === 'aim') {
-    if (input.timeout) cmdTimeout(m); else cmdFire(m, input.angle, input.power, input.weapon);
+    if (input.forfeit) cmdForfeit(m, input.forfeit);
+    else if (input.timeout) cmdTimeout(m); else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
   return true;
 }
@@ -1269,7 +1336,7 @@ function createController(match, opts) {
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon));
+    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
@@ -1667,7 +1734,7 @@ function createRenderer(cv, mini) {
         case 'crate': R.crateDrop[e.id] = { t: 0 }; R.onSfx('crate'); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
-        case 'over': R.onOver(e.winner); break;
+        case 'over': R.onOver(e.winner, e.forfeit); break;
       }
     }
     ev.length = 0;
@@ -1996,7 +2063,7 @@ function createRenderer(cv, mini) {
 
 // ---- mqtt.js
 // ============================================================== MQTT 3.1.1 over WebSocket (minimal, no library)
-// QoS 0 only, retained messages, last will, keep-alive. Enough for a relay between browsers.
+// QoS 0 and 1 (1 = the broker confirms, we resend until it does), retained messages, last will, keep-alive.
 // Free public brokers need no signup; every device of one room must use the same broker (its index is in the invite link).
 const BROKERS = [
   'wss://broker.emqx.io:8084/mqtt',
@@ -2020,6 +2087,8 @@ function mqttPacket(head, parts) {
 function createMqtt(url, opts) {
   const c = { connected: false, onMessage: null, onClose: null };
   let ws, buf = new Uint8Array(0), pid = 1, pingTimer = 0, closed = false, lastRx = Date.now();
+  const inflight = new Map(); // packet id -> { pkt, at, tries } for QoS 1 publishes awaiting PUBACK
+  const nextId = () => { pid = (pid % 65535) + 1; return pid; };
   const keepalive = opts.keepalive || 60;
   c.ready = new Promise((resolve, reject) => {
     let settled = false;
@@ -2053,34 +2122,53 @@ function createMqtt(url, opts) {
         } else if (type === 3) { // PUBLISH
           const tl = (body[0] << 8) | body[1], topic = DEC.decode(body.subarray(2, 2 + tl));
           const qos = (flags >> 1) & 3, start = 2 + tl + (qos ? 2 : 0);
-          if (qos === 1) ws.send(new Uint8Array([0x40, 2, body[2 + tl], body[3 + tl]])); // PUBACK (we never ask for qos 1, but be polite)
+          if (qos === 1) ws.send(new Uint8Array([0x40, 2, body[2 + tl], body[3 + tl]])); // PUBACK
+          if (typeof window !== 'undefined' && window.__pgLoss && Math.random() < window.__pgLoss) continue; // test hook: simulated message loss
           if (c.onMessage) { try { c.onMessage(topic, DEC.decode(body.subarray(start)), !!(flags & 1)); } catch (e) { console.error(e); } }
         }
+        else if (type === 4) inflight.delete((body[0] << 8) | body[1]); // PUBACK
         // SUBACK (9) and PINGRESP (13) need no handling
       }
     };
     ws.onerror = () => fail(new Error('socket error'));
-    ws.onclose = () => { clearTimeout(to); clearInterval(pingTimer); const was = c.connected; c.connected = false; fail(new Error('closed')); if (was && !closed && c.onClose) c.onClose(); };
+    ws.onclose = () => { clearTimeout(to); clearInterval(pingTimer); clearInterval(c._resendTimer); c._resendTimer = 0; const was = c.connected; c.connected = false; fail(new Error('closed')); if (was && !closed && c.onClose) c.onClose(); };
   });
   function ping() {
     if (!c.connected) return;
     if (Date.now() - lastRx > (keepalive * 1.5 + 10) * 1000) { try { ws.close(); } catch (e) {} return; }
     ws.send(new Uint8Array([0xC0, 0]));
+    resend();
   }
-  c.publish = function (topic, payload, retain) {
+  function resend() {
+    const now = Date.now();
+    for (const [id, f] of inflight) {
+      if (now - f.at < 2500) continue;
+      if (f.tries >= 6) { inflight.delete(id); continue; }
+      f.pkt[0] |= 0x08; f.at = now; f.tries++; // DUP flag
+      try { ws.send(f.pkt); } catch (e) {}
+    }
+  }
+  c.publish = function (topic, payload, retain, qos) {
     if (!c.connected) return false;
+    if (qos === 1) {
+      const id = nextId(), pkt = mqttPacket(0x32 | (retain ? 1 : 0), [mqttStr(topic), new Uint8Array([id >> 8, id & 255]), ENC.encode(payload)]);
+      inflight.set(id, { pkt, at: Date.now(), tries: 0 });
+      if (!c._resendTimer) c._resendTimer = setInterval(() => c.connected && resend(), 1000);
+      ws.send(pkt);
+      return true;
+    }
     ws.send(mqttPacket(0x30 | (retain ? 1 : 0), [mqttStr(topic), ENC.encode(payload)]));
     return true;
   };
   c.subscribe = function (filter) {
     if (!c.connected) return false;
-    const id = pid++ & 0xFFFF || (pid++ & 0xFFFF);
-    ws.send(mqttPacket(0x82, [new Uint8Array([id >> 8, id & 255]), mqttStr(filter), new Uint8Array([0])]));
+    const id = nextId();
+    ws.send(mqttPacket(0x82, [new Uint8Array([id >> 8, id & 255]), mqttStr(filter), new Uint8Array([1])])); // up to QoS 1
     return true;
   };
   c._drop = function () { try { ws.close(); } catch (e) {} }; // test hook: behaves like a network drop
   c.close = function () {
-    closed = true; clearInterval(pingTimer);
+    closed = true; clearInterval(pingTimer); clearInterval(c._resendTimer);
     if (c.connected) { try { ws.send(new Uint8Array([0xE0, 0])); } catch (e) {} }
     c.connected = false; try { ws.close(); } catch (e) {}
   };
@@ -2116,7 +2204,8 @@ function createRoomLink(o) {
   r.me = () => r.room && r.room.players.find(p => p.id === r.myId);
   r.online = id => !!(r.presence[id] && r.presence[id].on);
 
-  function pub(sub, obj, retain) { return r.mq && r.mq.publish(base + sub, obj === null ? '' : JSON.stringify(obj), retain); }
+  // QoS 1 (confirmed by the broker) for everything except the high-rate cosmetic feed
+  function pub(sub, obj, retain, qos) { return r.mq && r.mq.publish(base + sub, obj === null ? '' : JSON.stringify(obj), retain, qos === undefined ? 1 : qos); }
   function publishRoom() { r.room.ver++; r.room.t = Date.now(); pub('room', r.room, true); cb('onChange', r.room); }
   r.publishRoom = publishRoom;
 
@@ -2164,12 +2253,13 @@ function createRoomLink(o) {
       if (!msg) return;
       if (msg.type === 'kick' && msg.id === r.myId) { r.kicked = true; cb('onKicked'); return; }
       if (msg.type === 'logreq') { if (msg.gid === r.gid && msg.from !== r.myId && r.log.length) pub('g/' + r.gid + '/logx', r.log); return; }
+      if (msg.type === 'need') { if (msg.gid === r.gid && msg.from !== r.myId) answerNeed(msg.turnNo); return; }
       return cb('onCmd', msg);
     }
     const g = sub.match(/^g\/([a-z0-9]+)\/(in|log|logx|live|hash)$/);
     if (g && msg && g[1] === r.gid) {
       if (g[2] === 'in') acceptInput(msg);
-      else if (g[2] === 'log' || g[2] === 'logx') mergeLog(msg);
+      else if (g[2] === 'log' || g[2] === 'logx') { if (Array.isArray(msg)) for (const x of msg) if (x) r.seenAt[x.turnNo] = Date.now(); mergeLog(msg); }
       else if (g[2] === 'live') { if (msg.from !== r.myId) cb('onLive', msg); }
       else if (g[2] === 'hash') onHash(msg);
     }
@@ -2180,10 +2270,12 @@ function createRoomLink(o) {
     if (cur && (msg.ver < cur.ver || (msg.ver === cur.ver && msg.host >= cur.host && msg.host !== cur.host))) return;
     if (cur && msg.ver === cur.ver && msg.host === cur.host && msg.t === cur.t) return;
     const prevGid = cur && cur.game ? cur.game.gid : null;
+    // late = we did not see this game start (page reload / joined mid-game): the device must catch up from the log first
+    const late = !cur || cur.state === 'game';
     r.room = msg;
     if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
       r.gid = msg.game.gid; r.log = []; r.hashes = {};
-      cb('onGame', msg.game);
+      cb('onGame', msg.game, late);
     }
     if (msg.state === 'lobby') r.gid = null;
     cb('onChange', msg);
@@ -2281,7 +2373,7 @@ function createRoomLink(o) {
     r.room.state = 'game';
     r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};
     publishRoom();
-    cb('onGame', r.room.game); // our own echo is ignored, so start locally
+    cb('onGame', r.room.game, false); // our own echo is ignored, so start locally
     return true;
   };
   r.backToLobby = function () {
@@ -2334,8 +2426,19 @@ function createRoomLink(o) {
     r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo));
     for (const o of r.outbox) pub('g/' + o.gid + '/in', o.inp);
   }
-  r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live));
-  r.sendHash = (turnNo, h) => pub('g/' + r.gid + '/hash', { id: r.myId, turnNo, h });
+  r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live), false, 0);
+  r.sendHash = (turnNo, h) => pub('g/' + r.gid + '/hash', { id: r.myId, turnNo, h }, false, 0);
+  // stall recovery: a device stuck waiting for a turn asks; whoever has it answers (one answer is enough)
+  r.seenAt = {};
+  r.requestTurn = turnNo => pub('cmd', { type: 'need', gid: r.gid, turnNo, from: r.myId });
+  function answerNeed(turnNo) {
+    const have = r.log.filter(x => x.turnNo >= turnNo);
+    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo)) have.push(o.inp);
+    have.sort((a, b) => a.turnNo - b.turnNo);
+    if (!have.length) return;
+    const asked = Date.now(), wait = r.isHost() ? 0 : 150 + Math.random() * 400;
+    setTimeout(() => { if ((r.seenAt[turnNo] || 0) < asked) pub('g/' + r.gid + '/logx', have); }, wait);
+  }
   r.myHash = {};
   function onHash(msg) {
     if (!r.isHost() || msg.id === r.myId) return;
@@ -2390,6 +2493,7 @@ function showScreen(name) {
   $('lobby').hidden = name !== 'lobby';
   $('setup').hidden = name !== 'setup';
   const g = name === 'game';
+  $('diag').hidden = !g; if (!g) $('diag').textContent = '';
   $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); }
   if (name === 'setup') renderSetup();
@@ -2470,9 +2574,9 @@ function openLink(code, idx, create) {
         updateNetStatus();
       },
       onChange: room => onRoomChange(room),
-      onGame: game => startOnlineMatch(game),
+      onGame: (game, late) => startOnlineMatch(game, late),
       onInput: inp => onNetInput(inp),
-      onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; },
+      onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
       onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
@@ -2582,12 +2686,12 @@ function renderTankInfo(k) {
 }
 
 // ---------------------------------------------------------------- network game
-function startOnlineMatch(game) {
+function startOnlineMatch(game, late) {
   ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
   ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
   ON.spectator = !game.players.some(p => p.id === ON.myId);
   // joined late (reload or spectator): wait for the retained log, then fast-forward
-  ON.syncing = Date.now() - (game.at || 0) > 5000;
+  ON.syncing = !!late; ON.needAt = 0; ON.liveAt = 0;
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
   banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
@@ -2603,7 +2707,7 @@ function onlineCtrlOpts() {
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
-function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, !!x.timeout, !!x.ended]); }
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
   if (!ON.active) return;
   const mine = ON.applied[inp.turnNo];
@@ -2646,18 +2750,18 @@ function remoteTick(m, t) {
   if (fin) {
     if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
     if (m.phase === 'aim') {
-      if (fin.timeout) cmdTimeout(m);
+      if (fin.forfeit) cmdForfeit(m, fin.forfeit);
+      else if (fin.timeout) cmdTimeout(m);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon);
+      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
-    ctrl.charging = false;
     return;
   }
   const lv = ON.live;
   if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
     if (m.phase !== 'aim') return;
-    t.aim = lv.aim; ctrl.weapon = lv.weapon; ctrl.charging = !!lv.charging; ctrl.powerF = lv.power || 0;
+    t.aim = lv.aim; // the barrel turns for everyone; power and weapon choice stay private
     if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
   }
   if (ctrl.timeLeft > 0) ctrl.timeLeft--;
@@ -2665,7 +2769,7 @@ function remoteTick(m, t) {
 let rebuildTimer = 0;
 function requestRebuild(why) {
   if (rebuildTimer || !ON.link) return;
-  console.warn('resync:', why);
+  console.warn('resync:', why); ON.resyncs = (ON.resyncs || 0) + 1;
   rebuildTimer = setTimeout(() => { rebuildTimer = 0; if (ON.active && ON.link) rebuildFrom(ON.link.log); }, 60);
 }
 // Recreate the match from the seed and every accepted input — identical on every device.
@@ -2694,21 +2798,33 @@ function rebuildFrom(log) {
 // called from the main loop every frame while an online game is on screen
 function onlineFrame(now) {
   const L = ON.link, m = match; if (!L || !m || !ON.active) return;
+  if (now - (ON.diagAt || 0) > 500) {
+    ON.diagAt = now;
+    const st = { online: '●', reconnecting: '재연결 중', connecting: '연결 중', failed: '끊김' }[L.status] || L.status;
+    $('diag').textContent = `턴 ${m.turnNo} · 기록 ${L.log.length} · 서버${ON.brokerIdx + 1} ${st}` + (ON.needs ? ` · 재요청 ${ON.needs}` : '') + (ON.resyncs ? ` · 재동기 ${ON.resyncs}` : '');
+  }
   // state hash once per turn
   if (m.turnNo !== ON.hashTurn && m.hashes[m.turnNo] !== undefined) {
     ON.hashTurn = m.turnNo; L.noteMyHash(m.turnNo, m.hashes[m.turnNo]); L.sendHash(m.turnNo, m.hashes[m.turnNo]);
   }
+  forfeitWatch(now, m, L);
   if (m.phase !== 'aim') { setTurnTitle(false); return; }
   const t = m.tanks[m.cur];
   if (ON.aimTurn !== m.turnNo) { ON.aimTurn = m.turnNo; ON.aimSince = now; }
   setTurnTitle(ctrl.activeLocal() && document.hidden);
   // live feed of my turn for everyone else
   if (ctrl.activeLocal()) {
-    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim, weapon: ctrl.weapon, charging: ctrl.charging, power: Math.round(ctrl.powerF) };
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim }; // power and weapon are not shared
     const s = JSON.stringify(lv);
-    if ((s !== ON.lastLive && now - ON.lastLiveAt > 90) || now - ON.lastLiveAt > 1000) {
+    if ((s !== ON.lastLive && now - ON.lastLiveAt > 250) || now - ON.lastLiveAt > 1000) {
       ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);
     }
+  }
+  // stalled: waiting on someone else's turn with no sign of life for 5 s -> the turn probably ended
+  // elsewhere and its input was lost on the way; ask for it again (repeats every 3 s)
+  if (!ctrl.activeLocal() && !ON.inputs[m.turnNo] && !ON.syncing) {
+    const lastSign = Math.max(ON.aimSince, ON.live && ON.live.turnNo === m.turnNo ? ON.liveAt : 0);
+    if (now - lastSign > 5000 && now - (ON.needAt || 0) > 3000) { ON.needAt = now; L.requestTurn(m.turnNo); ON.needs = (ON.needs || 0) + 1; }
   }
   // host: skip the turn of a player who is gone (or frozen far past the time limit)
   if (L.isHost() && t.id !== ON.myId && !ON.inputs[m.turnNo] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
@@ -2719,6 +2835,24 @@ function onlineFrame(now) {
     if (gone || waited > (CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate + 15) * 1000) {
       ON.autoSent[m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true });
+    }
+  }
+}
+// A whole team gone for 30 s loses. Every device shows the countdown; the host records the result as a TurnInput.
+const FORFEIT_MS = 30000;
+function forfeitWatch(now, m, L) {
+  ON.goneTeam = null;
+  if (m.phase === 'over') return;
+  for (const team of ['red', 'blue']) {
+    const members = ON.game.players.filter(p => p.team === team);
+    const away = members.every(p => p.id !== ON.myId && !L.online(p.id));
+    const k = 'gone_' + team;
+    if (!away) { ON[k] = 0; continue; }
+    if (!ON[k]) ON[k] = now;
+    ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
+    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
+      ON.autoSent['f' + m.turnNo] = true;
+      L.sendInput({ turnNo: m.turnNo, seat: m.tanks[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
     }
   }
 }
@@ -2799,27 +2933,49 @@ const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.item
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
-R.onOver = winner => {
-  const t = $('overTitle');
-  t.textContent = winner === 'draw' ? '무승부' : winner === 'red' ? '레드 팀 승리' : '블루 팀 승리';
-  t.style.color = winner === 'red' ? '#FF9A86' : winner === 'blue' ? '#8CC2FF' : '#FFFFFF';
-  const alive = match.tanks.filter(x => x.alive && x.team === winner).map(x => x.nick).join(', ');
-  $('overSub').textContent = `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (alive ? ` · 생존: ${alive}` : '');
+R.onOver = (winner, forfeit) => {
+  const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
+  let title, cls;
+  if (winner === 'draw') { title = '무승부'; cls = 'draw'; }
+  else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
+  else { title = teamName(winner) + ' 승리'; cls = winner; }
+  t.textContent = title; t.className = 'ot ' + cls;
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  const ros = $('overRoster'); ros.innerHTML = '';
+  for (const team of ['red', 'blue']) {
+    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
+    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (team === winner ? ' · 승리' : ''); col.append(h);
+    for (const x of match.tanks.filter(k => k.team === team)) {
+      const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
+      const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
+      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
+      r.append(nm, sub); col.append(r);
+    }
+    ros.append(col);
+  }
+  if (cls === 'win') AU.play('pickup');
   const online = ON.active;
   $('again').hidden = online; $('toSetup').hidden = online; $('toLobby').hidden = true; $('leaveGame').hidden = true; $('overWait').hidden = true;
   if (online) onlineOver();
-  setTimeout(() => { if (screen === 'game' && match && match.phase === 'over') $('over').hidden = false; }, 900);
+  setTimeout(() => { if (screen === 'game' && match && match.phase === 'over') $('over').hidden = false; }, forfeit ? 300 : 1100);
 };
 
 // ---------------------------------------------------------------- HUD
 const hudCache = {};
 const setTxt = (id, s) => { if (hudCache[id] !== s) { hudCache[id] = s; $(id).textContent = s; } };
 function buildWindBar() { const b = $('windBar'); b.innerHTML = ''; for (let i = 0; i < 10; i++) { if (i === 5) b.appendChild(document.createElement('b')); b.appendChild(document.createElement('i')); } }
+// online: the bottom panel always shows MY tank (power and aim of the others stay private)
+function hudTank(m) {
+  if (ON.active && !ON.spectator) { const mine = m.tanks.find(x => x.id === ON.myId); if (mine) return mine; }
+  return m.cur >= 0 ? m.tanks[m.cur] : null;
+}
 function updateHud() {
-  const m = match, t = m.cur >= 0 ? m.tanks[m.cur] : null; if (!t) return;
+  const m = match, t = hudTank(m), cur = m.cur >= 0 ? m.tanks[m.cur] : null; if (!t || !cur) return;
+  const mineNow = ctrl.activeLocal();
   const d = CONFIG.tanks[t.tankId];
   setTxt('whoName', t.nick + ' · ' + d.name);
-  setTxt('whoHp', `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : ''));
+  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : '') : '격파됨 · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * t.fuel / d.movePx) + '%';
   const tiltDeg = Math.round(Math.atan2(t.ts, t.tc) * 180 / Math.PI);
@@ -2828,8 +2984,8 @@ function updateHud() {
   setTxt('angReal', tiltDeg ? `실제 ${real}° (기울기 ${-t.facing * tiltDeg > 0 ? '+' : ''}${-t.facing * tiltDeg})` : `${d.angleMin}°–${d.angleMax}°`);
   const dk = [t.aim, t.lastAim, t.tankId, t.facing, tiltDeg, ctrl.limit && (ctrl.keys.up || ctrl.keys.down) ? Math.floor(performance.now() / 100) % 2 : 0].join(',');
   if (hudCache.dial !== dk) { hudCache.dial = dk; drawDial(t, d, tiltDeg, real); }
-  const pw = ctrl.charging ? ctrl.powerF / 1000 : 0;
-  $('gauge').classList.toggle('charging', ctrl.charging);
+  const pw = ctrl.charging && mineNow ? ctrl.powerF / 1000 : 0;
+  $('gauge').classList.toggle('charging', ctrl.charging && mineNow);
   $('pw').style.width = (pw * 100) + '%';
   setTxt('pwTxt', (pw * 4).toFixed(1) + ' / 4');
   const lp = $('pwLast'); lp.hidden = t.lastPower < 0; if (t.lastPower >= 0) lp.style.left = `calc(${t.lastPower / 10}% - 1px)`;
@@ -2837,7 +2993,7 @@ function updateHud() {
     const b = $('w' + i), w = d.weapons[i];
     const label = `${i + 1}  ${w.name}` + (i === 1 && t.cd > 0 ? ` (${t.cd}턴 후)` : '');
     if (hudCache['w' + i] !== label) { hudCache['w' + i] = label; b.textContent = label; }
-    b.classList.toggle('sel', ctrl.weapon === i); b.disabled = i === 1 && t.cd > 0;
+    b.classList.toggle('sel', ctrl.weapon === i && (mineNow || !ON.active)); b.disabled = (i === 1 && t.cd > 0) || (ON.active && !mineNow);
   }
   const secs = Math.max(0, Math.ceil(ctrl.timeLeft / CONFIG.physics.tickRate));
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
@@ -2846,7 +3002,6 @@ function updateHud() {
   setTxt('windTxt', m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : ''));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
-  const mineNow = ctrl.activeLocal();
   const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
   if (hudCache.items !== key) {
     hudCache.items = key; const box = $('items'); box.innerHTML = '';
@@ -2861,19 +3016,49 @@ function updateHud() {
       box.appendChild(b);
     }
   }
-  const ok = m.tanks.map(x => x.alive ? Math.round(x.delay) : 'd').join(',') + m.cur;
-  if (hudCache.order !== ok) {
-    hudCache.order = ok; const o = $('order'); o.innerHTML = '<span class="lbl">턴 순서</span>';
-    const list = [t, ...m.tanks.filter(x => x.alive && x !== t).sort((a, b) => a.delay - b.delay || a.idx - b.idx), ...m.tanks.filter(x => !x.alive)];
-    list.forEach((x, i) => { if (i) { const s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; o.appendChild(s); } const c = document.createElement('span'); c.className = `chip ${x.team}` + (x === t ? ' now' : '') + (x.alive ? '' : ' dead'); c.textContent = x.nick; o.appendChild(c); });
-  }
+  updateStatus(m, cur);
   if (hudCache.portrait !== t.tankId) {
     hudCache.portrait = t.tankId; const p = $('portrait').getContext('2d'); p.clearRect(0, 0, 172, 128);
     p.save(); p.translate(86, 120); const sc = 172 / (S_.w * S_.scale) * 0.95; p.scale(sc, sc); drawTankLocal(p, t.tankId, d.sprite.baseAngle || 0); p.restore();
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
-  const waitTxt = ON.active && m.phase === 'aim' && !ctrl.activeLocal() ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator ? `관전 중 · ${t.nick}의 차례` : `${t.nick}의 차례 — 기다리는 중`) : '';
+  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
+  const waitTxt = gone ? gone : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
+}
+// top status bar: every player with tank, health, alive/dead, turn order and connection
+function updateStatus(m, cur) {
+  const box = $('status');
+  if (hudCache.statusFor !== m) {
+    hudCache.statusFor = m; box.innerHTML = '';
+    for (const team of ['red', 'blue']) {
+      const row = document.createElement('div'); row.className = 'srow ' + team;
+      for (const x of m.tanks.filter(k => k.team === team)) {
+        const c = document.createElement('div'); c.className = 'sc ' + team; c.dataset.idx = x.idx;
+        const no = document.createElement('span'); no.className = 'no';
+        const th = cloneCanvas(thumbs[x.tankId]); th.className = 'sth';
+        const sm = document.createElement('div'); sm.className = 'sm';
+        const nm = document.createElement('b'); nm.textContent = x.nick + (ON.active && x.id === ON.myId ? ' (나)' : '');
+        const hp = document.createElement('i'); hp.className = 'hp'; const hf = document.createElement('i'); hp.append(hf);
+        const st = document.createElement('span'); st.className = 'st';
+        sm.append(nm, hp, st); c.append(no, th, sm); c.title = `${x.nick} · ${CONFIG.tanks[x.tankId].name}`;
+        row.append(c);
+      }
+      box.append(row);
+    }
+  }
+  const order = [cur, ...m.tanks.filter(x => x.alive && x !== cur).sort((a, b) => a.delay - b.delay || a.idx - b.idx)];
+  const L = ON.active ? ON.link : null;
+  for (const c of box.querySelectorAll('.sc')) {
+    const x = m.tanks[+c.dataset.idx], pos = order.indexOf(x), off = L && !L.online(x.id) && x.id !== ON.myId;
+    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0].join(',');
+    if (c.dataset.k === key) continue; c.dataset.k = key;
+    c.classList.toggle('now', x === cur && x.alive); c.classList.toggle('dead', !x.alive); c.classList.toggle('off', !!off);
+    c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
+    c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
+    c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
+  }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
 function drawDial(t, d, tiltDeg, real) {
@@ -3060,7 +3245,8 @@ function loop(now) {
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
     if (ON.active) onlineFrame(now);
-    R.frame(frozen ? dt * 0.08 : dt, ctrl);
+    // the angle guide and power ring are only for the player who is aiming
+    R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
     updateHud();
   }
   requestAnimationFrame(loop);

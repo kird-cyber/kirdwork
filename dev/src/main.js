@@ -15,27 +15,49 @@ const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.item
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
-R.onOver = winner => {
-  const t = $('overTitle');
-  t.textContent = winner === 'draw' ? '무승부' : winner === 'red' ? '레드 팀 승리' : '블루 팀 승리';
-  t.style.color = winner === 'red' ? '#FF9A86' : winner === 'blue' ? '#8CC2FF' : '#FFFFFF';
-  const alive = match.tanks.filter(x => x.alive && x.team === winner).map(x => x.nick).join(', ');
-  $('overSub').textContent = `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (alive ? ` · 생존: ${alive}` : '');
+R.onOver = (winner, forfeit) => {
+  const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
+  let title, cls;
+  if (winner === 'draw') { title = '무승부'; cls = 'draw'; }
+  else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
+  else { title = teamName(winner) + ' 승리'; cls = winner; }
+  t.textContent = title; t.className = 'ot ' + cls;
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  const ros = $('overRoster'); ros.innerHTML = '';
+  for (const team of ['red', 'blue']) {
+    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
+    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (team === winner ? ' · 승리' : ''); col.append(h);
+    for (const x of match.tanks.filter(k => k.team === team)) {
+      const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
+      const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
+      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
+      r.append(nm, sub); col.append(r);
+    }
+    ros.append(col);
+  }
+  if (cls === 'win') AU.play('pickup');
   const online = ON.active;
   $('again').hidden = online; $('toSetup').hidden = online; $('toLobby').hidden = true; $('leaveGame').hidden = true; $('overWait').hidden = true;
   if (online) onlineOver();
-  setTimeout(() => { if (screen === 'game' && match && match.phase === 'over') $('over').hidden = false; }, 900);
+  setTimeout(() => { if (screen === 'game' && match && match.phase === 'over') $('over').hidden = false; }, forfeit ? 300 : 1100);
 };
 
 // ---------------------------------------------------------------- HUD
 const hudCache = {};
 const setTxt = (id, s) => { if (hudCache[id] !== s) { hudCache[id] = s; $(id).textContent = s; } };
 function buildWindBar() { const b = $('windBar'); b.innerHTML = ''; for (let i = 0; i < 10; i++) { if (i === 5) b.appendChild(document.createElement('b')); b.appendChild(document.createElement('i')); } }
+// online: the bottom panel always shows MY tank (power and aim of the others stay private)
+function hudTank(m) {
+  if (ON.active && !ON.spectator) { const mine = m.tanks.find(x => x.id === ON.myId); if (mine) return mine; }
+  return m.cur >= 0 ? m.tanks[m.cur] : null;
+}
 function updateHud() {
-  const m = match, t = m.cur >= 0 ? m.tanks[m.cur] : null; if (!t) return;
+  const m = match, t = hudTank(m), cur = m.cur >= 0 ? m.tanks[m.cur] : null; if (!t || !cur) return;
+  const mineNow = ctrl.activeLocal();
   const d = CONFIG.tanks[t.tankId];
   setTxt('whoName', t.nick + ' · ' + d.name);
-  setTxt('whoHp', `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : ''));
+  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : '') : '격파됨 · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * t.fuel / d.movePx) + '%';
   const tiltDeg = Math.round(Math.atan2(t.ts, t.tc) * 180 / Math.PI);
@@ -44,8 +66,8 @@ function updateHud() {
   setTxt('angReal', tiltDeg ? `실제 ${real}° (기울기 ${-t.facing * tiltDeg > 0 ? '+' : ''}${-t.facing * tiltDeg})` : `${d.angleMin}°–${d.angleMax}°`);
   const dk = [t.aim, t.lastAim, t.tankId, t.facing, tiltDeg, ctrl.limit && (ctrl.keys.up || ctrl.keys.down) ? Math.floor(performance.now() / 100) % 2 : 0].join(',');
   if (hudCache.dial !== dk) { hudCache.dial = dk; drawDial(t, d, tiltDeg, real); }
-  const pw = ctrl.charging ? ctrl.powerF / 1000 : 0;
-  $('gauge').classList.toggle('charging', ctrl.charging);
+  const pw = ctrl.charging && mineNow ? ctrl.powerF / 1000 : 0;
+  $('gauge').classList.toggle('charging', ctrl.charging && mineNow);
   $('pw').style.width = (pw * 100) + '%';
   setTxt('pwTxt', (pw * 4).toFixed(1) + ' / 4');
   const lp = $('pwLast'); lp.hidden = t.lastPower < 0; if (t.lastPower >= 0) lp.style.left = `calc(${t.lastPower / 10}% - 1px)`;
@@ -53,7 +75,7 @@ function updateHud() {
     const b = $('w' + i), w = d.weapons[i];
     const label = `${i + 1}  ${w.name}` + (i === 1 && t.cd > 0 ? ` (${t.cd}턴 후)` : '');
     if (hudCache['w' + i] !== label) { hudCache['w' + i] = label; b.textContent = label; }
-    b.classList.toggle('sel', ctrl.weapon === i); b.disabled = i === 1 && t.cd > 0;
+    b.classList.toggle('sel', ctrl.weapon === i && (mineNow || !ON.active)); b.disabled = (i === 1 && t.cd > 0) || (ON.active && !mineNow);
   }
   const secs = Math.max(0, Math.ceil(ctrl.timeLeft / CONFIG.physics.tickRate));
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
@@ -62,7 +84,6 @@ function updateHud() {
   setTxt('windTxt', m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : ''));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
-  const mineNow = ctrl.activeLocal();
   const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
   if (hudCache.items !== key) {
     hudCache.items = key; const box = $('items'); box.innerHTML = '';
@@ -77,19 +98,49 @@ function updateHud() {
       box.appendChild(b);
     }
   }
-  const ok = m.tanks.map(x => x.alive ? Math.round(x.delay) : 'd').join(',') + m.cur;
-  if (hudCache.order !== ok) {
-    hudCache.order = ok; const o = $('order'); o.innerHTML = '<span class="lbl">턴 순서</span>';
-    const list = [t, ...m.tanks.filter(x => x.alive && x !== t).sort((a, b) => a.delay - b.delay || a.idx - b.idx), ...m.tanks.filter(x => !x.alive)];
-    list.forEach((x, i) => { if (i) { const s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; o.appendChild(s); } const c = document.createElement('span'); c.className = `chip ${x.team}` + (x === t ? ' now' : '') + (x.alive ? '' : ' dead'); c.textContent = x.nick; o.appendChild(c); });
-  }
+  updateStatus(m, cur);
   if (hudCache.portrait !== t.tankId) {
     hudCache.portrait = t.tankId; const p = $('portrait').getContext('2d'); p.clearRect(0, 0, 172, 128);
     p.save(); p.translate(86, 120); const sc = 172 / (S_.w * S_.scale) * 0.95; p.scale(sc, sc); drawTankLocal(p, t.tankId, d.sprite.baseAngle || 0); p.restore();
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
-  const waitTxt = ON.active && m.phase === 'aim' && !ctrl.activeLocal() ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator ? `관전 중 · ${t.nick}의 차례` : `${t.nick}의 차례 — 기다리는 중`) : '';
+  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
+  const waitTxt = gone ? gone : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
+}
+// top status bar: every player with tank, health, alive/dead, turn order and connection
+function updateStatus(m, cur) {
+  const box = $('status');
+  if (hudCache.statusFor !== m) {
+    hudCache.statusFor = m; box.innerHTML = '';
+    for (const team of ['red', 'blue']) {
+      const row = document.createElement('div'); row.className = 'srow ' + team;
+      for (const x of m.tanks.filter(k => k.team === team)) {
+        const c = document.createElement('div'); c.className = 'sc ' + team; c.dataset.idx = x.idx;
+        const no = document.createElement('span'); no.className = 'no';
+        const th = cloneCanvas(thumbs[x.tankId]); th.className = 'sth';
+        const sm = document.createElement('div'); sm.className = 'sm';
+        const nm = document.createElement('b'); nm.textContent = x.nick + (ON.active && x.id === ON.myId ? ' (나)' : '');
+        const hp = document.createElement('i'); hp.className = 'hp'; const hf = document.createElement('i'); hp.append(hf);
+        const st = document.createElement('span'); st.className = 'st';
+        sm.append(nm, hp, st); c.append(no, th, sm); c.title = `${x.nick} · ${CONFIG.tanks[x.tankId].name}`;
+        row.append(c);
+      }
+      box.append(row);
+    }
+  }
+  const order = [cur, ...m.tanks.filter(x => x.alive && x !== cur).sort((a, b) => a.delay - b.delay || a.idx - b.idx)];
+  const L = ON.active ? ON.link : null;
+  for (const c of box.querySelectorAll('.sc')) {
+    const x = m.tanks[+c.dataset.idx], pos = order.indexOf(x), off = L && !L.online(x.id) && x.id !== ON.myId;
+    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0].join(',');
+    if (c.dataset.k === key) continue; c.dataset.k = key;
+    c.classList.toggle('now', x === cur && x.alive); c.classList.toggle('dead', !x.alive); c.classList.toggle('off', !!off);
+    c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
+    c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
+    c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
+  }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
 function drawDial(t, d, tiltDeg, real) {
@@ -276,7 +327,8 @@ function loop(now) {
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
     if (ON.active) onlineFrame(now);
-    R.frame(frozen ? dt * 0.08 : dt, ctrl);
+    // the angle guide and power ring are only for the player who is aiming
+    R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
     updateHud();
   }
   requestAnimationFrame(loop);

@@ -2,7 +2,7 @@
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, degrees, ticks (1 tick = 1/120 s). Tank numbers are approved values — do not change without sign-off.
 const CONFIG = {
-  version: '0.6.0',
+  version: '0.7.0',
   physics: {
     tickRate: 120,
     gravity: 600,          // px/s^2
@@ -22,6 +22,7 @@ const CONFIG = {
     delayPerMovePx: 0.6,
     itemDelay: 80,
     skipDelay: 150,
+    delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
     crateEveryTurns: 3,
     windMax: 10,
     maxPlayers: 8,
@@ -33,7 +34,7 @@ const CONFIG = {
 
   tanks: {
     boulder: {
-      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 140, speedClass: 1, angleMin: 15, angleMax: 80, powerMul: 1,
+      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 15, angleMax: 80, powerMul: 1,
       traits: { heavyShot: true },
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
@@ -42,7 +43,7 @@ const CONFIG = {
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 190, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
@@ -51,7 +52,7 @@ const CONFIG = {
       ],
     },
     hammer: {
-      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 140, speedClass: 1, angleMin: 25, angleMax: 70, powerMul: 1,
+      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 25, angleMax: 70, powerMul: 1,
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
@@ -60,7 +61,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 190, speedClass: 3, angleMin: 5, angleMax: 40, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 5, angleMax: 40, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -69,7 +70,7 @@ const CONFIG = {
       ],
     },
     trapper: {
-      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 140, speedClass: 3, angleMin: 10, angleMax: 45, powerMul: 1,
+      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 182, speedClass: 3, angleMin: 10, angleMax: 45, powerMul: 1,
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
@@ -78,7 +79,7 @@ const CONFIG = {
       ],
     },
     swarm: {
-      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 190, speedClass: 3, angleMin: 30, angleMax: 70, powerMul: 1.15,
+      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 30, angleMax: 70, powerMul: 1.15,
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
@@ -87,7 +88,7 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
@@ -96,7 +97,7 @@ const CONFIG = {
       ],
     },
     rage: {
-      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 250, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
+      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 325, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [

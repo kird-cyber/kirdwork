@@ -31,6 +31,7 @@ function showScreen(name) {
   $('lobby').hidden = name !== 'lobby';
   $('setup').hidden = name !== 'setup';
   const g = name === 'game';
+  $('diag').hidden = !g; if (!g) $('diag').textContent = '';
   $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); }
   if (name === 'setup') renderSetup();
@@ -111,9 +112,9 @@ function openLink(code, idx, create) {
         updateNetStatus();
       },
       onChange: room => onRoomChange(room),
-      onGame: game => startOnlineMatch(game),
+      onGame: (game, late) => startOnlineMatch(game, late),
       onInput: inp => onNetInput(inp),
-      onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; },
+      onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
       onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
@@ -223,12 +224,12 @@ function renderTankInfo(k) {
 }
 
 // ---------------------------------------------------------------- network game
-function startOnlineMatch(game) {
+function startOnlineMatch(game, late) {
   ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
   ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
   ON.spectator = !game.players.some(p => p.id === ON.myId);
   // joined late (reload or spectator): wait for the retained log, then fast-forward
-  ON.syncing = Date.now() - (game.at || 0) > 5000;
+  ON.syncing = !!late; ON.needAt = 0; ON.liveAt = 0;
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
   banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
@@ -244,7 +245,7 @@ function onlineCtrlOpts() {
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
-function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, !!x.timeout, !!x.ended]); }
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
   if (!ON.active) return;
   const mine = ON.applied[inp.turnNo];
@@ -287,18 +288,18 @@ function remoteTick(m, t) {
   if (fin) {
     if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
     if (m.phase === 'aim') {
-      if (fin.timeout) cmdTimeout(m);
+      if (fin.forfeit) cmdForfeit(m, fin.forfeit);
+      else if (fin.timeout) cmdTimeout(m);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon);
+      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
-    ctrl.charging = false;
     return;
   }
   const lv = ON.live;
   if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
     if (m.phase !== 'aim') return;
-    t.aim = lv.aim; ctrl.weapon = lv.weapon; ctrl.charging = !!lv.charging; ctrl.powerF = lv.power || 0;
+    t.aim = lv.aim; // the barrel turns for everyone; power and weapon choice stay private
     if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
   }
   if (ctrl.timeLeft > 0) ctrl.timeLeft--;
@@ -306,7 +307,7 @@ function remoteTick(m, t) {
 let rebuildTimer = 0;
 function requestRebuild(why) {
   if (rebuildTimer || !ON.link) return;
-  console.warn('resync:', why);
+  console.warn('resync:', why); ON.resyncs = (ON.resyncs || 0) + 1;
   rebuildTimer = setTimeout(() => { rebuildTimer = 0; if (ON.active && ON.link) rebuildFrom(ON.link.log); }, 60);
 }
 // Recreate the match from the seed and every accepted input — identical on every device.
@@ -335,21 +336,33 @@ function rebuildFrom(log) {
 // called from the main loop every frame while an online game is on screen
 function onlineFrame(now) {
   const L = ON.link, m = match; if (!L || !m || !ON.active) return;
+  if (now - (ON.diagAt || 0) > 500) {
+    ON.diagAt = now;
+    const st = { online: '●', reconnecting: '재연결 중', connecting: '연결 중', failed: '끊김' }[L.status] || L.status;
+    $('diag').textContent = `턴 ${m.turnNo} · 기록 ${L.log.length} · 서버${ON.brokerIdx + 1} ${st}` + (ON.needs ? ` · 재요청 ${ON.needs}` : '') + (ON.resyncs ? ` · 재동기 ${ON.resyncs}` : '');
+  }
   // state hash once per turn
   if (m.turnNo !== ON.hashTurn && m.hashes[m.turnNo] !== undefined) {
     ON.hashTurn = m.turnNo; L.noteMyHash(m.turnNo, m.hashes[m.turnNo]); L.sendHash(m.turnNo, m.hashes[m.turnNo]);
   }
+  forfeitWatch(now, m, L);
   if (m.phase !== 'aim') { setTurnTitle(false); return; }
   const t = m.tanks[m.cur];
   if (ON.aimTurn !== m.turnNo) { ON.aimTurn = m.turnNo; ON.aimSince = now; }
   setTurnTitle(ctrl.activeLocal() && document.hidden);
   // live feed of my turn for everyone else
   if (ctrl.activeLocal()) {
-    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim, weapon: ctrl.weapon, charging: ctrl.charging, power: Math.round(ctrl.powerF) };
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim }; // power and weapon are not shared
     const s = JSON.stringify(lv);
-    if ((s !== ON.lastLive && now - ON.lastLiveAt > 90) || now - ON.lastLiveAt > 1000) {
+    if ((s !== ON.lastLive && now - ON.lastLiveAt > 250) || now - ON.lastLiveAt > 1000) {
       ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);
     }
+  }
+  // stalled: waiting on someone else's turn with no sign of life for 5 s -> the turn probably ended
+  // elsewhere and its input was lost on the way; ask for it again (repeats every 3 s)
+  if (!ctrl.activeLocal() && !ON.inputs[m.turnNo] && !ON.syncing) {
+    const lastSign = Math.max(ON.aimSince, ON.live && ON.live.turnNo === m.turnNo ? ON.liveAt : 0);
+    if (now - lastSign > 5000 && now - (ON.needAt || 0) > 3000) { ON.needAt = now; L.requestTurn(m.turnNo); ON.needs = (ON.needs || 0) + 1; }
   }
   // host: skip the turn of a player who is gone (or frozen far past the time limit)
   if (L.isHost() && t.id !== ON.myId && !ON.inputs[m.turnNo] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
@@ -360,6 +373,24 @@ function onlineFrame(now) {
     if (gone || waited > (CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate + 15) * 1000) {
       ON.autoSent[m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true });
+    }
+  }
+}
+// A whole team gone for 30 s loses. Every device shows the countdown; the host records the result as a TurnInput.
+const FORFEIT_MS = 30000;
+function forfeitWatch(now, m, L) {
+  ON.goneTeam = null;
+  if (m.phase === 'over') return;
+  for (const team of ['red', 'blue']) {
+    const members = ON.game.players.filter(p => p.team === team);
+    const away = members.every(p => p.id !== ON.myId && !L.online(p.id));
+    const k = 'gone_' + team;
+    if (!away) { ON[k] = 0; continue; }
+    if (!ON[k]) ON[k] = now;
+    ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
+    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
+      ON.autoSent['f' + m.turnNo] = true;
+      L.sendInput({ turnNo: m.turnNo, seat: m.tanks[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
     }
   }
 }

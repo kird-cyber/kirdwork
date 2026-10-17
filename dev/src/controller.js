@@ -65,7 +65,7 @@ function createController(match, opts) {
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon));
+    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };

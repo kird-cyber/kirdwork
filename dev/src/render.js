@@ -286,7 +286,7 @@ function createRenderer(cv, mini) {
         case 'crate': R.crateDrop[e.id] = { t: 0 }; R.onSfx('crate'); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
-        case 'over': R.onOver(e.winner); break;
+        case 'over': R.onOver(e.winner, e.forfeit); break;
       }
     }
     ev.length = 0;

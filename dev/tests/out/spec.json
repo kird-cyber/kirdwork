@@ -9,8 +9,8 @@
  {
   "tank": "볼더",
   "item": "이동거리(px)",
-  "expected": "140",
-  "actual": "140",
+  "expected": "182",
+  "actual": "182",
   "pass": true
  },
  {
@@ -44,8 +44,8 @@
  {
   "tank": "바이퍼",
   "item": "이동거리(px)",
-  "expected": "190",
-  "actual": "190",
+  "expected": "247",
+  "actual": "247",
   "pass": true
  },
  {
@@ -79,8 +79,8 @@
  {
   "tank": "해머",
   "item": "이동거리(px)",
-  "expected": "140",
-  "actual": "140",
+  "expected": "182",
+  "actual": "182",
   "pass": true
  },
  {
@@ -114,8 +114,8 @@
  {
   "tank": "루키",
   "item": "이동거리(px)",
-  "expected": "190",
-  "actual": "190",
+  "expected": "247",
+  "actual": "247",
   "pass": true
  },
  {
@@ -149,8 +149,8 @@
  {
   "tank": "트래퍼",
   "item": "이동거리(px)",
-  "expected": "140",
-  "actual": "140",
+  "expected": "182",
+  "actual": "182",
   "pass": true
  },
  {
@@ -184,8 +184,8 @@
  {
   "tank": "스웜",
   "item": "이동거리(px)",
-  "expected": "190",
-  "actual": "190",
+  "expected": "247",
+  "actual": "247",
   "pass": true
  },
  {
@@ -219,8 +219,8 @@
  {
   "tank": "프리즘",
   "item": "이동거리(px)",
-  "expected": "330",
-  "actual": "330",
+  "expected": "429",
+  "actual": "429",
   "pass": true
  },
  {
@@ -254,8 +254,8 @@
  {
   "tank": "레이지",
   "item": "이동거리(px)",
-  "expected": "250",
-  "actual": "250",
+  "expected": "325",
+  "actual": "325",
   "pass": true
  },
  {
@@ -711,6 +711,34 @@
   "item": "맵 밖으로 떨어지면 낙사",
   "expected": "탈락",
   "actual": "탈락(fall)",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "시간 딜레이: 30초 쓰면 +120",
+  "expected": "+120",
+  "actual": "+120",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "시간 초과: 기본+150+240",
+  "expected": "1130",
+  "actual": "1130",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "느린 턴(아이템·이동·시간) 뒤 상대가 2번 연속",
+  "expected": "prism, prism",
+  "actual": "prism, prism",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "이동력 30% 증가 (루키 190→247px)",
+  "expected": "247",
+  "actual": "247",
   "pass": true
  }
 ]
