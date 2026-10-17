@@ -178,7 +178,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   // gravity 0.3: compare apex drop rate via vy change over 60 ticks
   const g = tank => { const mm = field([{ tank, x: 1000 }, { tank: 'rookie', x: 4000 }]); A.cmdFire(mm, 30, 600, 0); let v0 = null, k = 0; while (k < 80) { A.step(mm); k++; if (mm.proj[0] && v0 === null) v0 = mm.proj[0].vy; } return (mm.proj[0].vy - v0); };
   const gr = g('prism') / g('rookie');
-  check('프리즘', '광선: 중력 0.3배', '0.30', gr.toFixed(2), near(gr, 0.3, 0.02));
+  { const G = CONFIG.tanks.prism.weapons[0].gravityMul; check('프리즘', `광선: 중력 ${G}배`, G.toFixed(2), gr.toFixed(2), near(gr, G, 0.02)); }
   const m3 = field([{ tank: 'prism', x: 1000 }, { tank: 'rookie', x: 4000 }]);
   const r3 = fireAndTrace(m3, 20, 600, 1);
   check('프리즘', '3분광: 3발 ±8°', '3발', r3.evs.filter(e => e.type === 'shot').length + '발', r3.evs.filter(e => e.type === 'shot').length === 3);

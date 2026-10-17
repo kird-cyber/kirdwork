@@ -79,7 +79,7 @@ function botPlan(m, level, rnd, mem) {
   for (const target of foes) {
     const dir = target.x < t.x ? -1 : 1;
     if (t.facing !== dir) { cmdMove(m, dir); if (m.phase !== 'aim') return null; }
-    for (let a = d.angleMin; a <= d.angleMax; a += 3) for (let p = 150; p <= 1000; p += 25) {
+    for (let a = d.angleMin; a <= d.angleMax; a += 3) for (let p = 30; p <= 1000; p += 20) {
       const miss = botPredict(m, t, a, p, wIdx, target, L.windSeen, offOf[target.id]);
       if (miss < best.miss) best = { miss, a, p, target };
     }
