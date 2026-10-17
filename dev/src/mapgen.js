@@ -48,6 +48,7 @@ function quadPts(p0, p1, p2, n) {
   return out;
 }
 
+const THICK = 1.5; // terrain thickness multiplier (surface stays where it is, the underside goes deeper)
 const MAPGEN = {
   temple(W, H, mask) {
     const cx = W / 2, k = W / 3800;
@@ -57,11 +58,12 @@ const MAPGEN = {
       if (d < 450 * k) { const c = tcos(Math.PI * d / (900 * k)); t += 46 * c * c; }
       return t + 5 * tsin(x / 37) + 3 * tsin(x / 13);
     };
-    const bot = x => {
+    const bot0 = x => {
       const b = 1120 + 38 * tsin(x / 210) + 22 * tsin(x / 71 + 1);
       const e = Math.min(x - 120, W - 120 - x);
       return Math.min(b, top(x) + 50 + e * 1.3);
     };
+    const bot = x => Math.min(H - 70, top(x) + THICK * (bot0(x) - top(x)));
     fillBand(mask, W, H, 120, W - 121, top, bot);
     for (const ox of [Math.round(330 * k), Math.round(W - 330 * k)]) {
       const g = top(ox);
@@ -76,10 +78,10 @@ const MAPGEN = {
     const cx = W / 2;
     const bump = x => { const c = tcos(Math.PI * (x - cx) / (W * 0.944)); return c * c; };
     const top = x => 470 + 360 * bump(x) + 6 * tsin(x / 41);
-    const bot = x => top(x) + 34 + 44 * (1 - bump(x)) + 6 * tsin(x / 23);
+    const bot = x => top(x) + THICK * (34 + 44 * (1 - bump(x)) + 6 * tsin(x / 23));
     fillBand(mask, W, H, 120, W - 121, top, bot);
     const t2 = x => 1090 + 30 * tsin(x / 90) + 18 * tsin(x / 37);
-    fillBand(mask, W, H, Math.round(W * 0.29), Math.round(W * 0.71), t2, x => t2(x) + 28 + 6 * tsin(x / 19));
+    fillBand(mask, W, H, Math.round(W * 0.29), Math.round(W * 0.71), t2, x => t2(x) + THICK * (28 + 6 * tsin(x / 19)));
     for (const [fx, w, h] of [[0.083, 70, 90], [0.117, 60, 140], [0.156, 80, 70], [0.844, 80, 70], [0.883, 60, 140], [0.917, 70, 90]]) {
       const x = Math.round(W * fx), g = top(x);
       fillPoly(mask, W, H, [[x - w / 2, g + 20], [x - w / 2, g - h], [x + w / 2, g - h], [x + w / 2, g + 20]]);
@@ -96,24 +98,25 @@ const MAPGEN = {
       fillCircle(mask, W, H, cx - w / 2 + 70, base + th / 2, th / 2 + 20);
       fillCircle(mask, W, H, cx + w / 2 - 70, base + th / 2, th / 2 + 20);
     };
-    mass(1000, 1400, 820, 240);
-    mass(3000, 1150, 900, 260);
-    mass(5000, 1400, 800, 240);
-    mass(2050, 280, 700, 70);
-    mass(3950, 260, 660, 60);
+    mass(1000, 1400, 820, 240 * THICK);
+    mass(3000, 1150, 900, 260 * THICK);
+    mass(5000, 1400, 800, 240 * THICK);
+    mass(2050, 280, 700, 70 * THICK);
+    mass(3950, 260, 660, 60 * THICK);
   },
   bridge(W, H, mask) {
     const pillar = (x0, x1) => {
       const mid = (x0 + x1) / 2;
+      const lo = 660 + THICK * 390, tip = Math.min(H - 60, 660 + THICK * 680);
       const pts = quadPts([x0, 660], [mid, 610], [x1, 660], 24)
-        .concat([[x1 - 30, 1050]])
-        .concat(quadPts([x1 - 30, 1050], [mid, 1340], [x0 + 30, 1050], 24));
+        .concat([[x1 - 30, lo]])
+        .concat(quadPts([x1 - 30, lo], [mid, tip], [x0 + 30, lo], 24));
       fillPoly(mask, W, H, pts);
     };
     pillar(160, 560); pillar(W - 560, W - 160);
     const span = W - 1040;
     const top = x => 700 + 34 * tsin(Math.PI * (x - 520) / span);
-    fillBand(mask, W, H, 520, W - 521, top, x => top(x) + 46);
+    fillBand(mask, W, H, 520, W - 521, top, x => top(x) + 46 * THICK);
   },
 };
 

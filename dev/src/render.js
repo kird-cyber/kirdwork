@@ -536,26 +536,28 @@ function createRenderer(cv, mini) {
     ctx.restore();
   }
   const TELE_LOOK = { shape: 'ball', color: '#9CC6F7', size: 1.1, glow: '#BFE0FF' };
+  // Projectiles are drawn about 2.1x larger than before so their size reads like the blast they make (drawing only, hits unchanged)
+  const PS = 2.1;
   function drawProj(p) {
     const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx], look = p.tele ? TELE_LOOK : w.look;
     const tr = R.trails[p.id] || (R.trails[p.id] = []);
-    if (look.shape === 'missile' && vrnd() < 0.6) R.fx.push({ kind: 'smoke', x: p.x, y: p.y, vy: -10, t: 0, life: 0.6, r: 4 + vrnd() * 4 });
-    tr.push(p.x, p.y); if (tr.length > (look.shape === 'beam' ? 40 : 24)) tr.splice(0, 2);
+    if (look.shape === 'missile' && vrnd() < 0.7) R.fx.push({ kind: 'smoke', x: p.x, y: p.y, vy: -10, t: 0, life: 0.7, r: 6 + vrnd() * 6 });
+    tr.push(p.x, p.y); if (tr.length > (look.shape === 'beam' ? 44 : 28)) tr.splice(0, 2);
     if (tr.length > 4) {
       ctx.lineCap = 'round';
-      ctx.strokeStyle = look.shape === 'beam' ? look.color : 'rgba(255,255,255,0.55)'; ctx.lineWidth = look.shape === 'beam' ? 5 : 3;
+      ctx.strokeStyle = look.shape === 'beam' ? look.color : 'rgba(255,255,255,0.55)'; ctx.lineWidth = look.shape === 'beam' ? 8 : 5;
       ctx.globalAlpha = look.shape === 'beam' ? 0.9 : 0.6;
       ctx.beginPath(); ctx.moveTo(tr[0], tr[1]); for (let i = 2; i < tr.length; i += 2) ctx.lineTo(tr[i], tr[i + 1]); ctx.stroke();
-      if (look.shape === 'beam') { ctx.globalAlpha = 0.25; ctx.lineWidth = 14; ctx.stroke(); }
+      if (look.shape === 'beam') { ctx.globalAlpha = 0.25; ctx.lineWidth = 22; ctx.stroke(); }
       ctx.globalAlpha = 1;
     }
-    const a = Math.atan2(p.vy, p.vx), s = look.size || 1;
+    const a = Math.atan2(p.vy, p.vx), s = (look.size || 1) * PS;
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
     if (look.glow) { ctx.fillStyle = look.glow + '55'; ctx.beginPath(); ctx.arc(0, 0, 14 * s, 0, 7); ctx.fill(); }
-    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2;
-    if (look.shape === 'beam') { ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.fill(); }
-    else if (look.shape === 'arrow') { ctx.fillStyle = '#E6D7B0'; ctx.fillRect(-16, -1.5, 22, 3); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(14, 0); ctx.lineTo(6, 5); ctx.closePath(); ctx.fill(); ctx.stroke(); }
-    else if (look.shape === 'missile') { ctx.fillStyle = '#D8E2F0'; ctx.beginPath(); ctx.roundRect(-10, -3.5, 16, 7, 3); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -3.5); ctx.lineTo(12, 0); ctx.lineTo(6, 3.5); ctx.fill(); ctx.fillStyle = '#FFB040'; ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-18 - vrnd() * 6, 0); ctx.lineTo(-10, 2); ctx.fill(); }
+    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5;
+    if (look.shape === 'beam') { ctx.fillStyle = look.color + '88'; ctx.beginPath(); ctx.arc(0, 0, 9 * PS, 0, 7); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(0, 0, 5 * PS, 0, 7); ctx.fill(); }
+    else if (look.shape === 'arrow') { ctx.scale(PS, PS); ctx.lineWidth = 1.5; ctx.fillStyle = '#E6D7B0'; ctx.fillRect(-16, -1.5, 22, 3); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(14, 0); ctx.lineTo(6, 5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.fillRect(-18, -3.5, 5, 2); ctx.fillRect(-18, 1.5, 5, 2); }
+    else if (look.shape === 'missile') { ctx.scale(PS, PS); ctx.lineWidth = 1.5; ctx.fillStyle = '#D8E2F0'; ctx.beginPath(); ctx.roundRect(-10, -3.5, 16, 7, 3); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -3.5); ctx.lineTo(12, 0); ctx.lineTo(6, 3.5); ctx.fill(); ctx.fillStyle = '#FFB040'; ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-18 - vrnd() * 6, 0); ctx.lineTo(-10, 2); ctx.fill(); }
     else { ctx.fillStyle = look.color; ctx.beginPath(); ctx.arc(0, 0, 7 * s, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-2 * s, -2 * s, 2.4 * s, 0, 7); ctx.fill(); }
     ctx.restore();
   }
