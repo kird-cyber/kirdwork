@@ -1,4 +1,4 @@
-# 포격전 개발 소스
+# 포격리스 개발 소스
 
 - `src/` 게임 모듈 (config · core · mapgen · sim · controller · audio · render · mqtt · net · online · main), `template.html`
 - `python3 build.py` → `dist/index.html` (GitHub Pages용), `dist/pogyeokjeon.html`

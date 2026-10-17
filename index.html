@@ -3,9 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="친구와 링크 하나로 붙는 턴제 포격 대전">
+<meta name="description" content="친구와 링크 하나로 붙는 턴제 포격 대전 · 최대 4 대 4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="포격리스">
+<meta property="og:description" content="그 시절 그 포격전, 링크 하나로 친구들과 다시. 설치·가입 없이 최대 4 대 4.">
+<meta property="og:image" content="https://kird-cyber.github.io/kirdwork/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.png">
 <meta name="theme-color" content="#0E1220">
-<title>포격전</title>
+<title>포격리스</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
@@ -179,7 +187,14 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .orh { font-size: 13px; font-weight: 900; } .orcol.red .orh { color: #FF9A86; } .orcol.blue .orh { color: #8CC2FF; }
 .orr { display: flex; flex-direction: column; padding: 6px 8px; border-radius: 8px; background: var(--panel-solid); }
 .orr b { font-size: 14px; } .orr span { font-size: 12px; color: var(--muted); }
-.orr.dead { opacity: 0.5; } .orr.me { outline: 1px solid var(--gold); }
+.ovmvp { display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; border-radius: 12px; background: rgba(255,210,74,0.12); border: 1px solid rgba(255,210,74,0.5); }
+.ovmvp .mk { font-family: var(--font-display); color: var(--gold); font-size: 20px; } .ovmvp b { font-size: 20px; } .ovmvp b.red { color: #FF9A86; } .ovmvp b.blue { color: #8CC2FF; } .ovmvp .ms { font-size: 13px; color: var(--muted); }
+.orr .ost { font-size: 11.5px; color: #C9D3E6; font-variant-numeric: tabular-nums; }
+.obd { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.badge { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: #2A3348; white-space: nowrap; }
+.badge.mvp { background: var(--gold); color: #2A1A00; } .badge.bad { background: #4A2A2A; color: #FFC2B6; }
+.orr.mvp { box-shadow: inset 0 0 0 2px var(--gold); }
+.orr.dead { opacity: 0.62; } .orr.me { outline: 1px solid var(--gold); }
 @media (max-width: 600px) { .roster { grid-template-columns: 1fr; } .overbox { padding: 22px 18px; } }
 .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,10,18,0.8); font-family: var(--font-display); font-size: 26px; }
 @media (max-width: 820px) {
@@ -230,6 +245,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .note.bad, .bad { color: #FFB4A4; }
 #homeMsg { min-height: 20px; }
 .lobbyhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.lbrand { font-family: var(--font-display); font-size: 18px; color: var(--muted); letter-spacing: 0.04em; } .lbrand em { font-style: normal; color: var(--gold); }
 .lt { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; }
 .lt span { color: var(--gold); letter-spacing: 0.1em; margin-left: 8px; }
 .share { display: flex; gap: 8px; flex: 1; min-width: 280px; max-width: 560px; }
@@ -329,7 +345,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   <div class="hud-top" id="hudTop" hidden>
     <div class="statusbar" id="status" aria-label="플레이어 상태"></div>
     <div class="wind" aria-label="바람">
-      <div class="row"><span>바람</span><span id="windTxt">0</span></div>
+      <div class="row"><span id="windLbl">바람</span><span id="windTxt">0</span></div>
       <div class="windbar" id="windBar"></div>
     </div>
     <div class="right">
@@ -396,7 +412,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup home">
       <div class="brand">
         <div>
-          <h1>포격<em>전</em></h1>
+          <h1>포격<em>리스</em></h1>
           <p>친구와 링크 하나로 붙는 턴제 포격 대전 · 최대 4 대 4</p>
         </div>
         <div class="record" id="record" hidden></div>
@@ -422,6 +438,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="lobbyhead">
         <div>
+          <div class="lbrand">포격<em>리스</em></div>
           <h2 class="lt">대기방<span id="roomCode"></span></h2>
           <div class="note" id="lobbyStatus" role="status"></div>
         </div>
@@ -459,7 +476,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="brand">
         <div>
-          <h1>포격<em>전</em></h1>
+          <h1>포격<em>리스</em></h1>
           <p>한 기기 연습 모드</p>
         </div>
         <div class="cta"><span class="note" style="max-width:380px">자리마다 사람 또는 봇(쉬움·보통·어려움)을 고르세요. 사람 자리는 한 기기에서 번갈아 조작합니다.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
@@ -509,6 +526,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="overbox">
       <h2 id="overTitle">레드 팀 승리</h2>
       <div class="note" id="overSub"></div>
+      <div class="ovmvp" id="overMvp" hidden></div>
       <div class="roster" id="overRoster"></div>
       <div class="cta" style="justify-content:center">
         <button class="start" id="again" type="button">한 판 더</button>
@@ -646,6 +664,15 @@ const CONFIG = {
     },
   },
 
+  // happenings (like the original): one is drawn per match before it starts
+  happenings: {
+    chance: 0.8,                                   // 20% of matches are calm
+    list: ['meteor', 'quake', 'tornado', 'pillar'],
+    meteor: { every: 3, from: 3, r: 40, dmg: 180, fallTicks: 90 },
+    quake: { every: 4, from: 4, shift: 55 },
+    tornado: { w: 70, drift: 14 },
+    pillar: { w: 46, drift: 14, mul: 1.5 },
+  },
   items: {
     double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 },
     heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },
@@ -872,7 +899,7 @@ const MAPGEN = {
     fillBand(mask, W, H, 150, g1 - gw, top, bot);
     fillBand(mask, W, H, g1 + gw, g2 - gw, top, bot);
     fillBand(mask, W, H, g2 + gw, W - 151, top, bot);
-    for (const gx of [g1, g2]) fillBand(mask, W, H, gx - 150, gx + 150, x => 560 + 26 * Math.pow((x - gx) / 150, 2) + 4 * tsin(x / 17), x => 560 + THICK * 70 - 60 * Math.pow((x - gx) / 150, 2));
+    for (const gx of [g1, g2]) fillBand(mask, W, H, gx - 150, gx + 150, x => { const u = (x - gx) / 150; return 560 + 26 * u * u + 4 * tsin(x / 17); }, x => { const u = (x - gx) / 150; return 560 + THICK * 70 - 60 * u * u; });
   },
   // moon base: low gravity (see CONFIG.maps.moon.gravity), craters and two flat mesas
   moon(W, H, mask) {
@@ -886,7 +913,7 @@ const MAPGEN = {
   islands(W, H, mask) {
     for (const [fx, hw, lift] of [[0.12, 400, 0], [0.32, 300, 70], [0.5, 360, -30], [0.68, 300, 70], [0.88, 400, 0]]) {
       const cx = Math.round(W * fx);
-      const top = x => { const u = (x - cx) / hw; return 1120 - lift - 280 * Math.pow(Math.max(0, 1 - u * u), 0.55) + 6 * tsin(x / 31); };
+      const top = x => { const u = (x - cx) / hw; return 1120 - lift - 280 * Math.sqrt(Math.max(0, 1 - u * u)) + 6 * tsin(x / 31); }; // sqrt is exact on every engine (pow is not)
       fillBand(mask, W, H, cx - hw, cx + hw, top, () => H - 4);
     }
   },
@@ -961,11 +988,17 @@ function createMatch(opts) {
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
       delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
-      fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '',
+      fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
+      // match stats for the results screen (computed by the simulation, so every device agrees)
+      st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
     };
     m.tanks.push(t);
   });
   m.tanks.forEach(t => updateTilt(m, t));
+  // happening for this match
+  const HP = CONFIG.happenings;
+  m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
+  if (m.happening === 'tornado' || m.happening === 'pillar') m.column = { kind: m.happening, x: Math.round(m.W * (0.35 + 0.3 * rngNext(m))) };
   return m;
 }
 
@@ -1022,11 +1055,27 @@ function aimVector(t, aimDeg, extra10) {
 }
 
 // ---------------------------------------------------------------- damage
-function hurt(m, t, dmg, kind) {
+// by = the tank that caused it (null for terrain / sudden death / meteors)
+function hurt(m, t, dmg, kind, by) {
   if (!t.alive || dmg <= 0) return;
+  const real = Math.min(t.hp, dmg);
   t.hp = Math.max(0, t.hp - dmg);
+  t.st.taken += real;
+  if (by && by !== t) {
+    if (by.team === t.team) by.st.friendly += real;
+    else {
+      by.st.dealt += real; t.lastBy = by.idx;
+      if (by.st.lastHit !== m.turnNo) { by.st.lastHit = m.turnNo; by.st.hitTurns++; }
+      if (t.hp <= 0) { by.st.kills++; if (kind === 'fall') by.st.falls++; }
+    }
+  }
   m.events.push({ type: 'dmg', idx: t.idx, x: t.x, y: t.y, amount: dmg, kind: kind || 'hit' });
   if (t.hp <= 0) { t.alive = false; t.deathCause = kind || 'hit'; m.events.push({ type: 'death', idx: t.idx, x: t.x, y: t.y }); }
+}
+// a tank that falls out: the last enemy who hit it gets the fall kill
+function creditFall(m, t) {
+  const by = t.lastBy >= 0 ? m.tanks[t.lastBy] : null;
+  if (by && by.team !== t.team) { by.st.falls++; by.st.kills++; }
 }
 function explode(m, x, y, r, dmg, owner, w, amp) {
   const P = CONFIG.physics, cr = r * P.blastCarveMul, reach = r * P.blastDmgMul + P.bodyRadius;
@@ -1040,11 +1089,11 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
     if (crit && d < crit.within) { v *= crit.mul; m.events.push({ type: 'text', x: t.x, y: t.y - 90, text: '정타!', color: '#FFD24A' }); }
     v *= CONFIG.tanks[t.tankId].dmgTaken;
     if (t.shield) v *= CONFIG.items.shield.mul;
-    hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit');
+    hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
     if (poison && t.alive) {
       let pd = poison.dmg;
       if (amp && owner && CONFIG.tanks[owner.tankId].traits.ampPoison) pd = Math.round(pd * CONFIG.items.amplify.mul);
-      t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1 };
+      t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1, by: owner ? owner.idx : -1 };
       m.events.push({ type: 'text', x: t.x, y: t.y - 84, text: '중독', color: '#8EDB3A' });
     }
   }
@@ -1079,7 +1128,7 @@ function physTank(m, t) {
     t.vy = Math.min(t.vy + CONFIG.physics.gravity * TICK, 900);
     t.fallAcc += t.vy * TICK;
     while (t.fallAcc >= 1) { t.fallAcc -= 1; if (groundUnder(m, t)) break; t.y += 1; }
-    if (t.y > m.H + 40) { t.alive = false; t.hp = 0; t.deathCause = 'fall'; t.falling = false; m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
+    if (t.y > m.H + 40) { t.alive = false; t.hp = 0; t.deathCause = 'fall'; t.falling = false; creditFall(m, t); m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
   } else if (t.falling) {
     landTank(m, t);
   }
@@ -1089,7 +1138,7 @@ function physTank(m, t) {
 function landTank(m, t) {
   const h = t.y - t.fallFrom;
   t.falling = false; t.vy = 0; t.fallAcc = 0;
-  if (h > CONFIG.physics.fallSafe) hurt(m, t, Math.round((h - CONFIG.physics.fallSafe) * CONFIG.physics.fallDmgPerPx), 'fall');
+  if (h > CONFIG.physics.fallSafe) hurt(m, t, Math.round((h - CONFIG.physics.fallSafe) * CONFIG.physics.fallDmgPerPx), 'fall', t.lastBy >= 0 ? m.tanks[t.lastBy] : null);
 }
 function checkTouch(m, t) {
   if (!t.alive) return;
@@ -1136,7 +1185,7 @@ function cmdMove(m, dir) {
     const from = t.y;
     if (!groundUnder(m, t)) {
       const ys = [-10, -4, 0, 4, 10].map(dx => surfaceAt(m, t.x + dx, t.y + 1)).filter(y => y >= 0);
-      if (!ys.length) { t.y = m.H + 50; t.alive = false; t.hp = 0; t.deathCause = 'fall'; m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
+      if (!ys.length) { t.y = m.H + 50; t.alive = false; t.hp = 0; t.deathCause = 'fall'; creditFall(m, t); m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
       else {
         t.y = Math.min.apply(null, ys);
         const h = t.y - from;
@@ -1183,6 +1232,7 @@ function cmdFire(m, angle, power, weapon, used) {
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { angle, power, weapon, used });
+  t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
   const berserk = d.traits.berserk && t.hp < t.maxhp * d.traits.berserk.hpBelow;
@@ -1261,6 +1311,7 @@ function stepProjectiles(m) {
     for (let i = 0; i < n && !p.dead; i++) {
       if (!p.calm) p.vx += wa * w.windMul * h; p.vy += P.gravity * w.gravityMul * gm * h;
       p.x += p.vx * h; p.y += p.vy * h; p.age += h;
+      if (m.column && !p.inCol && Math.abs(p.x - m.column.x) < CONFIG.happenings[m.column.kind].w) columnHit(m, p);
       if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y, tele: !!p.tele }); break; }
       if (solidAt(m, p.x, p.y)) { p.dead = true; impact(m, p, p.x, p.y); break; }
       for (const t of m.tanks) {
@@ -1283,10 +1334,21 @@ function teleLand(m, p, x, y) {
   m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
   t.x = tx; t.y = sy; t.vy = 0; t.falling = false; updateTilt(m, t); checkTouch(m, t);
 }
+// tornado: the shell is flung in a new direction (deterministic, looks wild); fire pillar: the shell burns for x1.5 damage
+function columnHit(m, p) {
+  p.inCol = true;
+  if (m.column.kind === 'tornado') {
+    const a = ((p.id * 977 + m.tick * 131) % 2400) - 1200, c = cosD10(a), s = sinD10(a);
+    const vx = p.vx * c - p.vy * s, vy = p.vx * s + p.vy * c;
+    p.vx = vx * 1.05; p.vy = vy * 1.05 - 160;
+    m.events.push({ type: 'tornadoHit', x: p.x, y: p.y });
+  } else { p.fire = true; m.events.push({ type: 'pillarHit', x: p.x, y: p.y }); }
+}
 function impact(m, p, x, y) {
   if (p.tele) return teleLand(m, p, x, y);
   const owner = m.tanks[p.idx], d = CONFIG.tanks[owner.tankId], w = d.weapons[p.wIdx], pat = w.pattern;
   let r = w.radius, dmg = w.dmg;
+  if (p.fire) dmg *= CONFIG.happenings.pillar.mul;
   if (p.amp) dmg *= CONFIG.items.amplify.mul;
   if (p.berserk) { r *= d.traits.berserk.mul; dmg *= d.traits.berserk.mul; }
   if (pat.kind === 'orbital') {
@@ -1324,6 +1386,7 @@ function runScheduled(m) {
     if (e.kind === 'shot') spawnShot(m, e);
     else if (e.kind === 'mineBoom') mineBoom(m, e.x, e.y, e.owner);
     else if (e.kind === 'orbitalHit') { const sy = surfaceAt(m, e.x, 0); const w = CONFIG.tanks[m.tanks[e.idx].tankId].weapons[e.wIdx]; if (sy >= 0) explode(m, e.x, sy, e.r, e.dmg, m.tanks[e.idx], w, e.amp); }
+    else if (e.kind === 'meteorHit') { const sy = surfaceAt(m, e.x, 0), M = CONFIG.happenings.meteor; if (sy >= 0) explode(m, e.x, sy, M.r, M.dmg, null, null, false); else m.events.push({ type: 'out', x: e.x, y: m.H }); }
     else if (e.kind === 'rollHit') { const w = CONFIG.tanks[m.tanks[e.idx].tankId].weapons[e.wIdx]; explode(m, e.x, e.y, e.r, e.dmg, m.tanks[e.idx], w, e.amp); }
   }
 }
@@ -1349,9 +1412,24 @@ function beginTurn(m) {
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo });
   if (t.poison) {
-    hurt(m, t, t.poison.dmg, 'poison');
+    hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+  }
+  const MT = CONFIG.happenings.meteor;
+  if (m.happening === 'meteor' && m.turnNo >= MT.from && m.turnNo % MT.every === 0) {
+    const n = 1 + (rngNext(m) < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) {
+      const x = 200 + Math.floor(rngNext(m) * (m.W - 400));
+      schedule(m, MT.fallTicks + i * 20, { kind: 'meteorHit', x });
+      m.events.push({ type: 'meteor', x, at: m.tick + MT.fallTicks + i * 20 + 1, dur: MT.fallTicks + i * 20 });
+    }
+  }
+  if (m.column) { // the column drifts with the wind and bounces off the map edges
+    const C = CONFIG.happenings[m.column.kind];
+    let nx = m.column.x + m.wind * C.drift;
+    if (nx < 300) nx = 600 - nx; if (nx > m.W - 300) nx = 2 * (m.W - 300) - nx;
+    m.column.x = Math.round(clampN(nx, 300, m.W - 300));
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
@@ -1384,7 +1462,22 @@ function step(m) {
   const busy = m.proj.length || m.sched.length || m.tanks.some(t => t.alive && t.falling);
   if (busy) { m.settle = 0; return; }
   m.settle++;
-  if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) beginTurn(m);
+  if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) {
+    const Q = CONFIG.happenings.quake, next = m.turnNo + 1;
+    if (m.happening === 'quake' && next >= Q.from && next % Q.every === 0 && m.quakeDone !== next) { m.quakeDone = next; quake(m); m.settle = 0; return; }
+    beginTurn(m);
+  }
+}
+// earthquake: every tank is shoved sideways; ledges become dangerous
+function quake(m) {
+  const Q = CONFIG.happenings.quake;
+  m.events.push({ type: 'quake' });
+  for (const t of m.tanks) {
+    if (!t.alive) continue;
+    const nx = clampN(Math.round(t.x + (rngNext(m) - 0.5) * 2 * Q.shift), 20, m.W - 20);
+    if (solidAt(m, nx, t.y - 60)) continue; // a wall: stays put
+    t.x = nx; t.lastQuake = m.turnNo;
+  }
 }
 
 // ---------------------------------------------------------------- hash (everything that decides the future)
@@ -1401,6 +1494,7 @@ function stateHash(m) {
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
+  if (m.column) h = fnvF64(h, m.column.x);
   return h >>> 0;
 }
 
@@ -1763,7 +1857,7 @@ function createRenderer(cv, mini) {
 
   R.setMatch = function (m) {
     R.m = m; R.th = THEMES[m.theme];
-    R.bubbles = {}; R.fx = []; R.texts = []; R.beams = []; R.rollers = []; R.view = {}; R.shake = 0; R.crateDrop = {}; R.trails = {};
+    R.helis = []; R.meteors = []; R.bubbles = {}; R.fx = []; R.texts = []; R.beams = []; R.rollers = []; R.view = {}; R.shake = 0; R.crateDrop = {}; R.trails = {};
     buildTerrainTexture(); buildBackground();
     const t0 = m.tanks[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
     m.events.length = 0;
@@ -1987,7 +2081,11 @@ function createRenderer(cv, mini) {
         case 'beam': R.beams.push({ x: e.x, t: 0, life: e.ticks / CONFIG.physics.tickRate + 0.1 }); R.onSfx('beam'); break;
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
-        case 'crate': R.crateDrop[e.id] = { t: 0 }; R.onSfx('crate'); break;
+        case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
+        case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
+        case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
+        case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;
+        case 'pillarHit': burst(e.x, e.y, '#FFB040', 14); text(e.x, e.y - 30, '불꽃 강화!', '#FFB040'); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
@@ -2055,6 +2153,8 @@ function createRenderer(cv, mini) {
     }
     R.onEngine(anyMove && m.phase === 'aim');
     for (const id in R.crateDrop) R.crateDrop[id].t += dt;
+    for (const h of R.helis) h.t += dt; R.helis = R.helis.filter(h => h.t < 4);
+    R.meteors = R.meteors.filter(mt => R.m.tick < mt.at);
     for (const f of R.fx) {
       f.t += dt; if (f.t < 0) continue;
       if (f.kind === 'smoke' || f.kind === 'bubble' || f.kind === 'plus' || f.kind === 'ember' || f.kind === 'dust') { f.y += f.vy * dt; if (f.vx) f.x += f.vx * dt; f.vy *= 0.98; }
@@ -2113,8 +2213,10 @@ function createRenderer(cv, mini) {
     for (const c of m.crates) drawCrate(c);
     const t = m.cur >= 0 ? m.tanks[m.cur] : null;
     if (t && t.alive && m.phase === 'aim' && ui) drawAimGuide(t, ui);
+    drawColumn(); drawMeteors();
     for (const tk of m.tanks) if (tk.alive) drawTank(tk);
     for (const p of m.proj) drawProj(p);
+    drawHelis();
     drawLiquid(left, v);
     drawAmbient();
     if (!m.proj.length) R.trails = {};
@@ -2150,6 +2252,59 @@ function createRenderer(cv, mini) {
     ctx.strokeStyle = sea ? 'rgba(220,245,255,0.75)' : 'rgba(255,230,140,0.85)'; ctx.lineWidth = 3; ctx.beginPath();
     for (let x = Math.floor(x0 / 24) * 24; x <= x1 + 24; x += 24) { const y = lvl + Math.sin(x / 70 + R.t * (sea ? 1.6 : 0.8)) * (sea ? 6 : 4) + Math.sin(x / 23 + R.t * 2.3) * 2; if (x === Math.floor(x0 / 24) * 24) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
     ctx.stroke();
+  }
+  // happenings
+  function drawColumn() {
+    const m = R.m, c = m.column; if (!c) return;
+    const C = CONFIG.happenings[c.kind], sy = Math.max(0, surfaceAt(m, c.x, 0)), top = R.cam.y - R.viewSize().h, w = C.w;
+    if (c.kind === 'tornado') {
+      for (let i = 0; i < 14; i++) {
+        const y = top + ((i / 14) * (sy - top)), k = (y - top) / Math.max(1, sy - top), ww = w * (1.3 - k * 0.7);
+        const ph = R.t * 6 + i * 0.9;
+        ctx.strokeStyle = `rgba(110,122,142,${0.35 + 0.3 * Math.sin(ph) ** 2})`; ctx.lineWidth = 9;
+        ctx.beginPath(); ctx.ellipse(c.x + Math.sin(ph * 0.5) * 8, y, ww, 10, 0, 0, 7); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(120,130,150,0.22)'; ctx.beginPath(); ctx.moveTo(c.x - w * 1.3, top); ctx.lineTo(c.x + w * 1.3, top); ctx.lineTo(c.x + w * 0.6, sy); ctx.lineTo(c.x - w * 0.6, sy); ctx.fill();
+    } else {
+      const g = ctx.createLinearGradient(c.x - w, 0, c.x + w, 0);
+      g.addColorStop(0, 'rgba(255,90,20,0)'); g.addColorStop(0.5, `rgba(255,${150 + Math.round(40 * Math.sin(R.t * 9))},40,0.55)`); g.addColorStop(1, 'rgba(255,90,20,0)');
+      ctx.fillStyle = g; ctx.fillRect(c.x - w, top, w * 2, sy - top);
+      for (let i = 0; i < 3; i++) if (vrnd() < 0.5) R.fx.push({ kind: 'ember', x: c.x + (vrnd() - 0.5) * w * 1.6, y: sy - vrnd() * 200, vx: (vrnd() - 0.5) * 30, vy: -60 - vrnd() * 80, t: 0, life: 0.9, col: '#FFB040' });
+    }
+  }
+  function drawMeteors() {
+    const m = R.m;
+    for (const mt of R.meteors) {
+      const sy = Math.max(0, surfaceAt(m, mt.x, 0)), k = clamp(1 - (mt.at - m.tick) / mt.dur, 0, 1), e = k * k;
+      // warning ring where it will land
+      ctx.strokeStyle = `rgba(255,70,40,${0.5 + 0.4 * Math.sin(R.t * 8)})`; ctx.lineWidth = 4; ctx.setLineDash([10, 8]);
+      const rr = CONFIG.happenings.meteor.r * CONFIG.physics.blastDmgMul;
+      ctx.beginPath(); ctx.ellipse(mt.x, sy, rr, rr * 0.3, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+      if (k === 0) { // waiting in the sky: say so above the landing spot
+        ctx.font = '900 16px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        const ly = sy - 70 - Math.abs(Math.sin(R.t * 3)) * 10; ctx.strokeText('☄ 운석 낙하 예정', mt.x, ly); ctx.fillStyle = '#FF8A5A'; ctx.fillText('☄ 운석 낙하 예정', mt.x, ly);
+        ctx.strokeStyle = '#FF6A40'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(mt.x, ly + 8); ctx.lineTo(mt.x, sy - 16); ctx.moveTo(mt.x - 7, sy - 24); ctx.lineTo(mt.x, sy - 14); ctx.lineTo(mt.x + 7, sy - 24); ctx.stroke();
+      }
+      const mx = mt.x - (1 - e) * 260, my = sy - (1 - e) * 1100;
+      const g = ctx.createLinearGradient(mx - 120, my - 220, mx, my); g.addColorStop(0, 'rgba(255,120,40,0)'); g.addColorStop(1, 'rgba(255,200,90,0.85)');
+      ctx.strokeStyle = g; ctx.lineWidth = 18; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(mx - 110, my - 200); ctx.lineTo(mx, my); ctx.stroke();
+      ctx.fillStyle = '#5A3A2A'; ctx.strokeStyle = '#FFB040'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx, my, 22, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,160,60,0.35)'; ctx.beginPath(); ctx.arc(mx, my, 34 + Math.sin(R.t * 14) * 3, 0, 7); ctx.fill();
+    }
+  }
+  function drawHelis() {
+    for (const h of R.helis) {
+      const x = h.x + (h.t - 0.6) * 520 * h.dir, y = h.y + Math.sin(h.t * 3) * 6;
+      ctx.save(); ctx.translate(x, y); ctx.scale(h.dir, 1);
+      ctx.fillStyle = '#4E6A3A'; ctx.strokeStyle = '#1E2A16'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(0, 0, 46, 20, 0, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillRect(-110, -6, 70, 10); ctx.strokeRect(-110, -6, 70, 10);
+      ctx.fillStyle = '#9CC6F7'; ctx.beginPath(); ctx.ellipse(22, -4, 16, 10, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#1E2A16'; ctx.lineWidth = 4; const r = 70 * Math.abs(Math.sin(R.t * 30));
+      ctx.beginPath(); ctx.moveTo(-r, -28); ctx.lineTo(r, -28); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0, -28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-28, 22); ctx.lineTo(24, 22); ctx.stroke();
+      ctx.restore();
+    }
   }
   // snowflakes / embers drifting through the view
   R.amb = [];
@@ -2310,6 +2465,7 @@ function createRenderer(cv, mini) {
     const a = Math.atan2(p.vy, p.vx), s = (look.size || 1) * PS;
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
     if (look.glow) { ctx.fillStyle = look.glow + '55'; ctx.beginPath(); ctx.arc(0, 0, 14 * s, 0, 7); ctx.fill(); }
+    if (p.fire) { ctx.fillStyle = 'rgba(255,140,40,0.5)'; ctx.beginPath(); ctx.arc(0, 0, 20 * s * (0.9 + 0.2 * Math.sin(R.t * 20)), 0, 7); ctx.fill(); }
     ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5;
     if (look.shape === 'beam') { ctx.fillStyle = look.color + '88'; ctx.beginPath(); ctx.arc(0, 0, 9 * PS, 0, 7); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(0, 0, 5 * PS, 0, 7); ctx.fill(); }
     else if (look.shape === 'arrow') { ctx.scale(PS, PS); ctx.lineWidth = 1.5; ctx.fillStyle = '#E6D7B0'; ctx.fillRect(-16, -1.5, 22, 3); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(14, 0); ctx.lineTo(6, 5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.fillRect(-18, -3.5, 5, 2); ctx.fillRect(-18, 1.5, 5, 2); }
@@ -3124,6 +3280,7 @@ function startOnlineMatch(game, late) {
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
   banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
+  if (!late) announceHappening();
   if (ON.syncing) {
     banner('진행 중인 게임에 맞추는 중…');
     setTimeout(() => { ON.syncing = false; if (ON.link && ON.link.log.length) rebuildFrom(ON.link.log); }, 1800);
@@ -3413,6 +3570,23 @@ const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.item
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
+// results: MVP + titles from the simulation's stats (identical on every device)
+function matchAwards(m) {
+  const T = m.tanks, out = {}, add = (t, label, cls) => (out[t.idx] = out[t.idx] || []).push({ label, cls });
+  const best = (f, min) => { let b = null; for (const t of T) { const v = f(t); if (v > min && (!b || v > f(b))) b = t; } return b; };
+  const score = t => t.st.dealt + 150 * t.st.kills - t.st.friendly;
+  const mvp = best(score, 0);
+  if (mvp) add(mvp, '👑 MVP', 'mvp');
+  const acc = t => (t.st.shots >= 3 ? t.st.hitTurns / t.st.shots : 0);
+  const sn = best(acc, 0.5); if (sn) add(sn, '🎯 저격수', '');
+  const dl = best(t => t.st.dealt, 0); if (dl && dl !== mvp) add(dl, '💥 화력왕', '');
+  const fk = best(t => t.st.falls, 0); if (fk) add(fk, '🕳️ 낙사 장인', '');
+  const kl = best(t => t.st.kills, 1); if (kl) add(kl, '⚔️ 마무리 장인', '');
+  const ff = best(t => t.st.friendly, 49); if (ff) add(ff, '🤦 팀킬왕', 'bad');
+  const tk = best(t => (t.alive ? t.st.taken : 0), 0); if (tk && tk.st.taken >= tk.maxhp * 0.6) add(tk, '🛡️ 불사신', '');
+  for (const t of T) if (t.st.dealt === 0 && t.st.shots >= 3) add(t, '🕊️ 평화주의자', 'bad');
+  return { mvp, out };
+}
 R.onOver = (winner, forfeit) => {
   const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
@@ -3422,6 +3596,9 @@ R.onOver = (winner, forfeit) => {
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
   $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  const aw = matchAwards(match), mv = aw.mvp;
+  $('overMvp').hidden = !mv;
+  if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
   const ros = $('overRoster'); ros.innerHTML = '';
   for (const team of ['red', 'blue']) {
     const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
@@ -3430,7 +3607,12 @@ R.onOver = (winner, forfeit) => {
       const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
       const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
       const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
-      r.append(nm, sub); col.append(r);
+      const st = document.createElement('span'); st.className = 'ost';
+      st.textContent = `피해 ${x.st.dealt} · 격파 ${x.st.kills} · 명중 ${x.st.hitTurns}/${x.st.shots}` + (x.st.friendly ? ` · 팀킬 ${x.st.friendly}` : '');
+      const bd = document.createElement('div'); bd.className = 'obd';
+      for (const a of aw.out[x.idx] || []) { const c = document.createElement('span'); c.className = 'badge ' + a.cls; c.textContent = a.label; bd.append(c); }
+      if (aw.mvp === x) r.classList.add('mvp');
+      r.append(nm, sub, st); if (bd.children.length) r.append(bd); col.append(r);
     }
     ros.append(col);
   }
@@ -3482,6 +3664,7 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
+  setTxt('windLbl', m.happening ? '바람 · ' + HAPPEN[m.happening][0] : '바람');
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
@@ -3766,6 +3949,12 @@ function beginMatch(cfg, opts) {
   installMatch(createMatch(cfg), opts);
   $('over').hidden = true; $('loading').hidden = true;
 }
+const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
+function announceHappening() {
+  const h = match && match.happening; if (!h) return;
+  setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + HAPPEN[h][0]); }, 1700);
+  setTimeout(() => { if (match && match.happening === h) banner(HAPPEN[h][1]); }, 3300);
+}
 function startGame() {
   ON.active = false; TUT.on = false; showCoach();
   $('loading').hidden = false;
@@ -3781,6 +3970,7 @@ function startGame() {
     beginMatch({ seed, mapId: setup.map, players }, practiceOpts(bots));
     showScreen('game');
     banner(CONFIG.maps[setup.map].name);
+    announceHappening();
   }, 30);
 }
 

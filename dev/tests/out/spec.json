@@ -394,15 +394,15 @@
  {
   "tank": "루키",
   "item": "표준탄 피해(15px 거리, 루키)",
-  "expected": "188",
-  "actual": "188",
+  "expected": "194",
+  "actual": "194",
   "pass": true
  },
  {
   "tank": "루키",
   "item": "표준탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 67, 밖 0",
+  "actual": "안 69, 밖 0",
   "pass": true
  },
  {
@@ -429,15 +429,15 @@
  {
   "tank": "트래퍼",
   "item": "저각 포탄 피해(15px 거리, 루키)",
-  "expected": "176",
-  "actual": "176",
+  "expected": "185",
+  "actual": "185",
   "pass": true
  },
  {
   "tank": "트래퍼",
   "item": "저각 포탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 62, 밖 0",
+  "actual": "안 66, 밖 0",
   "pass": true
  },
  {
@@ -464,15 +464,15 @@
  {
   "tank": "스웜",
   "item": "유도 미사일 피해(15px 거리, 루키)",
-  "expected": "209",
-  "actual": "209",
+  "expected": "201",
+  "actual": "201",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "유도 미사일 피해 거리 98px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 74, 밖 0",
+  "actual": "안 71, 밖 0",
   "pass": true
  },
  {
@@ -499,15 +499,15 @@
  {
   "tank": "프리즘",
   "item": "광선 피해(15px 거리, 루키)",
-  "expected": "224",
-  "actual": "224",
+  "expected": "234",
+  "actual": "234",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "광선 피해 거리 95px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 79, 밖 0",
+  "actual": "안 83, 밖 0",
   "pass": true
  },
  {
@@ -745,7 +745,7 @@
   "tank": "아이템",
   "item": "증폭: 같은 탄 피해 ×1.5",
   "expected": "1.50",
-  "actual": "59 → 88 (1.49)",
+  "actual": "61 → 91 (1.49)",
   "pass": true
  },
  {
@@ -788,6 +788,41 @@
   "item": "서든데스: 18턴부터 모두 최대 체력의 4% 감소",
   "expected": "42,42",
   "actual": "42,42",
+  "pass": true
+ },
+ {
+  "tank": "해프닝",
+  "item": "운석: 예고된 자리에 떨어져 피해",
+  "expected": "예고 1~2개, 피해 >0",
+  "actual": "예고 1, 피해 122",
+  "pass": true
+ },
+ {
+  "tank": "해프닝",
+  "item": "지진: 다음 턴 전에 탱크가 밀려남",
+  "expected": "이동 있음",
+  "actual": "-23, 4",
+  "pass": true
+ },
+ {
+  "tank": "해프닝",
+  "item": "토네이도: 통과한 포탄의 착탄점이 바뀜",
+  "expected": "≠ 2067",
+  "actual": "1155",
+  "pass": true
+ },
+ {
+  "tank": "해프닝",
+  "item": "불기둥: 통과한 포탄 위력 1.5배",
+  "expected": "166 → 249",
+  "actual": "166 → 249",
+  "pass": true
+ },
+ {
+  "tank": "해프닝",
+  "item": "판마다 무작위 해프닝 (없음 약 20%)",
+  "expected": "none ≈ 40/200",
+  "actual": "{\"meteor\":41,\"pillar\":42,\"tornado\":37,\"quake\":48,\"none\":32}",
   "pass": true
  },
  {

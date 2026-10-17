@@ -17,7 +17,7 @@ function field(specs, opts) {
   m.mask.fill(0);
   for (let y = GROUND; y < m.H; y++) m.mask.fill(1, y * m.W, (y + 1) * m.W);
   m.tanks.forEach((t, i) => { t.x = specs[i].x; t.y = GROUND; t.facing = specs[i].facing || 1; t.delay = i === 0 ? 0 : 500 + i; A.updateTilt(m, t); });
-  m.wind = 0; m.crates = []; m.mines = [];
+  m.wind = 0; m.crates = []; m.mines = []; m.happening = null; m.column = null;
   // force first turn to player 0, no wind, no crate
   m.phase = 'aim'; m.turnNo = 1; m.cur = 0; m.turn = { actions: [], itemUsed: false, double: false, amp: false, movedPx: 0 };
   m.tanks[0].fuel = CONFIG.tanks[specs[0].tank].movePx;
@@ -251,6 +251,35 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const hp = ms.tanks.map(t => t.hp); A.cmdTimeout(ms); let g = 0; while (ms.phase !== 'aim' && g++ < 5000) A.step(ms);
   const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
   check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));
+}
+{ // happenings
+  const H = CONFIG.happenings;
+  // meteor: announced at a turn start, lands once time runs and hurts whoever stands there
+  const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mm.happening = 'meteor';
+  mm.turnNo = H.meteor.every * 2 - 1; mm.events.length = 0; A.cmdTimeout(mm);
+  let g = 0, mev = []; while (mm.phase !== 'aim' && g++ < 9000) { A.step(mm); for (const e of mm.events) mev.push(e); mm.events.length = 0; }
+  const warned = mev.filter(e => e.type === 'meteor');
+  // put a tank under the first meteor and let time run
+  const target = warned[0]; if (target) { const v = mm.tanks[1]; v.x = target.x; v.y = 800; A.updateTilt(mm, v); }
+  const hp0 = mm.tanks[1].hp; A.cmdTimeout(mm); g = 0; const ev2 = [];
+  while (mm.phase !== 'aim' && g++ < 9000) { A.step(mm); for (const e of mm.events) ev2.push(e); mm.events.length = 0; }
+  check('해프닝', '운석: 예고된 자리에 떨어져 피해', '예고 1~2개, 피해 >0', `예고 ${warned.length}, 피해 ${hp0 - mm.tanks[1].hp}`, warned.length >= 1 && hp0 - mm.tanks[1].hp > 0);
+  // quake: tanks get shoved before the next turn
+  const mq = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mq.happening = 'quake'; mq.turnNo = H.quake.every - 1;
+  const xs = mq.tanks.map(t => t.x); A.cmdTimeout(mq); g = 0; let qe = false;
+  while (mq.phase !== 'aim' && g++ < 9000) { A.step(mq); if (mq.events.some(e => e.type === 'quake')) qe = true; mq.events.length = 0; }
+  check('해프닝', '지진: 다음 턴 전에 탱크가 밀려남', '이동 있음', mq.tanks.map((t, i) => Math.round(t.x - xs[i])).join(', '), qe && mq.tanks.some((t, i) => Math.abs(t.x - xs[i]) >= 1));
+  // tornado: a shell through it lands somewhere else
+  const shot = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); if (col) mt.column = { kind: col, x: 1500 }; const r = fireAndTrace(mt, 30, 700, 0); const b = r.evs.find(e => e.type === 'boom'); return { x: b ? Math.round(b.x) : null, r }; };
+  const plain = shot(null), tor = shot('tornado');
+  check('해프닝', '토네이도: 통과한 포탄의 착탄점이 바뀜', `≠ ${plain.x}`, tor.x, tor.x !== plain.x && tor.r.evs.some(e => e.type === 'tornadoHit'));
+  // fire pillar: same landing spot, 1.5x damage
+  const dmgAt = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 2067 }]); if (col) mt.column = { kind: col, x: 1500 }; const r = fireAndTrace(mt, 30, 700, 0); const e = r.evs.find(x => x.type === 'dmg' && x.idx === 1); return e ? e.amount : 0; };
+  const d0 = dmgAt(null), d1 = dmgAt('pillar');
+  check('해프닝', '불기둥: 통과한 포탄 위력 1.5배', `${d0} → ${Math.round(d0 * 1.5)}`, `${d0} → ${d1}`, d0 > 0 && Math.abs(d1 - d0 * 1.5) <= 2);
+  // every match draws one happening (or none) deterministically from the seed
+  const counts = {}; for (let sd = 1; sd <= 200; sd++) { const m = A.createMatch({ seed: sd, mapId: 'temple', players: [{ id: 'a', nick: 'a', team: 'red', tankId: 'rookie' }, { id: 'b', nick: 'b', team: 'blue', tankId: 'rookie' }] }); counts[m.happening || 'none'] = (counts[m.happening || 'none'] || 0) + 1; }
+  check('해프닝', '판마다 무작위 해프닝 (없음 약 20%)', 'none ≈ 40/200', JSON.stringify(counts), counts.none > 20 && counts.none < 65 && H.list.every(k => counts[k] > 15));
 }
 { // turn delay: time spent, timeout, movement (+30%)
   const d0 = (used) => { const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdFire(m, 20, 300, 0, used); return m.tanks[0].delay; };

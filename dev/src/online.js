@@ -251,6 +251,7 @@ function startOnlineMatch(game, late) {
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
   banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
+  if (!late) announceHappening();
   if (ON.syncing) {
     banner('진행 중인 게임에 맞추는 중…');
     setTimeout(() => { ON.syncing = false; if (ON.link && ON.link.log.length) rebuildFrom(ON.link.log); }, 1800);

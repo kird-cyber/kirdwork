@@ -37,11 +37,17 @@ function createMatch(opts) {
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
       delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
-      fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '',
+      fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
+      // match stats for the results screen (computed by the simulation, so every device agrees)
+      st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
     };
     m.tanks.push(t);
   });
   m.tanks.forEach(t => updateTilt(m, t));
+  // happening for this match
+  const HP = CONFIG.happenings;
+  m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
+  if (m.happening === 'tornado' || m.happening === 'pillar') m.column = { kind: m.happening, x: Math.round(m.W * (0.35 + 0.3 * rngNext(m))) };
   return m;
 }
 
@@ -98,11 +104,27 @@ function aimVector(t, aimDeg, extra10) {
 }
 
 // ---------------------------------------------------------------- damage
-function hurt(m, t, dmg, kind) {
+// by = the tank that caused it (null for terrain / sudden death / meteors)
+function hurt(m, t, dmg, kind, by) {
   if (!t.alive || dmg <= 0) return;
+  const real = Math.min(t.hp, dmg);
   t.hp = Math.max(0, t.hp - dmg);
+  t.st.taken += real;
+  if (by && by !== t) {
+    if (by.team === t.team) by.st.friendly += real;
+    else {
+      by.st.dealt += real; t.lastBy = by.idx;
+      if (by.st.lastHit !== m.turnNo) { by.st.lastHit = m.turnNo; by.st.hitTurns++; }
+      if (t.hp <= 0) { by.st.kills++; if (kind === 'fall') by.st.falls++; }
+    }
+  }
   m.events.push({ type: 'dmg', idx: t.idx, x: t.x, y: t.y, amount: dmg, kind: kind || 'hit' });
   if (t.hp <= 0) { t.alive = false; t.deathCause = kind || 'hit'; m.events.push({ type: 'death', idx: t.idx, x: t.x, y: t.y }); }
+}
+// a tank that falls out: the last enemy who hit it gets the fall kill
+function creditFall(m, t) {
+  const by = t.lastBy >= 0 ? m.tanks[t.lastBy] : null;
+  if (by && by.team !== t.team) { by.st.falls++; by.st.kills++; }
 }
 function explode(m, x, y, r, dmg, owner, w, amp) {
   const P = CONFIG.physics, cr = r * P.blastCarveMul, reach = r * P.blastDmgMul + P.bodyRadius;
@@ -116,11 +138,11 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
     if (crit && d < crit.within) { v *= crit.mul; m.events.push({ type: 'text', x: t.x, y: t.y - 90, text: '정타!', color: '#FFD24A' }); }
     v *= CONFIG.tanks[t.tankId].dmgTaken;
     if (t.shield) v *= CONFIG.items.shield.mul;
-    hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit');
+    hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
     if (poison && t.alive) {
       let pd = poison.dmg;
       if (amp && owner && CONFIG.tanks[owner.tankId].traits.ampPoison) pd = Math.round(pd * CONFIG.items.amplify.mul);
-      t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1 };
+      t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1, by: owner ? owner.idx : -1 };
       m.events.push({ type: 'text', x: t.x, y: t.y - 84, text: '중독', color: '#8EDB3A' });
     }
   }
@@ -155,7 +177,7 @@ function physTank(m, t) {
     t.vy = Math.min(t.vy + CONFIG.physics.gravity * TICK, 900);
     t.fallAcc += t.vy * TICK;
     while (t.fallAcc >= 1) { t.fallAcc -= 1; if (groundUnder(m, t)) break; t.y += 1; }
-    if (t.y > m.H + 40) { t.alive = false; t.hp = 0; t.deathCause = 'fall'; t.falling = false; m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
+    if (t.y > m.H + 40) { t.alive = false; t.hp = 0; t.deathCause = 'fall'; t.falling = false; creditFall(m, t); m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
   } else if (t.falling) {
     landTank(m, t);
   }
@@ -165,7 +187,7 @@ function physTank(m, t) {
 function landTank(m, t) {
   const h = t.y - t.fallFrom;
   t.falling = false; t.vy = 0; t.fallAcc = 0;
-  if (h > CONFIG.physics.fallSafe) hurt(m, t, Math.round((h - CONFIG.physics.fallSafe) * CONFIG.physics.fallDmgPerPx), 'fall');
+  if (h > CONFIG.physics.fallSafe) hurt(m, t, Math.round((h - CONFIG.physics.fallSafe) * CONFIG.physics.fallDmgPerPx), 'fall', t.lastBy >= 0 ? m.tanks[t.lastBy] : null);
 }
 function checkTouch(m, t) {
   if (!t.alive) return;
@@ -212,7 +234,7 @@ function cmdMove(m, dir) {
     const from = t.y;
     if (!groundUnder(m, t)) {
       const ys = [-10, -4, 0, 4, 10].map(dx => surfaceAt(m, t.x + dx, t.y + 1)).filter(y => y >= 0);
-      if (!ys.length) { t.y = m.H + 50; t.alive = false; t.hp = 0; t.deathCause = 'fall'; m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
+      if (!ys.length) { t.y = m.H + 50; t.alive = false; t.hp = 0; t.deathCause = 'fall'; creditFall(m, t); m.events.push({ type: 'fallout', idx: t.idx, x: t.x }); }
       else {
         t.y = Math.min.apply(null, ys);
         const h = t.y - from;
@@ -259,6 +281,7 @@ function cmdFire(m, angle, power, weapon, used) {
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { angle, power, weapon, used });
+  t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
   const berserk = d.traits.berserk && t.hp < t.maxhp * d.traits.berserk.hpBelow;
@@ -337,6 +360,7 @@ function stepProjectiles(m) {
     for (let i = 0; i < n && !p.dead; i++) {
       if (!p.calm) p.vx += wa * w.windMul * h; p.vy += P.gravity * w.gravityMul * gm * h;
       p.x += p.vx * h; p.y += p.vy * h; p.age += h;
+      if (m.column && !p.inCol && Math.abs(p.x - m.column.x) < CONFIG.happenings[m.column.kind].w) columnHit(m, p);
       if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y, tele: !!p.tele }); break; }
       if (solidAt(m, p.x, p.y)) { p.dead = true; impact(m, p, p.x, p.y); break; }
       for (const t of m.tanks) {
@@ -359,10 +383,21 @@ function teleLand(m, p, x, y) {
   m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
   t.x = tx; t.y = sy; t.vy = 0; t.falling = false; updateTilt(m, t); checkTouch(m, t);
 }
+// tornado: the shell is flung in a new direction (deterministic, looks wild); fire pillar: the shell burns for x1.5 damage
+function columnHit(m, p) {
+  p.inCol = true;
+  if (m.column.kind === 'tornado') {
+    const a = ((p.id * 977 + m.tick * 131) % 2400) - 1200, c = cosD10(a), s = sinD10(a);
+    const vx = p.vx * c - p.vy * s, vy = p.vx * s + p.vy * c;
+    p.vx = vx * 1.05; p.vy = vy * 1.05 - 160;
+    m.events.push({ type: 'tornadoHit', x: p.x, y: p.y });
+  } else { p.fire = true; m.events.push({ type: 'pillarHit', x: p.x, y: p.y }); }
+}
 function impact(m, p, x, y) {
   if (p.tele) return teleLand(m, p, x, y);
   const owner = m.tanks[p.idx], d = CONFIG.tanks[owner.tankId], w = d.weapons[p.wIdx], pat = w.pattern;
   let r = w.radius, dmg = w.dmg;
+  if (p.fire) dmg *= CONFIG.happenings.pillar.mul;
   if (p.amp) dmg *= CONFIG.items.amplify.mul;
   if (p.berserk) { r *= d.traits.berserk.mul; dmg *= d.traits.berserk.mul; }
   if (pat.kind === 'orbital') {
@@ -400,6 +435,7 @@ function runScheduled(m) {
     if (e.kind === 'shot') spawnShot(m, e);
     else if (e.kind === 'mineBoom') mineBoom(m, e.x, e.y, e.owner);
     else if (e.kind === 'orbitalHit') { const sy = surfaceAt(m, e.x, 0); const w = CONFIG.tanks[m.tanks[e.idx].tankId].weapons[e.wIdx]; if (sy >= 0) explode(m, e.x, sy, e.r, e.dmg, m.tanks[e.idx], w, e.amp); }
+    else if (e.kind === 'meteorHit') { const sy = surfaceAt(m, e.x, 0), M = CONFIG.happenings.meteor; if (sy >= 0) explode(m, e.x, sy, M.r, M.dmg, null, null, false); else m.events.push({ type: 'out', x: e.x, y: m.H }); }
     else if (e.kind === 'rollHit') { const w = CONFIG.tanks[m.tanks[e.idx].tankId].weapons[e.wIdx]; explode(m, e.x, e.y, e.r, e.dmg, m.tanks[e.idx], w, e.amp); }
   }
 }
@@ -425,9 +461,24 @@ function beginTurn(m) {
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo });
   if (t.poison) {
-    hurt(m, t, t.poison.dmg, 'poison');
+    hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+  }
+  const MT = CONFIG.happenings.meteor;
+  if (m.happening === 'meteor' && m.turnNo >= MT.from && m.turnNo % MT.every === 0) {
+    const n = 1 + (rngNext(m) < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) {
+      const x = 200 + Math.floor(rngNext(m) * (m.W - 400));
+      schedule(m, MT.fallTicks + i * 20, { kind: 'meteorHit', x });
+      m.events.push({ type: 'meteor', x, at: m.tick + MT.fallTicks + i * 20 + 1, dur: MT.fallTicks + i * 20 });
+    }
+  }
+  if (m.column) { // the column drifts with the wind and bounces off the map edges
+    const C = CONFIG.happenings[m.column.kind];
+    let nx = m.column.x + m.wind * C.drift;
+    if (nx < 300) nx = 600 - nx; if (nx > m.W - 300) nx = 2 * (m.W - 300) - nx;
+    m.column.x = Math.round(clampN(nx, 300, m.W - 300));
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
@@ -460,7 +511,22 @@ function step(m) {
   const busy = m.proj.length || m.sched.length || m.tanks.some(t => t.alive && t.falling);
   if (busy) { m.settle = 0; return; }
   m.settle++;
-  if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) beginTurn(m);
+  if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) {
+    const Q = CONFIG.happenings.quake, next = m.turnNo + 1;
+    if (m.happening === 'quake' && next >= Q.from && next % Q.every === 0 && m.quakeDone !== next) { m.quakeDone = next; quake(m); m.settle = 0; return; }
+    beginTurn(m);
+  }
+}
+// earthquake: every tank is shoved sideways; ledges become dangerous
+function quake(m) {
+  const Q = CONFIG.happenings.quake;
+  m.events.push({ type: 'quake' });
+  for (const t of m.tanks) {
+    if (!t.alive) continue;
+    const nx = clampN(Math.round(t.x + (rngNext(m) - 0.5) * 2 * Q.shift), 20, m.W - 20);
+    if (solidAt(m, nx, t.y - 60)) continue; // a wall: stays put
+    t.x = nx; t.lastQuake = m.turnNo;
+  }
 }
 
 // ---------------------------------------------------------------- hash (everything that decides the future)
@@ -477,5 +543,6 @@ function stateHash(m) {
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
+  if (m.column) h = fnvF64(h, m.column.x);
   return h >>> 0;
 }

@@ -15,6 +15,23 @@ const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.item
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
+// results: MVP + titles from the simulation's stats (identical on every device)
+function matchAwards(m) {
+  const T = m.tanks, out = {}, add = (t, label, cls) => (out[t.idx] = out[t.idx] || []).push({ label, cls });
+  const best = (f, min) => { let b = null; for (const t of T) { const v = f(t); if (v > min && (!b || v > f(b))) b = t; } return b; };
+  const score = t => t.st.dealt + 150 * t.st.kills - t.st.friendly;
+  const mvp = best(score, 0);
+  if (mvp) add(mvp, '👑 MVP', 'mvp');
+  const acc = t => (t.st.shots >= 3 ? t.st.hitTurns / t.st.shots : 0);
+  const sn = best(acc, 0.5); if (sn) add(sn, '🎯 저격수', '');
+  const dl = best(t => t.st.dealt, 0); if (dl && dl !== mvp) add(dl, '💥 화력왕', '');
+  const fk = best(t => t.st.falls, 0); if (fk) add(fk, '🕳️ 낙사 장인', '');
+  const kl = best(t => t.st.kills, 1); if (kl) add(kl, '⚔️ 마무리 장인', '');
+  const ff = best(t => t.st.friendly, 49); if (ff) add(ff, '🤦 팀킬왕', 'bad');
+  const tk = best(t => (t.alive ? t.st.taken : 0), 0); if (tk && tk.st.taken >= tk.maxhp * 0.6) add(tk, '🛡️ 불사신', '');
+  for (const t of T) if (t.st.dealt === 0 && t.st.shots >= 3) add(t, '🕊️ 평화주의자', 'bad');
+  return { mvp, out };
+}
 R.onOver = (winner, forfeit) => {
   const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
@@ -24,6 +41,9 @@ R.onOver = (winner, forfeit) => {
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
   $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  const aw = matchAwards(match), mv = aw.mvp;
+  $('overMvp').hidden = !mv;
+  if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
   const ros = $('overRoster'); ros.innerHTML = '';
   for (const team of ['red', 'blue']) {
     const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
@@ -32,7 +52,12 @@ R.onOver = (winner, forfeit) => {
       const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
       const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
       const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
-      r.append(nm, sub); col.append(r);
+      const st = document.createElement('span'); st.className = 'ost';
+      st.textContent = `피해 ${x.st.dealt} · 격파 ${x.st.kills} · 명중 ${x.st.hitTurns}/${x.st.shots}` + (x.st.friendly ? ` · 팀킬 ${x.st.friendly}` : '');
+      const bd = document.createElement('div'); bd.className = 'obd';
+      for (const a of aw.out[x.idx] || []) { const c = document.createElement('span'); c.className = 'badge ' + a.cls; c.textContent = a.label; bd.append(c); }
+      if (aw.mvp === x) r.classList.add('mvp');
+      r.append(nm, sub, st); if (bd.children.length) r.append(bd); col.append(r);
     }
     ros.append(col);
   }
@@ -84,6 +109,7 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
+  setTxt('windLbl', m.happening ? '바람 · ' + HAPPEN[m.happening][0] : '바람');
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
@@ -368,6 +394,12 @@ function beginMatch(cfg, opts) {
   installMatch(createMatch(cfg), opts);
   $('over').hidden = true; $('loading').hidden = true;
 }
+const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
+function announceHappening() {
+  const h = match && match.happening; if (!h) return;
+  setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + HAPPEN[h][0]); }, 1700);
+  setTimeout(() => { if (match && match.happening === h) banner(HAPPEN[h][1]); }, 3300);
+}
 function startGame() {
   ON.active = false; TUT.on = false; showCoach();
   $('loading').hidden = false;
@@ -383,6 +415,7 @@ function startGame() {
     beginMatch({ seed, mapId: setup.map, players }, practiceOpts(bots));
     showScreen('game');
     banner(CONFIG.maps[setup.map].name);
+    announceHappening();
   }, 30);
 }
 

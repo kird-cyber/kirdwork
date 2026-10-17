@@ -114,6 +114,15 @@ const CONFIG = {
     },
   },
 
+  // happenings (like the original): one is drawn per match before it starts
+  happenings: {
+    chance: 0.8,                                   // 20% of matches are calm
+    list: ['meteor', 'quake', 'tornado', 'pillar'],
+    meteor: { every: 3, from: 3, r: 40, dmg: 180, fallTicks: 90 },
+    quake: { every: 4, from: 4, shift: 55 },
+    tornado: { w: 70, drift: 14 },
+    pillar: { w: 46, drift: 14, mul: 1.5 },
+  },
   items: {
     double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 },
     heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },

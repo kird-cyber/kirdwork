@@ -154,7 +154,7 @@ const MAPGEN = {
     fillBand(mask, W, H, 150, g1 - gw, top, bot);
     fillBand(mask, W, H, g1 + gw, g2 - gw, top, bot);
     fillBand(mask, W, H, g2 + gw, W - 151, top, bot);
-    for (const gx of [g1, g2]) fillBand(mask, W, H, gx - 150, gx + 150, x => 560 + 26 * Math.pow((x - gx) / 150, 2) + 4 * tsin(x / 17), x => 560 + THICK * 70 - 60 * Math.pow((x - gx) / 150, 2));
+    for (const gx of [g1, g2]) fillBand(mask, W, H, gx - 150, gx + 150, x => { const u = (x - gx) / 150; return 560 + 26 * u * u + 4 * tsin(x / 17); }, x => { const u = (x - gx) / 150; return 560 + THICK * 70 - 60 * u * u; });
   },
   // moon base: low gravity (see CONFIG.maps.moon.gravity), craters and two flat mesas
   moon(W, H, mask) {
@@ -168,7 +168,7 @@ const MAPGEN = {
   islands(W, H, mask) {
     for (const [fx, hw, lift] of [[0.12, 400, 0], [0.32, 300, 70], [0.5, 360, -30], [0.68, 300, 70], [0.88, 400, 0]]) {
       const cx = Math.round(W * fx);
-      const top = x => { const u = (x - cx) / hw; return 1120 - lift - 280 * Math.pow(Math.max(0, 1 - u * u), 0.55) + 6 * tsin(x / 31); };
+      const top = x => { const u = (x - cx) / hw; return 1120 - lift - 280 * Math.sqrt(Math.max(0, 1 - u * u)) + 6 * tsin(x / 31); }; // sqrt is exact on every engine (pow is not)
       fillBand(mask, W, H, cx - hw, cx + hw, top, () => H - 4);
     }
   },
