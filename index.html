@@ -307,7 +307,7 @@ const SPR = {"boulder": {"body": "<svg xmlns=\"http://www.w3.org/2000/svg\" view
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, degrees, ticks (1 tick = 1/120 s). Tank numbers are approved values — do not change without sign-off.
 const CONFIG = {
-  version: '0.4.0',
+  version: '0.5.0',
   physics: {
     tickRate: 120,
     gravity: 600,          // px/s^2
@@ -347,12 +347,12 @@ const CONFIG = {
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 190, speedClass: 2, angleMin: 35, angleMax: 60, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 190, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
-        { id: 'poisonArrow', name: '독화살', dmg: 200, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 40, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 240, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 80, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'arrow', color: '#6CC23A', size: 1 } },
+        { id: 'poisonArrow', name: '독화살', dmg: 200, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1 } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 240, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'arrow', color: '#6CC23A', size: 1 } },
       ],
     },
     hammer: {
@@ -361,7 +361,7 @@ const CONFIG = {
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
         { id: 'ap', name: '철갑 포탄', dmg: 300, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'ball', color: '#4A5269', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 520, radius: 46, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'ball', color: '#F0442E', size: 1.4, glow: '#FF7A4A' } },
+        { id: 'redflare', name: '홍염탄', dmg: 480, radius: 46, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'ball', color: '#F0442E', size: 1.4, glow: '#FF7A4A' } },
       ],
     },
     rookie: {
@@ -392,21 +392,21 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 950, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 50, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 950, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
-        { id: 'beam', name: '광선', dmg: 230, radius: 28, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
-        { id: 'prism3', name: '3분광', dmg: 150, radius: 24, windMul: 0, gravityMul: 0.3, pattern: { kind: 'spread', angles: [-80, 0, 80], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'beam', color: '#B9A6FF', size: 1 } },
+        { id: 'beam', name: '광선', dmg: 260, radius: 36, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
+        { id: 'prism3', name: '3분광', dmg: 170, radius: 26, windMul: 0, gravityMul: 0.3, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'beam', color: '#B9A6FF', size: 1 } },
       ],
     },
     rage: {
       name: '레이지', era: 'future', hp: 950, dmgTaken: 1.05, movePx: 250, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
-      traits: { berserk: { hpBelow: 0.5, mul: 1.5 } },
+      traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
         { id: 'photon', name: '광탄', dmg: 220, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
-        { id: 'orbital', name: '궤도 낙하', dmg: 300, radius: 70, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'orbital', name: '궤도 낙하', dmg: 240, radius: 55, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
   },
@@ -590,7 +590,7 @@ const MAPGEN = {
     pillar(160, 560); pillar(W - 560, W - 160);
     const span = W - 1040;
     const top = x => 700 + 34 * tsin(Math.PI * (x - 520) / span);
-    fillBand(mask, W, H, 520, W - 521, top, x => top(x) + 30);
+    fillBand(mask, W, H, 520, W - 521, top, x => top(x) + 46);
   },
 };
 
@@ -851,13 +851,8 @@ function cmdItem(m, slot, tx, ty) {
   if (m.phase !== 'aim' || !t || m.turn.itemUsed) return false;
   const id = t.items[slot]; if (!id) return false;
   const it = CONFIG.items[id];
-  if (it.effect === 'teleport') {
-    tx = Math.round(tx); ty = Math.round(ty);
-    const sy = surfaceAt(m, tx, Math.max(0, ty - 40));
-    if (sy < 0 || tx < 20 || tx > m.W - 20) return false;
-    m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
-    t.x = tx; t.y = sy; updateTilt(m, t); checkTouch(m, t);
-  } else if (it.effect === 'heal') {
+  if (it.effect === 'teleport') { m.turn.tele = true; } // next shot is a teleport shell
+  else if (it.effect === 'heal') {
     const cut = t.poison ? t.poison.healCut : 1;
     const v = Math.min(Math.round(it.amount * cut), t.maxhp - t.hp);
     t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v });
@@ -867,7 +862,7 @@ function cmdItem(m, slot, tx, ty) {
   t.items.splice(slot, 1);
   m.turn.itemUsed = true;
   m.events.push({ type: 'item', idx: t.idx, item: id });
-  recordAction(m, it.effect === 'teleport' ? { t: 'i', s: slot, x: tx, y: ty } : { t: 'i', s: slot });
+  recordAction(m, { t: 'i', s: slot });
   return true;
 }
 function inputOf(m, extra) {
@@ -892,11 +887,11 @@ function cmdFire(m, angle, power, weapon) {
     else if (p.kind === 'spread') p.angles.forEach((a, i) => shots.push({ at: baseTick + i * (p.gapTicks || 0), extra: a, pj: p.powerJitter ? (i % 2 ? p.powerJitter : -p.powerJitter) : 0 }));
     else shots.push({ at: baseTick, extra: 0, pj: 0 });
   };
-  addSeq(0);
-  if (m.turn.double) addSeq(CONFIG.items.double.gapTicks);
+  if (m.turn.tele) shots.push({ at: 0, extra: 0, pj: 0 }); // teleport shell: one plain shot, no weapon pattern
+  else { addSeq(0); if (m.turn.double) addSeq(CONFIG.items.double.gapTicks); }
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
-  for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk });
-  if (w.cooldownTurns) t.cd = w.cooldownTurns;
+  for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele });
+  if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon });
@@ -937,7 +932,7 @@ function spawnShot(m, ev) {
   const d = CONFIG.tanks[t.tankId], w = d.weapons[ev.wIdx];
   const mz = muzzleOf(t, ev.angle), dir = aimVector(t, ev.angle, ev.extra);
   const v = CONFIG.physics.maxSpeed * (ev.power + ev.pj) / 1000 * d.powerMul;
-  m.proj.push({ x: mz.x, y: mz.y, vx: dir.x * v, vy: dir.y * v, idx: t.idx, wIdx: ev.wIdx, age: 0, amp: ev.amp, berserk: ev.berserk, id: m.schedSeq++ });
+  m.proj.push({ x: mz.x, y: mz.y, vx: dir.x * v, vy: dir.y * v, idx: t.idx, wIdx: ev.wIdx, age: 0, amp: ev.amp, berserk: ev.berserk, tele: ev.tele, id: m.schedSeq++ });
   m.events.push({ type: 'shot', x: mz.x, y: mz.y, idx: t.idx, wIdx: ev.wIdx });
 }
 function stepProjectiles(m) {
@@ -949,7 +944,7 @@ function stepProjectiles(m) {
     for (let i = 0; i < n && !p.dead; i++) {
       p.vx += wa * w.windMul * h; p.vy += P.gravity * w.gravityMul * h;
       p.x += p.vx * h; p.y += p.vy * h; p.age += h;
-      if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y }); break; }
+      if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y, tele: !!p.tele }); break; }
       if (solidAt(m, p.x, p.y)) { p.dead = true; impact(m, p, p.x, p.y); break; }
       for (const t of m.tanks) {
         if (!t.alive || (t.idx === p.idx && p.age < 0.25)) continue;
@@ -960,7 +955,19 @@ function stepProjectiles(m) {
   }
   m.proj = m.proj.filter(p => !p.dead);
 }
+// Teleport shell: the shooter appears on the ground where it lands. Off-map = wasted.
+function teleLand(m, p, x, y) {
+  const t = m.tanks[p.idx];
+  if (!t.alive) return;
+  const tx = clampN(Math.round(x), 20, m.W - 20);
+  let sy = surfaceAt(m, tx, Math.max(0, Math.round(y) - 60));
+  if (sy < 0) sy = surfaceAt(m, tx, 0);
+  if (sy < 0) { m.events.push({ type: 'out', x, y, tele: true }); return; }
+  m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
+  t.x = tx; t.y = sy; t.vy = 0; t.falling = false; updateTilt(m, t); checkTouch(m, t);
+}
 function impact(m, p, x, y) {
+  if (p.tele) return teleLand(m, p, x, y);
   const owner = m.tanks[p.idx], d = CONFIG.tanks[owner.tankId], w = d.weapons[p.wIdx], pat = w.pattern;
   let r = w.radius, dmg = w.dmg;
   if (p.amp) dmg *= CONFIG.items.amplify.mul;
@@ -1017,7 +1024,7 @@ function beginTurn(m) {
   const d = CONFIG.tanks[t.tankId];
   t.fuel = d.movePx; t.shield = false;
   if (t.cd > 0) t.cd--;
-  m.turn = { actions: [], itemUsed: false, double: false, amp: false, movedPx: 0 };
+  m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, movedPx: 0 };
   const W = CONFIG.turn.windMax;
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9), -W, W);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
@@ -1521,7 +1528,7 @@ function createRenderer(cv, mini) {
         case 'text': text(e.x, e.y, e.text, e.color); break;
         case 'pickup': text(e.x, e.y - 70, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
         case 'heal': text(e.x, e.y - 70, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 20 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
-        case 'item': if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
+        case 'item': if (t && e.item === 'tele') text(t.x, t.y - 70, '순간이동탄 장전', '#9CC6F7'); if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'tele': burst(e.x, e.y - 20, '#9CC6F7', 14); burst(e.x2, e.y2 - 20, '#9CC6F7', 14); viewOf(e.idx).y = e.y2; R.follow = t; R.free = false; R.onSfx('tele'); break;
         case 'shot': {
           const w = CONFIG.tanks[t.tankId].weapons[e.wIdx], v = viewOf(e.idx);
@@ -1532,7 +1539,7 @@ function createRenderer(cv, mini) {
         }
         case 'beam': R.beams.push({ x: e.x, t: 0, life: e.ticks / CONFIG.physics.tickRate + 0.1 }); R.onSfx('beam'); break;
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
-        case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '장외', '#FFFFFF'); break;
+        case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
         case 'crate': R.crateDrop[e.id] = { t: 0 }; R.onSfx('crate'); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(`${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
@@ -1784,8 +1791,9 @@ function createRenderer(cv, mini) {
     if (fall >= 1) { const g = 0.5 + 0.5 * Math.sin(R.t * 4); ctx.strokeStyle = `rgba(255,230,140,${0.3 + g * 0.4})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-20, -34, 40, 38, 6); ctx.stroke(); }
     ctx.restore();
   }
+  const TELE_LOOK = { shape: 'ball', color: '#9CC6F7', size: 1.1, glow: '#BFE0FF' };
   function drawProj(p) {
-    const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx], look = w.look;
+    const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx], look = p.tele ? TELE_LOOK : w.look;
     const tr = R.trails[p.id] || (R.trails[p.id] = []);
     if (look.shape === 'missile' && vrnd() < 0.6) R.fx.push({ kind: 'smoke', x: p.x, y: p.y, vy: -10, t: 0, life: 0.6, r: 4 + vrnd() * 4 });
     tr.push(p.x, p.y); if (tr.length > (look.shape === 'beam' ? 40 : 24)) tr.splice(0, 2);
@@ -1971,8 +1979,7 @@ function useItemSlot(i) {
   if (!ctrl || !ctrl.activeLocal() || match.turn.itemUsed) return;
   AU.play('ui');
   const t = match.tanks[match.cur], it = t.items[i]; if (!it) return;
-  if (CONFIG.items[it].effect === 'teleport') { armedTele = armedTele === i ? -1 : i; if (armedTele >= 0) banner('지도에서 이동할 곳을 누르세요'); return; }
-  ctrl.useItem(i);
+  if (ctrl.useItem(i) && CONFIG.items[it].effect === 'teleport') banner('순간이동탄 장전 — 떨어진 곳으로 이동합니다');
 }
 
 // ---------------------------------------------------------------- input
