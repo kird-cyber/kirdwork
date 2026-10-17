@@ -72,7 +72,7 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
-        { id: 'std', name: '표준탄', dmg: 235, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
+        { id: 'std', name: '표준탄', dmg: 243, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
         { id: 'twin', name: '2연발', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
       ],
     },
@@ -81,7 +81,7 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
-        { id: 'low', name: '저각 포탄', dmg: 220, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#7C7140', size: 1 } },
+        { id: 'low', name: '저각 포탄', dmg: 232, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#7C7140', size: 1 } },
         { id: 'mines', name: '지뢰 사출', dmg: 60, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 100, look: { shape: 'ball', color: '#3A3A3A', size: 1 } },
       ],
     },
@@ -90,7 +90,7 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
-        { id: 'missile', name: '유도 미사일', dmg: 260, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
+        { id: 'missile', name: '유도 미사일', dmg: 250, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
         { id: 'mlrs', name: '다연장 6연발', dmg: 90, radius: 26, windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 120, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
       ],
     },
@@ -99,7 +99,7 @@ const CONFIG = {
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
-        { id: 'beam', name: '광선', dmg: 280, radius: 36, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
+        { id: 'beam', name: '광선', dmg: 292, radius: 36, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
         { id: 'prism3', name: '3분광', dmg: 170, radius: 26, windMul: 0, gravityMul: 0.3, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'beam', color: '#B9A6FF', size: 1 } },
       ],
     },
