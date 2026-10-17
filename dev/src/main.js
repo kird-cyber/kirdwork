@@ -133,7 +133,7 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
-  setTxt('windLbl', m.happening ? '바람 · ' + HAPPEN[m.happening][0] : '바람');
+  setTxt('windLbl', ['바람', m.happening ? HAPPEN[m.happening][0] : '', m.column ? `${HAPPEN[m.column.kind][0]} ${m.column.life}턴` : ''].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;

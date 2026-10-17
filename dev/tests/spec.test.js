@@ -288,16 +288,28 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   while (mq.phase !== 'aim' && g++ < 9000) { A.step(mq); if (mq.events.some(e => e.type === 'quake')) qe = true; mq.events.length = 0; }
   check('해프닝', '지진: 다음 턴 전에 탱크가 밀려남', '이동 있음', mq.tanks.map((t, i) => Math.round(t.x - xs[i])).join(', '), qe && mq.tanks.some((t, i) => Math.abs(t.x - xs[i]) >= 1));
   // tornado: a shell through it lands somewhere else
-  const shot = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); if (col) mt.column = { kind: col, x: 1500 }; const r = fireAndTrace(mt, 30, 700, 0); const b = r.evs.find(e => e.type === 'boom'); return { x: b ? Math.round(b.x) : null, r }; };
+  const shot = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); if (col) mt.column = { kind: col, x: 1500, life: 3 }; const r = fireAndTrace(mt, 30, 700, 0); const b = r.evs.find(e => e.type === 'boom'); return { x: b ? Math.round(b.x) : null, r }; };
   const plain = shot(null), tor = shot('tornado');
   check('해프닝', '토네이도: 통과한 포탄의 착탄점이 바뀜', `≠ ${plain.x}`, tor.x, tor.x !== plain.x && tor.r.evs.some(e => e.type === 'tornadoHit'));
   // fire pillar: same landing spot, 1.5x damage
-  const dmgAt = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 2067 }]); if (col) mt.column = { kind: col, x: 1500 }; const r = fireAndTrace(mt, 30, 700, 0); const e = r.evs.find(x => x.type === 'dmg' && x.idx === 1); return e ? e.amount : 0; };
+  const landX = (() => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 4300 }]); const r = fireAndTrace(mt, 30, 700, 0); return Math.round(r.evs.find(e => e.type === 'boom').x); })();
+  const dmgAt = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: landX }]); if (col) mt.column = { kind: col, x: 1500, life: 3 }; const r = fireAndTrace(mt, 30, 700, 0); const e = r.evs.find(x => x.type === 'dmg' && x.idx === 1); return e ? e.amount : 0; };
   const d0 = dmgAt(null), d1 = dmgAt('pillar');
   check('해프닝', '불기둥: 통과한 포탄 위력 1.5배', `${d0} → ${Math.round(d0 * 1.5)}`, `${d0} → ${d1}`, d0 > 0 && Math.abs(d1 - d0 * 1.5) <= 2);
   // every match draws one happening (or none) deterministically from the seed
   const counts = {}; for (let sd = 1; sd <= 200; sd++) { const m = A.createMatch({ seed: sd, mapId: 'temple', players: [{ id: 'a', nick: 'a', team: 'red', tankId: 'rookie' }, { id: 'b', nick: 'b', team: 'blue', tankId: 'rookie' }] }); counts[m.happening || 'none'] = (counts[m.happening || 'none'] || 0) + 1; }
-  check('해프닝', '판마다 무작위 해프닝 (없음 약 20%)', 'none ≈ 40/200', JSON.stringify(counts), counts.none > 20 && counts.none < 65 && H.list.every(k => counts[k] > 15));
+  check('해프닝', '판 시작 해프닝: 운석/지진/없음 (없음 약 50%)', 'none ≈ 100/200', JSON.stringify(counts), counts.none > 75 && counts.none < 125 && H.list.every(k => counts[k] > 30));
+  // weather: comes during the match, stays 3–4 turns, goes away, comes back later
+  const mw = A.createMatch({ seed: 5, mapId: 'temple', players: [{ id: 'a', nick: 'a', team: 'red', tankId: 'rookie' }, { id: 'b', nick: 'b', team: 'blue', tankId: 'rookie' }] });
+  const seen = []; let g2 = 0;
+  while (mw.turnNo < 60 && mw.phase !== 'over' && g2++ < 2e6) {
+    if (mw.phase === 'aim') { for (const t of mw.tanks) t.hp = t.maxhp; A.cmdTimeout(mw); } else A.step(mw);
+    for (const e of mw.events) if (e.type === 'weatherStart' || e.type === 'weatherEnd') seen.push(e.type[7] === 'S' ? 'S' + mw.turnNo : 'E' + mw.turnNo);
+    mw.events.length = 0;
+  }
+  const starts = seen.filter(x => x[0] === 'S').map(x => +x.slice(1)), ends = seen.filter(x => x[0] === 'E').map(x => +x.slice(1));
+  const lens = ends.map((e, i) => e - starts[i]);
+  check('해프닝', '날씨(토네이도·불기둥): 중간에 생겼다 3~4턴 뒤 사라지고 다시 생김', '여러 번, 길이 3~4', `${starts.length}번 · 길이 ${lens.join(',')}`, starts.length >= 3 && lens.length >= 2 && lens.every(l => l >= 3 && l <= 4));
 }
 { // turn delay: time spent, timeout, movement (+30%)
   const d0 = (used) => { const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdFire(m, 20, 300, 0, used); return m.tanks[0].delay; };

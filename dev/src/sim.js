@@ -16,9 +16,18 @@ function createMatch(opts) {
   };
   // start positions: pick random spawns, then interleave the teams from left to right so neither team
   // starts bunched on one side (smaller team spread evenly between the bigger one)
-  const xs = map.spawns.slice();
-  for (let i = xs.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = xs[i]; xs[i] = xs[j]; xs[j] = t; }
-  const n = opts.players.length, chosen = xs.slice(0, n).sort((a, b) => a - b);
+  // everyone starts within reach: a random window of the map no wider than startSpan, and not too close either
+  const n = opts.players.length, T0 = CONFIG.turn, sorted = map.spawns.slice().sort((a, b) => a - b);
+  const span = Math.max(T0.startSpan, (n - 1) * T0.startGap);
+  const starts = sorted.map((x, i) => i).filter(i => sorted.filter(x => x >= sorted[i] && x <= sorted[i] + span).length >= n);
+  let chosen = null;
+  for (let tries = 0; tries < 24 && !chosen; tries++) {
+    const lo = starts.length ? sorted[starts[Math.floor(rngNext(m) * starts.length)]] : sorted[0];
+    const win = starts.length ? sorted.filter(x => x >= lo && x <= lo + span) : sorted.slice();
+    for (let i = win.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = win[i]; win[i] = win[j]; win[j] = t; }
+    const pick = win.slice(0, n).sort((a, b) => a - b);
+    if (pick[pick.length - 1] - pick[0] >= Math.min(T0.startMin, span) || tries === 23) chosen = pick;
+  }
   const reds = [], blues = [];
   opts.players.forEach((p, i) => (p.team === 'red' ? reds : blues).push(i));
   const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; };
@@ -47,7 +56,7 @@ function createMatch(opts) {
   // happening for this match
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
-  if (m.happening === 'tornado' || m.happening === 'pillar') m.column = { kind: m.happening, x: Math.round(m.W * (0.35 + 0.3 * rngNext(m))) };
+  m.column = null; // weather comes later
   return m;
 }
 
@@ -493,11 +502,22 @@ function beginTurn(m) {
       m.events.push({ type: 'meteor', x, at: m.tick + MT.fallTicks + i * 20 + 1, dur: MT.fallTicks + i * 20 });
     }
   }
-  if (m.column) { // the column drifts with the wind and bounces off the map edges
-    const C = CONFIG.happenings[m.column.kind];
-    let nx = m.column.x + m.wind * C.drift;
-    if (nx < 300) nx = 600 - nx; if (nx > m.W - 300) nx = 2 * (m.W - 300) - nx;
-    m.column.x = Math.round(clampN(nx, 300, m.W - 300));
+  const WX = CONFIG.happenings.weather;
+  if (m.column) { // the column drifts with the wind, bounces off the map edges and runs out after a few turns
+    m.column.life--;
+    if (m.column.life <= 0) { m.events.push({ type: 'weatherEnd', kind: m.column.kind }); m.column = null; }
+    else {
+      const C = CONFIG.happenings[m.column.kind];
+      let nx = m.column.x + m.wind * C.drift;
+      if (nx < 300) nx = 600 - nx; if (nx > m.W - 300) nx = 2 * (m.W - 300) - nx;
+      m.column.x = Math.round(clampN(nx, 300, m.W - 300));
+      if (m.column.life === 1) m.events.push({ type: 'weatherSoon', kind: m.column.kind });
+    }
+  } else if (m.turnNo >= WX.from && rngNext(m) < WX.chance) {
+    const kind = WX.list[Math.floor(rngNext(m) * WX.list.length)];
+    const life = WX.minTurns + Math.floor(rngNext(m) * (WX.maxTurns - WX.minTurns + 1));
+    m.column = { kind, x: Math.round(m.W * (0.25 + 0.5 * rngNext(m))), life };
+    m.events.push({ type: 'weatherStart', kind, x: m.column.x });
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
@@ -562,6 +582,6 @@ function stateHash(m) {
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
-  if (m.column) h = fnvF64(h, m.column.x);
+  if (m.column) { h = fnvF64(h, m.column.x); h = fnvU32(h, m.column.life); }
   return h >>> 0;
 }

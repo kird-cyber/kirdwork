@@ -360,6 +360,9 @@ function createRenderer(cv, mini) {
         case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
+        case 'weatherStart': R.onBanner(e.kind === 'tornado' ? '토네이도 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : '불기둥 발생! 통과한 포탄 위력 1.5배'); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
+        case 'weatherSoon': R.onBanner(e.kind === 'tornado' ? '토네이도가 곧 사라집니다' : '불기둥이 곧 사라집니다'); break;
+        case 'weatherEnd': R.onBanner(e.kind === 'tornado' ? '토네이도가 사라졌습니다' : '불기둥이 꺼졌습니다'); break;
         case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;
         case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
         case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;

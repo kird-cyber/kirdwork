@@ -6,7 +6,7 @@ const CONFIG = {
   physics: {
     tickRate: 120,
     gravity: 600,          // px/s^2
-    maxSpeed: 1150,        // px/s at power 1000
+    maxSpeed: 1340,        // px/s at power 1000 (45°, no wind: ~3000 px)
     windAccel: 13,         // px/s^2 per wind unit
     fallSafe: 140,         // px of drop with no damage
     fallDmgPerPx: 0.35,
@@ -34,6 +34,8 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
+    // start positions: everyone within startSpan px (or (players-1) x startGap if that is wider), and not closer than startMin
+    startSpan: 2400, startGap: 380, startMin: 900,
     // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
     suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenWindMul: 1.5,
   },
@@ -127,10 +129,13 @@ const CONFIG = {
 
   // happenings (like the original): one is drawn per match before it starts
   happenings: {
-    chance: 0.8,                                   // 20% of matches are calm
-    list: ['meteor', 'quake', 'tornado', 'pillar'],
+    // drawn once before the match (like the original): meteors or earthquakes for the whole match, or calm
+    chance: 0.5,
+    list: ['meteor', 'quake'],
     meteor: { every: 3, from: 3, r: 40, dmg: 180, fallTicks: 90 },
     quake: { every: 4, from: 4, shift: 55 },
+    // weather that comes and goes during the match: one at a time, a few turns each
+    weather: { list: ['tornado', 'pillar'], from: 3, chance: 0.2, minTurns: 3, maxTurns: 4 },
     tornado: { w: 70, drift: 14 },
     pillar: { w: 46, drift: 14, mul: 1.5 },
   },
