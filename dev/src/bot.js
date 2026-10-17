@@ -1,4 +1,4 @@
-// ============================================================== BOT (balance measurement only — not shipped in the game build)
+// ============================================================== BOT (balance measurement + practice opponent)
 // Picks a target, searches angle × power with the same physics as the simulation, then adds aiming error.
 const BOT_LEVELS = {
   easy: { angErr: 4, powErr: 60 },
@@ -12,7 +12,7 @@ function botPredict(m, t, angle, power, wIdx, target) {
   const mz = muzzleOf(t, angle), dir = aimVector(t, angle, 0);
   const v = P.maxSpeed * power / 1000 * d.powerMul;
   let x = mz.x, y = mz.y, vx = dir.x * v, vy = dir.y * v, age = 0;
-  const wa = m.wind * P.windAccel * w.windMul, g = P.gravity * w.gravityMul;
+  const wa = m.wind * P.windAccel * w.windMul, g = P.gravity * w.gravityMul * (CONFIG.maps[m.mapId].gravity || 1);
   const tc = tankCenter(target);
   let best = 1e9;
   for (let tick = 0; tick < 1400; tick++) {
@@ -39,9 +39,15 @@ function botPredict(m, t, angle, power, wIdx, target) {
 
 // Decide and play one whole turn for the current tank. rnd = function returning [0,1).
 function botPlayTurn(m, level, rnd) {
+  const plan = botPlan(m, level, rnd);
+  if (!plan) return m.turn.endedInput || cmdTimeout(m);
+  return cmdFire(m, plan.angle, plan.power, plan.weapon);
+}
+// Everything except the shot: uses items, turns toward the target, returns { angle, power, weapon } (null = no target / turn ended).
+function botPlan(m, level, rnd) {
   const t = curTank(m), d = CONFIG.tanks[t.tankId], L = BOT_LEVELS[level] || BOT_LEVELS.normal;
   const foes = m.tanks.filter(o => o.alive && o.team !== t.team);
-  if (!foes.length) return cmdTimeout(m);
+  if (!foes.length) return null;
   // items: heal when hurt, otherwise use whatever buffs it holds
   const hasItem = id => t.items.indexOf(id);
   if (hasItem('heal') >= 0 && t.hp < t.maxhp * 0.55) cmdItem(m, hasItem('heal'));
@@ -52,7 +58,7 @@ function botPlayTurn(m, level, rnd) {
   let best = { miss: 1e9 };
   for (const target of foes) {
     const dir = target.x < t.x ? -1 : 1;
-    if (t.facing !== dir) { cmdMove(m, dir); if (m.phase !== 'aim') return m.turn.endedInput; }
+    if (t.facing !== dir) { cmdMove(m, dir); if (m.phase !== 'aim') return null; }
     for (let a = d.angleMin; a <= d.angleMax; a += 3) for (let p = 150; p <= 1000; p += 25) {
       const miss = botPredict(m, t, a, p, wIdx, target);
       if (miss < best.miss) best = { miss, a, p, target };
@@ -65,9 +71,9 @@ function botPlayTurn(m, level, rnd) {
     if (miss < best.miss) best = { miss, a, p, target: best.target };
   }
   const dir = best.target.x < t.x ? -1 : 1;
-  if (t.facing !== dir) { cmdMove(m, dir); if (m.phase !== 'aim') return m.turn.endedInput; }
+  if (t.facing !== dir) { cmdMove(m, dir); if (m.phase !== 'aim') return null; }
   const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
   const angle = Math.round(clampN(best.a + gauss() * L.angErr, d.angleMin, d.angleMax));
   const power = Math.round(clampN(best.p + gauss() * L.powErr, 0, 1000));
-  return cmdFire(m, angle, power, wIdx);
+  return { angle, power, weapon: wIdx };
 }

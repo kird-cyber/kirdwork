@@ -254,6 +254,21 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .probe::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #6B7590; flex-shrink: 0; }
 .probe[data-s="ok"]::before { background: var(--good); } .probe[data-s="fail"] { color: #FFB4A4; } .probe[data-s="fail"]::before { background: var(--red); }
+.coach { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; background: rgba(20, 26, 43, 0.94); border: 2px solid var(--gold); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.coach .ch { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: var(--gold); }
+.coach p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
+.coach:not([hidden]) ~ #hint { display: none; }
+@media (max-width: 600px) { .coach { bottom: auto; top: 60px; padding: 8px 12px; z-index: 10; } .coach p { font-size: 13px; } }
+.slot .tag select.ctl { width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: #0E1220; color: var(--fg); font: 700 12px var(--font-body); }
+@media (max-height: 520px) and (min-width: 601px) { .coach { bottom: 64px; padding: 8px 12px; } .coach p { font-size: 13px; } }
+.parade { display: flex; gap: 4px; justify-content: space-between; margin: -6px 0 -4px; }
+.parade canvas { width: 12%; max-width: 92px; height: auto; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.35)); animation: bob 2.4s ease-in-out infinite; }
+.parade canvas:nth-child(2n) { animation-delay: -1.2s; } .parade canvas:nth-child(3n) { animation-delay: -0.6s; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.record { padding: 8px 14px; border-radius: 12px; background: var(--panel-solid); border: 1px solid var(--line); font-size: 14px; font-weight: 700; }
+.record b { color: var(--gold); font-family: var(--font-display); font-weight: 400; font-size: 20px; margin: 0 2px; }
+.rotate { position: absolute; z-index: 20; left: 50%; transform: translateX(-50%); top: 38%; display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(20, 26, 43, 0.95); border: 1px solid var(--gold); font-size: 14px; font-weight: 700; width: max-content; max-width: calc(100vw - 40px); }
+@media (prefers-reduced-motion: reduce) { .parade canvas { animation: none; } }
 .lobbybar { position: sticky; bottom: -40px; margin: 0 -16px -40px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, rgba(14,18,32,0) 0, rgba(14,18,32,0.94) 22%); }
 @media (max-width: 700px) { .teams { grid-template-columns: 1fr; } .pc.empty { min-height: 30px; padding: 4px; font-size: 12px; } .mapbox .iconbtn { padding: 5px 7px; font-size: 11px; } .mapbox { gap: 4px; } #mini { width: 150px; height: auto; } .lt { font-size: 30px; } #waitTag { top: 70px; font-size: 12px; } }
 /* landscape phones: short screens get a one-line bottom panel and a compact status bar */
@@ -275,6 +290,26 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .tb { width: 48px; height: 48px; } .touch > div { grid-template-columns: repeat(2, 48px); gap: 6px; } .fire { width: 80px; height: 80px; font-size: 20px; }
   #waitTag { top: 70px; font-size: 12px; padding: 5px 12px; } #banner { font-size: 20px; top: 30%; }
 }
+/* chat */
+.chatbox { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(20, 26, 43, 0.7); border: 1px solid var(--line); }
+.msgs { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; font-size: 13px; -webkit-user-select: text; user-select: text; }
+.msgs .m b, .gmsgs .m b { margin-right: 6px; } .m.red b { color: #FF9A86; } .m.blue b { color: #8CC2FF; } .m.sys { color: var(--muted); font-size: 12px; }
+.chatin { display: flex; gap: 6px; }
+.chatin input { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: #0E1220; color: var(--fg); font: 500 14px var(--font-body); -webkit-user-select: text; user-select: text; }
+.chatin input:focus-visible { outline: 2px solid var(--gold); }
+.emotes { display: flex; gap: 5px; flex-wrap: wrap; }
+.emo { padding: 5px 9px; border-radius: 999px; border: 1px solid var(--line); background: #1A2030; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.emo:hover { background: #222B44; }
+.gchat { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); top: 128px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: min(460px, 60vw); }
+.gchat .emotes { display: none; } .gchat.open .emotes { display: flex; }
+.gchat .chatin { width: min(420px, 60vw); }
+.gmsgs { position: absolute; left: max(14px, env(safe-area-inset-left, 0px)); top: 176px; display: flex; flex-direction: column; gap: 3px; pointer-events: none; max-width: min(420px, 55vw); font-size: 14px; font-weight: 600; }
+.gmsgs .m { padding: 4px 9px; border-radius: 8px; background: rgba(12,17,30,0.72); transition: opacity .6s; }
+.gmsgs .m.old { opacity: 0; }
+.gchat.open + .gmsgs, .gchat.open ~ .gmsgs { top: 270px; }
+.pc .ready { color: var(--good); font-weight: 900; }
+@media (max-width: 600px) { .gchat { top: 112px; } .gmsgs { top: 150px; font-size: 12px; } }
+@media (max-height: 520px) and (min-width: 601px) { .gchat { top: 84px; } .gmsgs { top: 124px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { #banner { transition: none; } #banner.show.turnin { animation: none; } }
 </style>
 
@@ -291,7 +326,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="mapbox">
         <canvas id="mini" width="220" height="80" aria-label="미니맵: 눌러서 시점 이동"></canvas>
         <button class="iconbtn" id="recenter" type="button">내 탱크로<kbd>F</kbd></button>
-        <div class="setrow"><button class="iconbtn" id="sndBtn" type="button" aria-pressed="true">소리 켜짐</button><button class="iconbtn" id="shakeBtn" type="button" aria-pressed="true">흔들림 켜짐</button></div>
+        <div class="setrow"><button class="iconbtn" id="sndBtn" type="button" aria-pressed="true">소리 켜짐</button><button class="iconbtn" id="musicBtn" type="button" aria-pressed="true">음악 켜짐</button><button class="iconbtn" id="shakeBtn" type="button" aria-pressed="true">흔들림</button></div>
         <button class="iconbtn" id="exitBtn" type="button">나가기</button>
       </div>
       <div class="timer" id="timer">20</div>
@@ -300,7 +335,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="waitTag" hidden></div>
+  <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
+  <div id="coach" class="coach" hidden role="status"><div class="ch"><span id="coachStep"></span><button class="mini" id="coachSkip" type="button">건너뛰기</button></div><p id="coachText"></p></div>
   <div id="diag" aria-hidden="true"></div>
+  <div class="gchat" id="gchat" hidden>
+    <button class="iconbtn" id="chatBtn" type="button" aria-label="채팅 열기 (Enter)">💬</button>
+    <div class="emotes" data-emotes></div>
+    <form class="chatin" id="gameChatForm" hidden><input id="gameChatIn" maxlength="80" placeholder="채팅 (Enter 보내기 · Esc 닫기)" autocomplete="off" enterkeyhint="send" aria-label="채팅 입력"><button class="mini" type="submit">보내기</button></form>
+  </div>
+  <div id="gameMsgs" class="gmsgs" aria-live="polite"></div>
   <div id="netState" role="status" hidden></div>
   <div id="hint" hidden>← → 이동 · ↑ ↓ 각도 · 스페이스를 누르고 있다가 떼면 발사 · 드래그나 A/D로 맵 둘러보기</div>
 
@@ -346,7 +389,9 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
           <h1>포격<em>전</em></h1>
           <p>친구와 링크 하나로 붙는 턴제 포격 대전 · 최대 4 대 4</p>
         </div>
+        <div class="record" id="record" hidden></div>
       </div>
+      <div class="parade" id="parade" aria-hidden="true"></div>
       <div class="card">
         <label class="fld"><span>닉네임 (탱크 위에 표시됩니다)</span><input id="nickIn" maxlength="8" placeholder="최대 8글자" autocomplete="nickname" enterkeyhint="go"></label>
         <div class="invite" id="inviteBox" hidden>초대받은 방<b id="inviteCode"></b></div>
@@ -359,7 +404,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div class="probe" id="probe" data-s="idle"></div>
       </div>
       <div class="note">방을 만들면 초대 링크가 생깁니다. 친구가 링크를 열고 닉네임만 넣으면 같은 대기방에 들어옵니다. 로그인은 없습니다.</div>
-      <div class="cta"><button class="ghost" id="practiceBtn" type="button">혼자 연습하기 (한 기기에서 번갈아)</button></div>
+      <div class="cta"><button class="ghost" id="tutorialBtn" type="button">튜토리얼 (1분)</button><button class="ghost" id="practiceBtn" type="button">혼자 연습 · 봇 대전</button></div>
     </div>
   </div>
 
@@ -376,6 +421,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div class="teamcol red"><h3>레드 팀 <span id="redN"></span></h3><div class="slots" id="redList"></div></div>
         <div class="teamcol blue"><h3>블루 팀 <span id="blueN"></span></h3><div class="slots" id="blueList"></div></div>
       </div>
+      <div class="chatbox" id="lobbyChat">
+        <div class="msgs" id="lobbyMsgs" aria-live="polite"></div>
+        <div class="emotes" data-emotes></div>
+        <form class="chatin" id="lobbyChatForm"><input id="lobbyChatIn" maxlength="80" placeholder="대기방 채팅" autocomplete="off" enterkeyhint="send" aria-label="채팅 입력"><button class="mini" type="submit">보내기</button></form>
+      </div>
       <div class="sec">
         <h2>내 탱크</h2>
         <div class="picks" id="myPicks"></div>
@@ -387,8 +437,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       </div>
       <div class="cta lobbybar">
         <button class="start" id="lobbyStart" type="button">게임 시작</button>
+        <button class="start" id="readyBtn" type="button" hidden>준비 완료</button>
         <span class="note" id="startNote"></span>
         <span style="flex:1"></span>
+        <button class="ghost" id="musicBtn2" type="button" aria-pressed="true">음악 켜짐</button>
         <button class="ghost" id="leaveBtn" type="button">방 나가기</button>
       </div>
     </div>
@@ -400,7 +452,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
           <h1>포격<em>전</em></h1>
           <p>한 기기 연습 모드</p>
         </div>
-        <div class="cta"><span class="note" style="max-width:360px">한 기기에서 여러 명이 번갈아 조작합니다. 친구와 각자 기기로 하려면 처음 화면에서 방을 만드세요.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
+        <div class="cta"><span class="note" style="max-width:380px">자리마다 사람 또는 봇(쉬움·보통·어려움)을 고르세요. 사람 자리는 한 기기에서 번갈아 조작합니다.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
       </div>
 
       <div class="sec">
@@ -451,10 +503,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="cta" style="justify-content:center">
         <button class="start" id="again" type="button">한 판 더</button>
         <button class="ghost" id="toSetup" type="button">설정으로</button>
-        <button class="start" id="toLobby" type="button" hidden>대기방으로</button>
+        <button class="start" id="rematchBtn" type="button" hidden>바로 재대결</button>
+        <button class="ghost" id="toLobby" type="button" hidden>대기방으로</button>
         <button class="ghost" id="leaveGame" type="button" hidden>방 나가기</button>
       </div>
-      <div class="note" id="overWait" hidden>방장이 대기방으로 돌아가면 함께 이동합니다
+      <div class="note" id="overWait" hidden>방장이 재대결이나 대기방을 고르면 함께 이동합니다
       </div>
     </div>
   </div>

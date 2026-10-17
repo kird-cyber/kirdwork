@@ -10,13 +10,13 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/fonts|ERR_TUNNEL|net::/.test(m.text())) errs.push(m.text()); });
   await p.setContent(wrap); await p.waitForTimeout(1500); await p.click('#practiceBtn');
-  ok(await p.locator('.mapc').count() === 4, '맵 4종 표시');
+  ok(await p.locator('.mapc').count() === 8, '맵 8종 표시');
   // 4 v 4
   await p.click('.seg[data-team="red"][data-n="4"]'); await p.click('.seg[data-team="blue"][data-n="4"]');
   ok(await p.locator('.slot').count() === 8, '4:4 슬롯 8개');
   await p.fill('#nick-red-0', '민수');
   await p.screenshot({ path: SP + 'm1_setup.png' });
-  await p.click('#start'); await p.waitForTimeout(2500);
+  await p.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await p.click('#start'); await p.waitForTimeout(2500);
   let st = await p.evaluate(() => ({ phase: __pg.match.phase, n: __pg.match.tanks.length, nick: __pg.match.tanks[0].nick, cur: __pg.match.cur }));
   ok(st.n === 8 && st.nick === '민수', '탱크 8대 + 닉네임 반영');
   ok(st.phase === 'aim', '첫 턴 조준 단계');
@@ -76,7 +76,7 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
     await p.evaluate(id => { __pg.match = null; }, id);
     await p.evaluate(() => { document.getElementById('setup').hidden = false; });
     await p.click('.mapc >> nth=' + ['temple', 'valley', 'clouds', 'bridge'].indexOf(id));
-    await p.click('#start'); await p.waitForTimeout(2500);
+    await p.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await p.click('#start'); await p.waitForTimeout(2500);
     const ph = await p.evaluate(() => __pg.match.phase);
     ok(ph === 'aim', id + ' 맵 시작');
     await p.screenshot({ path: SP + `m1_${id}.png` });
@@ -86,7 +86,7 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
   {
     const q = await b.newPage({ viewport: { width: 1280, height: 800 } });
     await q.setContent(wrap); await q.waitForTimeout(1200); await q.click('#practiceBtn');
-    await q.click('.mapc >> nth=1'); await q.click('#start'); await q.waitForTimeout(2500);
+    await q.click('.mapc >> nth=1'); await q.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await q.click('#start'); await q.waitForTimeout(2500);
     for (let i = 0; i < 6; i++) {
       await q.waitForFunction(() => __pg.match.phase === 'aim' || __pg.match.phase === 'over', null, { timeout: 30000 });
       if (await q.evaluate(() => __pg.match.phase) === 'over') break;
@@ -107,7 +107,7 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
   const ph = await b.newPage({ viewport: { width: 390, height: 780 }, hasTouch: true, isMobile: true });
   await ph.setContent(wrap); await ph.waitForTimeout(1200); await ph.click('#practiceBtn');
   await ph.screenshot({ path: SP + 'm1_phone_setup.png', fullPage: false });
-  await ph.click('#start'); await ph.waitForTimeout(2500);
+  await ph.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await ph.click('#start'); await ph.waitForTimeout(2500);
   await ph.screenshot({ path: SP + 'm1_phone.png' });
   ok(await ph.locator('.fire').isVisible(), '휴대폰 터치 버튼 표시');
   await b.close();

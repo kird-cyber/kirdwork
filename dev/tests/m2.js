@@ -11,7 +11,7 @@ const res = []; const ok = (c, m) => res.push((c ? 'PASS ' : 'FAIL ') + m);
   ok(await p.evaluate(() => __pg.AU.ctx === null), '첫 조작 전에는 소리 엔진이 꺼져 있음');
   await p.click('#practiceBtn');
   await p.click('.seg[data-team="red"][data-n="2"]'); await p.click('.seg[data-team="blue"][data-n="2"]');
-  await p.click('#start'); await p.waitForTimeout(2600);
+  await p.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await p.click('#start'); await p.waitForTimeout(2600);
   ok(await p.evaluate(() => __pg.AU.ctx !== null), '클릭 후 소리 엔진 시작');
   // put the current tank on a slope-free spot is not needed; aim up to the limit and hold
   await p.evaluate(() => { const t = __pg.match.tanks[__pg.match.cur]; t.lastAim = Math.round((__pg.CONFIG.tanks[t.tankId].angleMin + __pg.CONFIG.tanks[t.tankId].angleMax) / 2); t.lastPower = 620; });

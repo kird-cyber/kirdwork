@@ -12,6 +12,7 @@ function createAudio() {
     A.bus = A.ctx.createGain(); A.bus.connect(comp); comp.connect(A.master);
     const len = A.ctx.sampleRate; A.noiseBuf = A.ctx.createBuffer(1, len, A.ctx.sampleRate);
     const d = A.noiseBuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    if (A.musicKind) A.music(A.musicKind);
   };
   A.setMuted = function (v) {
     A.muted = v; try { localStorage.setItem('pg.mute', v ? '1' : '0'); } catch (e) {}
@@ -94,6 +95,51 @@ function createAudio() {
     } else if (!on && A.engine) {
       const e = A.engine; e.g.gain.setTargetAtTime(0.0001, A.ctx.currentTime, 0.05); e.s.stop(A.ctx.currentTime + 0.3); e.lfo.stop(A.ctx.currentTime + 0.3); A.engine = null;
     }
+  };
+  // ---- background music: a small synthesized loop (lobby = calm, game = march). Own on/off, also follows mute.
+  A.musicOn = true; try { A.musicOn = localStorage.getItem('pg.music') !== '0'; } catch (e) {}
+  A.musicKind = null; let mTimer = 0, mNext = 0, mStep = 0, mBus = null;
+  const SONGS = {
+    lobby: { bpm: 84, roots: [45, 41, 48, 43], kinds: [0, 1, 1, 1], drums: false, lead: 'triangle', vol: 0.16 },
+    game: { bpm: 108, roots: [45, 45, 41, 43, 45, 45, 48, 43], kinds: [0, 0, 1, 1, 0, 0, 1, 1], drums: true, lead: 'square', vol: 0.12 },
+  };
+  const mf = n => 440 * Math.pow(2, (n - 69) / 12);
+  function mNote(type, f, t, dur, peak) {
+    const c = A.ctx, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(mBus); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function mHit(t, kick) {
+    const c = A.ctx;
+    if (kick) { const o = c.createOscillator(), g = c.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.12); g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14); o.connect(g); g.connect(mBus); o.start(t); o.stop(t + 0.16); }
+    else { const sN = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(); sN.buffer = A.noiseBuf; f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); sN.connect(f); f.connect(g); g.connect(mBus); sN.start(t); sN.stop(t + 0.06); }
+  }
+  function mTick() {
+    const song = SONGS[A.musicKind]; if (!song || !A.ctx) return;
+    const st = 60 / song.bpm / 4;
+    while (mNext < A.ctx.currentTime + 0.25) {
+      const bar = Math.floor(mStep / 16) % song.roots.length, k = mStep % 16, root = song.roots[bar];
+      const chord = song.kinds[bar] ? [0, 4, 7, 12] : [0, 3, 7, 12];
+      if (k === 0 || k === 8 || (song.drums && (k === 6 || k === 14))) mNote('triangle', mf(root - 12 + (k === 14 ? 12 : 0)), mNext, st * 1.8, 0.32);
+      if (k % 2 === 0) { const n = root + 12 + chord[(k / 2) % 4] + (k >= 8 ? 12 : 0); mNote(song.lead, mf(n), mNext, st * 0.9, song.drums ? 0.06 : 0.08); }
+      if (song.drums) { if (k === 0 || k === 8) mHit(mNext, true); if (k % 4 === 2) mHit(mNext, false); }
+      mNext += st; mStep++;
+    }
+  }
+  A.music = function (kind) {
+    A.musicKind = kind;
+    clearInterval(mTimer); mTimer = 0;
+    if (mBus) { const old = mBus; old.gain.setTargetAtTime(0.0001, A.ctx.currentTime, 0.2); setTimeout(() => old.disconnect(), 1200); mBus = null; }
+    if (!kind || !A.ctx || !A.musicOn) return;
+    mBus = A.ctx.createGain(); mBus.gain.value = 0.0001; mBus.connect(A.master);
+    mBus.gain.setTargetAtTime(SONGS[kind].vol, A.ctx.currentTime, 0.6);
+    mNext = A.ctx.currentTime + 0.1; mStep = 0;
+    mTimer = setInterval(mTick, 60); mTick();
+  };
+  A.setMusic = function (on) {
+    A.musicOn = on; try { localStorage.setItem('pg.music', on ? '1' : '0'); } catch (e) {}
+    A.music(A.musicKind);
   };
   return A;
 }

@@ -37,6 +37,7 @@ R.onOver = (winner, forfeit) => {
     ros.append(col);
   }
   if (cls === 'win') AU.play('pickup');
+  if (me && ON.game) noteResult(ON.game.gid, winner === 'draw' ? 'd' : me.team === winner ? 'w' : 'l');
   const online = ON.active;
   $('again').hidden = online; $('toSetup').hidden = online; $('toLobby').hidden = true; $('leaveGame').hidden = true; $('overWait').hidden = true;
   if (online) onlineOver();
@@ -50,7 +51,9 @@ function buildWindBar() { const b = $('windBar'); b.innerHTML = ''; for (let i =
 // online: the bottom panel always shows MY tank (power and aim of the others stay private)
 function hudTank(m) {
   if (ON.active && !ON.spectator) { const mine = m.tanks.find(x => x.id === ON.myId); if (mine) return mine; }
-  return m.cur >= 0 ? m.tanks[m.cur] : null;
+  const cur = m.cur >= 0 ? m.tanks[m.cur] : null;
+  if (!ON.active && cur && PRACTICE.bots[cur.id]) { const humans = m.tanks.filter(x => !PRACTICE.bots[x.id]); return humans.find(x => x.alive) || humans[0] || cur; }
+  return cur;
 }
 function updateHud() {
   const m = match, t = hudTank(m), cur = m.cur >= 0 ? m.tanks[m.cur] : null; if (!t || !cur) return;
@@ -81,7 +84,7 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
-  setTxt('windTxt', m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : ''));
+  setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
   const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
@@ -105,7 +108,8 @@ function updateHud() {
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
   const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
-  const waitTxt = gone ? gone : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
+  const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';
+  const waitTxt = gone ? gone : botTurn ? botTurn : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
 }
 // top status bar: every player with tank, health, alive/dead, turn order and connection
@@ -195,8 +199,10 @@ mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
   sb.textContent = AU.muted ? '소리 꺼짐' : '소리 켜짐'; sb.setAttribute('aria-pressed', String(!AU.muted));
-  kb.textContent = R.reduceMotion ? '흔들림 꺼짐' : '흔들림 켜짐'; kb.setAttribute('aria-pressed', String(!R.reduceMotion));
+  kb.textContent = R.reduceMotion ? '흔들림 끔' : '흔들림'; kb.setAttribute('aria-pressed', String(!R.reduceMotion));
+  for (const id of ['musicBtn', 'musicBtn2']) { const b = $(id); if (b) { b.textContent = AU.musicOn ? '음악 켜짐' : '음악 꺼짐'; b.setAttribute('aria-pressed', String(AU.musicOn)); } }
 }
+for (const id of ['musicBtn', 'musicBtn2']) $(id).addEventListener('click', () => { AU.unlock(); AU.setMusic(!AU.musicOn); syncSettings(); });
 $('sndBtn').addEventListener('click', () => { AU.unlock(); AU.setMuted(!AU.muted); syncSettings(); });
 $('shakeBtn').addEventListener('click', () => { R.reduceMotion = !R.reduceMotion; if (R.reduceMotion) R.shake = 0; try { localStorage.setItem('pg.shake', R.reduceMotion ? '0' : '1'); } catch (e) {} syncSettings(); });
 syncSettings();
@@ -220,7 +226,8 @@ window.addEventListener('resize', () => R.resize());
 // ---------------------------------------------------------------- setup
 const setup = { map: 'temple', red: 2, blue: 2, slots: { red: [], blue: [] } };
 let thumbs = {};
-function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length] }; }
+function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'normal' }; }
+const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
 for (const team of ['red', 'blue']) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
 try { const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null'); if (sv && sv.slots) Object.assign(setup, sv); } catch (e) {}
 function saveSetup() { try { localStorage.setItem('pg.setup', JSON.stringify(setup)); } catch (e) {} }
@@ -237,6 +244,10 @@ function mapPreview(id) {
     if (mp.mask[wy * meta.W + wx]) { const p = (py * cw + px) * 4; o[p] = col[0]; o[p + 1] = col[1]; o[p + 2] = col[2]; }
   }
   x.putImageData(img, 0, 0);
+  if (meta.theme === 'sea' || meta.theme === 'lava') { // the sea / lava line the islands and pits sit in
+    const ly = (meta.H - (meta.theme === 'sea' ? 210 : 170)) * ch / meta.H;
+    x.fillStyle = meta.theme === 'sea' ? 'rgba(30,120,200,0.9)' : 'rgba(240,90,30,0.95)'; x.fillRect(0, ly, cw, ch - ly);
+  }
   return c;
 }
 const previews = {};
@@ -258,7 +269,11 @@ function renderSetup() {
     const sp = document.createElement('span'); sp.textContent = (team === 'red' ? '레드 ' : '블루 ') + (i + 1);
     const inp = document.createElement('input'); inp.id = `nick-${team}-${i}`; inp.maxLength = 8; inp.value = sl.nick; inp.placeholder = '닉네임';
     inp.oninput = () => { sl.nick = inp.value; saveSetup(); };
-    tag.append(sp, inp); row.append(tag);
+    const sel = document.createElement('select'); sel.className = 'ctl'; sel.setAttribute('aria-label', `${sp.textContent} 조작`);
+    for (const [v, lb] of CTL) { const o = document.createElement('option'); o.value = v; o.textContent = lb; sel.append(o); }
+    if (!sl.ctl) sl.ctl = team === 'red' ? 'human' : 'normal';
+    sel.value = sl.ctl; sel.onchange = () => { sl.ctl = sel.value; saveSetup(); };
+    tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
     for (const k of TANK_KEYS) {
       const p = document.createElement('button'); p.type = 'button'; p.className = 'pick' + (sl.tank === k ? ' sel' : '');
@@ -276,6 +291,70 @@ $('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of
 $('start').onclick = startGame;
 $('again').onclick = () => { $('over').hidden = true; startGame(); };
 $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
+// ---------------------------------------------------------------- tutorial (1:1 against an easy bot, a coach panel walks through the controls)
+const TUT = { on: false, step: 0 };
+const TUT_STEPS = [
+  { text: '← → 키(휴대폰은 ◀ ▶)로 탱크를 움직여 보세요. 이동할수록 이동력 막대가 줄어듭니다.', done: (m, t) => Math.abs(t.x - TUT.x0) > 40 },
+  { text: '↑ ↓ 키(▲ ▼)로 포신 각도를 바꿔 보세요. 탱크 옆 각도기에 쏠 수 있는 범위가 금색으로 보입니다.', done: (m, t) => Math.abs(t.aim - TUT.a0) >= 6 },
+  { text: '스페이스(발사 버튼)를 누르고 있으면 파워가 찹니다. 떼는 순간 발사! 오른쪽 위 거리 표시로 상대 위치를 확인하세요.', done: m => m.phase !== 'aim' },
+  { text: '포탄은 바람에 밀립니다. 화면 위쪽 바람 표시를 보고 다음 각도·파워를 정하세요. 흰 선은 지난번 파워입니다.', done: m => m.phase === 'aim' && PRACTICE.bots[m.tanks[m.cur].id] },
+  { text: '지금은 상대 차례입니다. 왼쪽 위 상태창에서 체력과 다음 순서(▶ 2 3…)를 볼 수 있어요.', done: m => m.phase === 'aim' && !PRACTICE.bots[m.tanks[m.cur].id] },
+  { text: '1·2 키로 무기를 바꾸고(2번은 강하지만 딜레이↑), 3~6 키로 상자에서 얻은 아이템을 씁니다. 이제 상대를 쓰러뜨려 보세요!', done: (m, t, sec) => sec > 9 },
+];
+function startTutorial() {
+  TUT.on = true; TUT.step = 0; TUT.since = performance.now();
+  const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', tankId: 'rookie' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', tankId: 'boulder', bot: 'easy' }];
+  ON.active = false;
+  beginMatch({ seed: (Math.random() * 4294967296) >>> 0, mapId: 'temple', players }, practiceOpts({ b0: 'easy' }));
+  showScreen('game'); showCoach();
+}
+function showCoach() {
+  const c = $('coach'); c.hidden = !TUT.on; if (!TUT.on) return;
+  $('coachStep').textContent = `튜토리얼 ${Math.min(TUT.step + 1, TUT_STEPS.length)} / ${TUT_STEPS.length}`;
+  $('coachText').textContent = TUT_STEPS[TUT.step].text;
+}
+function tutorialFrame() {
+  if (!TUT.on || !match) return;
+  const m = match, t = m.tanks[0], st = TUT_STEPS[TUT.step];
+  if (TUT.x0 === undefined || TUT.at !== TUT.step) { TUT.at = TUT.step; TUT.x0 = t.x; TUT.a0 = t.aim; TUT.since = performance.now(); }
+  if (st.done(m, t, (performance.now() - TUT.since) / 1000)) {
+    TUT.step++; AU.play('pickup');
+    if (TUT.step >= TUT_STEPS.length) { TUT.on = false; banner('튜토리얼 완료!'); }
+    showCoach();
+  }
+}
+// practice bots: think, turn the barrel, charge, fire — visible like a person
+const PRACTICE = { bots: {} };
+function practiceOpts(bots) {
+  PRACTICE.bots = bots;
+  const B = { turn: -1 };
+  return {
+    isLocal: idx => !bots[match.tanks[idx].id],
+    remote: (m, t) => {
+      const lv = bots[t.id]; if (!lv) return;
+      if (B.turn !== m.turnNo) { B.turn = m.turnNo; B.stage = 'think'; B.wait = 70 + Math.floor(Math.random() * 70); B.plan = null; }
+      if (ctrl.timeLeft > 0) ctrl.timeLeft--;
+      if (B.stage === 'think') {
+        if (--B.wait > 0) return;
+        B.plan = botPlan(m, lv, Math.random);
+        if (m.phase !== 'aim') return;
+        if (!B.plan) { cmdTimeout(m); return; }
+        B.aimF = t.aim; B.stage = 'aim'; return;
+      }
+      if (B.stage === 'aim') {
+        const d = B.plan.angle - B.aimF, stp = 30 * TICK;
+        if (Math.abs(d) <= stp) { t.aim = B.plan.angle; B.stage = 'charge'; ctrl.charging = true; ctrl.powerF = 0; ctrl.weapon = B.plan.weapon; B.wait = 20; }
+        else { B.aimF += Math.sign(d) * stp; t.aim = Math.round(B.aimF); }
+        return;
+      }
+      if (B.stage === 'charge') {
+        if (--B.wait > 0) return;
+        ctrl.powerF = Math.min(B.plan.power, ctrl.powerF + 500 * TICK);
+        if (ctrl.powerF >= B.plan.power) { ctrl.charging = false; B.stage = 'done'; cmdFire(m, B.plan.angle, B.plan.power, B.plan.weapon, CONFIG.turn.timeLimitTicks - ctrl.timeLeft); }
+      }
+    },
+  };
+}
 // one match on screen: local practice or online (opts carry the online hooks)
 function installMatch(m, opts) {
   match = m;
@@ -290,16 +369,18 @@ function beginMatch(cfg, opts) {
   $('over').hidden = true; $('loading').hidden = true;
 }
 function startGame() {
-  ON.active = false;
+  ON.active = false; TUT.on = false; showCoach();
   $('loading').hidden = false;
   setTimeout(() => {
     const players = [];
     for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
       const sl = setup.slots[team][i];
-      players.push({ id: team[0] + i, nick: (sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1), team, tankId: sl.tank });
+      const ctl = sl.ctl || (team === 'red' ? 'human' : 'normal');
+      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank, bot: ctl === 'human' ? null : ctl });
     }
     const seed = (Math.random() * 4294967296) >>> 0;
-    beginMatch({ seed, mapId: setup.map, players });
+    const bots = {}; for (const p of players) if (p.bot) bots[p.id] = p.bot;
+    beginMatch({ seed, mapId: setup.map, players }, practiceOpts(bots));
     showScreen('game');
     banner(CONFIG.maps[setup.map].name);
   }, 30);
@@ -326,7 +407,7 @@ function loop(now) {
     if (camKeys.KeyD) { R.cam.x += sp; R.free = true; }
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
-    if (ON.active) onlineFrame(now);
+    if (ON.active) onlineFrame(now); else tutorialFrame();
     // the angle guide and power ring are only for the player who is aiming
     R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
     updateHud();

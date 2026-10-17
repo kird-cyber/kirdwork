@@ -41,7 +41,7 @@ function fireAndTrace(m, angle, power, weapon) {
   }
   return { evs: shots, firstProj, traj };
 }
-const carvedCount = (m, cx, cy, r) => { let c = 0; for (let y = Math.max(GROUND, cy - r - 2); y <= cy + r + 2; y++) for (let x = cx - r - 2; x <= cx + r + 2; x++) if (!m.mask[y * m.W + x]) c++; return c; };
+const carvedCount = (m, cx, cy, r0) => { const r = Math.ceil(r0); let c = 0; for (let y = Math.max(GROUND, cy - r - 2); y <= cy + r + 2; y++) for (let x = cx - r - 2; x <= cx + r + 2; x++) if (!m.mask[y * m.W + x]) c++; return c; };
 
 // ---------------------------------------------------------------- base stats for all tanks
 for (const [id, d] of Object.entries(CONFIG.tanks)) {
@@ -65,18 +65,29 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) {
   check(d.name, '받는 피해', `300×${d.dmgTaken}=${Math.round(300 * d.dmgTaken)}`, hp0 - v.hp, hp0 - v.hp === Math.round(300 * d.dmgTaken));
 }
 
+// damage falloff: 100% at the centre down to edgeDmg at r*blastDmgMul + bodyRadius
+const fall = (dist, r) => { const P = CONFIG.physics, reach = r * P.blastDmgMul + P.bodyRadius; return 1 - (1 - P.edgeDmg) * Math.min(1, dist / reach); };
 // ---------------------------------------------------------------- weapon damage + radius for every weapon
 for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) => {
   const m = field([{ tank: id, x: 1500 }, { tank: 'rookie', x: 3500 }]);
   const cx = 2500, cy = GROUND;
   A.explode(m, cx, cy, w.radius, w.dmg, m.tanks[0], w, false);
-  const area = carvedCount(m, cx, cy, w.radius), half = Math.PI * w.radius * w.radius / 2;
-  check(d.name, `${w.name} 폭발 반경`, w.radius + 'px', `파인 면적 ${Math.round(area)} (반원 ${Math.round(half)})`, Math.abs(area - half) < Math.PI * w.radius + 4);
+  const cr = w.radius * CONFIG.physics.blastCarveMul;
+  const area = carvedCount(m, cx, cy, cr), half = Math.PI * cr * cr / 2;
+  check(d.name, `${w.name} 땅 파임 반경 (${w.radius}×${CONFIG.physics.blastCarveMul})`, Math.round(cr) + 'px', `파인 면적 ${Math.round(area)} (반원 ${Math.round(half)})`, Math.abs(area - half) < Math.PI * cr + 4);
   const m2 = field([{ tank: id, x: 1000 }, { tank: 'rookie', x: 2500 }]);
   const v = m2.tanks[1], c = A.tankCenter(v); const hp0 = v.hp;
   A.explode(m2, c.x + 15, c.y, w.radius, w.dmg, m2.tanks[0], w, false);
-  const exp = Math.round(w.dmg * (1 - 0.55 * Math.min(1, 15 / (w.radius + 20))) * 0.9);
+  const exp = Math.round(w.dmg * fall(15, w.radius) * 0.9);
   check(d.name, `${w.name} 피해(15px 거리, 루키)`, exp, hp0 - v.hp, hp0 - v.hp === exp);
+  if (wi === 0) {
+    const reach = w.radius * CONFIG.physics.blastDmgMul + CONFIG.physics.bodyRadius;
+    const m3 = field([{ tank: id, x: 1000 }, { tank: 'rookie', x: 2500 }]), v3 = m3.tanks[1], c3 = A.tankCenter(v3), h3 = v3.hp;
+    A.explode(m3, c3.x + reach - 2, c3.y, w.radius, w.dmg, m3.tanks[0], w, false);
+    const m4 = field([{ tank: id, x: 1000 }, { tank: 'rookie', x: 2500 }]), v4 = m4.tanks[1], c4 = A.tankCenter(v4), h4 = v4.hp;
+    A.explode(m4, c4.x + reach + 2, c4.y, w.radius, w.dmg, m4.tanks[0], w, false);
+    check(d.name, `${w.name} 피해 거리 ${Math.round(reach)}px (안: 피해, 밖: 없음)`, '안 >0, 밖 0', `안 ${h3 - v3.hp}, 밖 ${h4 - v4.hp}`, h3 - v3.hp > 0 && h4 - v4.hp === 0);
+  }
 });
 
 // ---------------------------------------------------------------- tank-specific traits
@@ -117,9 +128,9 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const w = CONFIG.tanks.hammer.weapons[0];
   const hit = off => { const m = field([{ tank: 'hammer', x: 1000 }, { tank: 'rookie', x: 2500 }]); const v = m.tanks[1], c = A.tankCenter(v), h = v.hp; A.explode(m, c.x + off, c.y, w.radius, w.dmg, m.tanks[0], w, false); return h - v.hp; };
   const a = hit(5), b = hit(5.0001);
-  const base = Math.round(w.dmg * (1 - 0.55 * (5 / (w.radius + 20))) * 0.9), crit = Math.round(w.dmg * (1 - 0.55 * (5 / (w.radius + 20))) * 1.2 * 0.9);
+  const base = Math.round(w.dmg * fall(5, w.radius) * 0.9), crit = Math.round(w.dmg * fall(5, w.radius) * 1.2 * 0.9);
   check('해머', '정타(10px 안) 피해 +20%', crit, a, a === crit && a > base);
-  const off = hit(12), plain = Math.round(w.dmg * (1 - 0.55 * (12 / (w.radius + 20))) * 0.9);
+  const off = hit(12), plain = Math.round(w.dmg * fall(12, w.radius) * 0.9);
   check('해머', '10px 밖은 정타 아님', plain, off, off === plain);
   const m = field([{ tank: 'hammer', x: 1000 }, { tank: 'rookie', x: 3000 }]);
   A.cmdFire(m, 45, 500, 1);
@@ -227,6 +238,19 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   m2.mask.fill(0); for (let x = 0; x < 1010; x++) for (let y = 800; y < m2.H; y++) m2.mask[y * m2.W + x] = 1;
   let s2 = 0; while (m2.tanks[0].alive && s2 < 200) { A.cmdMove(m2, 1); s2++; }
   check('공통', '맵 밖으로 떨어지면 낙사', '탈락', m2.tanks[0].alive ? '생존' : '탈락(' + m2.tanks[0].deathCause + ')', !m2.tanks[0].alive);
+}
+{ // new items: fuel, calm; sudden death
+  const mf = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mf.tanks[0].items = ['fuel']; const f0 = mf.tanks[0].fuel; A.cmdItem(mf, 0);
+  check('아이템', '연료: 이번 턴 이동력 2배', f0 * 2, mf.tanks[0].fuel, mf.tanks[0].fuel === f0 * 2);
+  const land = (calm) => { const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mm.wind = 10; if (calm) { mm.tanks[0].items = ['calm']; A.cmdItem(mm, 0); } const r = fireAndTrace(mm, 30, 700, 0); const b = r.evs.find(e => e.type === 'boom'); return b ? Math.round(b.x) : null; };
+  const still = (() => { const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mm.wind = 0; const r = fireAndTrace(mm, 30, 700, 0); return Math.round(r.evs.find(e => e.type === 'boom').x); })();
+  const windy = land(false), calm = land(true);
+  check('아이템', '무풍탄: 바람 10에서도 바람 없을 때와 같은 곳에 떨어짐', still, `무풍 ${calm} / 그냥 ${windy}`, calm === still && windy !== still);
+  const T = CONFIG.turn, ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);
+  const sdTurn = T.suddenBase + T.suddenPerPlayer * 2; ms.turnNo = sdTurn - 1; ms.events.length = 0;
+  const hp = ms.tanks.map(t => t.hp); A.cmdTimeout(ms); let g = 0; while (ms.phase !== 'aim' && g++ < 5000) A.step(ms);
+  const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
+  check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));
 }
 { // turn delay: time spent, timeout, movement (+30%)
   const d0 = (used) => { const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdFire(m, 20, 300, 0, used); return m.tanks[0].delay; };

@@ -105,13 +105,14 @@ function hurt(m, t, dmg, kind) {
   if (t.hp <= 0) { t.alive = false; t.deathCause = kind || 'hit'; m.events.push({ type: 'death', idx: t.idx, x: t.x, y: t.y }); }
 }
 function explode(m, x, y, r, dmg, owner, w, amp) {
-  carve(m, x, y, r);
+  const P = CONFIG.physics, cr = r * P.blastCarveMul, reach = r * P.blastDmgMul + P.bodyRadius;
+  carve(m, x, y, cr);
   const crit = w && w.onHit && w.onHit.crit, poison = w && w.onHit && w.onHit.poison;
   for (const t of m.tanks) {
     if (!t.alive) continue;
     const c = tankCenter(t), dx = c.x - x, dy = c.y - y, d = Math.sqrt(dx * dx + dy * dy);
-    if (d > r + 20) continue;
-    let v = dmg * (1 - 0.55 * Math.min(1, d / (r + 20)));
+    if (d > reach) continue;
+    let v = dmg * (1 - (1 - P.edgeDmg) * Math.min(1, d / reach));
     if (crit && d < crit.within) { v *= crit.mul; m.events.push({ type: 'text', x: t.x, y: t.y - 90, text: '정타!', color: '#FFD24A' }); }
     v *= CONFIG.tanks[t.tankId].dmgTaken;
     if (t.shield) v *= CONFIG.items.shield.mul;
@@ -123,11 +124,11 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
       m.events.push({ type: 'text', x: t.x, y: t.y - 84, text: '중독', color: '#8EDB3A' });
     }
   }
-  for (const mi of m.mines) if (!mi.dead && Math.sqrt((mi.x - x) * (mi.x - x) + (mi.y - y) * (mi.y - y)) < r + 6) {
+  for (const mi of m.mines) if (!mi.dead && Math.sqrt((mi.x - x) * (mi.x - x) + (mi.y - y) * (mi.y - y)) < cr + 6) {
     mi.dead = true; schedule(m, 18, { kind: 'mineBoom', x: mi.x, y: mi.y - 4, owner: mi.owner });
   }
-  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < r) c.dead = true;
-  m.events.push({ type: 'boom', x, y, r, color: (w && w.look && w.look.glow) || '#FFB040' });
+  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < cr) c.dead = true;
+  m.events.push({ type: 'boom', x, y, r, dr: r * P.blastDmgMul, color: (w && w.look && w.look.glow) || '#FFB040' });
   resettleObjects(m);
 }
 function mineBoom(m, x, y, owner) {
@@ -237,6 +238,8 @@ function cmdItem(m, slot, tx, ty) {
   } else if (it.effect === 'shield') { t.shield = true; }
   else if (it.effect === 'doubleShot') { m.turn.double = true; }
   else if (it.effect === 'amplify') { m.turn.amp = true; }
+  else if (it.effect === 'fuel') { t.fuel += CONFIG.tanks[t.tankId].movePx; }
+  else if (it.effect === 'calm') { m.turn.calm = true; }
   t.items.splice(slot, 1);
   m.turn.itemUsed = true;
   m.events.push({ type: 'item', idx: t.idx, item: id });
@@ -269,7 +272,7 @@ function cmdFire(m, angle, power, weapon, used) {
   if (m.turn.tele) shots.push({ at: 0, extra: 0, pj: 0 }); // teleport shell: one plain shot, no weapon pattern
   else { addSeq(0); if (m.turn.double) addSeq(CONFIG.items.double.gapTicks); }
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
-  for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele });
+  for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele, calm: !!m.turn.calm });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
@@ -322,17 +325,17 @@ function spawnShot(m, ev) {
   const d = CONFIG.tanks[t.tankId], w = d.weapons[ev.wIdx];
   const mz = muzzleOf(t, ev.angle), dir = aimVector(t, ev.angle, ev.extra);
   const v = CONFIG.physics.maxSpeed * (ev.power + ev.pj) / 1000 * d.powerMul;
-  m.proj.push({ x: mz.x, y: mz.y, vx: dir.x * v, vy: dir.y * v, idx: t.idx, wIdx: ev.wIdx, age: 0, amp: ev.amp, berserk: ev.berserk, tele: ev.tele, id: m.schedSeq++ });
+  m.proj.push({ x: mz.x, y: mz.y, vx: dir.x * v, vy: dir.y * v, idx: t.idx, wIdx: ev.wIdx, age: 0, amp: ev.amp, berserk: ev.berserk, tele: ev.tele, calm: ev.calm, id: m.schedSeq++ });
   m.events.push({ type: 'shot', x: mz.x, y: mz.y, idx: t.idx, wIdx: ev.wIdx });
 }
 function stepProjectiles(m) {
-  const P = CONFIG.physics, wa = m.wind * P.windAccel;
+  const P = CONFIG.physics, wa = m.wind * P.windAccel, gm = CONFIG.maps[m.mapId].gravity || 1;
   for (const p of m.proj) {
     const owner = m.tanks[p.idx], w = CONFIG.tanks[owner.tankId].weapons[p.wIdx];
     const sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
     const n = Math.max(1, Math.ceil(sp * TICK / 3)), h = TICK / n;
     for (let i = 0; i < n && !p.dead; i++) {
-      p.vx += wa * w.windMul * h; p.vy += P.gravity * w.gravityMul * h;
+      if (!p.calm) p.vx += wa * w.windMul * h; p.vy += P.gravity * w.gravityMul * gm * h;
       p.x += p.vx * h; p.y += p.vy * h; p.age += h;
       if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y, tele: !!p.tele }); break; }
       if (solidAt(m, p.x, p.y)) { p.dead = true; impact(m, p, p.x, p.y); break; }
@@ -414,15 +417,21 @@ function beginTurn(m) {
   const d = CONFIG.tanks[t.tankId];
   t.fuel = d.movePx; t.shield = false;
   if (t.cd > 0) t.cd--;
-  m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, movedPx: 0 };
-  const W = CONFIG.turn.windMax;
-  m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9), -W, W);
+  m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
+  const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
+  const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
+  m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo });
   if (t.poison) {
     hurt(m, t, t.poison.dmg, 'poison');
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
+    if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+  }
+  if (sudden) {
+    if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
+    for (const o of m.tanks) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
   }
   m.phase = 'aim';

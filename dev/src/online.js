@@ -31,17 +31,29 @@ function showScreen(name) {
   $('lobby').hidden = name !== 'lobby';
   $('setup').hidden = name !== 'setup';
   const g = name === 'game';
+  $('gchat').hidden = !(g && ON.active); if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
   $('diag').hidden = !g; if (!g) $('diag').textContent = '';
   $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
-  if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); }
+  if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); TUT.on = false; showCoach(); }
+  AU.music(g ? 'game' : 'lobby');
   if (name === 'setup') renderSetup();
   if (name === 'home') { renderHome(); probeBrokers(); }
 }
 
 // ---------------------------------------------------------------- home
 function homeMsg(s, bad) { const e = $('homeMsg'); e.textContent = s || ''; e.classList.toggle('bad', !!bad); }
+// per-device record of online games (no login, so it lives in this browser)
+function loadRecord() { try { return JSON.parse(localStorage.getItem('pg.record') || 'null') || { w: 0, l: 0, d: 0, last: '' }; } catch (e) { return { w: 0, l: 0, d: 0, last: '' }; } }
+function noteResult(gid, res) {
+  const r = loadRecord(); if (r.last === gid) return; r.last = gid;
+  r[res]++; try { localStorage.setItem('pg.record', JSON.stringify(r)); } catch (e) {}
+}
 function renderHome() {
   const inv = parseInvite();
+  const rec = loadRecord(), n = rec.w + rec.l + rec.d, el = $('record');
+  el.hidden = n === 0;
+  if (n) el.innerHTML = `내 전적 <b>${rec.w}</b>승 <b>${rec.l}</b>패` + (rec.d ? ` <b>${rec.d}</b>무` : '') + ` · 승률 ${Math.round(100 * rec.w / Math.max(1, rec.w + rec.l))}%`;
+  const pr = $('parade'); if (!pr.children.length && thumbs.rookie) for (const k of TANK_KEYS) pr.append(cloneCanvas(thumbs[k]));
   $('nickIn').value = ON.nick || savedNick();
   $('inviteBox').hidden = !inv; $('joinBtn').hidden = !inv;
   if (inv) $('inviteCode').textContent = inv.code;
@@ -117,6 +129,7 @@ function openLink(code, idx, create) {
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
       onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
+      onChat: c => onChat(c),
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
     });
     ON.link = link;
@@ -155,6 +168,7 @@ function playerCard(p, room) {
   const nm = document.createElement('b'); nm.textContent = p.nick; info.append(nm);
   const tags = document.createElement('span'); tags.className = 'tags';
   tags.textContent = [CONFIG.tanks[p.tank] ? CONFIG.tanks[p.tank].name : '', host ? '방장' : '', me ? '나' : '', L.online(p.id) || me ? '' : '연결 끊김'].filter(Boolean).join(' · ');
+  if (!host && p.ready) { const r = document.createElement('span'); r.className = 'ready'; r.textContent = ' · 준비 완료'; tags.append(r); }
   info.append(tags); el.append(info);
   const act = document.createElement('div'); act.className = 'pa';
   if (me || isHost) {
@@ -212,10 +226,13 @@ function renderLobby() {
   const st = $('lobbyStart');
   st.hidden = !isHost;
   st.disabled = !L.canStart();
+  const rb = $('readyBtn'); rb.hidden = isHost || !me;
+  if (me) { rb.textContent = me.ready ? '준비 취소' : '준비 완료'; rb.className = me.ready ? 'ghost big' : 'start'; }
   const red = teamCount(room, 'red'), blue = teamCount(room, 'blue');
+  const others = room.players.filter(p => p.id !== room.host), readyN = others.filter(p => p.ready).length;
   $('startNote').textContent = isHost
-    ? (L.canStart() ? `${red} 대 ${blue} · 시작하면 위치는 무작위로 정해집니다` : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
-    : (me ? '방장이 시작하면 바로 전투가 시작됩니다' : '방에 들어가는 중…');
+    ? (L.canStart() ? `${red} 대 ${blue} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
+    : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : '방에 들어가는 중…');
   updateNetStatus();
 }
 function renderTankInfo(k) {
@@ -228,6 +245,7 @@ function startOnlineMatch(game, late) {
   ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
   ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
   ON.spectator = !game.players.some(p => p.id === ON.myId);
+  TUT.on = false; showCoach(); PRACTICE.bots = {};
   // joined late (reload or spectator): wait for the retained log, then fast-forward
   ON.syncing = !!late; ON.needAt = 0; ON.liveAt = 0;
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
@@ -412,6 +430,7 @@ function onlineOver() {
   const L = ON.link, isHost = L && L.isHost();
   $('again').hidden = true; $('toSetup').hidden = true;
   $('toLobby').hidden = !isHost; $('leaveGame').hidden = false;
+  $('rematchBtn').hidden = !isHost; $('rematchBtn').disabled = !(L && L.canRematch());
   $('overWait').hidden = isHost;
 }
 function bindOnlineUi() {
@@ -426,6 +445,11 @@ function bindOnlineUi() {
   $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeBtn').click(); });
   $('nickIn').addEventListener('keydown', e => { if (e.key === 'Enter') (parseInvite() ? $('joinBtn') : $('createBtn')).click(); });
   $('practiceBtn').onclick = () => { AU.unlock(); showScreen('setup'); };
+  $('tutorialBtn').onclick = () => { AU.unlock(); const n = $('nickIn').value.trim().slice(0, 8); if (n) { ON.nick = n; saveNick(n); } startTutorial(); };
+  $('coachSkip').onclick = () => { TUT.on = false; showCoach(); };
+  $('rotateX').onclick = () => { $('rotateTip').hidden = true; try { sessionStorage.setItem('pg.rot', '1'); } catch (e) {} };
+  const rot = () => { let seen = false; try { seen = sessionStorage.getItem('pg.rot') === '1'; } catch (e) {} $('rotateTip').hidden = !(screen === 'game' && matchMedia('(pointer: coarse)').matches && innerHeight > innerWidth * 1.15) || seen; };
+  window.addEventListener('resize', rot); setInterval(rot, 1500);
   $('backHome').onclick = () => showScreen('home');
   $('copyBtn').onclick = async () => {
     const url = inviteUrl();
@@ -436,6 +460,8 @@ function bindOnlineUi() {
   $('lobbyStart').onclick = () => { AU.unlock(); if (ON.link && ON.link.start()) $('lobbyStart').disabled = true; };
   $('leaveBtn').onclick = () => leaveOnline();
   $('toLobby').onclick = () => { if (ON.link) ON.link.backToLobby(); };
+  $('rematchBtn').onclick = () => { AU.unlock(); if (ON.link && ON.link.rematch()) $('rematchBtn').disabled = true; };
+  $('readyBtn').onclick = () => { AU.play('ui'); const me = ON.link && ON.link.me(); if (me) ON.link.setReady(!me.ready); };
   $('leaveGame').onclick = () => leaveOnline();
   $('exitBtn').onclick = () => {
     if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
@@ -443,9 +469,52 @@ function bindOnlineUi() {
   };
   window.addEventListener('hashchange', () => { if (screen === 'home') renderHome(); });
 }
+
+// ---------------------------------------------------------------- chat + emotes
+const EMOTES = [['nice', '👍', '나이스!'], ['lol', '😂', 'ㅋㅋㅋ'], ['wow', '😮', '헉!'], ['grr', '😤', '두고 봐'], ['sorry', '🙏', '미안~'], ['gg', '🤝', 'GG']];
+function chatLine(c) {
+  const d = document.createElement('div'); d.className = 'm ' + (c.team || '');
+  const b = document.createElement('b'); b.textContent = c.nick; d.append(b, document.createTextNode(c.emote ? EMOTES.find(e => e[0] === c.emote)[1] + ' ' + c.text : c.text));
+  return d;
+}
+function onChat(c) {
+  if (c.emote && !EMOTES.some(e => e[0] === c.emote)) c.emote = null;
+  const lm = $('lobbyMsgs'); lm.append(chatLine(c)); while (lm.children.length > 60) lm.firstChild.remove(); lm.scrollTop = lm.scrollHeight;
+  if (screen === 'game') {
+    const gm = $('gameMsgs'), line = chatLine(c); gm.append(line); while (gm.children.length > 5) gm.firstChild.remove();
+    setTimeout(() => line.classList.add('old'), 8000); setTimeout(() => line.remove(), 8800);
+    // speech bubble over the sender's tank
+    if (match) { const t = match.tanks.find(x => x.id === c.from); if (t) R.say(t.idx, c.emote ? EMOTES.find(e => e[0] === c.emote)[1] + ' ' + c.text : c.text); }
+  }
+  if (c.from !== ON.myId) AU.play('ui');
+}
+function sendChat(text, emote) {
+  text = String(text || '').trim(); if (!text || !ON.link) return;
+  const now = performance.now(); if (now - (ON.chatAt || 0) < 400) return; ON.chatAt = now; // no flooding
+  ON.link.sendChat(text, emote);
+}
+function bindChat() {
+  document.querySelectorAll('[data-emotes]').forEach(box => {
+    for (const [id, ic, tx] of EMOTES) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'emo'; b.textContent = ic + ' ' + tx;
+      b.onclick = () => { sendChat(tx, id); if (box.closest('.gchat')) closeGameChat(); };
+      box.append(b);
+    }
+  });
+  $('lobbyChatForm').onsubmit = e => { e.preventDefault(); sendChat($('lobbyChatIn').value); $('lobbyChatIn').value = ''; };
+  $('gameChatForm').onsubmit = e => { e.preventDefault(); sendChat($('gameChatIn').value); $('gameChatIn').value = ''; closeGameChat(); };
+  $('chatBtn').onclick = () => ($('gchat').classList.contains('open') ? closeGameChat() : openGameChat());
+  $('gameChatIn').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closeGameChat(); } e.stopPropagation(); });
+  window.addEventListener('keydown', e => {
+    if (screen !== 'game' || !ON.active || e.target.tagName === 'INPUT') return;
+    if (e.key === 'Enter') { e.preventDefault(); openGameChat(); }
+  });
+}
+function openGameChat() { $('gchat').classList.add('open'); $('gameChatForm').hidden = false; if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; setTimeout(() => $('gameChatIn').focus(), 0); }
+function closeGameChat() { $('gchat').classList.remove('open'); $('gameChatForm').hidden = true; $('gameChatIn').blur(); }
 // first screen: rejoin straight away after a reload, otherwise the home screen
 function routeStart() {
-  bindOnlineUi();
+  bindOnlineUi(); bindChat();
   ON.myId = onlineId(); ON.nick = savedNick();
   const inv = parseInvite();
   let again = null; try { again = sessionStorage.getItem('pg.room'); } catch (e) {}

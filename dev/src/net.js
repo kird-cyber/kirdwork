@@ -71,6 +71,7 @@ function createRoomLink(o) {
     if (sub === 'room') return msg && onRoom(msg);
     if (sub.startsWith('p/')) return onPresence(sub.slice(2), msg);
     if (sub === 'req') return msg && r.isHost() && onReq(msg);
+    if (sub === 'chat') { if (msg && typeof msg.text === 'string') { const c = { from: msg.from, nick: String(msg.nick || '').slice(0, 8), team: msg.team, text: msg.text.slice(0, 80), emote: msg.emote || null }; r.chat.push(c); if (r.chat.length > 60) r.chat.shift(); cb('onChat', c); } return; }
     if (sub === 'cmd') {
       if (!msg) return;
       if (msg.type === 'kick' && msg.id === r.myId) { r.kicked = true; cb('onKicked'); return; }
@@ -93,7 +94,7 @@ function createRoomLink(o) {
     if (cur && msg.ver === cur.ver && msg.host === cur.host && msg.t === cur.t) return;
     const prevGid = cur && cur.game ? cur.game.gid : null;
     // late = we did not see this game start (page reload / joined mid-game): the device must catch up from the log first
-    const late = !cur || cur.state === 'game';
+    const late = !cur; // a game that started while we were connected (start or rematch) is not a late join
     r.room = msg;
     if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
       r.gid = msg.game.gid; r.log = []; r.hashes = {};
@@ -169,6 +170,7 @@ function createRoomLink(o) {
     else if (q.type === 'team') { if (r.setTeam(q.id, q.team, true)) publishRoom(); }
     else if (q.type === 'tank') { if (CONFIG.tanks[q.tank]) { p.tank = q.tank; publishRoom(); } }
     else if (q.type === 'leave') { room.players = room.players.filter(x => x.id !== q.id); publishRoom(); }
+    else if (q.type === 'ready') { p.ready = !!q.ready; publishRoom(); }
   }
   r.setTeam = function (id, team, noPublish) {
     const p = r.room.players.find(x => x.id === id);
@@ -202,8 +204,26 @@ function createRoomLink(o) {
     if (!r.isHost() || r.room.state !== 'game') return;
     r.room.state = 'lobby';
     r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+    for (const p of r.room.players) p.ready = false;
     publishRoom();
   };
+  // rematch: same teams, tanks and map, a new battlefield; players who left are dropped
+  r.rematchPlayers = () => r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+  r.canRematch = function () {
+    if (!r.isHost() || r.room.state !== 'game') return false;
+    const ps = r.rematchPlayers();
+    return ps.some(p => p.team === 'red') && ps.some(p => p.team === 'blue');
+  };
+  r.rematch = function () {
+    if (!r.canRematch()) return false;
+    r.room.players = r.rematchPlayers();
+    r.room.state = 'lobby';
+    return r.start();
+  };
+  // chat + emotes (not stored: late joiners only see what comes after them)
+  r.chat = [];
+  r.sendChat = (text, emote) => pub('chat', { from: r.myId, nick: r.nick, team: (r.me() || {}).team || '', text: String(text).slice(0, 80), emote: emote || null });
+  r.setReady = v => { if (r.isHost()) { const p = r.me(); if (p) { p.ready = !!v; publishRoom(); } return; } pub('req', { type: 'ready', id: r.myId, ready: !!v }); };
   r.leave = function () {
     if (r.mq && r.mq.connected) {
       if (r.room && r.room.state === 'lobby' && r.me()) {

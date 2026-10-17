@@ -2,7 +2,7 @@
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, degrees, ticks (1 tick = 1/120 s). Tank numbers are approved values — do not change without sign-off.
 const CONFIG = {
-  version: '0.7.0',
+  version: '0.8.0',
   physics: {
     tickRate: 120,
     gravity: 600,          // px/s^2
@@ -15,6 +15,11 @@ const CONFIG = {
     climb: 7,              // max px climbed per step
     tankRadius: 20,        // hit radius around tank centre
     settleTicks: 100,      // quiet ticks after the last action before the next turn
+    // blast: weapon radius r -> damage reaches r*blastDmgMul + bodyRadius from the tank centre, terrain is dug to r*blastCarveMul
+    blastDmgMul: 1.8,
+    blastCarveMul: 1.15,
+    bodyRadius: 30,
+    edgeDmg: 0.3,          // damage at the very edge of the blast (centre = 100%)
   },
   turn: {
     timeLimitTicks: 7200,  // 60 s
@@ -29,6 +34,8 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
+    // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
+    suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenWindMul: 1.5,
   },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 
@@ -88,7 +95,7 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
@@ -113,6 +120,8 @@ const CONFIG = {
     tele: { name: '텔레포트', label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' },
     shield: { name: '실드', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' },
     amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
+    fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
+    calm: { name: '무풍탄', label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask.
@@ -121,5 +130,9 @@ const CONFIG = {
     valley: { name: '협곡 도시', tag: '얇은 지형 · 번지전', desc: '아주 얇은 골짜기 지형과 그 아래 한 겹 더. 발밑을 뚫어 떨어뜨리는 싸움이 핵심입니다.', W: 4800, H: 1500, theme: 'valley' },
     clouds: { name: '구름 대륙', tag: '넓은 맵 · 장거리전', desc: '두껍고 넓은 구름 대륙 세 개와 작은 구름섬. 멀리 떨어진 상대와 장거리 포격전을 벌입니다.', W: 6000, H: 1600, theme: 'clouds' },
     bridge: { name: '외나무 다리', tag: '좁은 다리 · 정면 승부', desc: '양쪽 바위 기둥을 잇는 얇은 다리 하나. 숨을 곳 없이 화력으로 맞붙습니다.', W: 4400, H: 1500, theme: 'bridge' },
+    snow: { name: '설원 요새', tag: '성벽 · 엄폐전', desc: '눈 덮인 언덕 양쪽에 돌 성벽이 서 있습니다. 성벽 뒤에 숨거나 넘겨 쏘는 싸움.', W: 5200, H: 1500, theme: 'snow' },
+    lava: { name: '화산 지대', tag: '용암 구덩이 · 고지대', desc: '가운데 화산과 용암 구덩이 두 개. 구덩이 위 떠 있는 바위를 차지하면 유리합니다.', W: 5000, H: 1500, theme: 'lava' },
+    moon: { name: '달 기지', tag: '저중력 · 장거리', desc: '중력이 약해 포탄이 멀리, 오래 날아갑니다. 분화구와 평평한 고원.', W: 5600, H: 1600, theme: 'moon', gravity: 0.62 },
+    islands: { name: '푸른 군도', tag: '섬 · 낙사 주의', desc: '바다 위 다섯 개의 섬. 섬 사이 바다에 빠지면 탈락입니다.', W: 5400, H: 1500, theme: 'sea' },
   },
 };

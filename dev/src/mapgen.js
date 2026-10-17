@@ -42,6 +42,16 @@ function fillCircle(mask, W, H, cx, cy, r) {
     for (let x = xa; x <= xb; x++) mask[y * W + x] = 1;
   }
 }
+function clearCircle(mask, W, H, cx, cy, r) {
+  const y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(H - 1, Math.ceil(cy + r));
+  for (let y = y0; y <= y1; y++) {
+    const dy = y + 0.5 - cy, d2 = r * r - dy * dy;
+    if (d2 < 0) continue;
+    const dx = Math.sqrt(d2);
+    const xa = Math.max(0, Math.ceil(cx - dx - 0.5)), xb = Math.min(W - 1, Math.floor(cx + dx - 0.5));
+    for (let x = xa; x <= xb; x++) mask[y * W + x] = 0;
+  }
+}
 function quadPts(p0, p1, p2, n) {
   const out = [];
   for (let i = 0; i <= n; i++) { const t = i / n, u = 1 - t; out.push([u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]); }
@@ -118,6 +128,50 @@ const MAPGEN = {
     const top = x => 700 + 34 * tsin(Math.PI * (x - 520) / span);
     fillBand(mask, W, H, 520, W - 521, top, x => top(x) + 46 * THICK);
   },
+  // snow fortress: rolling snow fields, a stone castle wall near each side to hide behind or shoot over
+  snow(W, H, mask) {
+    const cx = W / 2;
+    const top = x => 650 + 70 * tsin(x / 420) + 40 * tsin(x / 173 + 1) + 8 * tsin(x / 37) - 90 * Math.max(0, 1 - Math.abs(x - cx) / 700);
+    const bot = x => { const e = Math.min(x - 100, W - 100 - x); return Math.min(H - 70, top(x) + Math.min(THICK * 260, 40 + e * 1.2)); };
+    fillBand(mask, W, H, 100, W - 101, top, bot);
+    for (const fx of [0.22, 0.78]) {
+      const x = Math.round(W * fx), g = Math.min(top(x - 60), top(x + 60));
+      fillPoly(mask, W, H, [[x - 60, g + 30], [x - 60, g - 150], [x + 60, g - 150], [x + 60, g + 30]]);
+      for (let k = 0; k < 4; k++) fillPoly(mask, W, H, [[x - 60 + k * 34, g - 149], [x - 60 + k * 34, g - 176], [x - 60 + k * 34 + 18, g - 176], [x - 60 + k * 34 + 18, g - 149]]);
+    }
+  },
+  // volcano: a cone in the middle, two lava pits with floating rocks above them
+  lava(W, H, mask) {
+    const cx = W / 2;
+    const top = x => {
+      const d = Math.abs(x - cx), c = Math.max(0, 1 - d / 1050);
+      let t = 830 + 30 * tsin(x / 190) + 12 * tsin(x / 53) - 430 * c * c * (3 - 2 * c);
+      if (d < 130) t += 90 * (1 - d / 130);
+      return t;
+    };
+    const bot = x => Math.min(H - 60, 830 + THICK * 300 + 20 * tsin(x / 90));
+    const g1 = Math.round(W * 0.27), g2 = Math.round(W * 0.73), gw = 120;
+    fillBand(mask, W, H, 150, g1 - gw, top, bot);
+    fillBand(mask, W, H, g1 + gw, g2 - gw, top, bot);
+    fillBand(mask, W, H, g2 + gw, W - 151, top, bot);
+    for (const gx of [g1, g2]) fillBand(mask, W, H, gx - 150, gx + 150, x => 560 + 26 * Math.pow((x - gx) / 150, 2) + 4 * tsin(x / 17), x => 560 + THICK * 70 - 60 * Math.pow((x - gx) / 150, 2));
+  },
+  // moon base: low gravity (see CONFIG.maps.moon.gravity), craters and two flat mesas
+  moon(W, H, mask) {
+    const top = x => 720 + 60 * tsin(x / 510) + 30 * tsin(x / 190 + 2) + 5 * tsin(x / 29);
+    const bot = x => { const e = Math.min(x - 120, W - 120 - x); return Math.min(H - 70, top(x) + Math.min(THICK * 260, 40 + e * 1.2)); };
+    fillBand(mask, W, H, 120, W - 121, top, bot);
+    for (const fx of [0.33, 0.67]) { const x = Math.round(W * fx), g = top(x); fillPoly(mask, W, H, [[x - 170, g + 20], [x - 130, g - 150], [x + 130, g - 150], [x + 170, g + 20]]); }
+    for (const [fx, r] of [[0.14, 150], [0.5, 230], [0.86, 150], [0.24, 90], [0.76, 90]]) { const x = Math.round(W * fx); clearCircle(mask, W, H, x, top(x) - r * 0.62, r); }
+  },
+  // islands: five islands over the sea; falling into the water is a fall-out
+  islands(W, H, mask) {
+    for (const [fx, hw, lift] of [[0.12, 400, 0], [0.32, 300, 70], [0.5, 360, -30], [0.68, 300, 70], [0.88, 400, 0]]) {
+      const cx = Math.round(W * fx);
+      const top = x => { const u = (x - cx) / hw; return 1120 - lift - 280 * Math.pow(Math.max(0, 1 - u * u), 0.55) + 6 * tsin(x / 31); };
+      fillBand(mask, W, H, cx - hw, cx + hw, top, () => H - 4);
+    }
+  },
 };
 
 function maskSurface(mask, W, H, x, from) {
@@ -140,7 +194,11 @@ function buildMap(mapId) {
     if (yl < 0 || yr < 0 || Math.abs(yl - y) > 12 || Math.abs(yr - y) > 12) continue;
     cand.push(x);
   }
-  const N = 12, spawns = [];
-  for (let i = 0; i < N; i++) spawns.push(cand[Math.round(i * (cand.length - 1) / (N - 1))]);
+  // 12 spawns as far apart as possible: the largest gap G that still lets a left-to-right pass pick 12, then spread evenly
+  const N = 12;
+  const pick = G => { const out = []; for (const x of cand) if (!out.length || x - out[out.length - 1] >= G) out.push(x); return out; };
+  let G = 600; while (G > 20 && pick(G).length < N) G -= 10;
+  const all = pick(G), spawns = [];
+  for (let i = 0; i < N; i++) spawns.push(all[Math.round(i * (all.length - 1) / (N - 1))]);
   return { id: mapId, W, H, mask, spawns, theme: meta.theme };
 }
