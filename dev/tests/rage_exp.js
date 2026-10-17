@@ -28,7 +28,7 @@ if (isMainThread) {
     const A = load(); VARIANTS[job.v](A.CONFIG);
     const pl = [{ id: 'a', nick: 'a', team: 'red', tankId: job.swap ? job.o : 'rage' }, { id: 'b', nick: 'b', team: 'blue', tankId: job.swap ? 'rage' : job.o }];
     const m = A.createMatch({ seed: job.seed, mapId: job.map, players: pl }); const rnd = lcg(job.seed * 31 + 7); let g = 0;
-    while (m.phase !== 'over' && m.turnNo <= 80 && g++ < 400000) { if (m.phase === 'aim') A.botPlayTurn(m, 'normal', rnd); else A.step(m); }
+    while (m.phase !== 'over' && m.turnNo <= 80 && g++ < 400000) { if (m.phase === 'aim') A.botPlayTurn(m, 'measure', rnd); else A.step(m); }
     const rage = m.tanks.find(t => t.tankId === 'rage'), opp = m.tanks.find(t => t !== rage);
     let win;
     if (m.phase === 'over') win = m.winner === rage.team ? 1 : m.winner === 'draw' ? 0.5 : 0;

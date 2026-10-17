@@ -8,7 +8,7 @@ for (let seed = from; seed < from + count; seed++) {
   const rnd = lcg(seed * 31 + 7); let guard = 0, t0 = Date.now(), aimRepeat = 0;
   while (m.phase !== 'over' && m.turnNo <= 80 && guard++ < 400000) {
     if (m.phase === 'aim') {
-      A.botPlayTurn(m, 'normal', rnd);
+      A.botPlayTurn(m, 'measure', rnd);
       if (m.phase === 'aim') { if (++aimRepeat > 3) { const t = A.curTank(m); console.log('STUCK-AIM seed', seed, 'turn', m.turnNo, t.tankId, 'alive', t.alive, 'fuel', t.fuel, 'x', t.x, 'y', t.y); break; } } else aimRepeat = 0;
     } else A.step(m);
     if (Date.now() - t0 > 6000) { console.log('SLOW seed', seed, 'phase', m.phase, 'turn', m.turnNo, 'tick', m.tick, 'proj', JSON.stringify(m.proj.map(p => [Math.round(p.x), Math.round(p.y), Math.round(p.vx), Math.round(p.vy)])), 'sched', m.sched.length, 'tanks', JSON.stringify(m.tanks.map(t => [t.alive, t.falling, t.y, t.vy]))); break; }

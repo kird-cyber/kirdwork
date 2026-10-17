@@ -13,7 +13,7 @@ if (isMainThread) {
   parentPort.on('message', job => {
     const pl = [{ id: 'a', nick: 'a', team: job.swap ? 'blue' : 'red', tankId: 'kird' }, { id: 'b', nick: 'b', team: job.swap ? 'red' : 'blue', tankId: job.o }];
     const m = A.createMatch({ seed: job.seed, mapId: job.map, players: pl }); const rnd = lcg(job.seed * 31 + 7); let g = 0;
-    while (m.phase !== 'over' && m.turnNo <= 80 && g++ < 400000) { if (m.phase === 'aim') A.botPlayTurn(m, 'normal', rnd); else A.step(m); }
+    while (m.phase !== 'over' && m.turnNo <= 80 && g++ < 400000) { if (m.phase === 'aim') A.botPlayTurn(m, 'measure', rnd); else A.step(m); }
     const k = m.tanks.find(t => t.tankId === 'kird'), o = m.tanks.find(t => t !== k);
     const win = m.phase === 'over' ? (m.winner === k.team ? 1 : m.winner === 'draw' ? 0.5 : 0) : (k.hp / k.maxhp > o.hp / o.maxhp ? 1 : 0);
     parentPort.postMessage({ o: job.o, win });

@@ -276,7 +276,7 @@ window.addEventListener('resize', () => R.resize());
 // ---------------------------------------------------------------- setup
 const setup = { map: 'temple', red: 2, blue: 2, slots: { red: [], blue: [] } };
 let thumbs = {};
-function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'normal' }; }
+function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
 const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
 for (const team of ['red', 'blue']) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
 try { const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null'); if (sv && sv.slots) Object.assign(setup, sv); } catch (e) {}
@@ -321,7 +321,7 @@ function renderSetup() {
     inp.oninput = () => { sl.nick = inp.value; saveSetup(); };
     const sel = document.createElement('select'); sel.className = 'ctl'; sel.setAttribute('aria-label', `${sp.textContent} 조작`);
     for (const [v, lb] of CTL) { const o = document.createElement('option'); o.value = v; o.textContent = lb; sel.append(o); }
-    if (!sl.ctl) sl.ctl = team === 'red' ? 'human' : 'normal';
+    if (!sl.ctl) sl.ctl = team === 'red' ? 'human' : 'easy';
     sel.value = sl.ctl; sel.onchange = () => { sl.ctl = sel.value; saveSetup(); };
     tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
@@ -371,7 +371,7 @@ function tutorialFrame() {
 const PRACTICE = { bots: {} };
 function practiceOpts(bots) {
   PRACTICE.bots = bots;
-  const B = { turn: -1 };
+  const B = { turn: -1, mem: {} };
   return {
     isLocal: idx => !bots[match.tanks[idx].id],
     remote: (m, t) => {
@@ -380,7 +380,7 @@ function practiceOpts(bots) {
       if (ctrl.timeLeft > 0) ctrl.timeLeft--;
       if (B.stage === 'think') {
         if (--B.wait > 0) return;
-        B.plan = botPlan(m, lv, Math.random);
+        B.plan = botPlan(m, lv, Math.random, B.mem[t.id] || (B.mem[t.id] = {}));
         if (m.phase !== 'aim') return;
         if (!B.plan) { cmdTimeout(m); return; }
         B.aimF = t.aim; B.stage = 'aim'; return;
@@ -427,7 +427,7 @@ function startGame() {
     const players = [];
     for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
       const sl = setup.slots[team][i];
-      const ctl = sl.ctl || (team === 'red' ? 'human' : 'normal');
+      const ctl = sl.ctl || (team === 'red' ? 'human' : 'easy');
       players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
     }
     const seed = (Math.random() * 4294967296) >>> 0;

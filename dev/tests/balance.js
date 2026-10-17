@@ -21,7 +21,7 @@ function playGame(A, job) {
   return { a: job.a, b: job.b, map: job.map, res, turns: m.turnNo, over: m.phase === 'over', fallA: ta.deathCause === 'fall', fallB: tb.deathCause === 'fall' };
 }
 if (isMainThread) {
-  const N = +(process.argv[2] || 2), level = process.argv[3] || 'normal';
+  const N = +(process.argv[2] || 2), level = process.argv[3] || 'measure';
   const A = load(), T = Object.keys(A.CONFIG.tanks), M = Object.keys(A.CONFIG.maps);
   const jobs = []; let seed = 1;
   for (let i = 0; i < T.length; i++) for (let j = i; j < T.length; j++) for (const map of M) for (let k = 0; k < N; k++) jobs.push({ a: T[i], b: T[j], map, seed: seed++, level, swap: k % 2 });
