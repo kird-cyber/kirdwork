@@ -2,8 +2,8 @@
 const fs = require('fs'), path = require('path');
 const level = process.argv[2] || 'normal';
 const R = JSON.parse(fs.readFileSync(path.join(__dirname, 'out', `balance_${level}.json`)));
-const T = ['boulder', 'viper', 'hammer', 'rookie', 'trapper', 'swarm', 'prism', 'rage'], M = ['temple', 'valley', 'clouds', 'bridge', 'snow', 'lava', 'moon', 'islands'];
-const NAME = { boulder: '볼더', viper: '바이퍼', hammer: '해머', rookie: '루키', trapper: '트래퍼', swarm: '스웜', prism: '프리즘', rage: '레이지' };
+const T = ['boulder', 'viper', 'hammer', 'rookie', 'trapper', 'swarm', 'prism', 'rage', 'kird'], M = ['temple', 'valley', 'clouds', 'bridge', 'snow', 'lava', 'moon', 'islands'];
+const NAME = { boulder: '볼더', viper: '바이퍼', hammer: '해머', rookie: '루키', trapper: '트래퍼', swarm: '스웜', prism: '프리즘', rage: '레이지', kird: '케이' };
 const MAPN = { temple: '사막 신전', valley: '협곡 도시', clouds: '구름 대륙', bridge: '외나무 다리', snow: '설원 요새', lava: '화산 지대', moon: '달 기지', islands: '푸른 군도' };
 const score = (r, side) => r.res === side ? 1 : r.res === 'draw' ? 0.5 : 0;
 const W = {}, N = {}, mapW = {}, mapN = {};

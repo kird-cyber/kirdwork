@@ -7,25 +7,34 @@ const BOT_LEVELS = {
 };
 
 // Predict where a shot lands (or how close it passes the target). Returns miss distance in px.
+// Follows the same special rules as the simulation for bouncing and splitting shells.
 function botPredict(m, t, angle, power, wIdx, target) {
   const d = CONFIG.tanks[t.tankId], w = d.weapons[wIdx], P = CONFIG.physics;
   const mz = muzzleOf(t, angle), dir = aimVector(t, angle, 0);
   const v = P.maxSpeed * power / 1000 * d.powerMul;
-  let x = mz.x, y = mz.y, vx = dir.x * v, vy = dir.y * v, age = 0;
-  const wa = m.wind * P.windAccel * w.windMul, g = P.gravity * w.gravityMul * (CONFIG.maps[m.mapId].gravity || 1);
-  const tc = tankCenter(target);
+  return botFly(m, t, w, target, mz.x, mz.y, dir.x * v, dir.y * v, 0, false, false);
+}
+function botFly(m, t, w, target, x, y, vx, vy, age, bounced, child) {
+  const P = CONFIG.physics, wa = m.wind * P.windAccel * w.windMul, g = P.gravity * w.gravityMul * (CONFIG.maps[m.mapId].gravity || 1);
+  const tc = tankCenter(target), pat = w.pattern;
   let best = 1e9;
   for (let tick = 0; tick < 1400; tick++) {
     const sp = Math.sqrt(vx * vx + vy * vy), n = Math.max(1, Math.ceil(sp * TICK / 6)), h = TICK / n;
     for (let i = 0; i < n; i++) {
       vx += wa * h; vy += g * h; x += vx * h; y += vy * h; age += h;
+      if (pat.kind === 'split' && !child && vy >= 0) {
+        let mm = 1e9;
+        for (const sgn of [1, -1]) { const c = cosD10(pat.spread * sgn), s = sinD10(pat.spread * sgn); mm = Math.min(mm, botFly(m, t, w, target, x, y, vx * c - vy * s, vx * s + vy * c, age, bounced, true)); }
+        return mm;
+      }
       const dx = x - tc.x, dy = y - tc.y, dd = dx * dx + dy * dy;
       if (dd < best) best = dd;
       if (dd < 400) return 0;
       if (x < -400 || x > m.W + 400 || y > m.H + 200) return Math.sqrt(best) + 400;
       if (solidAt(m, x, y)) {
+        if (pat.kind === 'bounce' && !bounced) { bounced = true; x -= vx * h; y -= vy * h; vy = -Math.abs(vy) * pat.keep; vx *= 0.8; continue; }
         // blocked by terrain: distance from the impact to the target
-        return Math.sqrt(dx * dx + dy * dy) + (w.pattern.kind === 'orbital' ? -30 : 0);
+        return Math.sqrt(dx * dx + dy * dy) + (pat.kind === 'orbital' ? -30 : 0);
       }
       for (const o of m.tanks) {
         if (!o.alive || o === target || (o === t && age < 0.25)) continue;

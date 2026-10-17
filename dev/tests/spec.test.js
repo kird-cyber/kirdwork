@@ -252,6 +252,24 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
   check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));
 }
+{ // random-only company tank: bounce + K split, and the 1/9 odds
+  const mb = field([{ tank: 'kird', x: 1000 }, { tank: 'rookie', x: 3500 }]);
+  const rb = fireAndTrace(mb, 35, 520, 0);
+  const bn = rb.evs.filter(e => e.type === 'bounce').length, bm = rb.evs.filter(e => e.type === 'boom').length;
+  const firstBounce = rb.evs.find(e => e.type === 'bounce'), boom = rb.evs.find(e => e.type === 'boom');
+  check('케이', 'K-바운스탄: 땅에 한 번 튕긴 뒤 폭발', '튕김 1, 폭발 1, 폭발은 튕긴 곳보다 멀리', `튕김 ${bn}, 폭발 ${bm}`, bn === 1 && bm === 1 && boom.x > firstBounce.x);
+  const ms = field([{ tank: 'kird', x: 1000 }, { tank: 'rookie', x: 3500 }]);
+  const rs = fireAndTrace(ms, 45, 700, 1);
+  const sp = rs.evs.filter(e => e.type === 'split').length, booms = rs.evs.filter(e => e.type === 'boom');
+  check('케이', 'K-분열탄: 정점에서 두 갈래로 갈라져 2번 폭발', '분열 1, 폭발 2 (서로 떨어진 곳)', `분열 ${sp}, 폭발 ${booms.length}${booms.length === 2 ? `, 간격 ${Math.round(Math.abs(booms[0].x - booms[1].x))}px` : ''}`, sp === 1 && booms.length === 2 && Math.abs(booms[0].x - booms[1].x) > 80);
+  check('케이', '직접 고를 수 없음 (히든)', 'hidden', CONFIG.tanks.kird.hidden ? 'hidden' : '선택 가능', !!CONFIG.tanks.kird.hidden);
+  const PICK = Object.keys(CONFIG.tanks).filter(k => !CONFIG.tanks[k].hidden);
+  const roll = rnd => rnd() < CONFIG.randomTank.chance ? CONFIG.randomTank.id : PICK[Math.floor(rnd() * PICK.length)];
+  let seed = 99; const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  const N = 90000, cnt = {}; for (let i = 0; i < N; i++) { const k = roll(rnd); cnt[k] = (cnt[k] || 0) + 1; }
+  const pk = cnt.kird / N;
+  check('케이', '랜덤 9만 번 → 케이 확률 1/9', '0.111', pk.toFixed(3), Math.abs(pk - 1 / 9) < 0.005 && PICK.every(k => Math.abs(cnt[k] / N - 1 / 9) < 0.006));
+}
 { // happenings
   const H = CONFIG.happenings;
   // meteor: announced at a turn start, lands once time runs and hurts whoever stands there

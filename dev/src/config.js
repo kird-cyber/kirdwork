@@ -63,7 +63,7 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
-        { id: 'ap', name: '철갑 포탄', dmg: 285, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'ball', color: '#4A5269', size: 1 } },
+        { id: 'ap', name: '철갑 포탄', dmg: 275, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'ball', color: '#4A5269', size: 1 } },
         { id: 'redflare', name: '홍염탄', dmg: 480, radius: 46, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'ball', color: '#F0442E', size: 1.4, glow: '#FF7A4A' } },
       ],
     },
@@ -90,7 +90,7 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
-        { id: 'missile', name: '유도 미사일', dmg: 250, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
+        { id: 'missile', name: '유도 미사일', dmg: 242, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
         { id: 'mlrs', name: '다연장 6연발', dmg: 90, radius: 26, windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 120, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
       ],
     },
@@ -112,7 +112,18 @@ const CONFIG = {
         { id: 'orbital', name: '궤도 낙하', dmg: 240, radius: 48, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
+    // random-only tank in company colours. Never pickable; "?" gives it with randomTank.chance.
+    kird: {
+      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 234, speedClass: 3, angleMin: 20, angleMax: 60, powerMul: 1,
+      traits: {},
+      sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 84, behind: true },
+      weapons: [
+        { id: 'kbounce', name: 'K-바운스탄', dmg: 255, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'ball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 190, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ball', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+      ],
+    },
   },
+  randomTank: { id: 'kird', chance: 1 / 9 },
 
   // happenings (like the original): one is drawn per match before it starts
   happenings: {

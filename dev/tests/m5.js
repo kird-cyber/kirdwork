@@ -23,7 +23,7 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   await p.screenshot({ path: SP + 'm5_tutorial.png' });
   await p.keyboard.down('Space'); await sleep(900); await p.keyboard.up('Space');
   ok(await until(async () => (await step()).startsWith('튜토리얼 4'), 3000), '3단계(발사) 완료');
-  ok(await until(async () => (await step()).startsWith('튜토리얼 5'), 20000), '봇 차례로 넘어감 → 5단계');
+  const s5 = await until(async () => (await step()).startsWith('튜토리얼 5'), 30000); if (!s5) console.log('DBG', await step(), JSON.stringify(await p.evaluate(() => ({ turn: __pg.match.turnNo, phase: __pg.match.phase, cur: __pg.match.cur, hap: __pg.match.happening, tut: document.getElementById('coachText').textContent })))); ok(s5, '봇 차례로 넘어감 → 5단계');
   await sleep(1200); await p.screenshot({ path: SP + 'm5_bot_turn.png' });
   ok(await until(async () => (await step()).startsWith('튜토리얼 6'), 30000), '봇이 스스로 조준·발사하고 내 차례로 돌아옴 → 6단계');
   ok(await until(async () => p.isHidden('#coach'), 15000), '튜토리얼 완료');

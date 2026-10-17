@@ -12,7 +12,7 @@ function onlineId() {
 }
 function savedNick() { try { return localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
 function saveNick(n) { try { localStorage.setItem('pg.nick', n); } catch (e) {} }
-function savedTank() { try { const t = localStorage.getItem('pg.tank'); return CONFIG.tanks[t] ? t : 'rookie'; } catch (e) { return 'rookie'; } }
+function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden) ? t : 'rookie'; } catch (e) { return 'rookie'; } }
 function saveTank(t) { try { localStorage.setItem('pg.tank', t); } catch (e) {} }
 function brokerOverride() { try { return new URLSearchParams(location.search).get('broker'); } catch (e) { return null; } }
 function brokerUrl(i) { return brokerOverride() || BROKERS[i] || BROKERS[0]; }
@@ -167,7 +167,7 @@ function playerCard(p, room) {
   const info = document.createElement('div'); info.className = 'pi';
   const nm = document.createElement('b'); nm.textContent = p.nick; info.append(nm);
   const tags = document.createElement('span'); tags.className = 'tags';
-  tags.textContent = [CONFIG.tanks[p.tank] ? CONFIG.tanks[p.tank].name : '', host ? '방장' : '', me ? '나' : '', L.online(p.id) || me ? '' : '연결 끊김'].filter(Boolean).join(' · ');
+  tags.textContent = [tankLabel(p.tank), host ? '방장' : '', me ? '나' : '', L.online(p.id) || me ? '' : '연결 끊김'].filter(Boolean).join(' · ');
   if (!host && p.ready) { const r = document.createElement('span'); r.className = 'ready'; r.textContent = ' · 준비 완료'; tags.append(r); }
   info.append(tags); el.append(info);
   const act = document.createElement('div'); act.className = 'pa';
@@ -203,13 +203,7 @@ function renderLobby() {
   // my tank
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
-  for (const k of TANK_KEYS) {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'pick' + (myTank === k ? ' sel' : '');
-    b.append(cloneCanvas(thumbs[k])); const s = document.createElement('span'); s.textContent = CONFIG.tanks[k].name; b.append(s);
-    b.setAttribute('aria-pressed', String(myTank === k));
-    b.onclick = () => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); };
-    picks.append(b);
-  }
+  buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크');
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
@@ -236,6 +230,7 @@ function renderLobby() {
   updateNetStatus();
 }
 function renderTankInfo(k) {
+  if (k === 'random' || !CONFIG.tanks[k]) { const h = CONFIG.tanks[CONFIG.randomTank.id]; $('tankInfo').textContent = `랜덤: 시작할 때 8종 중 하나로 정해집니다 · 1/9 확률로 히든 탱크 "${h.name}" (${h.weapons[0].name} · ${h.weapons[1].name})`; return; }
   const d = CONFIG.tanks[k];
   $('tankInfo').textContent = `${d.name} · 체력 ${d.hp} · 이동 ${d.movePx} · 각도 ${d.angleMin}°–${d.angleMax}° · 1번 ${d.weapons[0].name} · 2번 ${d.weapons[1].name}`;
 }

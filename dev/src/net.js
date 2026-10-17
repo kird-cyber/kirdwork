@@ -12,6 +12,7 @@ const NET_PREFIX = 'kwpg/v1/';
 const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
 function genId() { return genCode(10).toLowerCase(); }
+function pickable(t) { return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden); }
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
 
 // o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
@@ -164,11 +165,11 @@ function createRoomLink(o) {
       if (room.state !== 'lobby' || r.banned[q.id]) return;
       if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
       const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
-      room.players.push({ id: q.id, nick: String(q.nick || '').slice(0, 8) || '손님', team, tank: CONFIG.tanks[q.tank] ? q.tank : 'rookie' });
+      room.players.push({ id: q.id, nick: String(q.nick || '').slice(0, 8) || '손님', team, tank: pickable(q.tank) ? q.tank : 'rookie' });
       publishRoom();
     } else if (!p || room.state !== 'lobby') return;
     else if (q.type === 'team') { if (r.setTeam(q.id, q.team, true)) publishRoom(); }
-    else if (q.type === 'tank') { if (CONFIG.tanks[q.tank]) { p.tank = q.tank; publishRoom(); } }
+    else if (q.type === 'tank') { if (pickable(q.tank)) { p.tank = q.tank; publishRoom(); } }
     else if (q.type === 'leave') { room.players = room.players.filter(x => x.id !== q.id); publishRoom(); }
     else if (q.type === 'ready') { p.ready = !!q.ready; publishRoom(); }
   }
@@ -192,7 +193,7 @@ function createRoomLink(o) {
     if (old) pub('g/' + old.gid + '/log', null, true); // clear the previous game's retained log
     r.room.game = {
       gid: genId(), seed: (Math.random() * 4294967296) >>> 0, mapId: r.room.map, at: Date.now(),
-      players: r.room.players.map(p => ({ id: p.id, nick: p.nick, team: p.team, tankId: p.tank })),
+      players: r.room.players.map(p => ({ id: p.id, nick: p.nick, team: p.team, tankId: pickable(p.tank) && p.tank !== 'random' ? p.tank : rollRandomTank(Math.random) })), // the host rolls "?" once, everyone gets the result
     };
     r.room.state = 'game';
     r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};

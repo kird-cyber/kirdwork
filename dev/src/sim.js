@@ -352,7 +352,7 @@ function spawnShot(m, ev) {
   m.events.push({ type: 'shot', x: mz.x, y: mz.y, idx: t.idx, wIdx: ev.wIdx });
 }
 function stepProjectiles(m) {
-  const P = CONFIG.physics, wa = m.wind * P.windAccel, gm = CONFIG.maps[m.mapId].gravity || 1;
+  const P = CONFIG.physics, wa = m.wind * P.windAccel, gm = CONFIG.maps[m.mapId].gravity || 1, born = [];
   for (const p of m.proj) {
     const owner = m.tanks[p.idx], w = CONFIG.tanks[owner.tankId].weapons[p.wIdx];
     const sp = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
@@ -362,7 +362,18 @@ function stepProjectiles(m) {
       p.x += p.vx * h; p.y += p.vy * h; p.age += h;
       if (m.column && !p.inCol && Math.abs(p.x - m.column.x) < CONFIG.happenings[m.column.kind].w) columnHit(m, p);
       if (p.x < -400 || p.x > m.W + 400 || p.y > m.H + 200) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y, tele: !!p.tele }); break; }
-      if (solidAt(m, p.x, p.y)) { p.dead = true; impact(m, p, p.x, p.y); break; }
+      // K split: at the top of its arc the shell becomes two (the arms of a K)
+      if (w.pattern.kind === 'split' && !p.child && p.vy >= 0) { p.dead = true; splitShell(m, p, w.pattern, born); break; }
+      if (solidAt(m, p.x, p.y)) {
+        // bounce: the first touch of the ground throws it back up, the second one explodes
+        if (w.pattern.kind === 'bounce' && !p.bounced) {
+          p.bounced = true; p.x -= p.vx * h; p.y -= p.vy * h;
+          p.vy = -Math.abs(p.vy) * w.pattern.keep; p.vx *= 0.8;
+          m.events.push({ type: 'bounce', x: p.x, y: p.y });
+          continue;
+        }
+        p.dead = true; impact(m, p, p.x, p.y); break;
+      }
       for (const t of m.tanks) {
         if (!t.alive || (t.idx === p.idx && p.age < 0.25)) continue;
         const c = tankCenter(t), dx = c.x - p.x, dy = c.y - p.y;
@@ -371,6 +382,14 @@ function stepProjectiles(m) {
     }
   }
   m.proj = m.proj.filter(p => !p.dead);
+  for (const b of born) m.proj.push(b);
+}
+function splitShell(m, p, pat, born) {
+  for (const sgn of [1, -1]) {
+    const c = cosD10(pat.spread * sgn), s = sinD10(pat.spread * sgn);
+    born.push({ x: p.x, y: p.y, vx: p.vx * c - p.vy * s, vy: p.vx * s + p.vy * c, idx: p.idx, wIdx: p.wIdx, age: p.age, amp: p.amp, berserk: p.berserk, calm: p.calm, fire: p.fire, inCol: p.inCol, child: true, id: m.schedSeq++ });
+  }
+  m.events.push({ type: 'split', x: p.x, y: p.y });
 }
 // Teleport shell: the shooter appears on the ground where it lands. Off-map = wasted.
 function teleLand(m, p, x, y) {

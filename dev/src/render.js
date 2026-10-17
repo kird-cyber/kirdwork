@@ -361,6 +361,8 @@ function createRenderer(cv, mini) {
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
         case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;
+        case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
+        case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;
         case 'pillarHit': burst(e.x, e.y, '#FFB040', 14); text(e.x, e.y - 30, '불꽃 강화!', '#FFB040'); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
@@ -726,7 +728,9 @@ function createRenderer(cv, mini) {
   // Projectiles are drawn about 2.1x larger than before so their size reads like the blast they make (drawing only, hits unchanged)
   const PS = 2.1;
   function drawProj(p) {
-    const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx], look = p.tele ? TELE_LOOK : w.look;
+    const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx];
+    let look = p.tele ? TELE_LOOK : w.look;
+    if (p.child) look = p.id % 2 ? { shape: 'ball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } : { shape: 'ball', color: '#8CC63F', size: 1, glow: '#D8F59A' };
     const tr = R.trails[p.id] || (R.trails[p.id] = []);
     if (look.shape === 'missile' && vrnd() < 0.7) R.fx.push({ kind: 'smoke', x: p.x, y: p.y, vy: -10, t: 0, life: 0.7, r: 6 + vrnd() * 6 });
     tr.push(p.x, p.y); if (tr.length > (look.shape === 'beam' ? 44 : 28)) tr.splice(0, 2);

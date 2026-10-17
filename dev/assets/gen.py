@@ -524,7 +524,57 @@ def rage():
     return s
 
 
-TANKS = dict(boulder=boulder, viper=viper, hammer=hammer, rookie=rookie, trapper=trapper, swarm=swarm, prism=prism, rage=rage)
+# ---------------------------------------------------------------- KIRD (random-only, company colours: blue + leaf green, K emblem)
+def kird():
+    s = S("kd")
+    ol = "#0E2238"
+    shadow(s, 128, 98)
+    # antenna + green leaf pennant
+    s.add(f'<path d="M144 62 L150 24" stroke="{ol}" stroke-width="3" stroke-linecap="round"/>')
+    s.add(f'<circle cx="150" cy="22" r="4.5" fill="#B6F25A" stroke="{ol}" stroke-width="2"/>')
+    s.add("§WS")
+    # barrel with a forked (split) muzzle
+    bar = s.lg("bar", [(0, "#A8D6FF"), (0.5, "#2E86D6"), (1, "#16508C")])
+    s.add(f'<rect x="150" y="70" width="62" height="14" rx="6" fill="{bar}" stroke="{ol}" stroke-width="3.5"/>')
+    s.add('<path d="M156 73.5 L206 73.5" stroke="#E6F4FF" stroke-width="2" stroke-linecap="round"/>')
+    s.add(f'<rect x="170" y="67" width="10" height="20" rx="3" fill="#8CC63F" stroke="{ol}" stroke-width="3"/>')
+    grn = s.lg("grn", [(0, "#D8F59A"), (1, "#5E9A22")])
+    s.add(f'<path d="M210 70 L232 60 L236 68 L214 77 Z" fill="{grn}" stroke="{ol}" stroke-width="3" stroke-linejoin="round"/>')
+    s.add(f'<path d="M210 84 L232 94 L236 86 L214 77 Z" fill="{bar}" stroke="{ol}" stroke-width="3" stroke-linejoin="round"/>')
+    s.add("§WE")
+    treads(s, 32, 136, 192, 38, 5, dict(hl="#9DB4CC", base="#5E7690", mid="#3E536B", deep="#24344A",
+                                        wheel_hl="#E2F0FF", wheel="#7FA0C4", wheel_deep="#3A5574", hub="#22344A"), ol, neon="#8CC63F")
+    # rear K-wing, shaped like the logo: a curved blue stem and a green leaf
+    stem = s.lg("stem", [(0, "#8CC8FF"), (0.5, "#2E86D6"), (1, "#16508C")], 0, 0, 1, 0)
+    s.add(f'<path d="M44 104 Q36 72 50 46 Q56 38 64 42 Q70 46 66 56 Q58 76 64 102 Z" fill="{stem}" stroke="{ol}" stroke-width="3.5" stroke-linejoin="round"/>')
+    s.add('<path d="M52 52 Q48 70 52 92" stroke="#DDF0FF" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>')
+    lf = s.lg("lf", [(0, "#E2F8A8"), (0.5, "#8CC63F"), (1, "#4E8A1C")], 0, 0, 1, 1)
+    s.add(f'<path d="M62 78 Q70 50 96 40 Q100 52 92 62 Q82 74 66 82 Z" fill="{lf}" stroke="{ol}" stroke-width="3.5" stroke-linejoin="round"/>')
+    # hull: sleek wedge
+    hull = s.lg("hull", ramp("#9ED2FF", "#2E86D6", "#1E66B0", "#123F73"))
+    s.add(f'<path d="M34 140 L44 112 Q50 98 66 96 L180 94 Q200 94 210 106 L224 140 Z" fill="{hull}" stroke="{ol}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add('<path d="M58 101 L182 99" stroke="#E6F4FF" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>')
+    s.add('<path d="M42 126 L216 126" stroke="#16508C" stroke-width="2"/>')
+    for x in range(58, 210, 22):
+        bolt(s, x, 132, 2.3, "#7FB8EE", ol)
+    # K emblem badge (blue stem + lower arm, green upper arm like the logo)
+    s.add(f'<rect x="58" y="104" width="34" height="20" rx="6" fill="#F4FAFF" stroke="{ol}" stroke-width="2.2"/>')
+    s.add('<path d="M66 108 L66 120 M66 116 Q72 112 76 120" stroke="#2E86D6" stroke-width="4.2" fill="none" stroke-linecap="round"/>')
+    s.add('<path d="M70 113 Q76 106 84 107" stroke="#8CC63F" stroke-width="4.2" fill="none" stroke-linecap="round"/>')
+    # visor eye in leaf green
+    eye(s, 182, 104, 26, 10, ol, "#B6F25A")
+    # turret dome
+    tur = s.rg("tur", [(0, "#DDF0FF"), (0.35, "#5AA6EC"), (0.8, "#1E66B0"), (1, "#123F73")], cx=0.35, cy=0.25, r=0.85)
+    s.add(f'<path d="M82 98 Q82 54 124 52 Q166 54 168 98 Z" fill="{tur}" stroke="{ol}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add('<path d="M94 76 Q100 62 118 58" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>')
+    # green band across the dome
+    s.add(f'<path d="M86 86 Q124 78 164 86 L165 92 Q124 84 85 92 Z" fill="{grn}" stroke="{ol}" stroke-width="2"/>')
+    s.add(f'<ellipse cx="124" cy="56" rx="15" ry="5.5" fill="#8CC8FF" stroke="{ol}" stroke-width="3"/>')
+    s.add(f'<rect x="136" y="60" width="11" height="8" rx="2" fill="#123F73" stroke="{ol}" stroke-width="2"/><rect x="138" y="62" width="6" height="3" fill="#B6F25A"/>')
+    return s
+
+
+TANKS = dict(boulder=boulder, viper=viper, hammer=hammer, rookie=rookie, trapper=trapper, swarm=swarm, prism=prism, rage=rage, kird=kird)
 
 if __name__ == "__main__":
     for k, f in TANKS.items():

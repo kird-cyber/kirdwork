@@ -10,6 +10,30 @@ R.onHitstop = ms => { if (!R.reduceMotion) freezeUntil = performance.now() + ms;
 R.onEngine = on => AU.setEngine(on);
 let match = null, ctrl = null;
 const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.items);
+const PICK_KEYS = TANK_KEYS.filter(k => !CONFIG.tanks[k].hidden), HIDDEN_KEYS = TANK_KEYS.filter(k => CONFIG.tanks[k].hidden);
+// "?" = random: one of the pickable tanks, or with randomTank.chance the hidden company tank
+function rollRandomTank(rnd) { const RT = CONFIG.randomTank; return rnd() < RT.chance ? RT.id : PICK_KEYS[Math.floor(rnd() * PICK_KEYS.length)]; }
+function tankLabel(k) { return k === 'random' ? '랜덤' : CONFIG.tanks[k] ? CONFIG.tanks[k].name : ''; }
+function randomThumb(w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+  x.fillStyle = '#FFD24A'; x.font = `900 ${Math.round(h * 0.72)}px "Black Han Sans", "Noto Sans KR", sans-serif`; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.lineWidth = 6; x.strokeStyle = '#3A2A00'; x.strokeText('?', w / 2, h * 0.54); x.fillText('?', w / 2, h * 0.54);
+  return c;
+}
+// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tank greyed out (shown, not pickable)
+function buildPicks(box, current, onPick, label) {
+  for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
+    const hidden = HIDDEN_KEYS.includes(k);
+    const b = document.createElement('button'); b.type = 'button';
+    b.className = 'pick' + (current === k ? ' sel' : '') + (hidden ? ' locked' : '') + (k === 'random' ? ' rnd' : '');
+    b.append(cloneCanvas(thumbs[k]));
+    const sp = document.createElement('span'); sp.textContent = hidden ? '랜덤 전용' : tankLabel(k); b.append(sp);
+    b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
+    if (hidden) { b.disabled = true; b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/9 확률로 나옵니다`; }
+    else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
+    box.append(b);
+  }
+}
 
 // ---------------------------------------------------------------- banner / over
 let bannerTimer = 0;
@@ -301,19 +325,13 @@ function renderSetup() {
     sel.value = sl.ctl; sel.onchange = () => { sl.ctl = sel.value; saveSetup(); };
     tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
-    for (const k of TANK_KEYS) {
-      const p = document.createElement('button'); p.type = 'button'; p.className = 'pick' + (sl.tank === k ? ' sel' : '');
-      p.append(cloneCanvas(thumbs[k]));
-      const s = document.createElement('span'); s.textContent = CONFIG.tanks[k].name; p.append(s);
-      p.setAttribute('aria-label', `${sp.textContent}: ${CONFIG.tanks[k].name}`);
-      p.onclick = () => { sl.tank = k; saveSetup(); renderSetup(); };
-      picks.appendChild(p);
-    }
+    if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
+    buildPicks(picks, sl.tank, k => { sl.tank = k; saveSetup(); renderSetup(); }, sp.textContent);
     row.appendChild(picks); slots.appendChild(row);
   }
 }
 document.querySelectorAll('.seg[data-team]').forEach(s => s.onclick = () => { setup[s.dataset.team] = +s.dataset.n; saveSetup(); renderSetup(); });
-$('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = TANK_KEYS[(Math.random() * TANK_KEYS.length) | 0]; saveSetup(); renderSetup(); };
+$('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
 $('start').onclick = startGame;
 $('again').onclick = () => { $('over').hidden = true; startGame(); };
 $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
@@ -323,8 +341,8 @@ const TUT_STEPS = [
   { text: '← → 키(휴대폰은 ◀ ▶)로 탱크를 움직여 보세요. 이동할수록 이동력 막대가 줄어듭니다.', done: (m, t) => Math.abs(t.x - TUT.x0) > 40 },
   { text: '↑ ↓ 키(▲ ▼)로 포신 각도를 바꿔 보세요. 탱크 옆 각도기에 쏠 수 있는 범위가 금색으로 보입니다.', done: (m, t) => Math.abs(t.aim - TUT.a0) >= 6 },
   { text: '스페이스(발사 버튼)를 누르고 있으면 파워가 찹니다. 떼는 순간 발사! 오른쪽 위 거리 표시로 상대 위치를 확인하세요.', done: m => m.phase !== 'aim' },
-  { text: '포탄은 바람에 밀립니다. 화면 위쪽 바람 표시를 보고 다음 각도·파워를 정하세요. 흰 선은 지난번 파워입니다.', done: m => m.phase === 'aim' && PRACTICE.bots[m.tanks[m.cur].id] },
-  { text: '지금은 상대 차례입니다. 왼쪽 위 상태창에서 체력과 다음 순서(▶ 2 3…)를 볼 수 있어요.', done: m => m.phase === 'aim' && !PRACTICE.bots[m.tanks[m.cur].id] },
+  { text: '포탄은 바람에 밀립니다. 화면 위쪽 바람 표시를 보고 다음 각도·파워를 정하세요. 흰 선은 지난번 파워입니다.', done: m => m.phase === 'aim' && m.turnNo > TUT.turn0 },
+  { text: '왼쪽 위 상태창에서 체력과 다음 순서(▶ 2 3…)를 볼 수 있어요. 오래 고민하거나 많이 움직이면 상대가 두 번 연속 쏠 수도 있어요!', done: (m, t, sec) => m.phase === 'aim' && !PRACTICE.bots[m.tanks[m.cur].id] && sec > 4 },
   { text: '1·2 키로 무기를 바꾸고(2번은 강하지만 딜레이↑), 3~6 키로 상자에서 얻은 아이템을 씁니다. 이제 상대를 쓰러뜨려 보세요!', done: (m, t, sec) => sec > 9 },
 ];
 function startTutorial() {
@@ -342,7 +360,7 @@ function showCoach() {
 function tutorialFrame() {
   if (!TUT.on || !match) return;
   const m = match, t = m.tanks[0], st = TUT_STEPS[TUT.step];
-  if (TUT.x0 === undefined || TUT.at !== TUT.step) { TUT.at = TUT.step; TUT.x0 = t.x; TUT.a0 = t.aim; TUT.since = performance.now(); }
+  if (TUT.x0 === undefined || TUT.at !== TUT.step) { TUT.at = TUT.step; TUT.x0 = t.x; TUT.a0 = t.aim; TUT.since = performance.now(); TUT.turn0 = m.turnNo; }
   if (st.done(m, t, (performance.now() - TUT.since) / 1000)) {
     TUT.step++; AU.play('pickup');
     if (TUT.step >= TUT_STEPS.length) { TUT.on = false; banner('튜토리얼 완료!'); }
@@ -396,6 +414,8 @@ function beginMatch(cfg, opts) {
 }
 const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
 function announceHappening() {
+  const kd = match && match.tanks.filter(t => CONFIG.tanks[t.tankId].hidden);
+  if (kd && kd.length) setTimeout(() => { if (match && match.tanks.includes(kd[0])) banner(`히든 탱크 등장! ${kd.map(t => t.nick).join(', ')} — ${CONFIG.tanks[kd[0].tankId].name}`); }, 5000);
   const h = match && match.happening; if (!h) return;
   setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + HAPPEN[h][0]); }, 1700);
   setTimeout(() => { if (match && match.happening === h) banner(HAPPEN[h][1]); }, 3300);
@@ -408,7 +428,7 @@ function startGame() {
     for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
       const sl = setup.slots[team][i];
       const ctl = sl.ctl || (team === 'red' ? 'human' : 'normal');
-      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank, bot: ctl === 'human' ? null : ctl });
+      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
     }
     const seed = (Math.random() * 4294967296) >>> 0;
     const bots = {}; for (const p of players) if (p.bot) bots[p.id] = p.bot;
@@ -452,6 +472,7 @@ window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, get screen() { return
   R.resize();
   await loadSprites();
   for (const k of TANK_KEYS) thumbs[k] = tankThumb(k, 132, 98);
+  thumbs.random = randomThumb(132, 98);
   routeStart();
   requestAnimationFrame(loop);
 })();

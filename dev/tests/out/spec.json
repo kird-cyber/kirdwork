@@ -280,6 +280,41 @@
   "pass": true
  },
  {
+  "tank": "케이",
+  "item": "체력",
+  "expected": "1050",
+  "actual": "1050",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "이동거리(px)",
+  "expected": "234",
+  "actual": "234",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "발사각 범위",
+  "expected": "20~60",
+  "actual": "20~60",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "발사 딜레이",
+  "expected": "740",
+  "actual": "740",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "받는 피해",
+  "expected": "300×0.95=285",
+  "actual": "285",
+  "pass": true
+ },
+ {
   "tank": "볼더",
   "item": "바위탄 땅 파임 반경 (40×1.15)",
   "expected": "46px",
@@ -359,15 +394,15 @@
  {
   "tank": "해머",
   "item": "철갑 포탄 피해(15px 거리, 루키)",
-  "expected": "228",
-  "actual": "228",
+  "expected": "220",
+  "actual": "220",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "철갑 포탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 81, 밖 0",
+  "actual": "안 78, 밖 0",
   "pass": true
  },
  {
@@ -464,15 +499,15 @@
  {
   "tank": "스웜",
   "item": "유도 미사일 피해(15px 거리, 루키)",
-  "expected": "201",
-  "actual": "201",
+  "expected": "195",
+  "actual": "195",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "유도 미사일 피해 거리 98px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 71, 밖 0",
+  "actual": "안 68, 밖 0",
   "pass": true
  },
  {
@@ -560,6 +595,41 @@
   "pass": true
  },
  {
+  "tank": "케이",
+  "item": "K-바운스탄 땅 파임 반경 (34×1.15)",
+  "expected": "39px",
+  "actual": "파인 면적 2524 (반원 2401)",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-바운스탄 피해(15px 거리, 루키)",
+  "expected": "203",
+  "actual": "203",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-바운스탄 피해 거리 91px (안: 피해, 밖: 없음)",
+  "expected": "안 >0, 밖 0",
+  "actual": "안 72, 밖 0",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-분열탄 땅 파임 반경 (30×1.15)",
+  "expected": "35px",
+  "actual": "파인 면적 1977 (반원 1870)",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-분열탄 피해(15px 거리, 루키)",
+  "expected": "150",
+  "actual": "150",
+  "pass": true
+ },
+ {
   "tank": "볼더",
   "item": "무게탄: 바람 영향 절반",
   "expected": "0.50",
@@ -604,15 +674,15 @@
  {
   "tank": "해머",
   "item": "정타(10px 안) 피해 +20%",
-  "expected": "296",
-  "actual": "296",
+  "expected": "286",
+  "actual": "286",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "10px 밖은 정타 아님",
-  "expected": "233",
-  "actual": "233",
+  "expected": "225",
+  "actual": "225",
   "pass": true
  },
  {
@@ -788,6 +858,34 @@
   "item": "서든데스: 18턴부터 모두 최대 체력의 4% 감소",
   "expected": "42,42",
   "actual": "42,42",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-바운스탄: 땅에 한 번 튕긴 뒤 폭발",
+  "expected": "튕김 1, 폭발 1, 폭발은 튕긴 곳보다 멀리",
+  "actual": "튕김 1, 폭발 1",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "K-분열탄: 정점에서 두 갈래로 갈라져 2번 폭발",
+  "expected": "분열 1, 폭발 2 (서로 떨어진 곳)",
+  "actual": "분열 1, 폭발 2, 간격 184px",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "직접 고를 수 없음 (히든)",
+  "expected": "hidden",
+  "actual": "hidden",
+  "pass": true
+ },
+ {
+  "tank": "케이",
+  "item": "랜덤 9만 번 → 케이 확률 1/9",
+  "expected": "0.111",
+  "actual": "0.112",
   "pass": true
  },
  {
