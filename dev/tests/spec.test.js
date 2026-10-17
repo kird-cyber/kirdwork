@@ -226,7 +226,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   };
   const plainHit = shotDmg(false), ampHit = shotDmg(true);
   const ratio = plainHit && ampHit && plainHit.pw === ampHit.pw ? ampHit.dmg / plainHit.dmg : 0;
-  check('아이템', '증폭: 같은 탄 피해 ×1.5', '1.50', ratio ? `${plainHit.dmg} → ${ampHit.dmg} (${ratio.toFixed(2)})` : '측정 실패', near(ratio, 1.5, 0.02));
+  check('아이템', '증폭: 같은 탄 피해 ×1.5', '1.50', ratio ? `${plainHit.dmg} → ${ampHit.dmg} (${ratio.toFixed(2)})` : '측정 실패', ratio > 0 && Math.abs(ampHit.dmg - plainHit.dmg * 1.5) <= 1.5); // each value is rounded to a whole point
   check('아이템', '턴당 1개만 사용', '두 번째 거부', (() => { const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mm.tanks[0].items = ['heal', 'shield']; A.cmdItem(mm, 0); return A.cmdItem(mm, 0) ? '허용됨' : '거부'; })(), (() => { const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mm.tanks[0].items = ['heal', 'shield']; A.cmdItem(mm, 0); return !A.cmdItem(mm, 0); })());
 }
 { // fall damage + fall out
