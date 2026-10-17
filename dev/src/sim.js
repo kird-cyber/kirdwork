@@ -423,6 +423,8 @@ function columnHit(m, p) {
 }
 function impact(m, p, x, y) {
   if (p.tele) return teleLand(m, p, x, y);
+  // for the renderer only (stuck arrows, rock shards...): never read back by the simulation
+  m.events.push({ type: 'impact', x, y, vx: p.vx, vy: p.vy, idx: p.idx, wIdx: p.wIdx, child: !!p.child, fire: !!p.fire });
   const owner = m.tanks[p.idx], d = CONFIG.tanks[owner.tankId], w = d.weapons[p.wIdx], pat = w.pattern;
   let r = w.radius, dmg = w.dmg;
   if (p.fire) dmg *= CONFIG.happenings.pillar.mul;

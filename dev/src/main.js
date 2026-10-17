@@ -20,14 +20,15 @@ function randomThumb(w, h) {
   x.lineWidth = 6; x.strokeStyle = '#3A2A00'; x.strokeText('?', w / 2, h * 0.54); x.fillText('?', w / 2, h * 0.54);
   return c;
 }
-// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tank greyed out (shown, not pickable)
+// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tank in full colour (shown, not pickable: only "?" can give it)
 function buildPicks(box, current, onPick, label) {
   for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
     const hidden = HIDDEN_KEYS.includes(k);
     const b = document.createElement('button'); b.type = 'button';
     b.className = 'pick' + (current === k ? ' sel' : '') + (hidden ? ' locked' : '') + (k === 'random' ? ' rnd' : '');
     b.append(cloneCanvas(thumbs[k]));
-    const sp = document.createElement('span'); sp.textContent = hidden ? '랜덤 전용' : tankLabel(k); b.append(sp);
+    const sp = document.createElement('span'); sp.textContent = tankLabel(k); b.append(sp);
+    if (hidden) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = '? 랜덤 전용'; b.append(bd); }
     b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
     if (hidden) { b.disabled = true; b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/9 확률로 나옵니다`; }
     else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }

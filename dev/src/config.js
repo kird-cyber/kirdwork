@@ -43,66 +43,66 @@ const CONFIG = {
 
   tanks: {
     boulder: {
-      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 15, angleMax: 80, powerMul: 1,
+      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 15, angleMax: 88, powerMul: 1,
       traits: { heavyShot: true },
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
-        { id: 'rock', name: '바위탄', dmg: 244, radius: 40, windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#B5AA95', size: 1 } },
-        { id: 'boulder', name: '거대 바위', dmg: 365, radius: 58, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 150, radius: 40, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'ball', color: '#9C907A', size: 1.5 } },
+        { id: 'rock', name: '바위탄', dmg: 254, radius: 40, windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
+        { id: 'boulder', name: '불바위', dmg: 381, radius: 58, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 150, radius: 40, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 30, angleMax: 65, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 30, angleMax: 88, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
-        { id: 'poisonArrow', name: '독화살', dmg: 178, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 205, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'arrow', color: '#6CC23A', size: 1 } },
+        { id: 'poisonArrow', name: '독화살', dmg: 192, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 221, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
     hammer: {
-      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 25, angleMax: 70, powerMul: 1,
+      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 25, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
-        { id: 'ap', name: '철갑 포탄', dmg: 252, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'ball', color: '#4A5269', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 442, radius: 46, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'ball', color: '#F0442E', size: 1.4, glow: '#FF7A4A' } },
+        { id: 'ap', name: '철갑 포탄', dmg: 281, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
+        { id: 'redflare', name: '홍염탄', dmg: 580, radius: 24, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 5, angleMax: 40, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 5, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
-        { id: 'std', name: '표준탄', dmg: 220, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
-        { id: 'twin', name: '2연발', dmg: 172, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
+        { id: 'std', name: '표준탄', dmg: 185, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'shell', color: '#5F7A30', size: 1.15 } },
+        { id: 'twin', name: '2연발', dmg: 144, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
       ],
     },
     trapper: {
-      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 182, speedClass: 3, angleMin: 10, angleMax: 45, powerMul: 1,
+      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.8, movePx: 182, speedClass: 3, angleMin: 10, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
-        { id: 'low', name: '저각 포탄', dmg: 202, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#7C7140', size: 1 } },
-        { id: 'mines', name: '지뢰 사출', dmg: 53, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 100, look: { shape: 'ball', color: '#3A3A3A', size: 1 } },
+        { id: 'low', name: '수류탄', dmg: 137, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'grenade', color: '#5B6B2E', size: 1.2 } },
+        { id: 'mines', name: '지뢰 사출', dmg: 35, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 100, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
       ],
     },
     swarm: {
-      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 30, angleMax: 70, powerMul: 1.15,
+      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 30, angleMax: 88, powerMul: 1.15,
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
-        { id: 'missile', name: '유도 미사일', dmg: 297, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 110, radius: 26, windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 120, look: { shape: 'missile', color: '#FF7A3A', size: 1 } },
+        { id: 'missile', name: '유도 미사일', dmg: 307, radius: 38, windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 115, radius: 26, windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 120, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 0, angleMax: 88, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
-        { id: 'beam', name: '광선', dmg: 390, radius: 36, windMul: 0, gravityMul: 0.55, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
-        { id: 'prism3', name: '3분광', dmg: 227, radius: 26, windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'beam', color: '#B9A6FF', size: 1 } },
+        { id: 'beam', name: '광선', dmg: 376, radius: 36, windMul: 0, gravityMul: 0.55, pattern: { kind: 'single' }, look: { shape: 'laser', color: '#7FFFF2', size: 1, glow: '#7FFFF2' } },
+        { id: 'prism3', name: '3분광', dmg: 218, radius: 26, windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'laser', color: '#B9A6FF', size: 0.8, glow: '#B9A6FF' } },
       ],
     },
     rage: {
@@ -110,18 +110,18 @@ const CONFIG = {
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
-        { id: 'photon', name: '광탄', dmg: 187, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
-        { id: 'orbital', name: '궤도 낙하', dmg: 219, radius: 48, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'photon', name: '광탄', dmg: 220, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'plasma', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'orbital', name: '궤도 낙하', dmg: 258, radius: 48, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
     // random-only tank in company colours. Never pickable; "?" gives it with randomTank.chance.
     kird: {
-      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 234, speedClass: 3, angleMin: 20, angleMax: 60, powerMul: 1,
+      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 234, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 84, behind: true },
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', dmg: 281, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'ball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
-        { id: 'ksplit', name: 'K-분열탄', dmg: 209, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ball', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+        { id: 'kbounce', name: 'K-바운스탄', dmg: 319, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 236, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
   },

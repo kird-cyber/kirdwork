@@ -104,7 +104,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const r = fireAndTrace(m, 50, 640, 1);
   const booms = r.evs.filter(e => e.type === 'boom');
   const gap = booms.length >= 2 ? booms[1].tick - booms[0].tick : -1, dist = booms.length >= 2 ? Math.round(booms[1].x - booms[0].x) : 0;
-  check('볼더', '거대 바위: 굴러서 2차 폭발', '66틱 뒤, ±80px', `${gap}틱 뒤, ${dist}px`, gap === 66 && Math.abs(dist) === 80);
+  check('볼더', '불바위: 굴러서 2차 폭발', '66틱 뒤, ±80px', `${gap}틱 뒤, ${dist}px`, gap === 66 && Math.abs(dist) === 80);
 }
 { // viper poison + venom heal cut + amplify poison
   const m = field([{ tank: 'viper', x: 1000 }, { tank: 'rookie', x: 2500 }]);

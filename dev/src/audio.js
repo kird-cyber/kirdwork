@@ -45,7 +45,9 @@ function createAudio() {
         if (s === 'arrow') { tone('triangle', 680, 180, 0.18, 0.5); noise(0.08, 0.25, 'highpass', 3000); }
         else if (s === 'missile') { noise(0.5, 0.45, 'bandpass', 600, 2400, 1.5); tone('sawtooth', 140, 60, 0.25, 0.25); }
         else if (s === 'beam') { tone('sawtooth', 1400, 300, 0.35, 0.3); tone('sine', 2200, 900, 0.3, 0.2); }
-        else if (p.catapult) { noise(0.12, 0.3, 'lowpass', 900); tone('sine', 160, 50, 0.3, 0.7, 0.04); }
+        else if (s === 'grenade') { tone('square', 2400, 1800, 0.05, 0.12); noise(0.12, 0.35, 'lowpass', 1400, 400); tone('sine', 220, 90, 0.15, 0.4, 0.03); }
+        else if (s === 'redshell') { noise(0.14, 0.8, 'highpass', 900); tone('sine', 220, 60, 0.22, 0.8); tone('square', 900, 300, 0.06, 0.15); }
+        else if (p.catapult || s === 'rock') { noise(0.12, 0.3, 'lowpass', 900); tone('sine', 160, 50, 0.3, 0.7, 0.04); }
         else { noise(0.18, 0.7, 'lowpass', 1800, 300); tone('sine', 130, 38, 0.32, 0.9); }
         break;
       }

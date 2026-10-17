@@ -125,7 +125,7 @@ function createRenderer(cv, mini) {
   const R = {
     m: null, terrain: null, tctx: null, bg: null, th: null,
     cam: { x: 0, y: 0, zoom: 1 }, dpr: 1, VW: 800, VH: 600,
-    fx: [], texts: [], beams: [], rollers: [], shake: 0,
+    fx: [], texts: [], beams: [], rollers: [], stuck: [], shake: 0,
     follow: null, free: false, view: {}, onBanner: () => {}, onOver: () => {},
     aimHint: null, trails: {}, crateDrop: {}, reduceMotion: false, t: 0,
     onSfx: () => {}, onHitstop: () => {}, onEngine: () => {},
@@ -133,7 +133,7 @@ function createRenderer(cv, mini) {
 
   R.setMatch = function (m) {
     R.m = m; R.th = THEMES[m.theme];
-    R.helis = []; R.meteors = []; R.bubbles = {}; R.fx = []; R.texts = []; R.beams = []; R.rollers = []; R.view = {}; R.shake = 0; R.crateDrop = {}; R.trails = {};
+    R.helis = []; R.meteors = []; R.bubbles = {}; R.fx = []; R.texts = []; R.beams = []; R.rollers = []; R.stuck = []; R.view = {}; R.shake = 0; R.crateDrop = {}; R.trails = {};
     buildTerrainTexture(); buildBackground();
     const t0 = m.tanks[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
     m.events.length = 0;
@@ -319,6 +319,76 @@ function createRenderer(cv, mini) {
     if (!prev) R.texts.push(o);
     if (amount >= 300 && !o.strong) { o.strong = true; text(e.x, e.y - 128, amount >= 450 ? '대박!' : '강타!', '#FFD24A', true); }
   }
+  // ---- per-weapon effects (drawing only)
+  function muzzleFx(e, t, shape, look) {
+    const f = t.facing, puff = (n, col) => { for (let i = 0; i < n; i++) R.fx.push({ kind: 'dust', x: e.x + (vrnd() - 0.5) * 16, y: e.y + (vrnd() - 0.5) * 10, vx: (vrnd() - 0.5) * 50, vy: -10 - vrnd() * 20, t: 0, life: 0.5, r: 4 + vrnd() * 4, col }); };
+    const smoke = (n, k) => { for (let i = 0; i < n; i++) R.fx.push({ kind: 'smoke', x: e.x, y: e.y, vy: -20 - vrnd() * 20, vx: f * (20 + vrnd() * 40) * (k || 1), t: 0, life: 0.6 + vrnd() * 0.3, r: 8 + vrnd() * 8 }); };
+    switch (shape) {
+      case 'rock': puff(6, '#B5AA95'); break; // a throw, not a blast
+      case 'firerock': puff(5, '#B5AA95'); burst(e.x, e.y, '#FF8A30', 10, 2); break;
+      case 'arrow': case 'bolt': R.fx.push({ kind: 'twang', x: e.x, y: e.y, t: 0, life: 0.22 }); break;
+      case 'grenade': case 'minecase': // the pin pops off
+        R.fx.push({ kind: 'pin', x: e.x, y: e.y - 6, vx: -f * (60 + vrnd() * 40), vy: -160 - vrnd() * 60, t: 0, life: 1.1, rot: 0 });
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 18, t: 0, life: 0.12, col: '#FFE6A8' }); smoke(2); break;
+      case 'missile': case 'rocket': // back-blast behind the launcher
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 30, t: 0, life: 0.18, col: '#FFB040' });
+        for (let i = 0; i < 7; i++) R.fx.push({ kind: 'smoke', x: e.x - f * 20, y: e.y, vy: -15 - vrnd() * 25, vx: -f * (60 + vrnd() * 90), t: 0, life: 0.9 + vrnd() * 0.4, r: 9 + vrnd() * 10 }); break;
+      case 'laser': case 'plasma': case 'beacon':
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 34, t: 0, life: 0.2, col: look.glow || look.color });
+        R.fx.push({ kind: 'ring', x: e.x, y: e.y, r: 22, t: 0, life: 0.25, w: 2 }); break;
+      case 'cannonball':
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 40, t: 0, life: 0.2, col: '#FFC060' }); smoke(8, 1.3); break;
+      case 'redshell':
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 30, t: 0, life: 0.18, col: '#FF4A30' }); smoke(4); break;
+      default:
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 26, t: 0, life: 0.16, col: look.glow || '#FFE6A8' }); smoke(4);
+    }
+  }
+  function impactFx(e) {
+    const m = R.m, t = m.tanks[e.idx]; if (!t) return;
+    const w = CONFIG.tanks[t.tankId].weapons[e.wIdx], shape = e.child ? 'kshard' : w.look.shape;
+    const ang = Math.atan2(e.vy, e.vx);
+    switch (shape) {
+      case 'arrow': case 'bolt': {
+        // the arrow stays stuck in the ground at the crater edge for a moment
+        const dx = Math.cos(ang), dy = Math.sin(ang);
+        let x = e.x, y = e.y, found = false;
+        for (let k = 0; k < 90; k += 2) { x = e.x + dx * k; y = e.y + dy * k; if (solidAt(m, Math.round(x), Math.round(y))) { found = true; break; } }
+        if (found) R.stuck.push({ x: x - dx * 4, y: y - dy * 4, ang, look: w.look, t: 0, life: 2.6, id: vrnd() * 1e6 | 0 });
+        for (let i = 0; i < 12; i++) R.fx.push({ kind: 'bubble', x: e.x + (vrnd() - 0.5) * 40, y: e.y - vrnd() * 20, vy: -30 - vrnd() * 40, t: 0, life: 0.9, r: 2 + vrnd() * 4 });
+        break;
+      }
+      case 'rock': case 'firerock': {
+        const n = shape === 'firerock' ? 12 : 9;
+        for (let i = 0; i < n; i++) { const a = -Math.PI * vrnd(), v = 140 + vrnd() * 280; R.fx.push({ kind: 'shard', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 1.1 + vrnd() * 0.5, s: 5 + vrnd() * 7, rot: vrnd() * 6, col: shape === 'firerock' ? '#4A362A' : '#9A8F78', hot: shape === 'firerock' }); }
+        for (let i = 0; i < 6; i++) R.fx.push({ kind: 'dust', x: e.x + (vrnd() - 0.5) * 50, y: e.y - vrnd() * 20, vx: (vrnd() - 0.5) * 80, vy: -20 - vrnd() * 30, t: 0, life: 1, r: 10 + vrnd() * 8, col: '#B5AA95' });
+        if (shape === 'firerock') for (let i = 0; i < 16; i++) R.fx.push({ kind: 'ember', x: e.x + (vrnd() - 0.5) * 40, y: e.y - vrnd() * 20, vx: (vrnd() - 0.5) * 160, vy: -80 - vrnd() * 140, t: 0, life: 1 + vrnd() * 0.8, col: vrnd() < 0.5 ? '#FFB040' : '#FF5A1A' });
+        break;
+      }
+      case 'cannonball': // heavy black smoke
+        for (let i = 0; i < 10; i++) R.fx.push({ kind: 'smoke', x: e.x + (vrnd() - 0.5) * 60, y: e.y - vrnd() * 30, vy: -30 - vrnd() * 40, vx: (vrnd() - 0.5) * 40, t: -vrnd() * 0.2, life: 1.6 + vrnd() * 0.6, r: 16 + vrnd() * 16, dark: true });
+        break;
+      case 'redshell': // small but violent: white-hot core, needle sparks, sharp shockwave
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 70, t: 0, life: 0.14, col: '#FFFFFF' });
+        R.fx.push({ kind: 'ring', x: e.x, y: e.y, r: 60, t: 0, life: 0.22, w: 6 });
+        for (let i = 0; i < 26; i++) { const a = vrnd() * Math.PI * 2, v = 300 + vrnd() * 320; R.fx.push({ kind: 'needle', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.28 + vrnd() * 0.2, col: vrnd() < 0.5 ? '#FFE08A' : '#FF4A30' }); }
+        R.onHitstop(60); break;
+      case 'grenade': // shrapnel
+        for (let i = 0; i < 18; i++) { const a = -Math.PI * vrnd(), v = 260 + vrnd() * 260; R.fx.push({ kind: 'needle', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.3 + vrnd() * 0.2, col: '#FFD080' }); }
+        break;
+      case 'missile': case 'rocket':
+        R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: shape === 'missile' ? 80 : 50, t: 0, life: 0.3, col: '#FF8A30' });
+        for (let i = 0; i < (shape === 'missile' ? 8 : 3); i++) R.fx.push({ kind: 'smoke', x: e.x + (vrnd() - 0.5) * 40, y: e.y - vrnd() * 20, vy: -40 - vrnd() * 30, t: -vrnd() * 0.2, life: 1.3, r: 12 + vrnd() * 12, dark: true });
+        break;
+      case 'laser': case 'plasma': case 'kball': case 'ksplit': case 'kshard': {
+        const col = shape === 'laser' ? (w.look.color) : shape === 'plasma' ? '#FF7FA8' : (e.child ? ['#2E86D6', '#8CC63F'][vrnd() < 0.5 ? 0 : 1] : '#8CC8FF');
+        R.fx.push({ kind: 'zap', x: e.x, y: e.y, r: 46, t: 0, life: 0.35, col });
+        for (let i = 0; i < 10; i++) { const a = vrnd() * Math.PI * 2, v = 200 + vrnd() * 220; R.fx.push({ kind: 'needle', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.25 + vrnd() * 0.15, col }); }
+        break;
+      }
+    }
+    if (e.fire) for (let i = 0; i < 10; i++) R.fx.push({ kind: 'ember', x: e.x + (vrnd() - 0.5) * 40, y: e.y, vx: (vrnd() - 0.5) * 120, vy: -60 - vrnd() * 100, t: 0, life: 1, col: '#FFB040' });
+  }
   const viewOf = idx => R.view[idx] || (R.view[idx] = { y: R.m.tanks[idx].y, ang: 0, recoil: 0, flash: 0, px: R.m.tanks[idx].x, move: 0, bob: vrnd() * 6, dust: 0, fxT: 0 });
   R.consumeEvents = function () {
     const m = R.m, ev = m.events;
@@ -349,11 +419,11 @@ function createRenderer(cv, mini) {
         case 'tele': burst(e.x, e.y - 20, '#9CC6F7', 14); burst(e.x2, e.y2 - 20, '#9CC6F7', 14); viewOf(e.idx).y = e.y2; R.follow = t; R.free = false; R.onSfx('tele'); break;
         case 'shot': {
           const w = CONFIG.tanks[t.tankId].weapons[e.wIdx], v = viewOf(e.idx);
-          R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: 26, t: 0, life: 0.16, col: w.look.glow || '#FFE6A8' });
-          for (let i = 0; i < 4; i++) R.fx.push({ kind: 'smoke', x: e.x, y: e.y, vy: -20 - vrnd() * 20, vx: t.facing * (20 + vrnd() * 40), t: 0, life: 0.6 + vrnd() * 0.3, r: 8 + vrnd() * 8 });
-          v.recoil = 1; shake(1.5);
-          R.onSfx('fire', { shape: w.look.shape, catapult: !!CONFIG.tanks[t.tankId].sprite.catapult }); break;
+          muzzleFx(e, t, w.look.shape, w.look);
+          v.recoil = 1; shake(w.look.shape === 'cannonball' || w.look.shape === 'firerock' ? 3 : 1.5);
+          R.onSfx('fire', { shape: SHELLS.sfx(w.look.shape), catapult: !!CONFIG.tanks[t.tankId].sprite.catapult }); break;
         }
+        case 'impact': impactFx(e); break;
         case 'beam': R.beams.push({ x: e.x, t: 0, life: e.ticks / CONFIG.physics.tickRate + 0.1 }); R.onSfx('beam'); break;
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
@@ -439,9 +509,10 @@ function createRenderer(cv, mini) {
     for (const f of R.fx) {
       f.t += dt; if (f.t < 0) continue;
       if (f.kind === 'smoke' || f.kind === 'bubble' || f.kind === 'plus' || f.kind === 'ember' || f.kind === 'dust') { f.y += f.vy * dt; if (f.vx) f.x += f.vx * dt; f.vy *= 0.98; }
-      else if (f.vx != null) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 'chunk' ? 600 : 300) * dt; }
+      else if (f.vx != null) { f.x += f.vx * dt; f.y += f.vy * dt; f.vy += (f.kind === 'chunk' || f.kind === 'shard' ? 600 : 300) * dt; }
     }
     R.fx = R.fx.filter(f => f.t < f.life);
+    for (const st of R.stuck) st.t += dt; R.stuck = R.stuck.filter(st => st.t < st.life);
     for (const s of R.texts) s.t += dt; R.texts = R.texts.filter(s => s.t < 1.4);
     R.hurtFlash = (R.hurtFlash || 0) * Math.pow(0.08, dt);
     R.stepAmbient(dt);
@@ -479,6 +550,7 @@ function createRenderer(cv, mini) {
     ctx.fillStyle = ag; ctx.fillRect(left - 10, m.H - 260, v.w + 20, 360);
     const rx = clamp(Math.floor(left), 0, m.W), ry = clamp(Math.floor(top), 0, m.H);
     const rw = clamp(Math.ceil(left + v.w), 0, m.W) - rx, rh = clamp(Math.ceil(top + v.h), 0, m.H) - ry;
+    for (const st of R.stuck) { ctx.globalAlpha = st.t > st.life - 0.5 ? (st.life - st.t) / 0.5 : 1; SHELLS.draw(ctx, st.look, { x: st.x, y: st.y, vx: Math.cos(st.ang), vy: Math.sin(st.ang), age: 0, id: st.id }); ctx.globalAlpha = 1; }
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
     for (const b of R.beams) {
       const a = Math.sin(Math.PI * b.t / b.life), sy2 = Math.max(0, surfaceAt(m, b.x, 0));
@@ -728,33 +800,24 @@ function createRenderer(cv, mini) {
     ctx.restore();
   }
   const TELE_LOOK = { shape: 'ball', color: '#9CC6F7', size: 1.1, glow: '#BFE0FF' };
-  // Projectiles are drawn about 2.1x larger than before so their size reads like the blast they make (drawing only, hits unchanged)
-  const PS = 2.1;
+  const ROLL_LOOK = { shape: 'firerock', color: '#4A362A', size: 1.1 };
+  const KSHARD = [{ shape: 'kshard', color: '#2E86D6', size: 1, glow: '#8CC8FF' }, { shape: 'kshard', color: '#8CC63F', size: 1, glow: '#D8F59A' }];
+  // every weapon has its own drawing (shells.js); hits are decided by the simulation, never by these sizes
   function drawProj(p) {
     const w = CONFIG.tanks[R.m.tanks[p.idx].tankId].weapons[p.wIdx];
-    let look = p.tele ? TELE_LOOK : w.look;
-    if (p.child) look = p.id % 2 ? { shape: 'ball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } : { shape: 'ball', color: '#8CC63F', size: 1, glow: '#D8F59A' };
-    const tr = R.trails[p.id] || (R.trails[p.id] = []);
-    if (look.shape === 'missile' && vrnd() < 0.7) R.fx.push({ kind: 'smoke', x: p.x, y: p.y, vy: -10, t: 0, life: 0.7, r: 6 + vrnd() * 6 });
-    tr.push(p.x, p.y); if (tr.length > (look.shape === 'beam' ? 44 : 28)) tr.splice(0, 2);
-    if (tr.length > 4) {
-      ctx.lineCap = 'round';
-      ctx.strokeStyle = look.shape === 'beam' ? look.color : 'rgba(255,255,255,0.55)'; ctx.lineWidth = look.shape === 'beam' ? 8 : 5;
-      ctx.globalAlpha = look.shape === 'beam' ? 0.9 : 0.6;
-      ctx.beginPath(); ctx.moveTo(tr[0], tr[1]); for (let i = 2; i < tr.length; i += 2) ctx.lineTo(tr[i], tr[i + 1]); ctx.stroke();
-      if (look.shape === 'beam') { ctx.globalAlpha = 0.25; ctx.lineWidth = 22; ctx.stroke(); }
+    const look = p.tele ? TELE_LOOK : p.child ? KSHARD[p.id % 2] : w.look;
+    SHELLS.emit(look.shape, p, f => R.fx.push(f));
+    const tr = R.trails[p.id] || (R.trails[p.id] = []), ts = SHELLS.trail(look.shape);
+    tr.push(p.x, p.y); if (tr.length > (ts ? ts.n * 2 : 4)) tr.splice(0, 2);
+    if (ts && tr.length > 4) {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(tr[0], tr[1]); for (let i = 2; i < tr.length; i += 2) ctx.lineTo(tr[i], tr[i + 1]);
+      ctx.strokeStyle = ts.col || look.color; ctx.lineWidth = ts.w; ctx.globalAlpha = ts.a; ctx.stroke();
+      if (ts.glow) { ctx.globalAlpha = 0.25; ctx.lineWidth = ts.glow; ctx.stroke(); }
       ctx.globalAlpha = 1;
     }
-    const a = Math.atan2(p.vy, p.vx), s = (look.size || 1) * PS;
-    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
-    if (look.glow) { ctx.fillStyle = look.glow + '55'; ctx.beginPath(); ctx.arc(0, 0, 14 * s, 0, 7); ctx.fill(); }
-    if (p.fire) { ctx.fillStyle = 'rgba(255,140,40,0.5)'; ctx.beginPath(); ctx.arc(0, 0, 20 * s * (0.9 + 0.2 * Math.sin(R.t * 20)), 0, 7); ctx.fill(); }
-    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2.5;
-    if (look.shape === 'beam') { ctx.fillStyle = look.color + '88'; ctx.beginPath(); ctx.arc(0, 0, 9 * PS, 0, 7); ctx.fill(); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.arc(0, 0, 5 * PS, 0, 7); ctx.fill(); }
-    else if (look.shape === 'arrow') { ctx.scale(PS, PS); ctx.lineWidth = 1.5; ctx.fillStyle = '#E6D7B0'; ctx.fillRect(-16, -1.5, 22, 3); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -5); ctx.lineTo(14, 0); ctx.lineTo(6, 5); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.fillRect(-18, -3.5, 5, 2); ctx.fillRect(-18, 1.5, 5, 2); }
-    else if (look.shape === 'missile') { ctx.scale(PS, PS); ctx.lineWidth = 1.5; ctx.fillStyle = '#D8E2F0'; ctx.beginPath(); ctx.roundRect(-10, -3.5, 16, 7, 3); ctx.fill(); ctx.stroke(); ctx.fillStyle = look.color; ctx.beginPath(); ctx.moveTo(6, -3.5); ctx.lineTo(12, 0); ctx.lineTo(6, 3.5); ctx.fill(); ctx.fillStyle = '#FFB040'; ctx.beginPath(); ctx.moveTo(-10, -2); ctx.lineTo(-18 - vrnd() * 6, 0); ctx.lineTo(-10, 2); ctx.fill(); }
-    else { ctx.fillStyle = look.color; ctx.beginPath(); ctx.arc(0, 0, 7 * s, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.arc(-2 * s, -2 * s, 2.4 * s, 0, 7); ctx.fill(); }
-    ctx.restore();
+    if (p.fire) { ctx.fillStyle = 'rgba(255,140,40,0.5)'; ctx.beginPath(); ctx.arc(p.x, p.y, 30 * (0.9 + 0.2 * Math.sin(R.t * 20)), 0, 7); ctx.fill(); }
+    SHELLS.draw(ctx, look, p);
   }
   function drawFx(f) {
     const k = f.t / f.life;
@@ -767,7 +830,22 @@ function createRenderer(cv, mini) {
     else if (f.kind === 'dust') { ctx.fillStyle = f.col; ctx.globalAlpha = 0.45 * (1 - k); ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + k), 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     else if (f.kind === 'bubble') { ctx.strokeStyle = `rgba(150,240,90,${0.9 * (1 - k)})`; ctx.fillStyle = `rgba(120,210,60,${0.35 * (1 - k)})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(f.x + Math.sin(f.t * 8) * 3, f.y, f.r, 0, 7); ctx.fill(); ctx.stroke(); }
     else if (f.kind === 'plus') { ctx.fillStyle = `rgba(110,240,200,${1 - k})`; ctx.fillRect(f.x - 5, f.y - 1.5, 10, 3); ctx.fillRect(f.x - 1.5, f.y - 5, 3, 10); }
-    else if (f.kind === 'roller') { const x = lerp(f.x0, f.x1, k), y = lerp(f.y0, f.y1, k) - 12; ctx.fillStyle = '#9C907A'; ctx.strokeStyle = '#2E211B'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, 12, 0, 7); ctx.fill(); ctx.stroke(); }
+    else if (f.kind === 'roller') { // the burning boulder rolls on
+      const x = lerp(f.x0, f.x1, k), y = lerp(f.y0, f.y1, k) - 14, dir = f.x1 >= f.x0 ? 1 : -1;
+      SHELLS.draw(ctx, ROLL_LOOK, { x, y, vx: dir, vy: 0, age: f.t * 2.4, id: 7 });
+      if (vrnd() < 0.5) R.fx.push({ kind: 'ember', x: x - dir * 10, y: y + (vrnd() - 0.5) * 10, vx: -dir * 30, vy: -40 - vrnd() * 40, t: 0, life: 0.6, col: '#FFB040' });
+    }
+    else if (f.kind === 'needle') { ctx.strokeStyle = f.col; ctx.globalAlpha = 1 - k; ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(f.x, f.y); ctx.lineTo(f.x - f.vx * 0.04, f.y - f.vy * 0.04); ctx.stroke(); ctx.globalAlpha = 1; }
+    else if (f.kind === 'shard') { ctx.save(); ctx.translate(f.x, f.y); ctx.rotate((f.rot || 0) + f.t * 7); ctx.globalAlpha = 1 - k * 0.5; ctx.fillStyle = f.col; ctx.strokeStyle = f.hot ? '#FF8A30' : 'rgba(30,24,18,0.7)'; ctx.lineWidth = f.hot ? 2 : 1.2; ctx.beginPath(); ctx.moveTo(-f.s * 0.6, -f.s * 0.3); ctx.lineTo(f.s * 0.1, -f.s * 0.6); ctx.lineTo(f.s * 0.6, 0); ctx.lineTo(f.s * 0.2, f.s * 0.5); ctx.lineTo(-f.s * 0.5, f.s * 0.35); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1; }
+    else if (f.kind === 'drip') { ctx.fillStyle = f.col; ctx.globalAlpha = 1 - k; ctx.beginPath(); ctx.ellipse(f.x, f.y, 2.2, 3.4, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
+    else if (f.kind === 'pin') { ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.t * 14); ctx.globalAlpha = 1 - k; ctx.strokeStyle = '#D8DDE2'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 5, 0, 7); ctx.moveTo(5, 0); ctx.lineTo(13, 0); ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1; }
+    else if (f.kind === 'twang') { ctx.strokeStyle = `rgba(255,255,255,${0.8 * (1 - k)})`; ctx.lineWidth = 2; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(f.x, f.y, 10 + k * 26 + i * 5, -0.7, 0.7); ctx.stroke(); ctx.beginPath(); ctx.arc(f.x, f.y, 10 + k * 26 + i * 5, Math.PI - 0.7, Math.PI + 0.7); ctx.stroke(); } }
+    else if (f.kind === 'zap') { // energy ring with jagged arcs
+      ctx.globalCompositeOperation = 'lighter'; ctx.strokeStyle = f.col; ctx.globalAlpha = 1 - k; ctx.lineWidth = 3;
+      const rr = f.r * (0.4 + k * 0.9); ctx.beginPath(); ctx.arc(f.x, f.y, rr, 0, 7); ctx.stroke();
+      ctx.lineWidth = 1.6; for (let j = 0; j < 5; j++) { let a = vrnd() * 7; ctx.beginPath(); ctx.moveTo(f.x, f.y); for (let q = 1; q <= 4; q++) { a += (vrnd() - 0.5) * 0.8; ctx.lineTo(f.x + Math.cos(a) * rr * q / 4, f.y + Math.sin(a) * rr * q / 4); } ctx.stroke(); }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+    }
   }
   function drawEdges(left, top) {
     const cam = R.cam, list = [];

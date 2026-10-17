@@ -156,9 +156,9 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .pick span { font-size: 11px; font-weight: 700; }
 .pick.sel { border-color: var(--gold); background: #2A2A1E; }
 .pick.rnd { background: #241E10; }
-.pick.locked { cursor: not-allowed; opacity: 0.6; border: 2px dashed #3A4660; }
-.pick.locked canvas { filter: grayscale(1) brightness(0.8); }
-.pick.locked span { color: var(--muted); font-size: 10px; }
+.pick.locked { cursor: help; position: relative; border: 2px dashed rgba(255, 210, 74, 0.7); background: linear-gradient(160deg, #142A44, #1A2030 60%, #1E3018); }
+.pick.locked span { color: #CFE6FF; }
+.pick.locked .rndonly { font-size: 9px; font-weight: 900; color: #2A1A00; background: var(--gold); border-radius: 6px; padding: 0 5px; line-height: 14px; margin-top: 1px; }
 .cta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .start { padding: 14px 34px; border-radius: 14px; border: none; background: var(--gold); color: #2A1A00; font-family: var(--font-display); font-size: 24px; cursor: pointer; }
 .ghost { padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line); background: transparent; font-weight: 700; cursor: pointer; }
