@@ -1,3 +1,10 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="친구와 링크 하나로 붙는 턴제 포격 대전">
+<meta name="theme-color" content="#0E1220">
 <title>포격전</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
@@ -175,8 +182,59 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .angle { width: auto; flex-direction: row; gap: 6px; align-items: baseline; }
   #banner { font-size: 20px; }
 }
+
+/* home + waiting room */
+.home { max-width: 640px; }
+.card { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 18px; background: var(--panel-solid); border: 1px solid var(--line); }
+.fld { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.fld input, .joinrow input, .share input { box-sizing: border-box; width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #0E1220; color: var(--fg); font: 700 18px var(--font-body); -webkit-user-select: text; user-select: text; }
+.fld input:focus-visible, .joinrow input:focus-visible { outline: 2px solid var(--gold); }
+.invite { padding: 12px 14px; border-radius: 12px; background: #2A2A1E; border: 1px solid var(--gold); font-weight: 700; }
+.invite b { color: var(--gold); font-family: var(--font-display); font-size: 22px; letter-spacing: 0.12em; margin-left: 6px; font-weight: 400; }
+.joinrow { display: flex; gap: 8px; }
+.joinrow input { flex: 1; text-transform: uppercase; letter-spacing: 0.15em; font-size: 16px; }
+.ghost.big { padding: 14px 22px; font-size: 16px; }
+.start:disabled, .ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+.note.bad, .bad { color: #FFB4A4; }
+#homeMsg { min-height: 20px; }
+.lobbyhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.lt { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; }
+.lt span { color: var(--gold); letter-spacing: 0.1em; margin-left: 8px; }
+.share { display: flex; gap: 8px; flex: 1; min-width: 280px; max-width: 560px; }
+.share input { font-size: 13px; font-weight: 500; color: var(--muted); }
+.start.sm { padding: 10px 16px; font-size: 16px; white-space: nowrap; }
+.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.teamcol { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(20, 26, 43, 0.7); border: 2px solid; }
+.teamcol.red { border-color: var(--red-deep); } .teamcol.blue { border-color: var(--blue-deep); }
+.teamcol h3 { margin: 0 0 2px; font-size: 15px; font-weight: 900; display: flex; justify-content: space-between; }
+.teamcol.red h3 { color: #FF9A86; } .teamcol.blue h3 { color: #8CC2FF; }
+.teamcol h3 span { color: var(--muted); font-weight: 700; }
+.pc { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border-radius: 12px; background: var(--panel-solid); border: 1px solid var(--line); min-height: 52px; }
+.pc canvas { width: 62px; height: 46px; flex-shrink: 0; }
+.pc.me { border-color: var(--gold); }
+.pc.off { opacity: 0.5; }
+.pc.empty { justify-content: center; color: var(--muted); font-size: 13px; border-style: dashed; background: transparent; }
+.pi { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.pi b { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pi .tags { font-size: 12px; color: var(--muted); }
+.pa { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mini { padding: 6px 9px; border-radius: 8px; border: 1px solid var(--line); background: #222B44; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.mini:disabled { opacity: 0.4; cursor: not-allowed; }
+.mini.warn { color: #FFB4A4; }
+.mapc:disabled { cursor: default; opacity: 0.55; }
+.mapc.sel:disabled { opacity: 1; }
+#waitTag { position: absolute; left: 50%; transform: translateX(-50%); top: 84px; padding: 7px 16px; border-radius: 999px; background: var(--panel); font-size: 14px; font-weight: 700; pointer-events: none; white-space: nowrap; }
+#netState { position: absolute; left: 50%; transform: translateX(-50%); top: 124px; padding: 7px 16px; border-radius: 999px; background: #5A1E16; color: #FFD4CA; font-size: 13px; font-weight: 700; pointer-events: none; }
+.probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.probe::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #6B7590; flex-shrink: 0; }
+.probe[data-s="ok"]::before { background: var(--good); } .probe[data-s="fail"] { color: #FFB4A4; } .probe[data-s="fail"]::before { background: var(--red); }
+.lobbybar { position: sticky; bottom: -40px; margin: 0 -16px -40px; padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, rgba(14,18,32,0) 0, rgba(14,18,32,0.94) 22%); }
+@media (max-width: 700px) { .teams { grid-template-columns: 1fr; } .pc.empty { min-height: 30px; padding: 4px; font-size: 12px; } .mapbox .iconbtn { padding: 5px 7px; font-size: 11px; } .mapbox { gap: 4px; } #mini { width: 150px; height: auto; } .lt { font-size: 30px; } #waitTag { top: 70px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { #banner { transition: none; } #banner.show.turnin { animation: none; } }
 </style>
+</head>
+<body>
+
 
 <div id="app">
   <canvas id="cv" aria-label="전장"></canvas>
@@ -192,12 +250,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <canvas id="mini" width="220" height="80" aria-label="미니맵: 눌러서 시점 이동"></canvas>
         <button class="iconbtn" id="recenter" type="button">내 탱크로<kbd>F</kbd></button>
         <div class="setrow"><button class="iconbtn" id="sndBtn" type="button" aria-pressed="true">소리 켜짐</button><button class="iconbtn" id="shakeBtn" type="button" aria-pressed="true">흔들림 켜짐</button></div>
+        <button class="iconbtn" id="exitBtn" type="button">나가기</button>
       </div>
       <div class="timer" id="timer">20</div>
     </div>
   </div>
 
   <div id="banner" role="status"></div>
+  <div id="waitTag" hidden></div>
+  <div id="netState" role="status" hidden></div>
   <div id="hint" hidden>← → 이동 · ↑ ↓ 각도 · 스페이스를 누르고 있다가 떼면 발사 · 드래그나 A/D로 맵 둘러보기</div>
 
   <div class="touch" id="touch" hidden>
@@ -234,14 +295,69 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="items" id="items"></div>
   </div>
 
-  <div class="overlay" id="setup">
+
+  <div class="overlay" id="home">
+    <div class="setup home">
+      <div class="brand">
+        <div>
+          <h1>포격<em>전</em></h1>
+          <p>친구와 링크 하나로 붙는 턴제 포격 대전 · 최대 4 대 4</p>
+        </div>
+      </div>
+      <div class="card">
+        <label class="fld"><span>닉네임 (탱크 위에 표시됩니다)</span><input id="nickIn" maxlength="8" placeholder="최대 8글자" autocomplete="nickname" enterkeyhint="go"></label>
+        <div class="invite" id="inviteBox" hidden>초대받은 방<b id="inviteCode"></b></div>
+        <div class="cta">
+          <button class="start" id="joinBtn" type="button" hidden>참여하기</button>
+          <button class="start" id="createBtn" type="button">방 만들기</button>
+        </div>
+        <div class="joinrow"><input id="codeIn" maxlength="5" placeholder="방 코드 5글자" autocomplete="off" aria-label="방 코드"><button class="ghost" id="codeBtn" type="button">코드로 참여</button></div>
+        <div class="note" id="homeMsg" role="status" aria-live="polite"></div>
+        <div class="probe" id="probe" data-s="idle"></div>
+      </div>
+      <div class="note">방을 만들면 초대 링크가 생깁니다. 친구가 링크를 열고 닉네임만 넣으면 같은 대기방에 들어옵니다. 로그인은 없습니다.</div>
+      <div class="cta"><button class="ghost" id="practiceBtn" type="button">혼자 연습하기 (한 기기에서 번갈아)</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="lobby" hidden>
+    <div class="setup">
+      <div class="lobbyhead">
+        <div>
+          <h2 class="lt">대기방<span id="roomCode"></span></h2>
+          <div class="note" id="lobbyStatus" role="status"></div>
+        </div>
+        <div class="share"><input id="shareLink" readonly aria-label="초대 링크"><button class="start sm" id="copyBtn" type="button">초대 링크 복사</button></div>
+      </div>
+      <div class="teams">
+        <div class="teamcol red"><h3>레드 팀 <span id="redN"></span></h3><div class="slots" id="redList"></div></div>
+        <div class="teamcol blue"><h3>블루 팀 <span id="blueN"></span></h3><div class="slots" id="blueList"></div></div>
+      </div>
+      <div class="sec">
+        <h2>내 탱크</h2>
+        <div class="picks" id="myPicks"></div>
+        <div class="note" id="tankInfo"></div>
+      </div>
+      <div class="sec">
+        <h2>맵 <span id="mapNote" style="letter-spacing:0"></span></h2>
+        <div class="maps" id="lobbyMaps"></div>
+      </div>
+      <div class="cta lobbybar">
+        <button class="start" id="lobbyStart" type="button">게임 시작</button>
+        <span class="note" id="startNote"></span>
+        <span style="flex:1"></span>
+        <button class="ghost" id="leaveBtn" type="button">방 나가기</button>
+      </div>
+    </div>
+  </div>
+  <div class="overlay" id="setup" hidden>
     <div class="setup">
       <div class="brand">
         <div>
           <h1>포격<em>전</em></h1>
-          <p>턴제 포격 대전 · 플레이 프로토타입 v0.4</p>
+          <p>한 기기 연습 모드</p>
         </div>
-        <div class="note" style="max-width:420px">한 기기에서 번갈아 조작하는 연습 버전입니다. 닉네임과 링크로 들어오는 온라인 대전은 다음 단계에서 붙습니다.</div>
+        <div class="cta"><span class="note" style="max-width:360px">한 기기에서 여러 명이 번갈아 조작합니다. 친구와 각자 기기로 하려면 처음 화면에서 방을 만드세요.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
       </div>
 
       <div class="sec">
@@ -291,6 +407,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="cta" style="justify-content:center">
         <button class="start" id="again" type="button">한 판 더</button>
         <button class="ghost" id="toSetup" type="button">설정으로</button>
+        <button class="start" id="toLobby" type="button" hidden>대기방으로</button>
+        <button class="ghost" id="leaveGame" type="button" hidden>방 나가기</button>
+      </div>
+      <div class="note" id="overWait" hidden>방장이 대기방으로 돌아가면 함께 이동합니다
       </div>
     </div>
   </div>
@@ -369,8 +489,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
-        { id: 'std', name: '표준탄', dmg: 220, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
-        { id: 'twin', name: '2연발', dmg: 180, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
+        { id: 'std', name: '표준탄', dmg: 235, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
+        { id: 'twin', name: '2연발', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'ball', color: '#5F7A30', size: 1 } },
       ],
     },
     trapper: {
@@ -392,21 +512,21 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 950, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1000, dmgTaken: 1.05, movePx: 330, speedClass: 5, angleMin: 0, angleMax: 65, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
-        { id: 'beam', name: '광선', dmg: 260, radius: 36, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
+        { id: 'beam', name: '광선', dmg: 280, radius: 36, windMul: 0, gravityMul: 0.3, pattern: { kind: 'single' }, look: { shape: 'beam', color: '#7FFFF2', size: 1 } },
         { id: 'prism3', name: '3분광', dmg: 170, radius: 26, windMul: 0, gravityMul: 0.3, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'beam', color: '#B9A6FF', size: 1 } },
       ],
     },
     rage: {
-      name: '레이지', era: 'future', hp: 950, dmgTaken: 1.05, movePx: 250, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
+      name: '레이지', era: 'future', hp: 900, dmgTaken: 1.05, movePx: 250, speedClass: 4, angleMin: 55, angleMax: 88, powerMul: 1,
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
-        { id: 'photon', name: '광탄', dmg: 220, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
-        { id: 'orbital', name: '궤도 낙하', dmg: 240, radius: 55, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'photon', name: '광탄', dmg: 205, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'orbital', name: '궤도 낙하', dmg: 240, radius: 55, windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'ball', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
   },
@@ -1096,12 +1216,14 @@ function createController(match, opts) {
     onInput: opts.onInput || null,          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
     replay: opts.replay || null,            // map turnNo -> TurnInput (replay / remote)
+    remote: opts.remote || null,            // online: called on aim ticks of tanks this device does not control
   };
-  c.frame = function (dtSec) {
-    c.acc += Math.min(dtSec, 0.25);
-    let n = 0;
-    while (c.acc >= TICK && n < c.maxStepsPerFrame) { c.tickOnce(); c.acc -= TICK; n++; }
-    if (n >= c.maxStepsPerFrame) c.acc = 0;
+  // cap: longest real-time gap to catch up in one call (a hidden tab catches up in bigger chunks)
+  c.frame = function (dtSec, cap, maxSteps) {
+    c.acc += Math.min(dtSec, cap || 0.25);
+    let n = 0; const lim = maxSteps || c.maxStepsPerFrame;
+    while (c.acc >= TICK && n < lim) { c.tickOnce(); c.acc -= TICK; n++; }
+    if (n >= lim) c.acc = Math.min(c.acc, cap ? cap : 0);
   };
   c.tickOnce = function () {
     const m = c.match;
@@ -1113,6 +1235,8 @@ function createController(match, opts) {
         if (inp) { applyTurnInput(m, inp); c.log.push(inp); }
       } else if (c.isLocal(t.idx)) {
         c.localTick(t);
+      } else if (c.remote) {
+        c.remote(m, t);
       }
     }
     step(m);
@@ -1147,7 +1271,7 @@ function createController(match, opts) {
     c.charging = false;
     c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon));
   };
-  c.selectWeapon = function (w) { const t = curTank(c.match); if (!t) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
+  c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
   return c;
@@ -1541,7 +1665,7 @@ function createRenderer(cv, mini) {
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
         case 'crate': R.crateDrop[e.id] = { t: 0 }; R.onSfx('crate'); break;
-        case 'turn': R.follow = t; R.free = false; R.onBanner(`${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
+        case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
         case 'over': R.onOver(e.winner); break;
       }
@@ -1717,8 +1841,9 @@ function createRenderer(cv, mini) {
     ctx.textAlign = 'center';
     if (cur) { ctx.fillStyle = '#FFD24A'; ctx.beginPath(); ctx.moveTo(x - 8, y - 32); ctx.lineTo(x + 8, y - 32); ctx.lineTo(x, y - 22); ctx.fill(); }
     ctx.font = '800 14px "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'; ctx.lineJoin = 'round';
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.strokeText(t.nick, x, y - 6);
-    ctx.fillStyle = t.team === 'red' ? '#FFC2B6' : '#C2DEFF'; ctx.fillText(t.nick, x, y - 6);
+    const mine = R.isMine && R.isMine(t), label = mine ? t.nick + ' (나)' : t.nick;
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.strokeText(label, x, y - 6);
+    ctx.fillStyle = mine ? '#FFE79A' : t.team === 'red' ? '#FFC2B6' : '#C2DEFF'; ctx.fillText(label, x, y - 6);
     ctx.fillStyle = '#10141F'; ctx.fillRect(x - w / 2 - 2, y - 2, w + 4, 10);
     ctx.fillStyle = t.team === 'red' ? '#F0583E' : '#3E94F0'; ctx.fillRect(x - w / 2, y, w * (t.hp / t.maxhp), 6);
     if (t.poison) { ctx.fillStyle = '#8EDB3A'; ctx.beginPath(); ctx.arc(x + w / 2 + 9, y + 3, 4, 0, 7); ctx.fill(); }
@@ -1869,6 +1994,779 @@ function createRenderer(cv, mini) {
   return R;
 }
 
+// ---- mqtt.js
+// ============================================================== MQTT 3.1.1 over WebSocket (minimal, no library)
+// QoS 0 only, retained messages, last will, keep-alive. Enough for a relay between browsers.
+// Free public brokers need no signup; every device of one room must use the same broker (its index is in the invite link).
+const BROKERS = [
+  'wss://broker.emqx.io:8084/mqtt',
+  'wss://broker.hivemq.com:8884/mqtt',
+  'wss://test.mosquitto.org:8081/mqtt',
+];
+const ENC = new TextEncoder(), DEC = new TextDecoder();
+
+function mqttStr(s) { const b = ENC.encode(s); const o = new Uint8Array(2 + b.length); o[0] = b.length >> 8; o[1] = b.length & 255; o.set(b, 2); return o; }
+function mqttLen(n) { const o = []; do { let d = n % 128; n = Math.floor(n / 128); if (n > 0) d |= 128; o.push(d); } while (n > 0); return o; }
+function mqttPacket(head, parts) {
+  let len = 0; for (const p of parts) len += p.length;
+  const lb = mqttLen(len), o = new Uint8Array(1 + lb.length + len);
+  o[0] = head; o.set(lb, 1); let at = 1 + lb.length;
+  for (const p of parts) { o.set(p, at); at += p.length; }
+  return o;
+}
+
+// opts: { clientId, keepalive (s), will: { topic, payload, retain } }
+// returns { ready: Promise, publish(topic, string, retain), subscribe(filter), close(), onMessage, onClose, connected }
+function createMqtt(url, opts) {
+  const c = { connected: false, onMessage: null, onClose: null };
+  let ws, buf = new Uint8Array(0), pid = 1, pingTimer = 0, closed = false, lastRx = Date.now();
+  const keepalive = opts.keepalive || 60;
+  c.ready = new Promise((resolve, reject) => {
+    let settled = false;
+    const fail = e => { if (!settled) { settled = true; reject(e); } };
+    const to = setTimeout(() => { fail(new Error('timeout')); try { ws.close(); } catch (e) {} }, opts.timeoutMs || 6000);
+    if (typeof window !== 'undefined' && window.__pgBlockNet > Date.now()) { clearTimeout(to); setTimeout(() => fail(new Error('blocked')), 50); return; } // test hook
+    try { ws = new WebSocket(url, ['mqtt']); } catch (e) { clearTimeout(to); fail(e); return; }
+    ws.binaryType = 'arraybuffer';
+    ws.onopen = () => {
+      const w = opts.will;
+      let flags = 0x02; // clean session
+      const payload = [mqttStr(opts.clientId)];
+      if (w) { flags |= 0x04 | (w.retain ? 0x20 : 0); payload.push(mqttStr(w.topic), mqttStr(w.payload)); }
+      const vh = new Uint8Array([0, 4, 77, 81, 84, 84, 4, flags, keepalive >> 8, keepalive & 255]);
+      ws.send(mqttPacket(0x10, [vh, ...payload]));
+    };
+    ws.onmessage = ev => {
+      lastRx = Date.now();
+      const d = new Uint8Array(ev.data), nb = new Uint8Array(buf.length + d.length); nb.set(buf); nb.set(d, buf.length); buf = nb;
+      for (;;) {
+        if (buf.length < 2) break;
+        let mul = 1, len = 0, i = 1, b;
+        do { if (i >= buf.length) return; b = buf[i++]; len += (b & 127) * mul; mul *= 128; } while (b & 128);
+        if (buf.length < i + len) break;
+        const type = buf[0] >> 4, flags = buf[0] & 15, body = buf.subarray(i, i + len);
+        buf = buf.slice(i + len);
+        if (type === 2) { // CONNACK
+          clearTimeout(to);
+          if (body[1] === 0) { c.connected = true; settled = true; resolve(c); pingTimer = setInterval(ping, Math.min(30, keepalive / 2) * 1000); }
+          else fail(new Error('refused ' + body[1]));
+        } else if (type === 3) { // PUBLISH
+          const tl = (body[0] << 8) | body[1], topic = DEC.decode(body.subarray(2, 2 + tl));
+          const qos = (flags >> 1) & 3, start = 2 + tl + (qos ? 2 : 0);
+          if (qos === 1) ws.send(new Uint8Array([0x40, 2, body[2 + tl], body[3 + tl]])); // PUBACK (we never ask for qos 1, but be polite)
+          if (c.onMessage) { try { c.onMessage(topic, DEC.decode(body.subarray(start)), !!(flags & 1)); } catch (e) { console.error(e); } }
+        }
+        // SUBACK (9) and PINGRESP (13) need no handling
+      }
+    };
+    ws.onerror = () => fail(new Error('socket error'));
+    ws.onclose = () => { clearTimeout(to); clearInterval(pingTimer); const was = c.connected; c.connected = false; fail(new Error('closed')); if (was && !closed && c.onClose) c.onClose(); };
+  });
+  function ping() {
+    if (!c.connected) return;
+    if (Date.now() - lastRx > (keepalive * 1.5 + 10) * 1000) { try { ws.close(); } catch (e) {} return; }
+    ws.send(new Uint8Array([0xC0, 0]));
+  }
+  c.publish = function (topic, payload, retain) {
+    if (!c.connected) return false;
+    ws.send(mqttPacket(0x30 | (retain ? 1 : 0), [mqttStr(topic), ENC.encode(payload)]));
+    return true;
+  };
+  c.subscribe = function (filter) {
+    if (!c.connected) return false;
+    const id = pid++ & 0xFFFF || (pid++ & 0xFFFF);
+    ws.send(mqttPacket(0x82, [new Uint8Array([id >> 8, id & 255]), mqttStr(filter), new Uint8Array([0])]));
+    return true;
+  };
+  c._drop = function () { try { ws.close(); } catch (e) {} }; // test hook: behaves like a network drop
+  c.close = function () {
+    closed = true; clearInterval(pingTimer);
+    if (c.connected) { try { ws.send(new Uint8Array([0xE0, 0])); } catch (e) {} }
+    c.connected = false; try { ws.close(); } catch (e) {}
+  };
+  return c;
+}
+
+// ---- net.js
+// ============================================================== ROOM PROTOCOL (no DOM)
+// One room = one topic tree on the relay broker:  kwpg/v1/<CODE>/
+//   room        retained · lobby/game state, written only by the host (ver increases on every change)
+//   p/<id>      retained · presence {id,nick,on}; the broker writes {on:0} itself if a device drops (last will)
+//   req         player -> host requests (join / team / tank / leave)
+//   cmd         host -> players (kick / resync)
+//   g/<gid>/in    TurnInputs (first one per turn number wins — the broker gives every device the same order)
+//   g/<gid>/log   retained · every accepted TurnInput so far (late joiners and reconnects rebuild from it)
+//   g/<gid>/live  the active player's partial turn (moves so far, aim, power) for spectators
+//   g/<gid>/hash  per-turn state hash from each device; the host compares
+const NET_PREFIX = 'kwpg/v1/';
+const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
+function genId() { return genCode(10).toLowerCase(); }
+function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
+
+// o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
+function createRoomLink(o) {
+  const base = NET_PREFIX + o.code + '/';
+  const r = {
+    code: o.code, myId: o.myId, nick: o.nick, room: null, presence: {}, log: [], gid: null,
+    status: 'connecting', mq: null, closed: false, joinSent: 0, kicked: false, hostWatch: 0, dropTimers: {}, hashes: {},
+  };
+  const cb = (name, ...a) => { if (o[name]) { try { o[name](...a); } catch (e) { console.error(e); } } };
+  r.isHost = () => !!(r.room && r.room.host === r.myId);
+  r.me = () => r.room && r.room.players.find(p => p.id === r.myId);
+  r.online = id => !!(r.presence[id] && r.presence[id].on);
+
+  function pub(sub, obj, retain) { return r.mq && r.mq.publish(base + sub, obj === null ? '' : JSON.stringify(obj), retain); }
+  function publishRoom() { r.room.ver++; r.room.t = Date.now(); pub('room', r.room, true); cb('onChange', r.room); }
+  r.publishRoom = publishRoom;
+
+  async function connect() {
+    if (r.closed) return;
+    setStatus('connecting');
+    const mq = createMqtt(o.url, {
+      clientId: 'pg' + r.myId + Math.floor(Math.random() * 1e6), keepalive: 90,
+      will: { topic: base + 'p/' + r.myId, payload: JSON.stringify({ id: r.myId, nick: r.nick, on: 0 }), retain: true },
+    });
+    r.mq = mq;
+    mq.onMessage = onMessage;
+    mq.onClose = () => { if (r.closed) return; setStatus('reconnecting'); setTimeout(connect, 1500); };
+    try { await mq.ready; } catch (e) {
+      if (r.closed) return;
+      if (r.status === 'connecting' && !r.everConnected) { setStatus('failed'); return; }
+      setStatus('reconnecting'); setTimeout(connect, 2500); return;
+    }
+    const again = r.everConnected;
+    r.everConnected = true;
+    mq.subscribe(base + '#');
+    // back after a drop: inputs sent meanwhile were missed, ask the others for their logs
+    if (again && r.gid) setTimeout(() => pub('cmd', { type: 'logreq', gid: r.gid, from: r.myId }), 300);
+    pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 1 }, true);
+    if (o.create && !r.room) {
+      r.room = { ver: 0, host: r.myId, map: 'temple', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+      publishRoom();
+    }
+    setStatus('online');
+    // no room on this code after a few seconds = wrong or expired link
+    if (!r.room) setTimeout(() => { if (!r.room && !r.closed) cb('onStatus', 'noroom'); }, 5000);
+    else maybeJoin();
+  }
+  function setStatus(s) { r.status = s; cb('onStatus', s); }
+
+  function onMessage(topic, payload) {
+    if (!topic.startsWith(base)) return;
+    const sub = topic.slice(base.length);
+    let msg = null;
+    if (payload) { try { msg = JSON.parse(payload); } catch (e) { return; } }
+    if (sub === 'room') return msg && onRoom(msg);
+    if (sub.startsWith('p/')) return onPresence(sub.slice(2), msg);
+    if (sub === 'req') return msg && r.isHost() && onReq(msg);
+    if (sub === 'cmd') {
+      if (!msg) return;
+      if (msg.type === 'kick' && msg.id === r.myId) { r.kicked = true; cb('onKicked'); return; }
+      if (msg.type === 'logreq') { if (msg.gid === r.gid && msg.from !== r.myId && r.log.length) pub('g/' + r.gid + '/logx', r.log); return; }
+      return cb('onCmd', msg);
+    }
+    const g = sub.match(/^g\/([a-z0-9]+)\/(in|log|logx|live|hash)$/);
+    if (g && msg && g[1] === r.gid) {
+      if (g[2] === 'in') acceptInput(msg);
+      else if (g[2] === 'log' || g[2] === 'logx') mergeLog(msg);
+      else if (g[2] === 'live') { if (msg.from !== r.myId) cb('onLive', msg); }
+      else if (g[2] === 'hash') onHash(msg);
+    }
+  }
+
+  function onRoom(msg) {
+    const cur = r.room;
+    if (cur && (msg.ver < cur.ver || (msg.ver === cur.ver && msg.host >= cur.host && msg.host !== cur.host))) return;
+    if (cur && msg.ver === cur.ver && msg.host === cur.host && msg.t === cur.t) return;
+    const prevGid = cur && cur.game ? cur.game.gid : null;
+    r.room = msg;
+    if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
+      r.gid = msg.game.gid; r.log = []; r.hashes = {};
+      cb('onGame', msg.game);
+    }
+    if (msg.state === 'lobby') r.gid = null;
+    cb('onChange', msg);
+    maybeJoin();
+    watchHost();
+  }
+  function maybeJoin() {
+    if (!r.room || r.kicked || r.room.state !== 'lobby' || r.me()) return;
+    if (Date.now() - r.joinSent < 2500) return;
+    r.joinSent = Date.now();
+    pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank });
+    setTimeout(maybeJoin, 2600);
+  }
+
+  function onPresence(id, msg) {
+    if (!msg) delete r.presence[id]; else r.presence[id] = msg;
+    cb('onChange', r.room);
+    if (!r.room) return;
+    watchHost();
+    if (!r.isHost()) return;
+    // host: a lobby player who stays offline for 12 s leaves the room (a page reload comes back well inside that)
+    const inRoom = r.room.players.some(p => p.id === id);
+    if (inRoom && id !== r.myId && !r.online(id) && r.room.state === 'lobby') {
+      clearTimeout(r.dropTimers[id]);
+      r.dropTimers[id] = setTimeout(() => {
+        if (r.isHost() && !r.online(id) && r.room.state === 'lobby' && r.room.players.some(p => p.id === id)) {
+          r.room.players = r.room.players.filter(p => p.id !== id); publishRoom();
+        }
+      }, 12000);
+    }
+  }
+  // host migration: the host has been offline for 6 s -> the first online player in join order takes over
+  function watchHost() {
+    if (!r.room || r.isHost()) return;
+    const h = r.room.host;
+    if (r.online(h)) { clearTimeout(r.hostWatch); r.hostWatch = 0; return; }
+    if (r.hostWatch) return;
+    r.hostWatch = setTimeout(() => {
+      r.hostWatch = 0;
+      if (!r.room || r.online(r.room.host) || r.closed) return;
+      const next = r.room.players.find(p => p.id !== r.room.host && (r.online(p.id) || p.id === r.myId));
+      if (next && next.id === r.myId) {
+        r.room.host = r.myId;
+        if (r.room.state === 'lobby') r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+        publishRoom();
+        cb('onStatus', 'host');
+      } else if (!next && !r.me()) {
+        // an old link: everybody is gone. Reopen the room with just me.
+        r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'temple', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+        r.gid = null;
+        publishRoom();
+        cb('onStatus', 'host');
+      } else watchHost();
+    }, 6000);
+  }
+
+  // ---- host: lobby requests
+  function onReq(q) {
+    const room = r.room; if (!room) return;
+    const p = room.players.find(x => x.id === q.id);
+    if (q.type === 'join') {
+      if (p) { if (p.nick !== q.nick) { p.nick = q.nick; publishRoom(); } return; }
+      if (room.state !== 'lobby' || r.banned[q.id]) return;
+      if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
+      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      room.players.push({ id: q.id, nick: String(q.nick || '').slice(0, 8) || '손님', team, tank: CONFIG.tanks[q.tank] ? q.tank : 'rookie' });
+      publishRoom();
+    } else if (!p || room.state !== 'lobby') return;
+    else if (q.type === 'team') { if (r.setTeam(q.id, q.team, true)) publishRoom(); }
+    else if (q.type === 'tank') { if (CONFIG.tanks[q.tank]) { p.tank = q.tank; publishRoom(); } }
+    else if (q.type === 'leave') { room.players = room.players.filter(x => x.id !== q.id); publishRoom(); }
+  }
+  r.setTeam = function (id, team, noPublish) {
+    const p = r.room.players.find(x => x.id === id);
+    if (!p || (team !== 'red' && team !== 'blue') || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
+    p.team = team; if (!noPublish) publishRoom(); return true;
+  };
+
+  // ---- player actions (host applies directly, others ask)
+  r.requestTeam = team => { if (r.isHost()) return r.setTeam(r.myId, team); pub('req', { type: 'team', id: r.myId, team }); };
+  r.requestTank = tank => { o.tank = tank; if (r.isHost()) { const p = r.me(); if (p) { p.tank = tank; publishRoom(); } return; } pub('req', { type: 'tank', id: r.myId, tank }); };
+  r.setMap = map => { if (r.isHost() && CONFIG.maps[map]) { r.room.map = map; publishRoom(); } };
+  r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
+  r.banned = {};
+  r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); publishRoom(); };
+  r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamCount(r.room, 'red') > 0 && teamCount(r.room, 'blue') > 0;
+  r.start = function () {
+    if (!r.canStart()) return false;
+    const old = r.room.game;
+    if (old) pub('g/' + old.gid + '/log', null, true); // clear the previous game's retained log
+    r.room.game = {
+      gid: genId(), seed: (Math.random() * 4294967296) >>> 0, mapId: r.room.map, at: Date.now(),
+      players: r.room.players.map(p => ({ id: p.id, nick: p.nick, team: p.team, tankId: p.tank })),
+    };
+    r.room.state = 'game';
+    r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};
+    publishRoom();
+    cb('onGame', r.room.game); // our own echo is ignored, so start locally
+    return true;
+  };
+  r.backToLobby = function () {
+    if (!r.isHost() || r.room.state !== 'game') return;
+    r.room.state = 'lobby';
+    r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+    publishRoom();
+  };
+  r.leave = function () {
+    if (r.mq && r.mq.connected) {
+      if (r.room && r.room.state === 'lobby' && r.me()) {
+        if (r.isHost()) {
+          // hand the room to the next player right away
+          const next = r.room.players.find(p => p.id !== r.myId && r.online(p.id));
+          r.room.players = r.room.players.filter(p => p.id !== r.myId);
+          if (next) { r.room.host = next.id; publishRoom(); }
+          else pub('room', null, true); // last one out: remove the room from the broker
+        } else pub('req', { type: 'leave', id: r.myId });
+      }
+      pub('p/' + r.myId, null, true);
+    }
+    r.closed = true;
+    setTimeout(() => r.mq && r.mq.close(), 150);
+  };
+
+  // ---- game traffic
+  function acceptInput(inp) {
+    if (typeof inp.turnNo !== 'number') return;
+    if (r.log.some(x => x.turnNo === inp.turnNo)) return;
+    r.log.push(inp);
+    if (r.log.length > 1 && r.log[r.log.length - 2].turnNo > inp.turnNo) r.log.sort((a, b) => a.turnNo - b.turnNo);
+    if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
+    cb('onInput', inp);
+  }
+  // fill gaps from another device's log (every device saw the same broker order, so entries agree)
+  function mergeLog(list) {
+    if (!Array.isArray(list)) return;
+    const have = {}; for (const x of r.log) have[x.turnNo] = 1;
+    let added = 0;
+    for (const x of list) if (x && typeof x.turnNo === 'number' && !have[x.turnNo]) { r.log.push(x); have[x.turnNo] = 1; added++; }
+    if (!added) return;
+    r.log.sort((a, b) => a.turnNo - b.turnNo);
+    if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
+    cb('onLog', r.log);
+  }
+  r.sendInput = inp => pub('g/' + r.gid + '/in', inp);
+  r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live));
+  r.sendHash = (turnNo, h) => pub('g/' + r.gid + '/hash', { id: r.myId, turnNo, h });
+  r.myHash = {};
+  function onHash(msg) {
+    if (!r.isHost() || msg.id === r.myId) return;
+    const mine = r.myHash[msg.turnNo];
+    if (mine !== undefined && mine !== msg.h) pub('cmd', { type: 'resync', id: msg.id, turnNo: msg.turnNo });
+    else if (mine === undefined) (r.hashes[msg.turnNo] = r.hashes[msg.turnNo] || []).push(msg);
+  }
+  r.noteMyHash = function (turnNo, h) {
+    r.myHash[turnNo] = h;
+    if (!r.isHost()) return;
+    for (const msg of r.hashes[turnNo] || []) if (msg.h !== h) pub('cmd', { type: 'resync', id: msg.id, turnNo });
+    delete r.hashes[turnNo];
+  };
+  r.resetGame = function () { r.log = []; r.myHash = {}; r.hashes = {}; };
+
+  window.addEventListener('pagehide', () => { if (!r.closed && r.mq && r.mq.connected) pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 0 }, true); });
+  Promise.resolve().then(connect); // callers get the object before the first callback fires
+  return r;
+}
+
+// ---- online.js
+// ============================================================== ONLINE: home screen, waiting room, network game (DOM)
+// Lockstep: every device runs the same simulation. Only TurnInputs travel (plus a cosmetic live feed of the active turn).
+const ON = {
+  link: null, myId: null, nick: '', code: null, brokerIdx: 0, game: null, spectator: false, syncing: false,
+  inputs: {}, applied: {}, live: null, liveN: 0, liveSeen: -1, autoSent: {}, aimTurn: 0, aimSince: 0,
+  lastLive: '', lastLiveAt: 0, hashTurn: 0, rebuildAt: 0, active: false,
+};
+const DQ = s => document.querySelector(s);
+
+function onlineId() {
+  try { let id = sessionStorage.getItem('pg.id'); if (!id) { id = genId(); sessionStorage.setItem('pg.id', id); } return id; } catch (e) { return genId(); }
+}
+function savedNick() { try { return localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
+function saveNick(n) { try { localStorage.setItem('pg.nick', n); } catch (e) {} }
+function savedTank() { try { const t = localStorage.getItem('pg.tank'); return CONFIG.tanks[t] ? t : 'rookie'; } catch (e) { return 'rookie'; } }
+function saveTank(t) { try { localStorage.setItem('pg.tank', t); } catch (e) {} }
+function brokerOverride() { try { return new URLSearchParams(location.search).get('broker'); } catch (e) { return null; } }
+function brokerUrl(i) { return brokerOverride() || BROKERS[i] || BROKERS[0]; }
+function parseInvite() {
+  const h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const code = (h.get('r') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+  return code.length === 5 ? { code, b: Math.max(0, Math.min(BROKERS.length - 1, +h.get('b') || 0)) } : null;
+}
+function inviteUrl() { return location.origin + location.pathname + location.search + `#r=${ON.code}&b=${ON.brokerIdx}`; }
+
+// ---------------------------------------------------------------- screens
+let screen = 'home';
+function showScreen(name) {
+  screen = name;
+  $('home').hidden = name !== 'home';
+  $('lobby').hidden = name !== 'lobby';
+  $('setup').hidden = name !== 'setup';
+  const g = name === 'game';
+  $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
+  if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); }
+  if (name === 'setup') renderSetup();
+  if (name === 'home') { renderHome(); probeBrokers(); }
+}
+
+// ---------------------------------------------------------------- home
+function homeMsg(s, bad) { const e = $('homeMsg'); e.textContent = s || ''; e.classList.toggle('bad', !!bad); }
+function renderHome() {
+  const inv = parseInvite();
+  $('nickIn').value = ON.nick || savedNick();
+  $('inviteBox').hidden = !inv; $('joinBtn').hidden = !inv;
+  if (inv) $('inviteCode').textContent = inv.code;
+  $('createBtn').className = inv ? 'ghost big' : 'start';
+}
+function readNick() {
+  const n = $('nickIn').value.trim().slice(0, 8);
+  if (!n) { homeMsg('닉네임을 먼저 입력하세요', true); $('nickIn').focus(); return null; }
+  ON.nick = n; saveNick(n); return n;
+}
+function setHomeBusy(b) { for (const id of ['createBtn', 'joinBtn', 'codeBtn', 'practiceBtn']) $(id).disabled = b; }
+
+// home screen: find a relay server that answers before anyone presses a button
+const PROBE = { state: 'idle', idx: -1 };
+async function probeBrokers() {
+  if (PROBE.state === 'busy' || PROBE.state === 'ok') return showProbe();
+  PROBE.state = 'busy'; showProbe();
+  const order = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
+  for (const i of order) {
+    const c = createMqtt(brokerUrl(i), { clientId: 'pgp' + genCode(8).toLowerCase(), keepalive: 30, timeoutMs: 5000 });
+    try { await c.ready; c.close(); PROBE.state = 'ok'; PROBE.idx = i; showProbe(); return; } catch (e) {}
+  }
+  PROBE.state = 'fail'; showProbe();
+}
+function showProbe() {
+  const e = $('probe'); if (!e) return;
+  e.dataset.s = PROBE.state;
+  e.textContent = PROBE.state === 'ok' ? `온라인 준비됨 · 중계 서버 ${PROBE.idx + 1}` : PROBE.state === 'fail' ? '중계 서버에 연결할 수 없습니다 — 인터넷 연결이나 회사·학교 방화벽을 확인하세요' : '온라인 연결 확인 중…';
+}
+async function createRoom() {
+  const nick = readNick(); if (!nick) return;
+  setHomeBusy(true); homeMsg('중계 서버에 연결하는 중…');
+  const code = genCode(5), all = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
+  const order = PROBE.idx >= 0 ? [PROBE.idx, ...all.filter(i => i !== PROBE.idx)] : all;
+  for (const idx of order) {
+    homeMsg(`중계 서버 ${idx + 1}에 연결하는 중…`);
+    const ok = await openLink(code, idx, true);
+    if (ok) { setHomeBusy(false); return; }
+  }
+  setHomeBusy(false);
+  homeMsg('중계 서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하세요.', true);
+}
+async function joinRoom(code, idx) {
+  const nick = readNick(); if (!nick) return;
+  setHomeBusy(true); homeMsg(`방 ${code}에 들어가는 중…`);
+  const ok = await openLink(code, idx, false);
+  setHomeBusy(false);
+  if (!ok) homeMsg('중계 서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요.', true);
+}
+// resolves true once connected (then the room callbacks drive the screens)
+function openLink(code, idx, create) {
+  return new Promise(resolve => {
+    if (ON.link) { ON.link.leave(); ON.link = null; }
+    let done = false;
+    ON.code = code; ON.brokerIdx = idx; ON.myId = ON.myId || onlineId();
+    const link = createRoomLink({
+      code, url: brokerUrl(idx), myId: ON.myId, nick: ON.nick, tank: savedTank(), create,
+      onStatus: s => {
+        if (ON.link !== link) return;
+        if (s === 'online' && !done) {
+          done = true; resolve(true);
+          try { history.replaceState(null, '', `#r=${code}&b=${idx}`); sessionStorage.setItem('pg.room', code); } catch (e) {}
+          if (!link.room) homeMsg('방 정보를 받는 중…');
+        }
+        if (s === 'failed' && !done) { done = true; link.closed = true; ON.link = null; resolve(false); }
+        if (s === 'noroom' && !link.room) { leaveOnline(); homeMsg(`방 ${code}을(를) 찾지 못했습니다. 링크가 맞는지, 방장이 아직 방에 있는지 확인하세요.`, true); }
+        if (s === 'host') banner('이제 내가 방장입니다');
+        updateNetStatus();
+      },
+      onChange: room => onRoomChange(room),
+      onGame: game => startOnlineMatch(game),
+      onInput: inp => onNetInput(inp),
+      onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; },
+      onLog: log => onNetLog(log),
+      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
+      onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
+    });
+    ON.link = link;
+  });
+}
+function leaveOnline() {
+  if (ON.link) ON.link.leave();
+  ON.link = null; ON.game = null; ON.active = false;
+  try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem('pg.room'); } catch (e) {}
+  showScreen('home');
+}
+
+// ---------------------------------------------------------------- lobby
+function onRoomChange(room) {
+  if (!room || !ON.link) return;
+  if (room.state === 'lobby') {
+    if (screen !== 'lobby') { ON.game = null; ON.active = false; showScreen('lobby'); }
+    renderLobby();
+  } else if (room.state === 'game' && screen === 'home') {
+    // arrived while a game is running and it was not started for us yet (spectate)
+    if (!ON.game) startOnlineMatch(room.game);
+  }
+  updateNetStatus();
+}
+function updateNetStatus() {
+  const L = ON.link; if (!L) return;
+  const txt = { connecting: '연결 중…', online: '연결됨', reconnecting: '다시 연결하는 중…', failed: '연결 실패' }[L.status] || '';
+  const el = $('lobbyStatus'); if (el) { el.textContent = `중계 서버 ${ON.brokerIdx + 1} · ${txt}`; el.classList.toggle('bad', L.status !== 'online'); }
+  const ns = $('netState'); if (ns) { ns.hidden = L.status === 'online'; ns.textContent = txt; }
+}
+function playerCard(p, room) {
+  const L = ON.link, me = p.id === ON.myId, host = room.host === p.id, isHost = L.isHost();
+  const el = document.createElement('div'); el.className = 'pc' + (me ? ' me' : '') + (L.online(p.id) || me ? '' : ' off');
+  el.append(cloneCanvas(thumbs[p.tank] || thumbs.rookie));
+  const info = document.createElement('div'); info.className = 'pi';
+  const nm = document.createElement('b'); nm.textContent = p.nick; info.append(nm);
+  const tags = document.createElement('span'); tags.className = 'tags';
+  tags.textContent = [CONFIG.tanks[p.tank] ? CONFIG.tanks[p.tank].name : '', host ? '방장' : '', me ? '나' : '', L.online(p.id) || me ? '' : '연결 끊김'].filter(Boolean).join(' · ');
+  info.append(tags); el.append(info);
+  const act = document.createElement('div'); act.className = 'pa';
+  if (me || isHost) {
+    const other = p.team === 'red' ? 'blue' : 'red';
+    const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mini';
+    mv.textContent = other === 'blue' ? '블루로 →' : '← 레드로';
+    mv.setAttribute('aria-label', `${p.nick}을(를) ${other === 'blue' ? '블루' : '레드'} 팀으로`);
+    mv.disabled = teamCount(room, other) >= CONFIG.turn.teamMax;
+    mv.onclick = () => { AU.play('ui'); if (me) L.requestTeam(other); else L.moveOther(p.id, other); };
+    act.append(mv);
+  }
+  if (isHost && !me) {
+    const k = document.createElement('button'); k.type = 'button'; k.className = 'mini warn'; k.textContent = '내보내기';
+    k.onclick = () => { if (confirm(`${p.nick}을(를) 방에서 내보낼까요?`)) L.kick(p.id); };
+    act.append(k);
+  }
+  el.append(act);
+  return el;
+}
+function renderLobby() {
+  const L = ON.link; if (!L || !L.room) return;
+  const room = L.room, isHost = L.isHost(), me = L.me();
+  $('roomCode').textContent = ON.code;
+  $('shareLink').value = inviteUrl();
+  for (const team of ['red', 'blue']) {
+    const list = $(team + 'List'); list.innerHTML = '';
+    const ps = room.players.filter(p => p.team === team);
+    ps.forEach(p => list.append(playerCard(p, room)));
+    for (let i = ps.length; i < CONFIG.turn.teamMax; i++) { const e = document.createElement('div'); e.className = 'pc empty'; e.textContent = '빈 자리'; list.append(e); }
+    $(team + 'N').textContent = `${ps.length} / ${CONFIG.turn.teamMax}`;
+  }
+  // my tank
+  const picks = $('myPicks'); picks.innerHTML = '';
+  const myTank = me ? me.tank : savedTank();
+  for (const k of TANK_KEYS) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pick' + (myTank === k ? ' sel' : '');
+    b.append(cloneCanvas(thumbs[k])); const s = document.createElement('span'); s.textContent = CONFIG.tanks[k].name; b.append(s);
+    b.setAttribute('aria-pressed', String(myTank === k));
+    b.onclick = () => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); };
+    picks.append(b);
+  }
+  renderTankInfo(myTank);
+  // maps
+  const maps = $('lobbyMaps'); maps.innerHTML = '';
+  for (const [k, meta] of Object.entries(CONFIG.maps)) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (room.map === k ? ' sel' : '');
+    b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
+    const inner = document.createElement('div'); inner.className = 'in';
+    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
+    b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
+    if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
+    maps.append(b);
+  }
+  $('mapNote').textContent = isHost ? '(방장이 고릅니다 · 눌러서 변경)' : '(방장이 고릅니다)';
+  const st = $('lobbyStart');
+  st.hidden = !isHost;
+  st.disabled = !L.canStart();
+  const red = teamCount(room, 'red'), blue = teamCount(room, 'blue');
+  $('startNote').textContent = isHost
+    ? (L.canStart() ? `${red} 대 ${blue} · 시작하면 위치는 무작위로 정해집니다` : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
+    : (me ? '방장이 시작하면 바로 전투가 시작됩니다' : '방에 들어가는 중…');
+  updateNetStatus();
+}
+function renderTankInfo(k) {
+  const d = CONFIG.tanks[k];
+  $('tankInfo').textContent = `${d.name} · 체력 ${d.hp} · 이동 ${d.movePx} · 각도 ${d.angleMin}°–${d.angleMax}° · 1번 ${d.weapons[0].name} · 2번 ${d.weapons[1].name}`;
+}
+
+// ---------------------------------------------------------------- network game
+function startOnlineMatch(game) {
+  ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
+  ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
+  ON.spectator = !game.players.some(p => p.id === ON.myId);
+  // joined late (reload or spectator): wait for the retained log, then fast-forward
+  ON.syncing = Date.now() - (game.at || 0) > 5000;
+  beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
+  showScreen('game');
+  banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
+  if (ON.syncing) {
+    banner('진행 중인 게임에 맞추는 중…');
+    setTimeout(() => { ON.syncing = false; if (ON.link && ON.link.log.length) rebuildFrom(ON.link.log); }, 1800);
+  }
+}
+function onlineCtrlOpts() {
+  return {
+    isLocal: idx => !ON.syncing && !ON.spectator && match.tanks[idx].id === ON.myId && !ON.inputs[match.turnNo],
+    remote: remoteTick,
+    onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
+  };
+}
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, !!x.timeout, !!x.ended]); }
+function onNetInput(inp) {
+  if (!ON.active) return;
+  const mine = ON.applied[inp.turnNo];
+  if (mine) { if (inputKey(mine) !== inputKey(inp)) requestRebuild('input'); return; }
+  ON.inputs[inp.turnNo] = inp;
+}
+function onNetLog(log) {
+  if (!ON.active || ON.syncing) return;
+  // a longer authoritative log than what we have seen: take the missing inputs, rebuild if anything disagrees
+  for (const x of log) {
+    const a = ON.applied[x.turnNo];
+    if (a && inputKey(a) !== inputKey(x)) { requestRebuild('log'); return; }
+    if (!a) ON.inputs[x.turnNo] = x;
+  }
+}
+function actUnits(actions) { let n = 0; for (const a of actions) n += a.t === 'm' ? a.n : 1; return n; }
+// Applies whatever part of `actions` this device has not applied yet. False if what we applied is not a prefix of it.
+function applyPartial(m, actions) {
+  const done = m.turn.actions;
+  for (let i = 0; i < done.length; i++) {
+    const a = done[i], b = actions[i];
+    if (!b || a.t !== b.t) return false;
+    if (a.t === 'm') { if (a.d !== b.d || a.n > b.n || (a.n < b.n && i !== done.length - 1)) return false; }
+    else if (a.s !== b.s) return false;
+  }
+  const U = actUnits(done); let u = 0;
+  for (const b of actions) {
+    const n = b.t === 'm' ? b.n : 1;
+    if (u + n <= U) { u += n; continue; }
+    for (let k = 0; k < n; k++, u++) {
+      if (u < U) continue;
+      if (m.phase !== 'aim') return true;
+      if (b.t === 'm') cmdMove(m, b.d); else cmdItem(m, b.s);
+    }
+  }
+  return true;
+}
+function remoteTick(m, t) {
+  const fin = ON.inputs[m.turnNo];
+  if (fin) {
+    if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
+    if (m.phase === 'aim') {
+      if (fin.timeout) cmdTimeout(m);
+      else if (fin.ended) { requestRebuild('ended'); return; }
+      else cmdFire(m, fin.angle, fin.power, fin.weapon);
+    }
+    ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
+    ctrl.charging = false;
+    return;
+  }
+  const lv = ON.live;
+  if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
+    if (m.phase !== 'aim') return;
+    t.aim = lv.aim; ctrl.weapon = lv.weapon; ctrl.charging = !!lv.charging; ctrl.powerF = lv.power || 0;
+    if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
+  }
+  if (ctrl.timeLeft > 0) ctrl.timeLeft--;
+}
+let rebuildTimer = 0;
+function requestRebuild(why) {
+  if (rebuildTimer || !ON.link) return;
+  console.warn('resync:', why);
+  rebuildTimer = setTimeout(() => { rebuildTimer = 0; if (ON.active && ON.link) rebuildFrom(ON.link.log); }, 60);
+}
+// Recreate the match from the seed and every accepted input — identical on every device.
+function rebuildFrom(log) {
+  const g = ON.game; if (!g) return;
+  const m = createMatch({ seed: g.seed, mapId: g.mapId, players: g.players });
+  const byTurn = {}; for (const x of log) byTurn[x.turnNo] = x;
+  let guard = 0;
+  while (m.phase !== 'over' && guard++ < 4e6) {
+    if (m.phase === 'aim') {
+      const x = byTurn[m.turnNo]; if (!x) break;
+      applyTurnInput(m, x);
+      if (m.phase === 'aim') break; // input did not end the turn (should not happen)
+    } else step(m);
+    if (m.events.length > 2000) m.events.length = 0;
+  }
+  m.events.length = 0;
+  ON.applied = byTurn; ON.inputs = {}; ON.hashTurn = 0;
+  const cam = { x: R.cam.x, y: R.cam.y };
+  installMatch(m, onlineCtrlOpts());
+  R.cam.x = cam.x; R.cam.y = cam.y;
+  if (m.phase === 'over') R.onOver(m.winner);
+  ON.rebuildAt = performance.now();
+}
+
+// called from the main loop every frame while an online game is on screen
+function onlineFrame(now) {
+  const L = ON.link, m = match; if (!L || !m || !ON.active) return;
+  // state hash once per turn
+  if (m.turnNo !== ON.hashTurn && m.hashes[m.turnNo] !== undefined) {
+    ON.hashTurn = m.turnNo; L.noteMyHash(m.turnNo, m.hashes[m.turnNo]); L.sendHash(m.turnNo, m.hashes[m.turnNo]);
+  }
+  if (m.phase !== 'aim') return;
+  const t = m.tanks[m.cur];
+  if (ON.aimTurn !== m.turnNo) { ON.aimTurn = m.turnNo; ON.aimSince = now; }
+  // live feed of my turn for everyone else
+  if (ctrl.activeLocal()) {
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim, weapon: ctrl.weapon, charging: ctrl.charging, power: Math.round(ctrl.powerF) };
+    const s = JSON.stringify(lv);
+    if ((s !== ON.lastLive && now - ON.lastLiveAt > 90) || now - ON.lastLiveAt > 1000) {
+      ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);
+    }
+  }
+  // host: skip the turn of a player who is gone (or frozen far past the time limit)
+  if (L.isHost() && t.id !== ON.myId && !ON.inputs[m.turnNo] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
+    const waited = now - ON.aimSince, gone = !L.online(t.id);
+    if ((gone && waited > 4000) || waited > (CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate + 15) * 1000) {
+      ON.autoSent[m.turnNo] = true;
+      L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true });
+    }
+  }
+}
+// hidden tabs get no animation frames: keep the simulation running in bigger steps so this device never falls behind
+let hiddenLast = 0;
+setInterval(() => {
+  if (!document.hidden || screen !== 'game' || !match || !ctrl || !ON.active) { hiddenLast = 0; return; }
+  const now = performance.now(), dt = hiddenLast ? (now - hiddenLast) / 1000 : 0.5; hiddenLast = now;
+  if (match.phase !== 'over') ctrl.frame(dt, 6, 6 * CONFIG.physics.tickRate);
+  match.events = match.events.filter(e => e.type === 'carve' || e.type === 'over');
+  onlineFrame(now);
+}, 500);
+
+function onlineOver() {
+  const L = ON.link, isHost = L && L.isHost();
+  $('again').hidden = true; $('toSetup').hidden = true;
+  $('toLobby').hidden = !isHost; $('leaveGame').hidden = false;
+  $('overWait').hidden = isHost;
+}
+function bindOnlineUi() {
+  $('createBtn').onclick = () => { AU.unlock(); createRoom(); };
+  $('joinBtn').onclick = () => { AU.unlock(); const inv = parseInvite(); if (inv) joinRoom(inv.code, inv.b); };
+  $('codeBtn').onclick = () => {
+    AU.unlock();
+    const c = $('codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (c.length !== 5) { homeMsg('방 코드는 5글자입니다', true); return; }
+    joinRoom(c, 0);
+  };
+  $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeBtn').click(); });
+  $('nickIn').addEventListener('keydown', e => { if (e.key === 'Enter') (parseInvite() ? $('joinBtn') : $('createBtn')).click(); });
+  $('practiceBtn').onclick = () => { AU.unlock(); showScreen('setup'); };
+  $('backHome').onclick = () => showScreen('home');
+  $('copyBtn').onclick = async () => {
+    const url = inviteUrl();
+    try { await navigator.clipboard.writeText(url); $('copyBtn').textContent = '복사됨!'; }
+    catch (e) { $('shareLink').select(); document.execCommand && document.execCommand('copy'); $('copyBtn').textContent = '복사됨!'; }
+    setTimeout(() => { $('copyBtn').textContent = '초대 링크 복사'; }, 1600);
+  };
+  $('lobbyStart').onclick = () => { AU.unlock(); if (ON.link && ON.link.start()) $('lobbyStart').disabled = true; };
+  $('leaveBtn').onclick = () => leaveOnline();
+  $('toLobby').onclick = () => { if (ON.link) ON.link.backToLobby(); };
+  $('leaveGame').onclick = () => leaveOnline();
+  $('exitBtn').onclick = () => {
+    if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
+    else if (confirm('연습을 끝내고 처음 화면으로 갈까요?')) showScreen('home');
+  };
+  window.addEventListener('hashchange', () => { if (screen === 'home') renderHome(); });
+}
+// first screen: rejoin straight away after a reload, otherwise the home screen
+function routeStart() {
+  bindOnlineUi();
+  ON.myId = onlineId(); ON.nick = savedNick();
+  const inv = parseInvite();
+  let again = null; try { again = sessionStorage.getItem('pg.room'); } catch (e) {}
+  showScreen('home');
+  if (inv && again === inv.code && ON.nick) joinRoom(inv.code, inv.b);
+}
+
 // ---- main.js
 // ============================================================== UI + MAIN LOOP
 const $ = id => document.getElementById(id);
@@ -1880,7 +2778,7 @@ try { const v = localStorage.getItem('pg.shake'); R.reduceMotion = v === null ? 
 R.onSfx = (n, p) => AU.play(n, p);
 R.onHitstop = ms => { if (!R.reduceMotion) freezeUntil = performance.now() + ms; };
 R.onEngine = on => AU.setEngine(on);
-let match = null, ctrl = null, armedTele = -1;
+let match = null, ctrl = null;
 const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.items);
 
 // ---------------------------------------------------------------- banner / over
@@ -1893,7 +2791,10 @@ R.onOver = winner => {
   t.style.color = winner === 'red' ? '#FF9A86' : winner === 'blue' ? '#8CC2FF' : '#FFFFFF';
   const alive = match.tanks.filter(x => x.alive && x.team === winner).map(x => x.nick).join(', ');
   $('overSub').textContent = `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (alive ? ` · 생존: ${alive}` : '');
-  setTimeout(() => { $('over').hidden = false; }, 900);
+  const online = ON.active;
+  $('again').hidden = online; $('toSetup').hidden = online; $('toLobby').hidden = true; $('leaveGame').hidden = true; $('overWait').hidden = true;
+  if (online) onlineOver();
+  setTimeout(() => { if (screen === 'game' && match && match.phase === 'over') $('over').hidden = false; }, 900);
 };
 
 // ---------------------------------------------------------------- HUD
@@ -1931,7 +2832,8 @@ function updateHud() {
   setTxt('windTxt', m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : ''));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
-  const key = t.items.join(',') + '|' + used + '|' + armedTele + '|' + m.turnNo;
+  const mineNow = ctrl.activeLocal();
+  const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
   if (hudCache.items !== key) {
     hudCache.items = key; const box = $('items'); box.innerHTML = '';
     for (let i = 0; i < CONFIG.turn.inventoryMax; i++) {
@@ -1939,8 +2841,7 @@ function updateHud() {
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
         b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${meta.name}</span>`;
-        b.title = meta.name; b.disabled = used; if (used) b.style.opacity = 0.45;
-        if (armedTele === i) b.classList.add('armed');
+        b.title = meta.name; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);
@@ -1957,7 +2858,8 @@ function updateHud() {
     p.save(); p.translate(86, 120); const sc = 172 / (S_.w * S_.scale) * 0.95; p.scale(sc, sc); drawTankLocal(p, t.tankId, d.sprite.baseAngle || 0); p.restore();
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
-  cv.classList.toggle('tele', armedTele >= 0);
+  const waitTxt = ON.active && m.phase === 'aim' && !ctrl.activeLocal() ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator ? `관전 중 · ${t.nick}의 차례` : `${t.nick}의 차례 — 기다리는 중`) : '';
+  if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
 function drawDial(t, d, tiltDeg, real) {
@@ -1985,7 +2887,7 @@ function useItemSlot(i) {
 // ---------------------------------------------------------------- input
 const KEYMAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down', Space: 'fire' };
 const camKeys = {};
-function inGame() { return match && $('setup').hidden; }
+function inGame() { return !!match && screen === 'game'; }
 window.addEventListener('pointerdown', () => AU.unlock(), { capture: true });
 window.addEventListener('keydown', e => {
   AU.unlock();
@@ -1995,8 +2897,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Digit1') ctrl.selectWeapon(0);
   if (e.code === 'Digit2') ctrl.selectWeapon(1);
   if (['Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(e.code)) useItemSlot(+e.code.slice(5) - 3);
-  if (e.code === 'KeyF' && match.cur >= 0) R.camTo(match.tanks[match.cur]);
-  if (e.code === 'Escape') armedTele = -1;
+  if (e.code === 'KeyF') recenter();
 });
 window.addEventListener('keyup', e => { if (KEYMAP[e.code] && ctrl) ctrl.keys[KEYMAP[e.code]] = false; camKeys[e.code] = false; });
 window.addEventListener('blur', () => { if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; for (const k in camKeys) camKeys[k] = false; });
@@ -2008,13 +2909,7 @@ cv.addEventListener('pointermove', e => {
   if (Math.abs(dx) + Math.abs(dy) > 6) { drag.moved = true; cv.classList.add('dragging'); R.free = true; }
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
-cv.addEventListener('pointerup', e => {
-  if (drag && !drag.moved && armedTele >= 0 && ctrl.activeLocal()) {
-    const w = R.screenToWorld(e.clientX, e.clientY);
-    if (ctrl.useItem(armedTele, w.x, w.y)) armedTele = -1; else banner('그곳엔 착지할 땅이 없습니다');
-  }
-  drag = null; cv.classList.remove('dragging');
-});
+cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -2024,12 +2919,18 @@ function syncSettings() {
 $('sndBtn').addEventListener('click', () => { AU.unlock(); AU.setMuted(!AU.muted); syncSettings(); });
 $('shakeBtn').addEventListener('click', () => { R.reduceMotion = !R.reduceMotion; if (R.reduceMotion) R.shake = 0; try { localStorage.setItem('pg.shake', R.reduceMotion ? '0' : '1'); } catch (e) {} syncSettings(); });
 syncSettings();
-$('recenter').addEventListener('click', () => match && match.cur >= 0 && R.camTo(match.tanks[match.cur]));
+// F / button: my own tank online (if alive), otherwise the tank whose turn it is
+function recenter() {
+  if (!match) return;
+  const mine = ON.active && match.tanks.find(t => t.id === ON.myId && t.alive);
+  if (mine) R.camTo(mine); else if (match.cur >= 0) R.camTo(match.tanks[match.cur]);
+}
+$('recenter').addEventListener('click', recenter);
 $('w0').addEventListener('click', () => ctrl && ctrl.selectWeapon(0));
 $('w1').addEventListener('click', () => ctrl && ctrl.selectWeapon(1));
 document.querySelectorAll('[data-k]').forEach(b => {
   const k = KEYMAP[b.dataset.k];
-  const down = e => { e.preventDefault(); if (ctrl) { ctrl.keys[k] = true; R.free = false; } };
+  const down = e => { e.preventDefault(); AU.unlock(); if (ctrl) { ctrl.keys[k] = true; R.free = false; } };
   const up = e => { e.preventDefault(); if (ctrl) ctrl.keys[k] = false; };
   b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); b.addEventListener('pointercancel', up);
 });
@@ -2093,9 +2994,22 @@ document.querySelectorAll('.seg[data-team]').forEach(s => s.onclick = () => { se
 $('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = TANK_KEYS[(Math.random() * TANK_KEYS.length) | 0]; saveSetup(); renderSetup(); };
 $('start').onclick = startGame;
 $('again').onclick = () => { $('over').hidden = true; startGame(); };
-$('toSetup').onclick = () => { $('over').hidden = true; showSetup(); };
-function showSetup() { $('setup').hidden = false; $('hudTop').hidden = true; $('hud').hidden = true; $('hint').hidden = true; $('touch').hidden = true; renderSetup(); }
+$('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
+// one match on screen: local practice or online (opts carry the online hooks)
+function installMatch(m, opts) {
+  match = m;
+  ctrl = createController(match, opts || {});
+  for (const k in hudCache) delete hudCache[k];
+  R.setMatch(match); R.resize(); buildWindBar();
+  R.isMine = t => ON.active && t.id === ON.myId;
+  window.__pg.match = match; window.__pg.ctrl = ctrl;
+}
+function beginMatch(cfg, opts) {
+  installMatch(createMatch(cfg), opts);
+  $('over').hidden = true; $('loading').hidden = true;
+}
 function startGame() {
+  ON.active = false;
   $('loading').hidden = false;
   setTimeout(() => {
     const players = [];
@@ -2104,14 +3018,9 @@ function startGame() {
       players.push({ id: team[0] + i, nick: (sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1), team, tankId: sl.tank });
     }
     const seed = (Math.random() * 4294967296) >>> 0;
-    match = createMatch({ seed, mapId: setup.map, players });
-    ctrl = createController(match);
-    armedTele = -1;
-    for (const k in hudCache) delete hudCache[k];
-    R.setMatch(match); R.resize(); buildWindBar();
-    $('setup').hidden = true; $('hudTop').hidden = false; $('hud').hidden = false; $('hint').hidden = false; $('touch').hidden = false; $('loading').hidden = true;
+    beginMatch({ seed, mapId: setup.map, players });
+    showScreen('game');
     banner(CONFIG.maps[setup.map].name);
-    window.__pg.match = match; window.__pg.ctrl = ctrl;
   }, 30);
 }
 
@@ -2136,19 +3045,23 @@ function loop(now) {
     if (camKeys.KeyD) { R.cam.x += sp; R.free = true; }
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
+    if (ON.active) onlineFrame(now);
     R.frame(frozen ? dt * 0.08 : dt, ctrl);
     updateHud();
   }
   requestAnimationFrame(loop);
 }
-window.__pg = { CONFIG, R, AU, createMatch, stateHash };
+window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, get screen() { return screen; } };
 (async () => {
   R.resize();
   await loadSprites();
   for (const k of TANK_KEYS) thumbs[k] = tankThumb(k, 132, 98);
-  showSetup();
+  routeStart();
   requestAnimationFrame(loop);
 })();
 
 })();
 </script>
+
+</body>
+</html>
