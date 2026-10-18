@@ -51,7 +51,8 @@ function createController(match, opts) {
   c.resetCurve = function () { const t = curSub(c.match); if (t && !c.charging) c.rel = c.defaultRel(t); };
   c.worldPts = function (t) {
     const m = c.match; t = t || curSub(m);
-    return c.rel.map(p => [clampN(Math.round(t.x + p[0]), 0, m.W - 1), clampN(Math.round(t.y + p[1]), 0, m.H - 1)]);
+    const xl = m.rules.wrapX ? -m.W / 2 : 0, xh = m.rules.wrapX ? m.W * 1.5 : m.W - 1;
+    return c.rel.map(p => [clampN(Math.round(t.x + p[0]), xl, xh), clampN(Math.round(t.y + p[1]), 0, m.H - 1)]);
   };
   c.setPoint = function (i, wx, wy) { const t = curSub(c.match); if (!t || c.charging) return; c.rel[i] = [wx - t.x, wy - t.y]; };
   // straight curve from the sub to (wx, wy)

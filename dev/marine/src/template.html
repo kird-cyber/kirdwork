@@ -64,6 +64,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .windbar i { flex: 1; height: 7px; border-radius: 2px; background: #2E3850; }
 .windbar i.on { background: #5FC8F0; }
 .windbar b { width: 2px; height: 13px; background: var(--fg); }
+.maprule { font-size: 11px; line-height: 1.4; color: var(--gold); font-weight: 700; }
+.maprule:empty { display: none; }
+.maprule-lobby { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: #9FE6D0; font-weight: 700; }
+.mapc .r { font-size: 12px; line-height: 1.45; color: #9FE6D0; font-weight: 700; }
 .right { display: flex; gap: 8px; align-items: flex-start; }
 .timer { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--panel); border: 3px solid var(--gold); font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .timer.low { border-color: var(--red); color: #FFB4A4; }
@@ -365,6 +369,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="wind" aria-label="해류">
       <div class="row"><span id="windLbl">해류</span><span id="windTxt">0</span></div>
       <div class="windbar" id="windBar"></div>
+      <div class="maprule" id="mapRule" title="이 맵의 특수 규칙"></div>
     </div>
     <div class="right">
       <div class="mapbox">
@@ -479,6 +484,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="sec">
         <h2>맵 <span id="mapNote" style="letter-spacing:0"></span></h2>
         <div class="maps" id="lobbyMaps"></div>
+        <p class="maprule-lobby" id="lobbyMapRule"></p>
       </div>
       <div class="cta lobbybar">
         <button class="start" id="lobbyStart" type="button">게임 시작</button>

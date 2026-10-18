@@ -54,7 +54,7 @@ function createRoomLink(o) {
     if (again && r.gid) setTimeout(() => { pub('cmd', { type: 'logreq', gid: r.gid, from: r.myId }); setTimeout(flushOutbox, 700); }, 300);
     pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 1 }, true);
     if (o.create && !r.room) {
-      r.room = { ver: 0, host: r.myId, map: 'reef', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+      r.room = { ver: 0, host: r.myId, map: 'atlantic', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
       publishRoom();
     }
     setStatus('online');
@@ -148,7 +148,7 @@ function createRoomLink(o) {
         cb('onStatus', 'host');
       } else if (!next && !r.me()) {
         // an old link: everybody is gone. Reopen the room with just me.
-        r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'reef', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+        r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'atlantic', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
         r.gid = null;
         publishRoom();
         cb('onStatus', 'host');

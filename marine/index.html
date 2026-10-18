@@ -81,6 +81,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .windbar i { flex: 1; height: 7px; border-radius: 2px; background: #2E3850; }
 .windbar i.on { background: #5FC8F0; }
 .windbar b { width: 2px; height: 13px; background: var(--fg); }
+.maprule { font-size: 11px; line-height: 1.4; color: var(--gold); font-weight: 700; }
+.maprule:empty { display: none; }
+.maprule-lobby { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: #9FE6D0; font-weight: 700; }
+.mapc .r { font-size: 12px; line-height: 1.45; color: #9FE6D0; font-weight: 700; }
 .right { display: flex; gap: 8px; align-items: flex-start; }
 .timer { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--panel); border: 3px solid var(--gold); font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 .timer.low { border-color: var(--red); color: #FFB4A4; }
@@ -385,6 +389,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="wind" aria-label="해류">
       <div class="row"><span id="windLbl">해류</span><span id="windTxt">0</span></div>
       <div class="windbar" id="windBar"></div>
+      <div class="maprule" id="mapRule" title="이 맵의 특수 규칙"></div>
     </div>
     <div class="right">
       <div class="mapbox">
@@ -499,6 +504,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="sec">
         <h2>맵 <span id="mapNote" style="letter-spacing:0"></span></h2>
         <div class="maps" id="lobbyMaps"></div>
+        <p class="maprule-lobby" id="lobbyMapRule"></p>
       </div>
       <div class="cta lobbybar">
         <button class="start" id="lobbyStart" type="button">게임 시작</button>
@@ -637,63 +643,63 @@ const CONFIG = {
   // speedClass 1 = heaviest (longest wait between turns) .. 5 = quickest
   subs: {
     uboat: {
-      name: '유보트-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
+      name: '유보트-96', model: '유보트 VII-C형', hp: 970, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
       weapons: [
         { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 210, rx: 90, ry: 90 },
         { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 145, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sejong: {
-      name: '세종대왕함', model: '도산안창호급 몸체', hp: 1100, hull: 4, movePx: 240, range: 2900, turn: 90, speedClass: 2,
+      name: '세종대왕함', model: '도산안창호급 몸체', hp: 1110, hull: 4, movePx: 240, range: 2900, turn: 90, speedClass: 2,
       weapons: [
         { id: 'cheonji', name: '천지 어뢰', kind: 'cross', dmg: 200, rx: 140, ry: 140, thin: 38 },
         { id: 'singijeon', name: '신기전', kind: 'rain', dmg: 75, rx: 45, ry: 45, arrows: 5, gap: 45, height: 360, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     ohio: {
-      name: '오하이오', model: '오하이오급 전략원잠', hp: 1190, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
+      name: '오하이오', model: '오하이오급 전략원잠', hp: 1210, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
       weapons: [
-        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 220, rx: 95, ry: 95 },
-        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 275, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
+        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 225, rx: 95, ry: 95 },
+        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 280, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
       ],
     },
     nautilus: {
-      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1120, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
+      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1110, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
       weapons: [
         { id: 'drill', name: '충각 관통탄', kind: 'pierce', dmg: 205, rx: 80, ry: 80, drill: 120 },
         { id: 'maelstrom', name: '마엘스트롬', kind: 'vortex', dmg: 175, rx: 90, ry: 90, pull: 100, pullR: 220, waitTicks: 72, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     kilo: {
-      name: '킬로', model: '킬로급 디젤-전기', hp: 1050, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
+      name: '킬로', model: '킬로급 디젤-전기', hp: 1040, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
       weapons: [
         { id: 'volt', name: '전류탄', kind: 'electric', dmg: 165, rx: 85, ry: 85 },
         { id: 'chain', name: '연쇄 번개', kind: 'chain', dmg: 125, rx: 60, ry: 60, jumps: 2, jumpR: 400, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     alvin: {
-      name: '앨빈', model: '심해 탐사정', hp: 1050, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
+      name: '앨빈', model: '심해 탐사정', hp: 1060, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
       weapons: [
         { id: 'claw', name: '집게 어뢰', kind: 'circle', dmg: 225, rx: 90, ry: 90 },
         { id: 'drone', name: '해저 드론', kind: 'crawl', dmg: 210, rx: 85, ry: 85, crawl: 300, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     blue: {
-      name: '블루핀', model: '청상어형', fish: true, hp: 930, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
+      name: '블루핀', model: '청상어형', fish: true, hp: 920, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
       weapons: [
-        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 205, rx: 80, ry: 80, seek: 260, turnMax: 40 },
+        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 200, rx: 80, ry: 80, seek: 260, turnMax: 40 },
         { id: 'frenzy', name: '피 냄새 파편탄', kind: 'octo8', dmg: 70, rx: 45, ry: 45, reach: 120, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     orca: {
-      name: '오르카', model: '범고래형', fish: true, hp: 1210, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
+      name: '오르카', model: '범고래형', fish: true, hp: 1220, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
       weapons: [
         { id: 'direct', name: '직격 어뢰', kind: 'direct', dmg: 220, rx: 80, ry: 80 },
         { id: 'tail', name: '꼬리치기 어뢰', kind: 'hell', dmg: 190, rx: 150, ry: 40, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sona: {
-      name: '소나', model: '향유고래형', fish: true, hp: 1210, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
+      name: '소나', model: '향유고래형', fish: true, hp: 1200, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
       weapons: [
         { id: 'sonar', name: '음파탄', kind: 'vell', dmg: 195, rx: 45, ry: 160 },
         { id: 'blow', name: '숨구멍 대폭발', kind: 'inflate', dmg: 260, rx: 140, ry: 140, waitTicks: 60, cooldownTurns: 3, extraDelay: 150 },
@@ -719,12 +725,32 @@ const CONFIG = {
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask. W*H must be a multiple of 4.
+  // map list (order = the original's). rules: special rule per map, all deterministic (see sim.js mapRules)
   maps: {
-    reef: { name: '산호 협곡', tag: '기둥 · 버섯 바위', desc: '해저에서 솟은 기둥 위에 버섯 모양 바위가 얹혀 있습니다. 바위 밑은 좋은 은신처.', W: 4000, H: 1600, theme: 'reef' },
-    cave: { name: '해저 동굴', tag: '굴 · 주머니', desc: '가운데 거대한 바위 덩어리를 굴이 꿰뚫습니다. 굴 속에 숨으면 곡선과 튕김으로 노려야 합니다.', W: 4000, H: 1700, theme: 'cave' },
-    wreck: { name: '침몰선', tag: '선실 · 구멍', desc: '가라앉은 거대한 배. 선실 안에 숨고, 뚫린 구멍으로 쏘고 들어갑니다.', W: 4200, H: 1600, theme: 'wreck' },
-    ice: { name: '빙하 아래', tag: '고드름 · 좁은 바다', desc: '머리 위는 깨지지 않는 빙하, 고드름이 매달린 좁은 바다. 위로 밀려 나갈 수 없습니다.', W: 4000, H: 1500, theme: 'ice' },
-    vents: { name: '열수구', tag: '굴뚝 · 아치', desc: '뜨거운 굴뚝과 돌 아치가 늘어선 해저 화산 지대.', W: 3800, H: 1700, theme: 'vents' },
+    god12: { name: '12신', en: '12 GOD', tag: '사이버 신전 · 기둥 12개', desc: '네온 회로가 흐르는 사이버 신전. 천장과 바닥에서 엇갈려 뻗은 기둥 12개는 겉이 깎여도 금속 속심이 남습니다.', rule: '사이버 공간: 어뢰가 좌우 끝을 넘으면 반대편에서 다시 나옵니다', W: 4000, H: 1700, theme: 'god12',
+      rules: { wrapX: true } },
+    atlantic: { name: '아틀란틱', en: 'Atlantic', tag: '대양 · 탁 트인 전장', desc: '넓고 깊은 대서양. 십자 암초 4개뿐이라 눈대중 거리와 해류 읽기가 실력의 전부입니다.', rule: '대양 해류: 해류가 1.6배 강합니다', W: 4800, H: 1500, theme: 'atlantic',
+      rules: { currentMul: 1.6 } },
+    battlefield: { name: '배틀 필드', en: 'Battle Field', tag: '벙커 · 참호 · 기뢰', desc: '양 끝의 가라앉은 벙커, 바닥의 참호, 가운데 대잠 기둥과 그물. 총안으로 쏘고 참호로 숨습니다.', rule: '기뢰밭: 떠 있는 기뢰가 폭발이나 어뢰에 닿으면 터집니다(연쇄 폭발)', W: 4200, H: 1600, theme: 'battlefield',
+      rules: { mines: [[1600, 620], [1900, 820], [2300, 820], [2600, 620], [2100, 1050], [1450, 900], [2750, 900], [2100, 250]], mine: { r: 22, rx: 120, dmg: 120 } } },
+    bermuda: { name: '버뮤다', en: 'Bermuda', tag: '삼각지대 · 물결 암초', desc: '한가운데 거대한 삼각형 암벽과 길 잃은 배. 바깥은 지그재그 물결 암초가 휘감습니다.', rule: '버뮤다 삼각지대: 삼각형 안에서는 해류가 2배', W: 4200, H: 1700, theme: 'bermuda',
+      rules: { tri: [[2100, 260], [1350, 1250], [2850, 1250]], triMul: 2 } },
+    cave: { name: '케이브', en: 'Cave', tag: '동굴 · 종유석 · 떠 있는 바위', desc: '위아래가 출렁이는 두꺼운 동굴. 종유석과 떠 있는 바위 사이 틈으로 곡선을 꿰어야 합니다.', rule: '낙석: 천장 가까이에서 터지면 종유석이 떨어집니다(피해 90)', W: 4000, H: 1700, theme: 'cave',
+      rules: { rockfall: { ceilY: 620, chance: 0.6, dmg: 90, r: 55, reach: 520 } } },
+    cube: { name: '큐브', en: 'Cube', tag: '격자 블록 · 금속 심', desc: '크기가 다른 정육면체 블록이 격자로 떠 있고, 일부는 금속 심이 박혀 끝까지 남습니다.', rule: '큐브 세계: 모든 폭발이 네모 모양으로 터집니다', W: 3800, H: 1800, theme: 'cube',
+      rules: { box: true } },
+    duke: { name: '듀크', en: 'Duke', tag: '가라앉은 공작의 성', desc: '탑 두 개와 성벽, 아치형 성문이 뚫린 본성. 무너진 성벽 틈으로 안뜰에 숨어듭니다.', rule: '성의 가호: 성 안뜰에 있으면 받는 피해가 20% 줄어듭니다', W: 4400, H: 1700, theme: 'duke',
+      rules: { guard: { x0: 1150, x1: 3250, y0: 860, y1: 1700, mul: 0.8 } } },
+    iceberg: { name: '아이스버그', en: 'Iceberg', tag: '빙산 · 유빙', desc: '수면에 거꾸로 매달린 빙산 셋과 유빙 조각. 빙산마다 숨을 수 있는 얼음 동굴이 있습니다.', rule: '깨지는 얼음: 폭발에 파이는 크기가 1.4배', W: 4200, H: 1700, theme: 'iceberg',
+      rules: { carveMul: 1.4 } },
+    jurassic: { name: '쥬라기', en: 'Jurassic', tag: '공룡 화석 · 암모나이트', desc: '바닥에 누운 거대한 공룡 화석. 갈비뼈 아치 아래가 은신처, 물속엔 돌 조각이 가득합니다.', rule: '화석 발굴: 바위를 파면 가끔 보급 상자가 나옵니다', W: 4200, H: 1600, theme: 'jurassic',
+      rules: { fossil: 0.18 } },
+    nautilus: { name: '노틸러스', en: 'Nautilus', tag: '거대 앵무조개 껍데기', desc: '한가운데 앵무조개 껍데기의 나선 복도. 곡선을 빙글 돌려 안쪽 깊숙이 숨은 적을 노립니다.', rule: '나선 해류: 껍데기 주변 물살이 어뢰를 시계 방향으로 휘감습니다', W: 4000, H: 1700, theme: 'nautilus',
+      rules: { swirl: { x: 2000, y: 800, r: 950, v: 40 } } },
+    seacity: { name: '씨 시티', en: 'Sea City', tag: '해저 도시 · 2층 통로 · 리프트', desc: '금속 천장 아래 해저 도시. 리프트 기둥, 좌우 2층 금속 통로, 바닥의 돔과 첨탑.', rule: '도시 보급망: 보급 상자가 2턴마다 떨어집니다', W: 4200, H: 1800, theme: 'seacity',
+      rules: { crateEvery: 2 } },
+    spa: { name: '스파', en: 'Spa', tag: '해저 온천 · 대나무 · 돌 욕조', desc: '엇갈린 대나무 장대와 김이 오르는 돌 욕조 셋. 욕조 안은 아늑한 은신처입니다.', rule: '온천: 욕조 안에서 턴을 시작하면 체력 +60, 욕조 위 기포가 어뢰를 밀어 올립니다', W: 3800, H: 1500, theme: 'spa',
+      rules: { lift: [[480, 920, 400, 1240, 60], [1680, 2320, 400, 1240, 60], [2980, 3420, 400, 1240, 60]], heal: [[460, 940, 1040, 1290, 60], [1660, 2340, 1040, 1290, 60], [2960, 3440, 1040, 1290, 60]] } },
   },
 };
 
@@ -830,79 +856,170 @@ function seabed(mask, W, H, top) {
   fillBand(mask, W, H, 0, W - 1, () => H - 36, () => H, 2);
 }
 
+function rectM(mask, W, H, x0, y0, x1, y1, v) { fillPoly(mask, W, H, [[x0, y0], [x1, y0], [x1, y1], [x0, y1]], v === undefined ? 1 : v); }
+// a straight bar of thickness th between two points
+function barM(mask, W, H, x0, y0, x1, y1, th, v) {
+  const dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / L * th / 2, ny = dx / L * th / 2;
+  fillPoly(mask, W, H, [[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], v === undefined ? 1 : v);
+}
+// circular arc of thickness th (angles in tenths of a degree, 0 = right, 900 = down)
+function arcM(mask, W, H, cx, cy, r, a0, a1, th, v) {
+  const step = Math.max(4, Math.round(600 / Math.max(20, r)));
+  for (let a = a0; a <= a1; a += step) fillEllipse(mask, W, H, cx + r * cosD10(a), cy + r * sinD10(a), th / 2, th / 2, v === undefined ? 1 : v);
+}
+function floorOf(H, base, a, b) { return x => H - base + a * tsin(x / 310) + b * tsin(x / 83 + 1); }
+
+
 const MAPGEN = {
-  // 산호 협곡: three pillars with mushroom caps, floating rocks, a rolling sea floor
-  reef(W, H, mask) {
-    const floor = x => H - 330 + 60 * tsin(x / 310) + 30 * tsin(x / 97 + 1) + 12 * tsin(x / 23);
-    seabed(mask, W, H, floor);
-    for (const [fx, topY, cap] of [[0.27, 640, 190], [0.5, 520, 210], [0.73, 700, 180]]) {
-      const cx = Math.round(W * fx), g = floor(cx) + 30;
-      fillPoly(mask, W, H, [[cx - 70, g], [cx - 42, topY + 40], [cx + 42, topY + 40], [cx + 70, g]]);
-      fillEllipse(mask, W, H, cx, topY, cap, 64);
-      fillEllipse(mask, W, H, cx - cap * 0.55, topY + 30, cap * 0.35, 30); // drooping lip: shade below
-      fillEllipse(mask, W, H, cx + cap * 0.55, topY + 30, cap * 0.35, 30);
+  // 12 GOD: a neon cyber temple. Twelve pillars (six from the ceiling, six from the floor, offset) with an unbreakable metal core and a rock sheath; four floating data blocks
+  god12(W, H, m) {
+    rectM(m, W, H, 0, 0, W, 70, 2); rectM(m, W, H, 0, H - 150, W, H, 2);
+    for (let i = 0; i < 6; i++) {
+      const xt = 400 + i * 640, xb = 720 + i * 640 - 640 * (i === 5 ? 1 : 0) * 0;
+      const lt = 230 + 90 * ((i * 5) % 3), lb = 230 + 90 * ((i * 7 + 1) % 3);
+      rectM(m, W, H, xt - 48, 60, xt + 48, 70 + lt); rectM(m, W, H, xt - 12, 60, xt + 12, 50 + lt, 2); fillEllipse(m, W, H, xt, 70 + lt, 62, 40);
+      if (xb < W - 200) { rectM(m, W, H, xb - 48, H - 150 - lb, xb + 48, H - 140); rectM(m, W, H, xb - 12, H - 130 - lb, xb + 12, H - 140, 2); fillEllipse(m, W, H, xb, H - 150 - lb, 62, 40); }
     }
-    for (const [fx, y, r] of [[0.11, 520, 90], [0.89, 560, 90], [0.38, 330, 64], [0.62, 360, 64]]) fillEllipse(mask, W, H, Math.round(W * fx), y, r * 1.3, r);
-    for (let i = 0; i < 22; i++) { const x = 80 + i * (W - 160) / 21; fillEllipse(mask, W, H, x, floor(x) + 4, 34 + 14 * tsin(i * 1.7), 26 + 10 * tsin(i * 2.3)); }
+    for (const [y] of [[520], [1100]]) { rectM(m, W, H, 0, y - 30, 170, y + 30); rectM(m, W, H, W - 170, y - 30, W, y + 30); }
+    for (const [x, y] of [[1250, 760], [2750, 760], [2000, 520], [2000, 1010]]) { rectM(m, W, H, x - 90, y - 60, x + 90, y + 60); rectM(m, W, H, x - 20, y - 20, x + 20, y + 20, 2); }
   },
-  // 해저 동굴: a big rock mass with a winding tunnel, two shafts and side pockets
-  cave(W, H, mask) {
-    const floor = x => H - 200 + 40 * tsin(x / 270) + 18 * tsin(x / 61);
-    seabed(mask, W, H, floor);
-    const x0 = Math.round(W * 0.15), x1 = Math.round(W * 0.85);
-    const edge = x => Math.min(1, Math.min(x - x0, x1 - x) / 220);
-    const top = x => 760 - edge(x) * (240 + 60 * tsin(x / 400) + 26 * tsin(x / 130));
-    const bot = x => 760 + edge(x) * (460 + 50 * tsin(x / 350) + 20 * tsin(x / 77));
-    fillBand(mask, W, H, x0, x1, top, bot);
-    for (let x = W * 0.19; x <= W * 0.81; x += 6) fillEllipse(mask, W, H, x, 880 + 170 * tsin(x / 520), 78 + 14 * tsin(x / 90), 78 + 14 * tsin(x / 90), 0);
-    for (const fx of [0.33, 0.66]) { const cx = W * fx; for (let y = top(cx) - 20; y <= 880 + 170 * tsin(cx / 520); y += 8) fillEllipse(mask, W, H, cx, y, 62, 62, 0); }
-    for (const [fx, y, r] of [[0.24, 700, 110], [0.76, 1060, 110], [0.5, 1080, 120]]) fillEllipse(mask, W, H, W * fx, y, r * 1.2, r, 0);
-  },
-  // 침몰선: a huge tilted wreck lying on the sea floor, rooms inside, holes in the deck, two masts
-  wreck(W, H, mask) {
-    const floor = x => H - 240 + 30 * tsin(x / 330) + 14 * tsin(x / 70);
-    seabed(mask, W, H, floor);
-    const cx = W * 0.5, cy = H - 470, A = 60, L = 2100, T = 430;
-    fillPoly(mask, W, H, rotPts([[-L / 2, -T / 2], [L / 2 - 220, -T / 2], [L / 2, -40], [L / 2 - 280, T / 2], [-L / 2 + 70, T / 2], [-L / 2, T / 2 - 90]], cx, cy, A));
-    for (const [a, b] of [[-880, -470], [-370, 40], [140, 560]]) fillPoly(mask, W, H, rotPts([[a, -150], [b, -150], [b, 130], [a, 130]], cx, cy, A), 0);
-    for (const [lx, ly, r] of [[-660, -215, 70], [360, -215, 70], [920, -60, 60], [-1050, -40, 70], [-120, -215, 56]]) { const p = rotPts([[lx, ly]], cx, cy, A)[0]; fillEllipse(mask, W, H, p[0], p[1], r, r, 0); }
-    for (const lx of [-300, 420]) fillPoly(mask, W, H, rotPts([[lx - 13, -T / 2 - 430], [lx + 13, -T / 2 - 430], [lx + 13, -T / 2 + 10], [lx - 13, -T / 2 + 10]], cx, cy, A));
-    for (const lx of [-300, 420]) fillPoly(mask, W, H, rotPts([[lx - 120, -T / 2 - 330], [lx + 120, -T / 2 - 330], [lx + 120, -T / 2 - 312], [lx - 120, -T / 2 - 312]], cx, cy, A));
-    for (const [fx, r] of [[0.08, 70], [0.92, 80], [0.2, 50], [0.82, 55]]) fillEllipse(mask, W, H, W * fx, floor(W * fx) - 10, r * 1.4, r);
-  },
-  // 빙하 아래: unbreakable ice above, icicles hanging down, a narrow sea
-  ice(W, H, mask) {
-    fillBand(mask, W, H, 0, W - 1, () => 0, () => 70, 2);
-    fillBand(mask, W, H, 0, W - 1, () => 0, x => 130 + 40 * tsin(x / 230) + 16 * tsin(x / 57), 1);
-    for (let i = 0; i < 16; i++) {
-      const x = 150 + i * (W - 300) / 15 + 60 * tsin(i * 2.1), len = 170 + 140 * (0.5 + 0.5 * tsin(i * 1.37)), w = 40 + 18 * tsin(i * 0.9);
-      fillPoly(mask, W, H, [[x - w, 100], [x + w, 100], [x + w * 0.3, 100 + len * 0.7], [x, 100 + len], [x - w * 0.3, 100 + len * 0.7]]);
+  // Atlantic: wide open ocean. A row of cross-shaped reefs at mid depth (the original's + + . +), a few sea mounts far below. Long range: the pure eye test
+  atlantic(W, H, m) {
+    const f = floorOf(H, 180, 40, 14); seabed(m, W, H, f);
+    for (const [x, y, s] of [[1050, 650, 1], [1950, 760, 1.15], [3000, 640, 0.8], [3850, 740, 1.05]]) {
+      rectM(m, W, H, x - 190 * s, y - 34, x + 190 * s, y + 34); rectM(m, W, H, x - 34, y - 190 * s, x + 34, y + 190 * s); fillEllipse(m, W, H, x, y, 60, 60);
     }
-    const bx = W * 0.5; fillPoly(mask, W, H, [[bx - 170, 90], [bx + 170, 90], [bx + 120, 600], [bx + 40, 680], [bx - 60, 660], [bx - 140, 560]]);
-    const floor = x => H - 280 + 70 * tsin(x / 260) + 30 * tsin(x / 90 + 2);
-    seabed(mask, W, H, floor);
-    for (const fx of [0.22, 0.78]) { const x = W * fx; fillPoly(mask, W, H, [[x - 160, floor(x) + 20], [x - 40, floor(x) - 240], [x + 30, floor(x) - 260], [x + 150, floor(x) + 20]]); }
+    for (const [fx, w, h] of [[0.12, 260, 220], [0.5, 360, 300], [0.86, 300, 240]]) { const x = W * fx; fillPoly(m, W, H, [[x - w, f(x) + 40], [x - w * 0.25, f(x) - h], [x + w * 0.3, f(x) - h * 0.9], [x + w, f(x) + 40]]); }
   },
-  // 열수구: chimneys of different heights, stone arches between some of them
-  vents(W, H, mask) {
-    const floor = x => H - 260 + 50 * tsin(x / 300) + 20 * tsin(x / 80);
-    seabed(mask, W, H, floor);
-    const ch = [[0.16, 760], [0.3, 560], [0.44, 820], [0.58, 520], [0.72, 760], [0.86, 600]];
-    for (const [fx, ty] of ch) {
-      const x = W * fx, g = floor(x) + 30;
-      fillPoly(mask, W, H, [[x - 95, g], [x - 46, ty + 30], [x - 62, ty], [x + 62, ty], [x + 46, ty + 30], [x + 95, g]]);
-      fillEllipse(mask, W, H, x, ty + 6, 30, 22, 0); // the vent mouth
+  // Battle Field: two sunken bunkers facing each other, trenches in the floor, anti-sub poles and a sagging net line in no-man's-land
+  battlefield(W, H, m) {
+    const f = x => H - 260 + 18 * tsin(x / 140); seabed(m, W, H, f);
+    for (const s of [-1, 1]) {
+      const cx = s < 0 ? 520 : W - 520;
+      rectM(m, W, H, cx - 300, H - 760, cx + 300, f(cx) + 20);              // bunker block
+      rectM(m, W, H, cx - 330, H - 800, cx + 330, H - 740, 2);             // concrete roof slab (metal)
+      rectM(m, W, H, cx - 200, H - 640, cx + 200, H - 440, 0);              // inner room
+      rectM(m, W, H, cx + s * 200 - 20, H - 590, cx + s * 320, H - 520, 0); // firing slit toward the middle
+      rectM(m, W, H, cx - s * 60, H - 440, cx + s * 40, f(cx) + 20, 0);     // stair shaft down to the trench
+      for (const k of [0, 1]) { const tx = cx + s * (520 + k * 260); rectM(m, W, H, tx - 70, f(tx) - 10, tx + 70, f(tx) + 120, 0); }
     }
-    // arches: the upper half of a thick ring between neighbouring chimneys (shelter below)
-    for (const [fa, fb, cyOff] of [[0.3, 0.44, 40], [0.58, 0.72, 60]]) {
-      const xa = W * fa, xb = W * fb, mx = (xa + xb) / 2, rx = (xb - xa) / 2, base = Math.min(floor(xa), floor(xb)) - 360 + cyOff;
-      fillEllipse(mask, W, H, mx, base, rx + 10, 230);
-      fillEllipse(mask, W, H, mx, base + 20, rx - 50, 200, 0);
-      fillBand(mask, W, H, Math.round(mx - rx - 20), Math.round(mx + rx + 20), () => base + 20, x => floor(x) + 40, 0);
-      for (const fx of [fa, fb]) { const x = W * fx; fillPoly(mask, W, H, [[x - 95, floor(x) + 30], [x - 46, base + 30], [x + 46, base + 30], [x + 95, floor(x) + 30]]); }
-    }
-    for (const [fx, r] of [[0.06, 80], [0.94, 80], [0.51, 60]]) fillEllipse(mask, W, H, W * fx, floor(W * fx) - 10, r * 1.5, r);
+    for (const x of [1550, 1800, 2400, 2650]) rectM(m, W, H, x - 14, f(x) - 520, x + 14, f(x) + 10, 2);
+    for (let x = 1550; x <= 2650; x += 20) { const t = (x - 1550) / 1100, y = H - 780 + 120 * 4 * t * (1 - t); fillEllipse(m, W, H, x, y, 12, 10); }
+    for (const [x, r] of [[2100, 120], [1300, 80], [2900, 80]]) fillEllipse(m, W, H, x, f(x) - 40, r * 1.6, r);
   },
+  // Bermuda: the triangle. A big hollow triangle of rock (gaps at the corners) with a lost ship inside; zig-zag reef "waves" swirl around it
+  bermuda(W, H, m) {
+    const f = floorOf(H, 200, 30, 12); seabed(m, W, H, f);
+    const A = [2100, 260], B = [1350, 1250], C = [2850, 1250];
+    const side = (p, q) => { const n = 20; for (let i = 3; i <= n - 3; i++) { const t = i / n; fillEllipse(m, W, H, p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, 46, 46); } };
+    side(A, B); side(B, C); side(C, A);
+    fillPoly(m, W, H, [[1880, 1010], [2330, 1010], [2270, 1100], [1950, 1100]]); rectM(m, W, H, 2080, 860, 2100, 1010); // lost ship
+    for (const [x0, y0, n, amp] of [[200, 380, 6, 70], [3000, 420, 6, 70], [260, 900, 5, 60], [3150, 980, 5, 60], [1500, 160, 5, 40]]) {
+      for (let i = 0; i < n; i++) barM(m, W, H, x0 + i * 150, y0 + (i % 2 ? amp : -amp), x0 + (i + 1) * 150, y0 + (i % 2 ? -amp : amp), 34);
+    }
+  },
+  // Cave: the original's cave. A thick wavy ceiling and floor bulging toward each other, stalactites, and floating boulders (the "objects") in between
+  cave(W, H, m) {
+    rectM(m, W, H, 0, 0, W, 40, 2);
+    fillBand(m, W, H, 0, W - 1, () => 0, x => 220 + 150 * (0.5 + 0.5 * tsin(x / 260)) + 40 * tsin(x / 70));
+    seabed(m, W, H, x => H - 230 - 150 * (0.5 + 0.5 * tsin(x / 260 + 2.4)) - 40 * tsin(x / 64));
+    for (let i = 0; i < 14; i++) { const x = 140 + i * 270 + 40 * tsin(i * 3.1), top = 220 + 150 * (0.5 + 0.5 * tsin(x / 260)), L = 90 + 70 * (0.5 + 0.5 * tsin(i * 1.9)); fillPoly(m, W, H, [[x - 36, top - 10], [x + 36, top - 10], [x, top + L]]); }
+    for (const [x, y, rx, ry] of [[700, 820, 150, 90], [1450, 650, 110, 120], [2050, 950, 180, 100], [2650, 640, 120, 110], [3300, 860, 160, 95]]) fillEllipse(m, W, H, x, y, rx, ry);
+  },
+  // Cube: a lattice of square blocks of different sizes. Some hide a metal cube inside; corners everywhere for cross and vertical bursts
+  cube(W, H, m) {
+    rectM(m, W, H, 0, H - 140, W, H, 2); rectM(m, W, H, 0, H - 260, W, H - 140);
+    for (let i = 0; i < 9; i++) { const x = 220 + i * 420, h = 80 + 80 * ((i * 3) % 3); rectM(m, W, H, x - 90, H - 260 - h, x + 90, H - 250); }
+    const sizes = [190, 290, 230, 340, 210, 300];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 7; c++) {
+      if ((r * 7 + c) % 5 === 2) continue;
+      const s = sizes[(r * 3 + c * 2) % sizes.length] / 2, x = 330 + c * 520 + (r % 2) * 260, y = 330 + r * 380;
+      if (x > W - 200) continue;
+      rectM(m, W, H, x - s, y - s, x + s, y + s);
+      if ((r + c) % 3 === 0) rectM(m, W, H, x - s * 0.35, y - s * 0.35, x + s * 0.35, y + s * 0.35, 2);
+    }
+  },
+  // Duke: a sunken duke's castle. Two towers with battlements, curtain walls, a keep with a gate arch through it
+  duke(W, H, m) {
+    const f = x => H - 240 + 20 * tsin(x / 400); seabed(m, W, H, f);
+    const crenel = (x0, x1, y) => { for (let x = x0; x < x1; x += 80) rectM(m, W, H, x, y - 50, x + 44, y + 2); };
+    for (const cx of [1000, 3400]) {
+      rectM(m, W, H, cx - 150, 520, cx + 150, f(cx) + 20); crenel(cx - 150, cx + 150, 520);
+      rectM(m, W, H, cx - 40, 640, cx + 40, 720, 0); rectM(m, W, H, cx - 40, 880, cx + 40, 960, 0);
+      rectM(m, W, H, cx - 20, 520, cx + 20, f(cx), 2);
+    }
+    const k = 2200; rectM(m, W, H, k - 260, 380, k + 260, f(k) + 20); crenel(k - 260, k + 260, 380);
+    fillEllipse(m, W, H, k, f(k) - 220, 150, 220, 0); rectM(m, W, H, k - 150, f(k) - 220, k + 150, f(k) + 10, 0); // gate arch
+    rectM(m, W, H, k - 70, 520, k + 70, 640, 0);                                                                    // great hall window
+    for (const [a, b] of [[1150, 1940], [2460, 3250]]) { rectM(m, W, H, a, 860, b, 940); crenel(a, b, 860); }
+    for (const [g0, g1] of [[1700, 1860], [2540, 2700]]) { rectM(m, W, H, g0, 800, g1, 945, 0); fillEllipse(m, W, H, (g0 + g1) / 2, 945, 80, 40, 0); } // breached walls: the way into the courtyards
+    for (const x of [300, 4100]) fillEllipse(m, W, H, x, f(x) - 30, 200, 110);
+  },
+  // Iceberg: icebergs hang from the surface (the bulk below water, wider than the tip), one broken floe drifting, the sea floor far down
+  iceberg(W, H, m) {
+    const f = floorOf(H, 170, 40, 16); seabed(m, W, H, f);
+    for (const [cx, w, d] of [[700, 300, 760], [2050, 420, 980], [3450, 340, 700]]) {
+      fillPoly(m, W, H, [[cx - w * 0.5, 0], [cx + w * 0.45, 0], [cx + w * 0.9, d * 0.35], [cx + w * 0.75, d * 0.7], [cx + w * 0.2, d], [cx - w * 0.35, d * 0.85], [cx - w * 0.95, d * 0.45], [cx - w * 0.8, d * 0.15]]);
+      fillEllipse(m, W, H, cx - w * 0.2, d * 0.55, w * 0.25, d * 0.12, 0); // a cave pocket in the ice
+    }
+    fillPoly(m, W, H, [[1250, 820], [1480, 780], [1560, 900], [1420, 990], [1230, 950]]);
+    fillPoly(m, W, H, [[2750, 1060], [2980, 1010], [3050, 1120], [2860, 1190]]);
+  },
+  // Jurassic: a giant fossil skeleton on the floor (ribs arch over a shelter, a skull with an eye hole), ammonites, and a field of small stones in the water
+  jurassic(W, H, m) {
+    const f = floorOf(H, 220, 26, 10); seabed(m, W, H, f);
+    const spineY = x => H - 560 - 60 * tsin((x - 900) / 700);
+    for (let x = 900; x <= 3000; x += 70) fillEllipse(m, W, H, x, spineY(x), 34, 26);
+    for (let i = 0; i < 9; i++) { const x = 1300 + i * 140, r = 230 - Math.abs(i - 4) * 18; arcM(m, W, H, x, spineY(x) + r, r, 1900, 3500, 26); arcM(m, W, H, x, spineY(x) + r, r, 0, 300, 26); }
+    fillPoly(m, W, H, [[3000, spineY(3000) - 60], [3380, spineY(3000) - 120], [3560, spineY(3000) + 10], [3380, spineY(3000) + 130], [3030, spineY(3000) + 90]]);
+    fillEllipse(m, W, H, 3300, spineY(3000) - 40, 40, 34, 0);
+    for (let x = 3080; x < 3520; x += 60) fillPoly(m, W, H, [[x, spineY(3000) + 110], [x + 30, spineY(3000) + 110], [x + 15, spineY(3000) + 170]]);
+    for (const [x, y] of [[420, f(420) - 60], [3900, f(3900) - 60]]) { arcM(m, W, H, x, y, 80, 0, 3200, 30); arcM(m, W, H, x + 20, y + 10, 40, 0, 2600, 24); }
+    for (let i = 0; i < 40; i++) { const x = 200 + ((i * 977) % 3800), y = 260 + ((i * 613) % 520), s = 18 + (i * 7) % 22; rectM(m, W, H, x - s, y - s, x + s, y + s); }
+  },
+  // Nautilus: a giant chambered nautilus shell — a spiral corridor with inner walls (each with a hole) — and swirling coral like the original's
+  nautilus(W, H, m) {
+    const f = floorOf(H, 200, 30, 12); seabed(m, W, H, f);
+    const cx = 2000, cy = 800;
+    // log spiral r = a * e^(b*theta): sampled with the table, grows ~1.75x per half turn
+    let r = 110; for (let a = 0; a <= 9000; a += 15) { r *= 1.0026; if (r > 720) break; fillEllipse(m, W, H, cx + r * cosD10(a), cy + r * sinD10(a) * 0.8, 24 + r * 0.06, 24 + r * 0.06); }
+    { let rr = 110; const marks = {}; for (let a = 0; a <= 9000; a += 15) { rr *= 1.0026; if (a % 900 === 450 && a > 900 && rr < 720) { const r1 = rr * 0.62, r2 = rr * 0.86; barM(m, W, H, cx + r1 * cosD10(a), cy + r1 * sinD10(a) * 0.8, cx + r2 * cosD10(a), cy + r2 * sinD10(a) * 0.8, 24); fillEllipse(m, W, H, cx + rr * 0.74 * cosD10(a), cy + rr * 0.74 * sinD10(a) * 0.8, 26, 26, 0); } } } // inner walls (septa), each with a hole
+    
+    for (const [x, y, s] of [[500, 500, 1], [3500, 520, -1], [650, 1100, -1], [3350, 1120, 1]]) for (let a = 0; a <= 2400; a += 40) { const rr = 60 + a / 24; fillEllipse(m, W, H, x + s * rr * cosD10(a), y + rr * sinD10(a) * 0.6, 26, 22); }
+  },
+  // Sea City: an undersea city under a metal canopy. Lift shaft from the ceiling, walkway platforms on two levels, domes and spires on the city floor
+  seacity(W, H, m) {
+    rectM(m, W, H, 0, 0, W, 90, 2); rectM(m, W, H, 0, 90, W, 130);
+    rectM(m, W, H, 1950, 120, 2250, 760); rectM(m, W, H, 2060, 120, 2140, 740, 2); rectM(m, W, H, 1990, 300, 2210, 420, 0); // lift shaft + cabin bay
+    for (const [x0, x1, y] of [[60, 900, 560], [3300, 4140, 560], [450, 1500, 1000], [2700, 3750, 1000]]) { rectM(m, W, H, x0, y - 22, x1, y + 22, 2); rectM(m, W, H, x0 + 40, y + 22, x1 - 40, y + 60); }
+    const f = x => H - 200 + 10 * tsin(x / 200); seabed(m, W, H, f);
+    for (const [x, r] of [[700, 230], [2100, 300], [3500, 230]]) { fillEllipse(m, W, H, x, f(x), r, r * 0.8); fillEllipse(m, W, H, x, f(x), r - 50, r * 0.8 - 50, 0); rectM(m, W, H, x - r, f(x), x + r, f(x) + 40); }
+    for (const [x, h] of [[1300, 520], [1450, 380], [2800, 460], [2950, 600]]) { rectM(m, W, H, x - 50, f(x) - h, x + 50, f(x) + 20); fillPoly(m, W, H, [[x - 50, f(x) - h], [x + 50, f(x) - h], [x, f(x) - h - 140]]); rectM(m, W, H, x - 8, f(x) - h - 140, x + 8, f(x), 2); }
+  },
+  // Spa: a cosy hot spring. Crossed bamboo poles leaning every way (the original's X sticks), stone tubs on the floor, pebble stacks
+  spa(W, H, m) {
+    const f = floorOf(H, 200, 20, 8); seabed(m, W, H, f);
+    for (const [x, y, L, a] of [[600, 450, 520, 300], [1250, 700, 460, -350], [1900, 380, 560, 250], [2600, 650, 500, -280], [3250, 420, 480, 330], [1550, 1000, 380, 150], [2950, 1000, 380, -170]]) {
+      for (const s of [1, -1]) { const aa = s * a; barM(m, W, H, x - L / 2 * cosD10(aa), y - L / 2 * sinD10(aa), x + L / 2 * cosD10(aa), y + L / 2 * sinD10(aa), 30); }
+    }
+    for (const [x, w] of [[700, 300], [2000, 380], [3200, 300]]) { const y = f(x); fillEllipse(m, W, H, x, y - 40, w, 150); fillEllipse(m, W, H, x, y - 90, w - 50, 140, 0); rectM(m, W, H, x - w, y - 250, x + w, y - 120, 0); }
+    for (const x of [1350, 2650]) for (let k = 0; k < 4; k++) fillEllipse(m, W, H, x, f(x) - 30 - k * 62, 70 - k * 12, 30);
+  },
+};
+// hand-placed start points (any depth, like the original); buildMap nudges each one into open water
+const MAPSPAWNS = {
+  god12: [[420, 640], [900, 1000], [1250, 420], [1550, 1150], [1700, 760], [2000, 760], [2300, 760], [2450, 1150], [2750, 420], [3100, 1000], [3550, 640], [3650, 1200]],
+  atlantic: [[300, 420], [560, 900], [1050, 300], [1450, 1000], [1950, 360], [2450, 1050], [2500, 520], [3000, 1030], [3400, 400], [3850, 330], [4250, 980], [4500, 520]],
+  battlefield: [[350, 300], [520, 540], [820, 1100], [1150, 420], [1350, 1150], [1700, 330], [2100, 560], [2500, 330], [2850, 1150], [3050, 420], [3380, 1100], [3850, 300]],
+  bermuda: [[260, 620], [500, 1200], [850, 250], [1100, 700], [1650, 380], [2100, 820], [2550, 380], [3050, 700], [3350, 250], [3700, 1250], [3900, 650], [2100, 1400]],
+  cave: [[280, 700], [450, 1050], [1000, 560], [1050, 1050], [1450, 950], [1750, 560], [2350, 700], [2650, 1000], [2950, 520], [3300, 1100], [3650, 600], [3800, 1000]],
+  cube: [[330, 520], [590, 330], [850, 900], [1110, 520], [1370, 1100], [1630, 330], [1890, 900], [2150, 520], [2410, 1100], [2930, 330], [3190, 900], [3450, 520]],
+  duke: [[300, 600], [600, 1150], [1000, 300], [1400, 650], [1300, 1150], [1950, 300], [2450, 300], [3100, 1150], [3000, 650], [3400, 300], [3800, 1150], [4100, 600]],
+  iceberg: [[250, 500], [380, 1200], [700, 1050], [1250, 450], [1350, 1250], [2050, 1250], [2700, 450], [2750, 900], [3450, 1000], [3600, 1300], [3950, 500], [4000, 1150]],
+  jurassic: [[250, 900], [600, 450], [900, 1050], [1150, 300], [1700, 1150], [1900, 700], [2400, 1150], [2600, 380], [3000, 300], [3300, 1100], [3700, 560], [4000, 900]],
+  nautilus: [[220, 750], [500, 300], [850, 850], [1000, 1300], [1300, 400], [1700, 1300], [2700, 400], [2300, 1300], [3000, 850], [3150, 1300], [3500, 300], [3800, 800]],
+  seacity: [[300, 400], [480, 820], [700, 1250], [1200, 400], [1150, 820], [2100, 900], [2100, 1150], [3000, 400], [3050, 820], [3500, 1250], [3700, 820], [3900, 400]],
+  spa: [[250, 600], [450, 1050], [700, 250], [1000, 900], [1250, 300], [1700, 650], [2300, 250], [2250, 900], [2900, 300], [3300, 950], [3550, 650], [3650, 250]],
 };
 
 // open-water component reachable from the widest open area (spawns must all be in it)
@@ -928,28 +1045,20 @@ function clearAround(mask, W, H, x, y, rx, ry) {
   return !mask[Math.round(y) * W + Math.round(x)];
 }
 
-// Builds mask + 12 spawn points spread across the open water.
+// Builds mask + the 12 hand-placed spawn points (each nudged to the nearest spot where a hull fits in the open water).
 function buildMap(mapId) {
   const meta = CONFIG.maps[mapId], P = CONFIG.physics;
   const W = meta.W, H = meta.H, mask = maskNew(W, H);
   MAPGEN[mapId](W, H, mask);
-  const water = waterComponent(mask, W, H);
-  // per 80-px column: the reachable spot with the most room around it
-  const cols = [];
-  for (let x = 200; x <= W - 200; x += 80) {
+  const water = waterComponent(mask, W, H), spawns = [];
+  for (const [x, y] of MAPSPAWNS[mapId]) {
     let best = null;
-    for (let y = 160; y <= H - 160; y += 30) {
-      if (!water[y * W + x] || !clearAround(mask, W, H, x, y, P.hullRx + 28, P.hullRy + 28)) continue;
-      let room = 0; for (const r of [60, 90, 130, 180]) { if (clearAround(mask, W, H, x, y, r, r)) room = r; else break; }
-      const score = room * 10 - Math.abs(y - H * 0.45) / 40;
-      if (!best || score > best.score) best = { x, y, score };
+    for (let r = 0; r <= 400 && !best; r += 10) for (let a = 0; a < 3600 && !best; a += r ? 300 : 3600) {
+      const px = Math.round(x + r * cosD10(a)), py = Math.round(y + r * sinD10(a));
+      if (px > 60 && py > 60 && px < W - 60 && py < H - 60 && water[py * W + px] && clearAround(mask, W, H, px, py, P.hullRx + 20, P.hullRy + 20)) best = { x: px, y: py };
     }
-    if (best) cols.push({ x: best.x, y: best.y });
+    if (best) spawns.push(best);
   }
-  const N = 12, pick = G => { const out = []; for (const c of cols) if (!out.length || c.x - out[out.length - 1].x >= G) out.push(c); return out; };
-  let G = 600; while (G > 80 && pick(G).length < N) G -= 20;
-  const all = pick(G), spawns = [];
-  for (let i = 0; i < N; i++) spawns.push(all[Math.round(i * (all.length - 1) / (N - 1))]);
   return { id: mapId, W, H, mask, spawns, theme: meta.theme };
 }
 
@@ -971,9 +1080,11 @@ function createMatch(opts) {
     cfgVersion: CONFIG.version, seed: opts.seed >>> 0, rng: opts.seed >>> 0,
     mapId: opts.mapId, W: map.W, H: map.H, mask: map.mask, theme: map.theme,
     tick: 0, turnNo: 0, current: 0, cur: -1, phase: 'settle', settle: 40, winner: null,
-    subs: [], proj: [], crates: [], sched: [], schedSeq: 0,
+    subs: [], proj: [], crates: [], sched: [], schedSeq: 0, falls: [],
     turn: null, hashes: {}, events: [], spawns: map.spawns,
+    rules: (CONFIG.maps[opts.mapId] && CONFIG.maps[opts.mapId].rules) || {},
   };
+  m.mines = (m.rules.mines || []).map(([x, y], i) => ({ x, y, alive: true, id: i }));
   // start positions: a random window of the map (sorted by x), teams interleaved left to right, never too close
   const n = opts.players.length, T0 = CONFIG.turn, sorted = map.spawns.slice().sort((a, b) => a.x - b.x || a.y - b.y);
   const span = Math.max(T0.startSpan, (n - 1) * T0.startGap);
@@ -1013,22 +1124,35 @@ function createMatch(opts) {
 function solidAt(m, x, y) {
   x = Math.floor(x); y = Math.floor(y);
   if (x < 0 || y < 0 || x >= m.W || y >= m.H) return false;
-  return m.mask[y * m.W + x] !== 0;
+  if (m.mask[y * m.W + x] !== 0) return true;
+  if (m.mines.length) { const r = m.rules.mine.r; for (const q of m.mines) if (q.alive && (x - q.x) * (x - q.x) + (y - q.y) * (y - q.y) <= r * r) return true; }
+  return false;
 }
 function outOfMap(m, x, y) { return x < 0 || y < 0 || x >= m.W || y >= m.H; }
 // dig an ellipse out of the rock (bedrock stays)
 function carveEllipse(m, cx, cy, rx, ry) {
-  if (rx < 1 || ry < 1) return;
+  if (rx < 1 || ry < 1) return 0;
   const W = m.W, H = m.H, mask = m.mask;
   const y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(H - 1, Math.ceil(cy + ry));
+  let n = 0;
   for (let y = y0; y <= y1; y++) {
     const dy = (y - cy) / ry, d2 = 1 - dy * dy;
     if (d2 < 0) continue;
     const dx = rx * Math.sqrt(d2);
     const xa = Math.max(0, Math.floor(cx - dx)), xb = Math.min(W - 1, Math.ceil(cx + dx));
-    for (let i = y * W + xa, e = y * W + xb; i <= e; i++) if (mask[i] === 1) mask[i] = 0;
+    for (let i = y * W + xa, e = y * W + xb; i <= e; i++) if (mask[i] === 1) { mask[i] = 0; n++; }
   }
   m.events.push({ type: 'carve', x: cx, y: cy, rx, ry });
+  return n;
+}
+// dig a rectangle (큐브 map: square bursts)
+function carveBox(m, cx, cy, rx, ry) {
+  if (rx < 1 || ry < 1) return 0;
+  const W = m.W, mask = m.mask, x0 = Math.max(0, Math.floor(cx - rx)), x1 = Math.min(W - 1, Math.ceil(cx + rx)), y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry));
+  let n = 0;
+  for (let y = y0; y <= y1; y++) for (let i = y * W + x0, e = y * W + x1; i <= e; i++) if (mask[i] === 1) { mask[i] = 0; n++; }
+  m.events.push({ type: 'carve', x: cx, y: cy, rx, ry, box: true });
+  return n;
 }
 // outward surface normal at a rock contact point: average of the water directions around it
 function rockNormal(m, x, y) {
@@ -1087,27 +1211,79 @@ function ringOut(m, t, by) {
 // Bursts reach through rock: that is how a tall burst hits a sub hiding under an overhang.
 function explode(m, x, y, sh, dmg, owner, opts) {
   opts = opts || {};
-  const P = CONFIG.physics, cm = P.carveMul * (opts.carveMul || 1), pad = P.bodyPad;
-  if (sh.thin) { carveEllipse(m, x, y, sh.rx * cm, sh.thin * cm); carveEllipse(m, x, y, sh.thin * cm, sh.ry * cm); }
-  else carveEllipse(m, x, y, sh.rx * cm, sh.ry * cm);
+  const P = CONFIG.physics, R = m.rules, box = !!R.box, cm = P.carveMul * (opts.carveMul || 1) * (R.carveMul || 1), pad = P.bodyPad;
+  const dig = box ? carveBox : carveEllipse;
+  let carved = 0;
+  if (sh.thin) { carved += dig(m, x, y, sh.rx * cm, sh.thin * cm); carved += dig(m, x, y, sh.thin * cm, sh.ry * cm); }
+  else carved += dig(m, x, y, sh.rx * cm, sh.ry * cm);
+  // distance inside the shape: 0 centre .. 1 edge (square norm on the 큐브 map)
+  const norm = (a, b) => box ? Math.max(Math.abs(a), Math.abs(b)) : Math.sqrt(a * a + b * b);
   const hit = [];
   for (const t of m.subs) {
     if (!t.alive) continue;
     const dx = t.x - x, dy = t.y - y;
     let n;
-    if (sh.thin) {
-      const a = dx / (sh.rx + pad), b = dy / (sh.thin + pad), c = dx / (sh.thin + pad), d = dy / (sh.ry + pad);
-      n = Math.min(Math.sqrt(a * a + b * b), Math.sqrt(c * c + d * d));
-    } else { const a = dx / (sh.rx + pad), b = dy / (sh.ry + pad); n = Math.sqrt(a * a + b * b); }
+    if (sh.thin) n = Math.min(norm(dx / (sh.rx + pad), dy / (sh.thin + pad)), norm(dx / (sh.thin + pad), dy / (sh.ry + pad)));
+    else n = norm(dx / (sh.rx + pad), dy / (sh.ry + pad));
     if (n > 1) continue;
     let v = dmg * (1 - (1 - P.edgeDmg) * n);
     if (t.shield) v *= CONFIG.items.shield.mul;
+    const g = R.guard; if (g && t.x >= g.x0 && t.x <= g.x1 && t.y >= g.y0 && t.y <= g.y1) v *= g.mul;
     hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
     hit.push(t);
   }
-  for (const c of m.crates) if (!c.dead) { const a = (c.x - x) / (sh.rx + 10), b = (c.y - y) / (sh.ry + 10); if (a * a + b * b <= 1) c.dead = true; }
-  m.events.push({ type: 'boom', x, y, rx: sh.rx, ry: sh.ry, thin: sh.thin || 0, kind: opts.fx || 'hit', idx: owner ? owner.idx : -1 });
+  for (const c of m.crates) if (!c.dead) { const a = (c.x - x) / (sh.rx + 10), b = (c.y - y) / (sh.ry + 10); if (norm(a, b) <= 1) c.dead = true; }
+  m.events.push({ type: 'boom', x, y, rx: sh.rx, ry: sh.ry, thin: sh.thin || 0, kind: opts.fx || 'hit', idx: owner ? owner.idx : -1, box });
+  // 기뢰: every mine inside the burst goes off a moment later (chains)
+  for (const q of m.mines) {
+    if (!q.alive) continue;
+    const r = m.rules.mine.r;
+    if (norm((q.x - x) / (Math.max(sh.rx, sh.thin || 0) + r), (q.y - y) / (Math.max(sh.ry, sh.thin || 0) + r)) <= 1) { q.alive = false; schedule(m, 10, { kind: 'mine', x: q.x, y: q.y, idx: owner ? owner.idx : -1 }); }
+  }
+  // 낙석: a burst under the cave ceiling brings a stalactite down
+  if (R.rockfall && !opts.rock) {
+    const F = R.rockfall;
+    for (let k = 20; k <= F.reach; k += 8) if (solidAt(m, x, y - Math.max(sh.ry, sh.thin || 0) * 0.5 - k)) {
+      const ry = y - Math.max(sh.ry, sh.thin || 0) * 0.5 - k;
+      if (ry <= F.ceilY && rngNext(m) < F.chance) { m.falls.push({ x, y: ry + 16, by: owner ? owner.idx : -1, id: m.schedSeq++ }); m.events.push({ type: 'rockfall', x, y: ry }); }
+      break;
+    }
+  }
+  // 화석 발굴: digging rock sometimes uncovers a supply crate right there
+  if (R.fossil && carved > 300 && !opts.rock && rngNext(m) < R.fossil) {
+    const keys = Object.keys(CONFIG.items); let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
+    let r = rngNext(m) * total, item = keys[0]; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
+    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++ }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
+  }
   return hit;
+}
+// water push on a torpedo at (x, y) for one 3-px step: the turn's current plus the map's own water (zones)
+function driftAt(m, x, y) {
+  const P = CONFIG.physics, R = m.rules, k = 3 / P.torpSpeed;
+  let cx = m.current * P.currentPush * (R.currentMul || 1), cy = 0;
+  if (R.tri && inTri(x, y, R.tri)) cx *= R.triMul;
+  if (R.swirl) { const w = R.swirl, dx = x - w.x, dy = y - w.y, d = Math.sqrt(dx * dx + dy * dy); if (d < w.r && d > 1) { const f = w.v * (1 - d / w.r); cx += -dy / d * f; cy += dx / d * f; } }
+  if (R.lift) for (const z of R.lift) if (x >= z[0] && x <= z[1] && y >= z[2] && y <= z[3]) cy -= z[4];
+  return [cx * k, cy * k];
+}
+function inTri(x, y, t) {
+  const s = (a, b) => (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+  const d1 = s(t[0], t[1]), d2 = s(t[1], t[2]), d3 = s(t[2], t[0]);
+  return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+}
+// falling stalactites (케이브): straight down, burst on rock or a hull
+function stepFalls(m) {
+  const F = m.rules.rockfall;
+  for (const f of m.falls) {
+    if (f.dead) continue;
+    f.y += 5;
+    const hitSub = m.subs.some(t => t.alive && inHull(t, f.x, f.y, 6));
+    if (f.y >= m.H - 2 || hitSub || solidAt(m, f.x, f.y + 6)) {
+      f.dead = true;
+      explode(m, f.x, f.y, { rx: F.r, ry: F.r }, F.dmg, f.by >= 0 ? m.subs[f.by] : null, { rock: true, carveMul: 0.6, fx: 'rock' });
+    }
+  }
+  m.falls = m.falls.filter(f => !f.dead);
 }
 function schedule(m, ticks, ev) { ev.at = m.tick + ticks; ev.seq = m.schedSeq++; m.sched.push(ev); }
 
@@ -1222,7 +1398,8 @@ function inputOf(m, extra) {
 }
 function cleanPts(m, pts) {
   const out = [];
-  for (let i = 0; i < 3; i++) { const p = pts && pts[i] ? pts[i] : [0, 0]; out.push([clampN(Math.round(+p[0] || 0), 0, m.W - 1), clampN(Math.round(+p[1] || 0), 0, m.H - 1)]); }
+  const xl = m.rules.wrapX ? -m.W / 2 : 0, xh = m.rules.wrapX ? m.W * 1.5 : m.W - 1; // 12신: points may lie past the side edges (the shot wraps)
+  for (let i = 0; i < 3; i++) { const p = pts && pts[i] ? pts[i] : [0, 0]; out.push([clampN(Math.round(+p[0] || 0), xl, xh), clampN(Math.round(+p[1] || 0), 0, m.H - 1)]); }
   return out;
 }
 // Fire: pts = three [x, y] world points (integers), gauge 0..1000 (burst point along the curve), weapon 0|1, used = ticks spent.
@@ -1250,7 +1427,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
 }
 function launch(m, p) {
   const a = pathAt(p.path, 0);
-  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
+  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
   m.proj.push(p);
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -1299,7 +1476,7 @@ function dmgOf(m, p, base) { return base * (p.amp ? CONFIG.items.amplify.mul : 1
 // one 3-px sub-step of a torpedo. Returns nothing; marks p.dead when it bursts or leaves.
 function stepTorp(m, p, w) {
   const P = CONFIG.physics, h = 3;
-  const drift = p.calm || p.mode === 'fall' || p.mode === 'crawl' ? 0 : m.current * P.currentPush * (h / P.torpSpeed);
+  const dv = p.calm || p.mode === 'fall' || p.mode === 'crawl' ? null : driftAt(m, p.x, p.y), drift = dv ? dv[0] : 0, lift = dv ? dv[1] : 0;
   const px = p.x, py = p.y;
   if (p.mode === 'path') {
     p.s += h;
@@ -1309,7 +1486,7 @@ function stepTorp(m, p, w) {
     }
     if (p.mode === 'path') {
       const a = pathAt(p.path, p.s);
-      p.ox += drift; p.x = a.x - a.ty * p.off + p.ox; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty;
+      p.ox += drift; p.oy = (p.oy || 0) + lift; p.x = a.x - a.ty * p.off + p.ox; p.y = a.y + a.tx * p.off + p.oy; p.dx = a.tx; p.dy = a.ty;
     }
   }
   if (p.mode === 'free') {
@@ -1322,9 +1499,9 @@ function stepTorp(m, p, w) {
         p.turnLeft -= step;
       }
     }
-    p.x += p.dx * h + drift; p.y += p.dy * h; p.rem -= h;
+    p.x += p.dx * h + drift; p.y += p.dy * h + lift; p.rem -= h;
   } else if (p.mode === 'mini') {
-    p.x += p.dx * h + drift; p.y += p.dy * h; p.rem -= h;
+    p.x += p.dx * h + drift; p.y += p.dy * h + lift; p.rem -= h;
   } else if (p.mode === 'fall') {
     const v = (w.kind === 'rain' ? 600 : (w.fallSpeed || 420)) * TICK / 2; p.y += v; p.rem -= v;
   } else if (p.mode === 'crawl') {
@@ -1333,6 +1510,8 @@ function stepTorp(m, p, w) {
     return;
   }
   p.age++;
+  // 12신: the left and right edges of cyberspace join up
+  if (m.rules.wrapX && p.y >= 0 && p.y < m.H) { if (p.x < 0) { p.x += m.W; p.ox += m.W; if (p.x >= m.W) p.x = m.W - 1e-6; } else if (p.x >= m.W) { p.x -= m.W; p.ox -= m.W; } }
   if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y }); return; }
   // rock
   if (p.piercing) {
@@ -1471,6 +1650,7 @@ function runScheduled(m) {
   if (!due.length) return;
   m.sched = m.sched.filter(e => e.at > m.tick);
   for (const e of due) {
+    if (e.kind === 'mine') { const M = m.rules.mine; explode(m, e.x, e.y, { rx: M.rx, ry: M.rx }, M.dmg, e.idx >= 0 ? m.subs[e.idx] : null, { fx: 'mine', rock: true }); continue; }
     const owner = m.subs[e.idx], w = CONFIG.subs[owner.subId].weapons[e.wIdx], mul = e.amp ? CONFIG.items.amplify.mul : 1;
     if (e.kind === 'fall') m.proj.push({ mode: 'fall', x: e.x, y: e.y, dx: 0, dy: 1, rem: 2400, idx: e.idx, wIdx: e.wIdx, amp: e.amp, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++ });
     else if (e.kind === 'arrow') m.proj.push({ mode: 'fall', x: e.x, y: e.y, dx: 0, dy: 1, rem: 900, idx: e.idx, wIdx: e.wIdx, amp: e.amp, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++ });
@@ -1511,7 +1691,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.subs.length;
   const cmax = Math.round(T.currentMax * (sudden ? T.suddenCurrentMul : 1));
   m.current = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 3.6 * (sudden ? T.suddenCurrentMul : 1)), -cmax, cmax);
-  if (m.turnNo % T.crateEveryTurns === 1) dropCrate(m);
+  const ce = m.rules.crateEvery || T.crateEveryTurns;
+  if (m.turnNo % ce === 1 % ce) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo });
   if (t.shock) {
@@ -1524,6 +1705,10 @@ function beginTurn(m) {
     for (const o of m.subs) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
     if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
+  // 온천: starting the turn inside a stone tub heals
+  if (m.rules.heal) for (const z of m.rules.heal) if (t.x >= z[0] && t.x <= z[1] && t.y >= z[2] && t.y <= z[3] && t.hp < t.maxhp) {
+    const v = Math.min(z[4], t.maxhp - t.hp); t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v, spa: true }); break;
+  }
   m.phase = 'aim';
 }
 function dropCrate(m) {
@@ -1533,7 +1718,7 @@ function dropCrate(m) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = Math.round(140 + rngNext(m) * (m.H - 280));
     let r = rngNext(m) * total, item = keys[0];
     for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y))) continue;
+    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y)) || m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
     m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ });
     m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id });
     return;
@@ -1546,8 +1731,9 @@ function step(m) {
   m.tick++;
   runScheduled(m);
   stepProjectiles(m);
+  if (m.falls.length) stepFalls(m);
   m.crates = m.crates.filter(x => !x.dead);
-  if (m.proj.length || m.sched.length) { m.settle = 0; return; }
+  if (m.proj.length || m.sched.length || m.falls.length) { m.settle = 0; return; }
   m.settle++;
   if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) beginTurn(m);
 }
@@ -1564,6 +1750,7 @@ function stateHash(m) {
     h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-'); h = fnvU32(h, t.shield ? 1 : 0); h = fnvF64(h, t.fuel);
   }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
+  for (const q of m.mines) h = fnvU32(h, q.alive ? 1 : 0);
   return h >>> 0;
 }
 
@@ -1621,7 +1808,8 @@ function createController(match, opts) {
   c.resetCurve = function () { const t = curSub(c.match); if (t && !c.charging) c.rel = c.defaultRel(t); };
   c.worldPts = function (t) {
     const m = c.match; t = t || curSub(m);
-    return c.rel.map(p => [clampN(Math.round(t.x + p[0]), 0, m.W - 1), clampN(Math.round(t.y + p[1]), 0, m.H - 1)]);
+    const xl = m.rules.wrapX ? -m.W / 2 : 0, xh = m.rules.wrapX ? m.W * 1.5 : m.W - 1;
+    return c.rel.map(p => [clampN(Math.round(t.x + p[0]), xl, xh), clampN(Math.round(t.y + p[1]), 0, m.H - 1)]);
   };
   c.setPoint = function (i, wx, wy) { const t = curSub(c.match); if (!t || c.charging) return; c.rel[i] = [wx - t.x, wy - t.y]; };
   // straight curve from the sub to (wx, wy)
@@ -2075,6 +2263,19 @@ const MTHEMES = {
   wreck: { water: ['#2F7A8C', '#134456', '#061A2A'], rock: [[148, 100, 66], [84, 56, 40]], edge: [204, 140, 92], bed: [48, 38, 32], mini: '#B07A50', debris: '#A0704C', far: '#0C3A4C', ray: 'rgba(200,240,230,0.06)' },
   ice: { water: ['#4AA2C8', '#1C6290', '#0A2A4C'], rock: [[206, 232, 244], [118, 158, 192]], edge: [246, 252, 255], bed: [88, 116, 150], mini: '#D8EEF8', debris: '#E2F2FA', far: '#14507A', ray: 'rgba(220,250,255,0.08)' },
   vents: { water: ['#215A6E', '#0F3042', '#050F1C'], rock: [[84, 74, 78], [40, 34, 38]], edge: [150, 104, 76], bed: [28, 22, 26], mini: '#6E6266', debris: '#7A6E70', far: '#0A2434', ray: 'rgba(255,200,160,0.04)', hot: true },
+  // the 12 maps (deco = props on rock, pattern = texture inside rock, farKind = background silhouettes, bedEdge = metal rim)
+  god12: { water: ['#1C2C70', '#0E1642', '#060A22'], rock: [[64, 76, 146], [30, 34, 84]], edge: [56, 225, 255], bed: [26, 22, 64], bedEdge: [255, 79, 216], mini: '#5A6AC8', debris: '#8FB0FF', far: '#18246A', ray: 'rgba(120,200,255,0.05)', deco: 'neon', pattern: 'grid', farKind: 'grid' },
+  atlantic: { water: ['#2C93CC', '#0F5A8C', '#062A4A'], rock: [[124, 152, 160], [62, 82, 94]], edge: [196, 232, 238], bed: [40, 56, 70], mini: '#9AC0CC', debris: '#A8C4CC', far: '#0B4F7C', ray: 'rgba(190,240,255,0.08)', deco: 'reef' },
+  battlefield: { water: ['#56735F', '#283B30', '#0E1A14'], rock: [[112, 120, 84], [62, 68, 46]], edge: [190, 170, 110], bed: [104, 104, 98], bedEdge: [160, 156, 140], mini: '#8E9468', debris: '#9A9470', far: '#1E2A20', ray: 'rgba(220,230,180,0.04)', deco: 'war', pattern: 'strata', farKind: 'hills' },
+  bermuda: { water: ['#20828A', '#0E3F4A', '#051A22'], rock: [[64, 134, 132], [30, 70, 72]], edge: [110, 230, 206], bed: [30, 50, 56], mini: '#5AB0A8', debris: '#7FC8C0', far: '#0B2B3B', ray: 'rgba(160,255,230,0.05)', deco: 'wreck' },
+  cave: { water: ['#3E3656', '#221C34', '#0C0A16'], rock: [[94, 84, 116], [44, 38, 58]], edge: [168, 150, 196], bed: [30, 26, 40], mini: '#8A7EA6', debris: '#9C8BB5', far: '#1A1528', ray: 'rgba(240,196,107,0.03)', deco: 'cave', pattern: 'strata' },
+  cube: { water: ['#2E5288', '#18294A', '#0A1224'], rock: [[64, 100, 156], [32, 52, 92]], edge: [252, 170, 40], bed: [22, 32, 56], bedEdge: [236, 236, 236], mini: '#5A86C0', debris: '#9FC0E8', far: '#14213D', ray: 'rgba(200,220,255,0.05)', deco: 'neon', pattern: 'grid', farKind: 'grid' },
+  duke: { water: ['#40386A', '#221D3A', '#0E0C1C'], rock: [[100, 88, 116], [54, 46, 64]], edge: [206, 168, 52], bed: [34, 30, 44], bedEdge: [150, 120, 50], mini: '#8A7AA0', debris: '#A898B8', far: '#1D1B2F', ray: 'rgba(255,220,150,0.04)', deco: 'castle', pattern: 'brick', farKind: 'castle' },
+  iceberg: { water: ['#4AA2C8', '#1C6290', '#0A2A4C'], rock: [[210, 234, 246], [120, 160, 194]], edge: [255, 255, 255], bed: [88, 116, 150], mini: '#D8EEF8', debris: '#E2F2FA', far: '#14507A', ray: 'rgba(220,250,255,0.09)', deco: 'ice', pattern: 'ice' },
+  jurassic: { water: ['#5E6E4C', '#2E3626', '#12160E'], rock: [[156, 116, 78], [92, 66, 46]], edge: [232, 206, 164], bed: [50, 38, 28], mini: '#B88E64', debris: '#C8A880', far: '#2B2414', ray: 'rgba(255,240,200,0.05)', deco: 'fossil', pattern: 'strata', farKind: 'hills' },
+  nautilus: { water: ['#2C8494', '#134752', '#06202A'], rock: [[204, 172, 132], [132, 98, 72]], edge: [246, 218, 166], bed: [60, 46, 40], mini: '#D4B48C', debris: '#E8C8A0', far: '#0F2D3A', ray: 'rgba(200,250,255,0.07)', deco: 'reef' },
+  seacity: { water: ['#20529A', '#0E2A55', '#050F26'], rock: [[74, 114, 176], [36, 60, 104]], edge: [79, 195, 247], bed: [30, 40, 64], bedEdge: [255, 102, 196], mini: '#6292D8', debris: '#9FC8F0', far: '#0A2040', ray: 'rgba(160,220,255,0.06)', deco: 'city', pattern: 'grid', farKind: 'city' },
+  spa: { water: ['#3E928C', '#1C5450', '#0A2624'], rock: [[126, 156, 112], [72, 98, 72]], edge: [247, 205, 168], bed: [40, 56, 50], mini: '#98B898', debris: '#C8D8B0', far: '#103A3A', ray: 'rgba(255,240,220,0.07)', deco: 'spa', pattern: 'wood' },
 };
 // torpedo looks per weapon kind: body colour, nose colour, glow
 const TORP = {
@@ -2084,7 +2285,7 @@ const TORP = {
   direct: ['#1E232B', '#EEF2F5'], hell: ['#1E232B', '#EEF2F5'], vell: ['#7A8899', '#6FE3E1', '#AFFFFF'], inflate: ['#7A8899', '#A9B4C0', '#DDF6FF'],
   bounce: ['#2E86D6', '#8CC63F', '#8CC8FF'], split: ['#8CC63F', '#2E86D6', '#D8F59A'],
 };
-const BOOMC = { hit: '#FFB547', small: '#FFC870', big: '#FF8A30', sonar: '#6FE3E1', cross: '#F2C94C', volt: '#BFA8FF', swirl: '#6FE3E1', fire: '#FF8A30', kblue: '#5FA8FF', kgreen: '#9FE07A' };
+const BOOMC = { mine: '#FF6A3A', rock: '#C8B8E0', hit: '#FFB547', small: '#FFC870', big: '#FF8A30', sonar: '#6FE3E1', cross: '#F2C94C', volt: '#BFA8FF', swirl: '#6FE3E1', fire: '#FF8A30', kblue: '#5FA8FF', kgreen: '#9FE07A' };
 
 function createRenderer(cv, mini) {
   const ctx = cv.getContext('2d'), mctx = mini.getContext('2d');
@@ -2096,7 +2297,7 @@ function createRenderer(cv, mini) {
   };
 
   R.setMatch = function (m) {
-    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null;
+    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null; R.anchors = {};
     R.fx = []; R.texts = []; R.bolts = []; R.view = {}; R.shake = 0; R.trails = {}; R.bubbles = {}; R.snow = null;
     buildTerrainTexture(); buildBackground();
     const t0 = m.subs[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
@@ -2126,7 +2327,11 @@ function createRenderer(cv, mini) {
       const v = mask[i]; if (!v) continue;
       const px = i % W, py = (i / W) | 0, p = i * 4, n = (hash2(px >> 1, py >> 1) - 0.5) * 16;
       let r, g, b;
-      if (v === 2) { const s = ((px >> 3) + (py >> 3)) & 1; r = bd[0] + s * 6; g = bd[1] + s * 6; b = bd[2] + s * 8; }
+      if (v === 2) {
+        const s = ((px >> 3) + (py >> 3)) & 1; r = bd[0] + s * 6; g = bd[1] + s * 6; b = bd[2] + s * 8;
+        if (th.bedEdge && dist[i] <= 9) { r = th.bedEdge[0]; g = th.bedEdge[1]; b = th.bedEdge[2]; }
+        else if (th.bedEdge && (px % 48 < 2 || py % 48 < 2)) { r += 14; g += 14; b += 18; }
+      }
       else {
         const e = dist[i] / 3, k = Math.min(1, e / 90);
         r = lerp(r0[0], r1[0], k); g = lerp(r0[1], r1[1], k); b = lerp(r0[2], r1[2], k);
@@ -2134,6 +2339,12 @@ function createRenderer(cv, mini) {
         if (th.hot && e > 12 && Math.abs(Math.sin(px / 37 + Math.sin(py / 53) * 2.4)) < 0.03) { r = 220; g = 96; b = 40; }
         if (R.m.theme === 'ice' && e > 6 && Math.abs(Math.sin(px / 23 - py / 61)) < 0.02) { r += 30; g += 30; b += 20; }
         if (R.m.theme === 'wreck' && e > 6 && (py % 46 < 2 || ((px + (py / 46 | 0) * 30) % 90) < 2)) { r -= 26; g -= 20; b -= 16; }
+        const pat = th.pattern;
+        if (pat === 'grid' && e > 5 && (px % 40 < 2 || py % 40 < 2)) { r = lerp(r, eg[0], 0.35); g = lerp(g, eg[1], 0.35); b = lerp(b, eg[2], 0.35); }
+        else if (pat === 'brick' && e > 5 && (py % 36 < 2 || ((px + ((py / 36 | 0) % 2) * 40) % 80) < 2)) { r -= 22; g -= 20; b -= 16; }
+        else if (pat === 'strata' && e > 6) { const w = Math.sin(py / 9 + Math.sin(px / 140) * 1.6); if (w > 0.82) { r += 14; g += 12; b += 10; } else if (w < -0.9) { r -= 12; g -= 10; b -= 8; } }
+        else if (pat === 'ice' && e > 6 && Math.abs(Math.sin(px / 23 - py / 61)) < 0.02) { r += 30; g += 30; b += 20; }
+        else if (pat === 'wood' && e > 4 && Math.abs(Math.sin(px / 11 + py / 29 + Math.sin(py / 70) * 2)) < 0.07) { r -= 18; g -= 14; b -= 12; }
       }
       o[p] = r + n; o[p + 1] = g + n; o[p + 2] = b + n; o[p + 3] = 255;
     }
@@ -2144,7 +2355,7 @@ function createRenderer(cv, mini) {
   // props on rock tops (and some undersides), seeded so every match on a map looks the same
   function decorate(x, m) {
     let s = 4321 + m.W; const r = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-    const W = m.W, H = m.H, mask = m.mask, theme = m.theme;
+    const W = m.W, H = m.H, mask = m.mask, theme = R.th.deco || m.theme;
     for (let px = 30; px < W - 30; px += 18 + Math.floor(r() * 44)) {
       for (let py = 4; py < H - 40; py++) {
         const i = py * W + px, top = mask[i] === 1 && !mask[i - W] && !mask[i - 2 * W], under = mask[i] === 1 && py + 2 < H && !mask[i + W] && !mask[i + 2 * W];
@@ -2165,6 +2376,24 @@ function createRenderer(cv, mini) {
           } else if (theme === 'ice') {
             if (k < 0.16) { x.fillStyle = 'rgba(240,252,255,0.9)'; x.beginPath(); x.moveTo(-4, 0); x.lineTo(0, -14 - r() * 8); x.lineTo(4, 0); x.fill(); }
             else if (k < 0.24) { x.fillStyle = '#E8F6FF'; x.beginPath(); x.ellipse(0, -1, 8, 3, 0, Math.PI, 0); x.fill(); }
+          } else if (theme === 'neon') {
+            if (k < 0.16) { x.fillStyle = R.th.bedEdge ? `rgb(${R.th.bedEdge.join(',')})` : '#FF4FD8'; x.globalAlpha = 0.9; x.fillRect(-2, -10, 4, 10); x.globalAlpha = 0.3; x.beginPath(); x.arc(0, -10, 9, 0, 7); x.fill(); x.globalAlpha = 1; }
+            else if (k < 0.26) { x.strokeStyle = `rgb(${R.th.edge.join(',')})`; x.lineWidth = 2; x.beginPath(); x.moveTo(-14, -2); x.lineTo(-4, -2); x.lineTo(0, -8); x.lineTo(14, -8); x.stroke(); }
+          } else if (theme === 'city') {
+            if (k < 0.1) { x.fillStyle = '#9FB4D0'; x.fillRect(-1.5, -34, 3, 34); x.fillStyle = '#FFE9A0'; x.beginPath(); x.arc(0, -36, 4, 0, 7); x.fill(); x.globalAlpha = 0.25; x.beginPath(); x.arc(0, -36, 14, 0, 7); x.fill(); x.globalAlpha = 1; }
+            else if (k < 0.18) { x.fillStyle = '#FF66C4'; x.fillRect(-8, -6, 16, 3); }
+          } else if (theme === 'castle') {
+            if (k < 0.1) { x.strokeStyle = '#3E2A1A'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -40); x.stroke(); x.fillStyle = r() < 0.5 ? '#7A1F2B' : '#C9A227'; x.beginPath(); x.moveTo(0, -40); x.lineTo(20, -34); x.lineTo(0, -27); x.fill(); }
+            else if (k < 0.24) { x.fillStyle = 'rgba(86,120,60,0.85)'; x.beginPath(); x.ellipse(0, -2, 10, 4, 0, Math.PI, 0); x.fill(); }
+          } else if (theme === 'fossil') {
+            if (k < 0.14) { x.strokeStyle = '#6E8A3A'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(10, -18, 4, -34); x.stroke(); for (let j = 1; j < 5; j++) { x.beginPath(); x.moveTo(j * 1.5, -j * 7); x.lineTo(j * 1.5 + 8, -j * 7 - 4); x.moveTo(j * 1.5, -j * 7); x.lineTo(j * 1.5 - 7, -j * 7 - 3); x.stroke(); } }
+            else if (k < 0.24) { x.fillStyle = '#EADBC0'; x.fillRect(-7, -3, 14, 3); x.beginPath(); x.arc(-7, -1.5, 3, 0, 7); x.arc(7, -1.5, 3, 0, 7); x.fill(); }
+          } else if (theme === 'spa') {
+            if (k < 0.12) { const c = ['#F7C59F', '#E8E0D4', '#BFD8C0']; for (let j = 0; j < 3; j++) { x.fillStyle = c[j]; x.beginPath(); x.ellipse(0, -4 - j * 7, 9 - j * 2, 4, 0, 0, 7); x.fill(); } }
+            else if (k < 0.15) { x.fillStyle = '#FFD84A'; x.beginPath(); x.ellipse(0, -6, 8, 6, 0, 0, 7); x.fill(); x.beginPath(); x.arc(5, -13, 4.5, 0, 7); x.fill(); x.fillStyle = '#FF8A3A'; x.beginPath(); x.moveTo(9, -13); x.lineTo(13, -12); x.lineTo(9, -11); x.fill(); x.fillStyle = '#222'; x.fillRect(5.5, -15, 1.6, 1.6); }
+          } else if (theme === 'war') {
+            if (k < 0.12) { x.strokeStyle = '#4A3E2E'; x.lineWidth = 2; for (const ox of [-10, 10]) { x.beginPath(); x.moveTo(ox, 0); x.lineTo(ox, -20); x.stroke(); } x.strokeStyle = '#8A8A80'; x.lineWidth = 1; x.beginPath(); for (let j = -10; j <= 10; j += 4) { x.moveTo(j, -16); x.lineTo(j + 4, -12); x.lineTo(j + 2, -18); } x.stroke(); }
+            else if (k < 0.2) { x.fillStyle = '#B08A4A'; x.save(); x.rotate(0.4); x.fillRect(-2, -10, 4, 9); x.restore(); }
           } else if (theme === 'vents') {
             if (k < 0.2) { for (let j = 0; j < 3; j++) { const h = 14 + r() * 18, ox = (j - 1) * 5; x.fillStyle = '#EDE6DC'; x.fillRect(ox - 1.5, -h, 3, h); x.fillStyle = '#E8402E'; x.beginPath(); x.arc(ox, -h, 3, 0, 7); x.fill(); } }
             else if (k < 0.28) { x.fillStyle = '#E0D2C0'; x.beginPath(); x.ellipse(0, -2, 5, 3, 0, 0, 7); x.fill(); }
@@ -2179,26 +2408,39 @@ function createRenderer(cv, mini) {
       }
     }
   }
-  function carveTexture(cx, cy, rx, ry) {
+  function carveTexture(cx, cy, rx, ry, box) {
     R.miniDirty = true;
     const t = R.tctx; if (!t) return;
+    if (box) {
+      t.save(); t.globalCompositeOperation = 'source-atop'; t.fillStyle = 'rgba(10,14,20,0.5)'; t.fillRect(cx - rx - 12, cy - ry - 12, rx * 2 + 24, ry * 2 + 24);
+      t.globalCompositeOperation = 'destination-out'; t.fillRect(cx - rx - 0.5, cy - ry - 0.5, rx * 2 + 1, ry * 2 + 1); t.restore();
+      repaintBed(cx, cy, rx, ry); return;
+    }
     t.save(); t.globalCompositeOperation = 'source-atop';
     t.translate(cx, cy); t.scale(1, ry / rx);
     const g = t.createRadialGradient(0, 0, rx * 0.85, 0, 0, rx * 1.35); g.addColorStop(0, 'rgba(10,14,20,0.55)'); g.addColorStop(1, 'rgba(10,14,20,0)');
     t.fillStyle = g; t.beginPath(); t.arc(0, 0, rx * 1.35, 0, 7); t.fill();
     t.globalCompositeOperation = 'destination-out'; t.beginPath(); t.arc(0, 0, rx + 0.5, 0, 7); t.fill();
     t.restore();
-    // bedrock never digs: repaint it if it sits inside the hole
-    const m = R.m, x0 = Math.max(0, Math.floor(cx - rx - 2)), x1 = Math.min(m.W - 1, Math.ceil(cx + rx + 2)), y0 = Math.max(0, Math.floor(cy - ry - 2)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry + 2));
+    repaintBed(cx, cy, rx, ry);
+  }
+  // bedrock never digs: repaint it if it sits inside the hole
+  function repaintBed(cx, cy, rx, ry) {
+    const t = R.tctx, m = R.m, x0 = Math.max(0, Math.floor(cx - rx - 2)), x1 = Math.min(m.W - 1, Math.ceil(cx + rx + 2)), y0 = Math.max(0, Math.floor(cy - ry - 2)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry + 2));
     let bed = false; for (let y = y0; y <= y1 && !bed; y += 3) for (let x = x0; x <= x1; x += 3) if (m.mask[y * m.W + x] === 2) { bed = true; break; }
-    if (bed) { const b = R.th.bed; t.fillStyle = `rgb(${b[0]},${b[1]},${b[2]})`; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (m.mask[y * m.W + x] === 2) t.fillRect(x, y, 1, 1); }
+    if (bed) { const b = R.th.bedEdge || R.th.bed; t.fillStyle = `rgb(${b[0]},${b[1]},${b[2]})`; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (m.mask[y * m.W + x] === 2) t.fillRect(x, y, 1, 1); }
   }
   function buildBackground() {
     const th = R.th; let s = 77; const r = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
     const far = document.createElement('canvas'); far.width = 2400; far.height = 700; const x = far.getContext('2d');
     x.fillStyle = th.far; x.globalAlpha = 0.55;
     x.beginPath(); x.moveTo(0, 700); for (let i = 0; i <= 2400; i += 40) x.lineTo(i, 520 - 120 * Math.abs(Math.sin(i / 340)) - 40 * Math.sin(i / 91)); x.lineTo(2400, 700); x.fill();
-    x.globalAlpha = 0.35; for (let i = 0; i < 9; i++) { const px = r() * 2400, w = 30 + r() * 50, h = 180 + r() * 260; x.beginPath(); x.moveTo(px - w, 700); x.lineTo(px - w * 0.3, 700 - h); x.lineTo(px + w * 0.4, 700 - h * 0.9); x.lineTo(px + w, 700); x.fill(); }
+    x.globalAlpha = 0.35;
+    const kind = th.farKind || 'hills';
+    if (kind === 'city') for (let i = 0; i < 26; i++) { const px = r() * 2400, w = 30 + r() * 70, h = 120 + r() * 380; x.fillRect(px, 700 - h, w, h); if (r() < 0.5) { x.beginPath(); x.moveTo(px, 700 - h); x.lineTo(px + w / 2, 700 - h - 60); x.lineTo(px + w, 700 - h); x.fill(); } if (r() < 0.4) { x.beginPath(); x.ellipse(px + w / 2, 700 - h, w * 0.7, w * 0.5, 0, Math.PI, 0); x.fill(); } }
+    else if (kind === 'castle') for (let i = 0; i < 7; i++) { const px = r() * 2400, w = 60 + r() * 80, h = 200 + r() * 260; x.fillRect(px, 700 - h, w, h); for (let j = 0; j < w; j += 20) x.fillRect(px + j, 700 - h - 16, 11, 16); if (r() < 0.6) { x.beginPath(); x.moveTo(px - 6, 700 - h - 16); x.lineTo(px + w / 2, 700 - h - 90); x.lineTo(px + w + 6, 700 - h - 16); x.fill(); } }
+    else if (kind === 'grid') { x.globalAlpha = 0.5; x.strokeStyle = th.far; x.lineWidth = 2; for (let i = -20; i <= 20; i++) { x.beginPath(); x.moveTo(1200 + i * 60, 420); x.lineTo(1200 + i * 260, 700); x.stroke(); } for (let j = 0; j < 8; j++) { const y = 420 + (j * j) * 4.5; x.beginPath(); x.moveTo(0, y); x.lineTo(2400, y); x.stroke(); } }
+    else for (let i = 0; i < 9; i++) { const px = r() * 2400, w = 30 + r() * 50, h = 180 + r() * 260; x.beginPath(); x.moveTo(px - w, 700); x.lineTo(px - w * 0.3, 700 - h); x.lineTo(px + w * 0.4, 700 - h * 0.9); x.lineTo(px + w, 700); x.fill(); }
     x.globalAlpha = 1;
     R.bg = { far, rays: Array.from({ length: 6 }, () => ({ x: r(), w: 60 + r() * 120, a: 0.6 + r() * 0.8, v: 0.002 + r() * 0.004 })) };
   }
@@ -2222,7 +2464,7 @@ function createRenderer(cv, mini) {
   }
   function boomFx(e) {
     const col = BOOMC[e.kind] || '#FFB547', size = Math.max(e.rx, e.ry), tier = size < 60 ? 1 : size < 120 ? 2 : 3;
-    R.fx.push({ kind: 'shape', x: e.x, y: e.y, rx: e.rx, ry: e.ry, thin: e.thin, t: 0, life: 0.55 + tier * 0.1, col });
+    R.fx.push({ kind: 'shape', x: e.x, y: e.y, rx: e.rx, ry: e.ry, thin: e.thin, box: e.box, t: 0, life: 0.55 + tier * 0.1, col });
     R.fx.push({ kind: 'ring', x: e.x, y: e.y, r: size * 0.8, t: 0, life: 0.5, w: 2 + tier });
     bubbles(e.x, e.y, [10, 18, 30][tier - 1], size * 0.8, true);
     debris(e.x, e.y, [4, 8, 14][tier - 1]);
@@ -2238,7 +2480,8 @@ function createRenderer(cv, mini) {
     for (const e of ev) {
       const t = e.idx != null && e.idx >= 0 ? m.subs[e.idx] : null;
       switch (e.type) {
-        case 'carve': carveTexture(e.x, e.y, e.rx, e.ry); break;
+        case 'carve': carveTexture(e.x, e.y, e.rx, e.ry, e.box); break;
+        case 'rockfall': debris(e.x, e.y + 10, 8); R.onSfx('hit', { n: 1 }); break;
         case 'boom': boomFx(e); break;
         case 'dmg':
           dmgText(e, e.kind === 'sudden' ? '#C9A6FF' : e.kind === 'shock' ? '#BFA8FF' : e.kind === 'graze' ? '#CFE6FF' : e.kind === 'friendly' ? '#FFD0A0' : e.kind === 'ram' || e.kind === 'crush' ? '#FFB4A4' : '#FFFFFF');
@@ -2267,7 +2510,7 @@ function createRenderer(cv, mini) {
         case 'shocked': text(e.x, e.y - 80, '감전', '#BFA8FF'); break;
         case 'impact': bubbles(e.x, e.y, 6, 10); break;
         case 'pickup': text(e.x, e.y - 60, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
-        case 'heal': text(e.x, e.y - 60, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
+        case 'heal': text(e.x, e.y - 60, (e.spa ? '온천 +' : '+') + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t) { text(t.x, t.y - 60, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '장외', '#CFE6FF'); break;
@@ -2379,7 +2622,9 @@ function createRenderer(cv, mini) {
     ctx.strokeStyle = 'rgba(255,90,74,0.45)'; ctx.setLineDash([16, 12]); ctx.lineWidth = 3 / cam.zoom; ctx.strokeRect(0, 0, m.W, m.H); ctx.setLineDash([]);
     const rx = clamp(Math.floor(left), 0, m.W), ry = clamp(Math.floor(top), 0, m.H);
     const rw = clamp(Math.ceil(left + v.w), 0, m.W) - rx, rh = clamp(Math.ceil(top + v.h), 0, m.H) - ry;
+    drawZones(left, top, v);
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
+    drawMapExtras();
     for (const c of m.crates) drawCrate(c);
     for (const f of R.fx) if (f.kind === 'wreck') drawFx(f);
     if (ui) drawAim(ui); // (the game passes no aim: the curve lives only on the aiming panel)
@@ -2407,6 +2652,30 @@ function createRenderer(cv, mini) {
     drawMini(left, top, v);
   }
   function mix(a, b, f) { const pa = a.match(/\w\w/g).map(h => parseInt(h, 16)), pb = b.match(/\w\w/g).map(h => parseInt(h, 16)); return `rgb(${Math.round(lerp(pa[0], pb[0], f))},${Math.round(lerp(pa[1], pb[1], f))},${Math.round(lerp(pa[2], pb[2], f))})`; }
+  // map-rule visuals under the rock: the Bermuda triangle, the Nautilus swirl, spa bubble columns, 12신 wrap edges
+  function drawZones(left, top, v) {
+    const m = R.m, Rr = m.rules, z = R.cam.zoom;
+    if (Rr.tri) { const t = Rr.tri; ctx.fillStyle = 'rgba(110,230,206,0.07)'; ctx.beginPath(); ctx.moveTo(t[0][0], t[0][1]); ctx.lineTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(110,230,206,0.25)'; ctx.setLineDash([18 / z, 14 / z]); ctx.lineWidth = 2 / z; ctx.stroke(); ctx.setLineDash([]); }
+    if (Rr.swirl) { const w = Rr.swirl; ctx.strokeStyle = 'rgba(200,250,255,0.10)'; ctx.lineWidth = 3; for (let i = 0; i < 6; i++) { const r = w.r * (0.25 + i * 0.13), a0 = R.t * (0.6 - i * 0.06) + i; ctx.beginPath(); ctx.ellipse(w.x, w.y, r, r * 0.8, 0, a0, a0 + 1.6); ctx.stroke(); } }
+    if (Rr.lift) for (const q of Rr.lift) { if (vrnd() < 0.25) R.fx.push({ kind: 'bubble', x: q[0] + vrnd() * (q[1] - q[0]), y: q[3] - vrnd() * 40, vx: 0, vy: -70 - vrnd() * 60, t: 0, life: 4, r: 2 + vrnd() * 3 }); }
+    if (Rr.heal) for (const q of Rr.heal) { if (vrnd() < 0.06) R.fx.push({ kind: 'bubble', x: q[0] + vrnd() * (q[1] - q[0]), y: q[2] + 10, vx: (vrnd() - 0.5) * 10, vy: -25, t: 0, life: 2.5, r: 6 + vrnd() * 6 }); }
+    if (Rr.wrapX) { for (const ex of [0, m.W]) { const g = ctx.createLinearGradient(ex - 60, 0, ex + 60, 0); g.addColorStop(0, 'rgba(56,225,255,0)'); g.addColorStop(0.5, `rgba(56,225,255,${0.18 + 0.08 * Math.sin(R.t * 3)})`); g.addColorStop(1, 'rgba(56,225,255,0)'); ctx.fillStyle = g; ctx.fillRect(ex - 60, top, 120, v.h); } }
+  }
+  // map objects over the rock: mines (배틀 필드), falling stalactites (케이브), the castle-guard mark (듀크)
+  function drawMapExtras() {
+    const m = R.m;
+    for (const q of m.mines) {
+      if (!q.alive) continue;
+      const an = R.anchors || (R.anchors = {}); if (an[q.id] === undefined) { an[q.id] = q.y; for (let y = q.y + 24; y < m.H; y += 6) if (m.mask[Math.floor(y) * m.W + Math.floor(q.x)]) { an[q.id] = y; break; } }
+      ctx.strokeStyle = 'rgba(40,40,36,0.8)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(q.x, q.y + 20); ctx.lineTo(q.x + Math.sin(R.t + q.id) * 6, an[q.id]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.save(); ctx.translate(q.x, q.y + Math.sin(R.t * 1.3 + q.id) * 3);
+      ctx.strokeStyle = '#2A2A26'; ctx.lineWidth = 4; for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 16, Math.sin(a) * 16); ctx.lineTo(Math.cos(a) * 26, Math.sin(a) * 26); ctx.stroke(); }
+      const g = ctx.createRadialGradient(-6, -6, 2, 0, 0, 20); g.addColorStop(0, '#6A6A60'); g.addColorStop(1, '#22221E'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 19, 0, 7); ctx.fill();
+      ctx.fillStyle = Math.sin(R.t * 5 + q.id) > 0 ? '#FF3A2A' : '#5A1A14'; ctx.beginPath(); ctx.arc(0, -8, 3.5, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    for (const f of m.falls) { ctx.fillStyle = `rgb(${R.th.edge.join(',')})`; ctx.beginPath(); ctx.moveTo(f.x - 16, f.y - 30); ctx.lineTo(f.x + 16, f.y - 30); ctx.lineTo(f.x, f.y + 14); ctx.fill(); }
+  }
   function drawSub(t, ui) {
     const v = viewOf(t.idx), m = R.m, bob = Math.sin(R.t * 1.6 + v.bob) * 2.5;
     const face = v.face >= 0 ? 1 : -1, squash = Math.max(0.15, Math.abs(v.face));
@@ -2418,6 +2687,7 @@ function createRenderer(cv, mini) {
     if (t.shield) { ctx.strokeStyle = 'rgba(200,180,255,0.75)'; ctx.fillStyle = 'rgba(200,180,255,0.12)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(v.x, v.y + bob, 60, 36, 0, 0, 7); ctx.fill(); ctx.stroke(); }
   }
   function drawLabel(t) {
+    const gz = R.m.rules.guard; if (gz && t.x >= gz.x0 && t.x <= gz.x1 && t.y >= gz.y0 && t.y <= gz.y1) { const v0 = viewOf(t.idx); ctx.fillStyle = '#C9A227'; ctx.beginPath(); ctx.moveTo(v0.x + 40, v0.y - 46); ctx.lineTo(v0.x + 52, v0.y - 42); ctx.lineTo(v0.x + 50, v0.y - 30); ctx.lineTo(v0.x + 46, v0.y - 25); ctx.lineTo(v0.x + 42, v0.y - 30); ctx.lineTo(v0.x + 40, v0.y - 42); ctx.closePath(); ctx.fill(); }
     const v = viewOf(t.idx), m = R.m, cur = m.cur === t.idx && m.phase === 'aim', y = v.y - 52;
     ctx.font = '700 14px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
     ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.strokeText(t.nick, v.x, y - 10); ctx.fillStyle = t.team === 'red' ? '#FFB4A4' : '#A9D0FF'; ctx.fillText(t.nick, v.x, y - 10);
@@ -2474,7 +2744,8 @@ function createRenderer(cv, mini) {
     if (f.kind === 'bubble') { ctx.strokeStyle = `rgba(220,245,255,${0.7 * (1 - k)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.stroke(); ctx.fillStyle = `rgba(255,255,255,${0.35 * (1 - k)})`; ctx.beginPath(); ctx.arc(f.x - f.r * 0.3, f.y - f.r * 0.3, f.r * 0.3, 0, 7); ctx.fill(); }
     else if (f.kind === 'shape') {
       const a = 1 - k, draw = (rx, ry) => { const r = Math.max(rx, ry); ctx.save(); ctx.translate(f.x, f.y); ctx.scale(rx / r, ry / r); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r); g.addColorStop(0, `rgba(255,250,225,${0.95 * a})`); g.addColorStop(0.45, f.col + Math.round(a * 180).toString(16).padStart(2, '0')); g.addColorStop(1, f.col + '00'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * (0.75 + k * 0.25), 0, 7); ctx.fill(); ctx.restore(); ctx.strokeStyle = `rgba(255,255,255,${0.6 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(f.x, f.y, rx, ry, 0, 0, 7); ctx.stroke(); };
-      if (f.thin) { draw(f.rx, f.thin); draw(f.thin, f.ry); } else draw(f.rx, f.ry);
+      if (f.box) { const sq = (rx, ry) => { ctx.fillStyle = f.col + Math.round(a * 150).toString(16).padStart(2, '0'); ctx.fillRect(f.x - rx, f.y - ry, rx * 2, ry * 2); ctx.strokeStyle = `rgba(255,255,255,${0.7 * a})`; ctx.lineWidth = 2; ctx.strokeRect(f.x - rx, f.y - ry, rx * 2, ry * 2); }; if (f.thin) { sq(f.rx, f.thin); sq(f.thin, f.ry); } else sq(f.rx, f.ry); }
+      else if (f.thin) { draw(f.rx, f.thin); draw(f.thin, f.ry); } else draw(f.rx, f.ry);
     }
     else if (f.kind === 'ring') { ctx.strokeStyle = `rgba(220,245,255,${0.6 * (1 - k)})`; ctx.lineWidth = f.w; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.5 + k * 1.1), 0, 7); ctx.stroke(); }
     else if (f.kind === 'sonar') { ctx.strokeStyle = `rgba(111,227,225,${0.8 * (1 - k)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(f.x, f.y, f.rx * (0.3 + k), f.ry * (0.3 + k), 0, 0, 7); ctx.stroke(); }
@@ -2567,6 +2838,22 @@ function createRenderer(cv, mini) {
   return R;
 }
 // lobby / setup map preview
+// map previews take ~0.4 s each (the whole map is generated), so they are built one at a time after the screen shows
+const PREVIEWS = {}, previewQueue = [];
+function previewInto(canvas, id) {
+  canvas.width = 320; canvas.height = Math.round(320 * CONFIG.maps[id].H / CONFIG.maps[id].W);
+  const paint = () => canvas.getContext('2d').drawImage(PREVIEWS[id], 0, 0);
+  if (PREVIEWS[id]) return paint();
+  const x = canvas.getContext('2d'), th = MTHEMES[CONFIG.maps[id].theme]; x.fillStyle = th.water[1]; x.fillRect(0, 0, canvas.width, canvas.height);
+  previewQueue.push({ id, paint });
+  if (previewQueue.length === 1) setTimeout(nextPreview, 30);
+}
+function nextPreview() {
+  const job = previewQueue[0]; if (!job) return;
+  if (!PREVIEWS[job.id]) PREVIEWS[job.id] = mapPreview(job.id);
+  for (let i = previewQueue.length - 1; i >= 0; i--) if (previewQueue[i].id === job.id) { previewQueue[i].paint(); previewQueue.splice(i, 1); }
+  if (previewQueue.length) setTimeout(nextPreview, 30);
+}
 function mapPreview(id) {
   const meta = CONFIG.maps[id], th = MTHEMES[meta.theme];
   const mp = buildMap(id), cw = 320, ch = Math.round(320 * meta.H / meta.W);
@@ -2606,18 +2893,18 @@ function botShapeDmg(sh, dmg, x, y, t) {
 function botDropY(m, x, y, max) { for (let k = 0; k < max; k += 6) if (solidAt(m, x, y + k)) return y + k; return y + max; }
 // Score one curve. Returns { score, det } (det = burst distance along the curve).
 function botEval(m, t, w, path, target, curSeen, aimX, aimY) {
-  const P = CONFIG.physics, drift = m.current * curSeen * P.currentPush / P.torpSpeed;
-  let best = 1e18, bestS = -1, rockS = -1;
+  // water push accumulated along the curve (the turn's current + the map's own currents), as the bot judges it
+  let ox = 0, oy = 0, best = 1e18, bestS = -1, rockS = -1, bx = 0, by = 0, rx = 0, ry = 0;
   for (let s = 6; s <= path.L; s += 6) {
-    const a = pathAt(path, s), x = a.x + drift * s, y = a.y;
-    if (outOfMap(m, x, y)) { rockS = s; break; }
-    if (solidAt(m, x, y)) { rockS = s; break; }
+    const a0 = pathAt(path, s), dv = driftAt(m, a0.x + ox, a0.y + oy);
+    ox += dv[0] * 2 * curSeen; oy += dv[1] * 2 * curSeen;
+    const a = a0, x = a.x + ox, y = a.y + oy;
+    if (outOfMap(m, x, y) || solidAt(m, x, y)) { rockS = s; rx = x; ry = y; break; }
     const dd = (x - aimX) * (x - aimX) + (y - aimY) * (y - aimY);
-    if (dd < best) { best = dd; bestS = s; }
+    if (dd < best) { best = dd; bestS = s; bx = x; by = y; }
   }
-  if (rockS >= 0 && (bestS < 0 || bestS > rockS)) bestS = rockS;
+  if (rockS >= 0 && (bestS < 0 || bestS > rockS)) { bestS = rockS; bx = rx; by = ry; }
   if (bestS < 0) return { score: -1, det: path.L };
-  const end = pathAt(path, bestS), bx = end.x + drift * bestS, by = end.y;
   const sh = { rx: w.rx, ry: w.ry, thin: w.thin || 0 };
   let score = 0;
   const value = (o, v) => { if (o.team !== t.team) score += Math.min(v, o.hp) + (v >= o.hp ? 150 : 0); else score -= (o === t ? 2.5 : 1.5) * v; };
@@ -2879,7 +3166,7 @@ function createRoomLink(o) {
     if (again && r.gid) setTimeout(() => { pub('cmd', { type: 'logreq', gid: r.gid, from: r.myId }); setTimeout(flushOutbox, 700); }, 300);
     pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 1 }, true);
     if (o.create && !r.room) {
-      r.room = { ver: 0, host: r.myId, map: 'reef', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+      r.room = { ver: 0, host: r.myId, map: 'atlantic', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
       publishRoom();
     }
     setStatus('online');
@@ -2973,7 +3260,7 @@ function createRoomLink(o) {
         cb('onStatus', 'host');
       } else if (!next && !r.me()) {
         // an old link: everybody is gone. Reopen the room with just me.
-        r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'reef', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
+        r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'atlantic', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
         r.gid = null;
         publishRoom();
         cb('onStatus', 'host');
@@ -3339,11 +3626,13 @@ function renderLobby() {
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
+  { const mm = CONFIG.maps[room.map]; if (mm) $('lobbyMapRule').textContent = `${mm.name} — ${mm.desc} ★ ${mm.rule}`; }
   for (const [k, meta] of Object.entries(CONFIG.maps)) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (room.map === k ? ' sel' : '');
-    b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
+    b.append((() => { const c = document.createElement('canvas'); previewInto(c, k); return c; })());
     const inner = document.createElement('div'); inner.className = 'in';
     inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
+    b.title = `${meta.name} (${meta.en}) — ${meta.desc}\n★ ${meta.rule}`;
     b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
     if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
     maps.append(b);
@@ -3943,7 +4232,8 @@ function updateHud() {
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const cd = Math.abs(m.current), cmax = CONFIG.turn.currentMax;
   setTxt('windLbl', '해류');
-  setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.current === 0 ? '없음' : (m.current < 0 ? '← ' : '') + cd + (m.current > 0 ? ' →' : '')) + (m.turn && m.turn.calm ? ' (정류탄)' : ''));
+  setTxt('mapRule', '★ ' + (CONFIG.maps[m.mapId].rule || ''));
+  setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.current === 0 ? '없음' : (m.current < 0 ? '← ' : '') + cd + (m.current > 0 ? ' →' : '')) + (m.rules.currentMul && m.current ? ` (×${m.rules.currentMul})` : '') + (m.turn && m.turn.calm ? ' (정류탄)' : ''));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const n = Math.ceil(cd * 5 / cmax); const on = m.current < 0 ? (i < 5 && i >= 5 - n) : (i >= 5 && i < 5 + n); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
   const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
@@ -4071,7 +4361,7 @@ document.querySelectorAll('[data-k]').forEach(b => {
 window.addEventListener('resize', () => R.resize());
 
 // ---------------------------------------------------------------- setup
-const setup = { map: 'reef', red: 2, blue: 2, slots: { red: [], blue: [] } };
+const setup = { map: 'atlantic', red: 2, blue: 2, slots: { red: [], blue: [] } };
 let thumbs = {};
 function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: PICK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % PICK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
 const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
@@ -4084,9 +4374,9 @@ function renderSetup() {
   const maps = $('maps'); maps.innerHTML = '';
   for (const [k, meta] of Object.entries(CONFIG.maps)) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (setup.map === k ? ' sel' : '');
-    b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
+    b.append((() => { const c = document.createElement('canvas'); previewInto(c, k); return c; })());
     const inner = document.createElement('div'); inner.className = 'in';
-    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span><span class="d">${meta.desc}</span>`;
+    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.en} · ${meta.tag}</span><span class="d">${meta.desc}</span><span class="r">★ ${meta.rule}</span>`;
     b.append(inner); b.onclick = () => { setup.map = k; saveSetup(); renderSetup(); };
     maps.appendChild(b);
   }
@@ -4133,8 +4423,8 @@ function startTutorial() {
   TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false; PAD.used = false;
   const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', subId: 'uboat' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', subId: 'sona', bot: 'easy' }];
   ON.active = false;
-  // fixed layout (seed 7): the player moves first, open water on all sides, a clear line to the bot ~1000px away
-  beginMatch({ seed: 7, mapId: 'reef', players }, practiceOpts({ b0: 'easy' }));
+  // fixed tutorial layout (아틀란틱, seed 3)
+  beginMatch({ seed: 3, mapId: 'atlantic', players }, practiceOpts({ b0: 'easy' })); // fixed: I move first, open water, clear line ~1250px
   showScreen('game'); showCoach();
 }
 function showCoach() {

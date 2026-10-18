@@ -21,18 +21,18 @@ function botShapeDmg(sh, dmg, x, y, t) {
 function botDropY(m, x, y, max) { for (let k = 0; k < max; k += 6) if (solidAt(m, x, y + k)) return y + k; return y + max; }
 // Score one curve. Returns { score, det } (det = burst distance along the curve).
 function botEval(m, t, w, path, target, curSeen, aimX, aimY) {
-  const P = CONFIG.physics, drift = m.current * curSeen * P.currentPush / P.torpSpeed;
-  let best = 1e18, bestS = -1, rockS = -1;
+  // water push accumulated along the curve (the turn's current + the map's own currents), as the bot judges it
+  let ox = 0, oy = 0, best = 1e18, bestS = -1, rockS = -1, bx = 0, by = 0, rx = 0, ry = 0;
   for (let s = 6; s <= path.L; s += 6) {
-    const a = pathAt(path, s), x = a.x + drift * s, y = a.y;
-    if (outOfMap(m, x, y)) { rockS = s; break; }
-    if (solidAt(m, x, y)) { rockS = s; break; }
+    const a0 = pathAt(path, s), dv = driftAt(m, a0.x + ox, a0.y + oy);
+    ox += dv[0] * 2 * curSeen; oy += dv[1] * 2 * curSeen;
+    const a = a0, x = a.x + ox, y = a.y + oy;
+    if (outOfMap(m, x, y) || solidAt(m, x, y)) { rockS = s; rx = x; ry = y; break; }
     const dd = (x - aimX) * (x - aimX) + (y - aimY) * (y - aimY);
-    if (dd < best) { best = dd; bestS = s; }
+    if (dd < best) { best = dd; bestS = s; bx = x; by = y; }
   }
-  if (rockS >= 0 && (bestS < 0 || bestS > rockS)) bestS = rockS;
+  if (rockS >= 0 && (bestS < 0 || bestS > rockS)) { bestS = rockS; bx = rx; by = ry; }
   if (bestS < 0) return { score: -1, det: path.L };
-  const end = pathAt(path, bestS), bx = end.x + drift * bestS, by = end.y;
   const sh = { rx: w.rx, ry: w.ry, thin: w.thin || 0 };
   let score = 0;
   const value = (o, v) => { if (o.team !== t.team) score += Math.min(v, o.hp) + (v >= o.hp ? 150 : 0); else score -= (o === t ? 2.5 : 1.5) * v; };

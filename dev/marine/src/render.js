@@ -14,6 +14,19 @@ const MTHEMES = {
   wreck: { water: ['#2F7A8C', '#134456', '#061A2A'], rock: [[148, 100, 66], [84, 56, 40]], edge: [204, 140, 92], bed: [48, 38, 32], mini: '#B07A50', debris: '#A0704C', far: '#0C3A4C', ray: 'rgba(200,240,230,0.06)' },
   ice: { water: ['#4AA2C8', '#1C6290', '#0A2A4C'], rock: [[206, 232, 244], [118, 158, 192]], edge: [246, 252, 255], bed: [88, 116, 150], mini: '#D8EEF8', debris: '#E2F2FA', far: '#14507A', ray: 'rgba(220,250,255,0.08)' },
   vents: { water: ['#215A6E', '#0F3042', '#050F1C'], rock: [[84, 74, 78], [40, 34, 38]], edge: [150, 104, 76], bed: [28, 22, 26], mini: '#6E6266', debris: '#7A6E70', far: '#0A2434', ray: 'rgba(255,200,160,0.04)', hot: true },
+  // the 12 maps (deco = props on rock, pattern = texture inside rock, farKind = background silhouettes, bedEdge = metal rim)
+  god12: { water: ['#1C2C70', '#0E1642', '#060A22'], rock: [[64, 76, 146], [30, 34, 84]], edge: [56, 225, 255], bed: [26, 22, 64], bedEdge: [255, 79, 216], mini: '#5A6AC8', debris: '#8FB0FF', far: '#18246A', ray: 'rgba(120,200,255,0.05)', deco: 'neon', pattern: 'grid', farKind: 'grid' },
+  atlantic: { water: ['#2C93CC', '#0F5A8C', '#062A4A'], rock: [[124, 152, 160], [62, 82, 94]], edge: [196, 232, 238], bed: [40, 56, 70], mini: '#9AC0CC', debris: '#A8C4CC', far: '#0B4F7C', ray: 'rgba(190,240,255,0.08)', deco: 'reef' },
+  battlefield: { water: ['#56735F', '#283B30', '#0E1A14'], rock: [[112, 120, 84], [62, 68, 46]], edge: [190, 170, 110], bed: [104, 104, 98], bedEdge: [160, 156, 140], mini: '#8E9468', debris: '#9A9470', far: '#1E2A20', ray: 'rgba(220,230,180,0.04)', deco: 'war', pattern: 'strata', farKind: 'hills' },
+  bermuda: { water: ['#20828A', '#0E3F4A', '#051A22'], rock: [[64, 134, 132], [30, 70, 72]], edge: [110, 230, 206], bed: [30, 50, 56], mini: '#5AB0A8', debris: '#7FC8C0', far: '#0B2B3B', ray: 'rgba(160,255,230,0.05)', deco: 'wreck' },
+  cave: { water: ['#3E3656', '#221C34', '#0C0A16'], rock: [[94, 84, 116], [44, 38, 58]], edge: [168, 150, 196], bed: [30, 26, 40], mini: '#8A7EA6', debris: '#9C8BB5', far: '#1A1528', ray: 'rgba(240,196,107,0.03)', deco: 'cave', pattern: 'strata' },
+  cube: { water: ['#2E5288', '#18294A', '#0A1224'], rock: [[64, 100, 156], [32, 52, 92]], edge: [252, 170, 40], bed: [22, 32, 56], bedEdge: [236, 236, 236], mini: '#5A86C0', debris: '#9FC0E8', far: '#14213D', ray: 'rgba(200,220,255,0.05)', deco: 'neon', pattern: 'grid', farKind: 'grid' },
+  duke: { water: ['#40386A', '#221D3A', '#0E0C1C'], rock: [[100, 88, 116], [54, 46, 64]], edge: [206, 168, 52], bed: [34, 30, 44], bedEdge: [150, 120, 50], mini: '#8A7AA0', debris: '#A898B8', far: '#1D1B2F', ray: 'rgba(255,220,150,0.04)', deco: 'castle', pattern: 'brick', farKind: 'castle' },
+  iceberg: { water: ['#4AA2C8', '#1C6290', '#0A2A4C'], rock: [[210, 234, 246], [120, 160, 194]], edge: [255, 255, 255], bed: [88, 116, 150], mini: '#D8EEF8', debris: '#E2F2FA', far: '#14507A', ray: 'rgba(220,250,255,0.09)', deco: 'ice', pattern: 'ice' },
+  jurassic: { water: ['#5E6E4C', '#2E3626', '#12160E'], rock: [[156, 116, 78], [92, 66, 46]], edge: [232, 206, 164], bed: [50, 38, 28], mini: '#B88E64', debris: '#C8A880', far: '#2B2414', ray: 'rgba(255,240,200,0.05)', deco: 'fossil', pattern: 'strata', farKind: 'hills' },
+  nautilus: { water: ['#2C8494', '#134752', '#06202A'], rock: [[204, 172, 132], [132, 98, 72]], edge: [246, 218, 166], bed: [60, 46, 40], mini: '#D4B48C', debris: '#E8C8A0', far: '#0F2D3A', ray: 'rgba(200,250,255,0.07)', deco: 'reef' },
+  seacity: { water: ['#20529A', '#0E2A55', '#050F26'], rock: [[74, 114, 176], [36, 60, 104]], edge: [79, 195, 247], bed: [30, 40, 64], bedEdge: [255, 102, 196], mini: '#6292D8', debris: '#9FC8F0', far: '#0A2040', ray: 'rgba(160,220,255,0.06)', deco: 'city', pattern: 'grid', farKind: 'city' },
+  spa: { water: ['#3E928C', '#1C5450', '#0A2624'], rock: [[126, 156, 112], [72, 98, 72]], edge: [247, 205, 168], bed: [40, 56, 50], mini: '#98B898', debris: '#C8D8B0', far: '#103A3A', ray: 'rgba(255,240,220,0.07)', deco: 'spa', pattern: 'wood' },
 };
 // torpedo looks per weapon kind: body colour, nose colour, glow
 const TORP = {
@@ -23,7 +36,7 @@ const TORP = {
   direct: ['#1E232B', '#EEF2F5'], hell: ['#1E232B', '#EEF2F5'], vell: ['#7A8899', '#6FE3E1', '#AFFFFF'], inflate: ['#7A8899', '#A9B4C0', '#DDF6FF'],
   bounce: ['#2E86D6', '#8CC63F', '#8CC8FF'], split: ['#8CC63F', '#2E86D6', '#D8F59A'],
 };
-const BOOMC = { hit: '#FFB547', small: '#FFC870', big: '#FF8A30', sonar: '#6FE3E1', cross: '#F2C94C', volt: '#BFA8FF', swirl: '#6FE3E1', fire: '#FF8A30', kblue: '#5FA8FF', kgreen: '#9FE07A' };
+const BOOMC = { mine: '#FF6A3A', rock: '#C8B8E0', hit: '#FFB547', small: '#FFC870', big: '#FF8A30', sonar: '#6FE3E1', cross: '#F2C94C', volt: '#BFA8FF', swirl: '#6FE3E1', fire: '#FF8A30', kblue: '#5FA8FF', kgreen: '#9FE07A' };
 
 function createRenderer(cv, mini) {
   const ctx = cv.getContext('2d'), mctx = mini.getContext('2d');
@@ -35,7 +48,7 @@ function createRenderer(cv, mini) {
   };
 
   R.setMatch = function (m) {
-    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null;
+    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null; R.anchors = {};
     R.fx = []; R.texts = []; R.bolts = []; R.view = {}; R.shake = 0; R.trails = {}; R.bubbles = {}; R.snow = null;
     buildTerrainTexture(); buildBackground();
     const t0 = m.subs[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
@@ -65,7 +78,11 @@ function createRenderer(cv, mini) {
       const v = mask[i]; if (!v) continue;
       const px = i % W, py = (i / W) | 0, p = i * 4, n = (hash2(px >> 1, py >> 1) - 0.5) * 16;
       let r, g, b;
-      if (v === 2) { const s = ((px >> 3) + (py >> 3)) & 1; r = bd[0] + s * 6; g = bd[1] + s * 6; b = bd[2] + s * 8; }
+      if (v === 2) {
+        const s = ((px >> 3) + (py >> 3)) & 1; r = bd[0] + s * 6; g = bd[1] + s * 6; b = bd[2] + s * 8;
+        if (th.bedEdge && dist[i] <= 9) { r = th.bedEdge[0]; g = th.bedEdge[1]; b = th.bedEdge[2]; }
+        else if (th.bedEdge && (px % 48 < 2 || py % 48 < 2)) { r += 14; g += 14; b += 18; }
+      }
       else {
         const e = dist[i] / 3, k = Math.min(1, e / 90);
         r = lerp(r0[0], r1[0], k); g = lerp(r0[1], r1[1], k); b = lerp(r0[2], r1[2], k);
@@ -73,6 +90,12 @@ function createRenderer(cv, mini) {
         if (th.hot && e > 12 && Math.abs(Math.sin(px / 37 + Math.sin(py / 53) * 2.4)) < 0.03) { r = 220; g = 96; b = 40; }
         if (R.m.theme === 'ice' && e > 6 && Math.abs(Math.sin(px / 23 - py / 61)) < 0.02) { r += 30; g += 30; b += 20; }
         if (R.m.theme === 'wreck' && e > 6 && (py % 46 < 2 || ((px + (py / 46 | 0) * 30) % 90) < 2)) { r -= 26; g -= 20; b -= 16; }
+        const pat = th.pattern;
+        if (pat === 'grid' && e > 5 && (px % 40 < 2 || py % 40 < 2)) { r = lerp(r, eg[0], 0.35); g = lerp(g, eg[1], 0.35); b = lerp(b, eg[2], 0.35); }
+        else if (pat === 'brick' && e > 5 && (py % 36 < 2 || ((px + ((py / 36 | 0) % 2) * 40) % 80) < 2)) { r -= 22; g -= 20; b -= 16; }
+        else if (pat === 'strata' && e > 6) { const w = Math.sin(py / 9 + Math.sin(px / 140) * 1.6); if (w > 0.82) { r += 14; g += 12; b += 10; } else if (w < -0.9) { r -= 12; g -= 10; b -= 8; } }
+        else if (pat === 'ice' && e > 6 && Math.abs(Math.sin(px / 23 - py / 61)) < 0.02) { r += 30; g += 30; b += 20; }
+        else if (pat === 'wood' && e > 4 && Math.abs(Math.sin(px / 11 + py / 29 + Math.sin(py / 70) * 2)) < 0.07) { r -= 18; g -= 14; b -= 12; }
       }
       o[p] = r + n; o[p + 1] = g + n; o[p + 2] = b + n; o[p + 3] = 255;
     }
@@ -83,7 +106,7 @@ function createRenderer(cv, mini) {
   // props on rock tops (and some undersides), seeded so every match on a map looks the same
   function decorate(x, m) {
     let s = 4321 + m.W; const r = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-    const W = m.W, H = m.H, mask = m.mask, theme = m.theme;
+    const W = m.W, H = m.H, mask = m.mask, theme = R.th.deco || m.theme;
     for (let px = 30; px < W - 30; px += 18 + Math.floor(r() * 44)) {
       for (let py = 4; py < H - 40; py++) {
         const i = py * W + px, top = mask[i] === 1 && !mask[i - W] && !mask[i - 2 * W], under = mask[i] === 1 && py + 2 < H && !mask[i + W] && !mask[i + 2 * W];
@@ -104,6 +127,24 @@ function createRenderer(cv, mini) {
           } else if (theme === 'ice') {
             if (k < 0.16) { x.fillStyle = 'rgba(240,252,255,0.9)'; x.beginPath(); x.moveTo(-4, 0); x.lineTo(0, -14 - r() * 8); x.lineTo(4, 0); x.fill(); }
             else if (k < 0.24) { x.fillStyle = '#E8F6FF'; x.beginPath(); x.ellipse(0, -1, 8, 3, 0, Math.PI, 0); x.fill(); }
+          } else if (theme === 'neon') {
+            if (k < 0.16) { x.fillStyle = R.th.bedEdge ? `rgb(${R.th.bedEdge.join(',')})` : '#FF4FD8'; x.globalAlpha = 0.9; x.fillRect(-2, -10, 4, 10); x.globalAlpha = 0.3; x.beginPath(); x.arc(0, -10, 9, 0, 7); x.fill(); x.globalAlpha = 1; }
+            else if (k < 0.26) { x.strokeStyle = `rgb(${R.th.edge.join(',')})`; x.lineWidth = 2; x.beginPath(); x.moveTo(-14, -2); x.lineTo(-4, -2); x.lineTo(0, -8); x.lineTo(14, -8); x.stroke(); }
+          } else if (theme === 'city') {
+            if (k < 0.1) { x.fillStyle = '#9FB4D0'; x.fillRect(-1.5, -34, 3, 34); x.fillStyle = '#FFE9A0'; x.beginPath(); x.arc(0, -36, 4, 0, 7); x.fill(); x.globalAlpha = 0.25; x.beginPath(); x.arc(0, -36, 14, 0, 7); x.fill(); x.globalAlpha = 1; }
+            else if (k < 0.18) { x.fillStyle = '#FF66C4'; x.fillRect(-8, -6, 16, 3); }
+          } else if (theme === 'castle') {
+            if (k < 0.1) { x.strokeStyle = '#3E2A1A'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -40); x.stroke(); x.fillStyle = r() < 0.5 ? '#7A1F2B' : '#C9A227'; x.beginPath(); x.moveTo(0, -40); x.lineTo(20, -34); x.lineTo(0, -27); x.fill(); }
+            else if (k < 0.24) { x.fillStyle = 'rgba(86,120,60,0.85)'; x.beginPath(); x.ellipse(0, -2, 10, 4, 0, Math.PI, 0); x.fill(); }
+          } else if (theme === 'fossil') {
+            if (k < 0.14) { x.strokeStyle = '#6E8A3A'; x.lineWidth = 2; x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(10, -18, 4, -34); x.stroke(); for (let j = 1; j < 5; j++) { x.beginPath(); x.moveTo(j * 1.5, -j * 7); x.lineTo(j * 1.5 + 8, -j * 7 - 4); x.moveTo(j * 1.5, -j * 7); x.lineTo(j * 1.5 - 7, -j * 7 - 3); x.stroke(); } }
+            else if (k < 0.24) { x.fillStyle = '#EADBC0'; x.fillRect(-7, -3, 14, 3); x.beginPath(); x.arc(-7, -1.5, 3, 0, 7); x.arc(7, -1.5, 3, 0, 7); x.fill(); }
+          } else if (theme === 'spa') {
+            if (k < 0.12) { const c = ['#F7C59F', '#E8E0D4', '#BFD8C0']; for (let j = 0; j < 3; j++) { x.fillStyle = c[j]; x.beginPath(); x.ellipse(0, -4 - j * 7, 9 - j * 2, 4, 0, 0, 7); x.fill(); } }
+            else if (k < 0.15) { x.fillStyle = '#FFD84A'; x.beginPath(); x.ellipse(0, -6, 8, 6, 0, 0, 7); x.fill(); x.beginPath(); x.arc(5, -13, 4.5, 0, 7); x.fill(); x.fillStyle = '#FF8A3A'; x.beginPath(); x.moveTo(9, -13); x.lineTo(13, -12); x.lineTo(9, -11); x.fill(); x.fillStyle = '#222'; x.fillRect(5.5, -15, 1.6, 1.6); }
+          } else if (theme === 'war') {
+            if (k < 0.12) { x.strokeStyle = '#4A3E2E'; x.lineWidth = 2; for (const ox of [-10, 10]) { x.beginPath(); x.moveTo(ox, 0); x.lineTo(ox, -20); x.stroke(); } x.strokeStyle = '#8A8A80'; x.lineWidth = 1; x.beginPath(); for (let j = -10; j <= 10; j += 4) { x.moveTo(j, -16); x.lineTo(j + 4, -12); x.lineTo(j + 2, -18); } x.stroke(); }
+            else if (k < 0.2) { x.fillStyle = '#B08A4A'; x.save(); x.rotate(0.4); x.fillRect(-2, -10, 4, 9); x.restore(); }
           } else if (theme === 'vents') {
             if (k < 0.2) { for (let j = 0; j < 3; j++) { const h = 14 + r() * 18, ox = (j - 1) * 5; x.fillStyle = '#EDE6DC'; x.fillRect(ox - 1.5, -h, 3, h); x.fillStyle = '#E8402E'; x.beginPath(); x.arc(ox, -h, 3, 0, 7); x.fill(); } }
             else if (k < 0.28) { x.fillStyle = '#E0D2C0'; x.beginPath(); x.ellipse(0, -2, 5, 3, 0, 0, 7); x.fill(); }
@@ -118,26 +159,39 @@ function createRenderer(cv, mini) {
       }
     }
   }
-  function carveTexture(cx, cy, rx, ry) {
+  function carveTexture(cx, cy, rx, ry, box) {
     R.miniDirty = true;
     const t = R.tctx; if (!t) return;
+    if (box) {
+      t.save(); t.globalCompositeOperation = 'source-atop'; t.fillStyle = 'rgba(10,14,20,0.5)'; t.fillRect(cx - rx - 12, cy - ry - 12, rx * 2 + 24, ry * 2 + 24);
+      t.globalCompositeOperation = 'destination-out'; t.fillRect(cx - rx - 0.5, cy - ry - 0.5, rx * 2 + 1, ry * 2 + 1); t.restore();
+      repaintBed(cx, cy, rx, ry); return;
+    }
     t.save(); t.globalCompositeOperation = 'source-atop';
     t.translate(cx, cy); t.scale(1, ry / rx);
     const g = t.createRadialGradient(0, 0, rx * 0.85, 0, 0, rx * 1.35); g.addColorStop(0, 'rgba(10,14,20,0.55)'); g.addColorStop(1, 'rgba(10,14,20,0)');
     t.fillStyle = g; t.beginPath(); t.arc(0, 0, rx * 1.35, 0, 7); t.fill();
     t.globalCompositeOperation = 'destination-out'; t.beginPath(); t.arc(0, 0, rx + 0.5, 0, 7); t.fill();
     t.restore();
-    // bedrock never digs: repaint it if it sits inside the hole
-    const m = R.m, x0 = Math.max(0, Math.floor(cx - rx - 2)), x1 = Math.min(m.W - 1, Math.ceil(cx + rx + 2)), y0 = Math.max(0, Math.floor(cy - ry - 2)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry + 2));
+    repaintBed(cx, cy, rx, ry);
+  }
+  // bedrock never digs: repaint it if it sits inside the hole
+  function repaintBed(cx, cy, rx, ry) {
+    const t = R.tctx, m = R.m, x0 = Math.max(0, Math.floor(cx - rx - 2)), x1 = Math.min(m.W - 1, Math.ceil(cx + rx + 2)), y0 = Math.max(0, Math.floor(cy - ry - 2)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry + 2));
     let bed = false; for (let y = y0; y <= y1 && !bed; y += 3) for (let x = x0; x <= x1; x += 3) if (m.mask[y * m.W + x] === 2) { bed = true; break; }
-    if (bed) { const b = R.th.bed; t.fillStyle = `rgb(${b[0]},${b[1]},${b[2]})`; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (m.mask[y * m.W + x] === 2) t.fillRect(x, y, 1, 1); }
+    if (bed) { const b = R.th.bedEdge || R.th.bed; t.fillStyle = `rgb(${b[0]},${b[1]},${b[2]})`; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (m.mask[y * m.W + x] === 2) t.fillRect(x, y, 1, 1); }
   }
   function buildBackground() {
     const th = R.th; let s = 77; const r = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
     const far = document.createElement('canvas'); far.width = 2400; far.height = 700; const x = far.getContext('2d');
     x.fillStyle = th.far; x.globalAlpha = 0.55;
     x.beginPath(); x.moveTo(0, 700); for (let i = 0; i <= 2400; i += 40) x.lineTo(i, 520 - 120 * Math.abs(Math.sin(i / 340)) - 40 * Math.sin(i / 91)); x.lineTo(2400, 700); x.fill();
-    x.globalAlpha = 0.35; for (let i = 0; i < 9; i++) { const px = r() * 2400, w = 30 + r() * 50, h = 180 + r() * 260; x.beginPath(); x.moveTo(px - w, 700); x.lineTo(px - w * 0.3, 700 - h); x.lineTo(px + w * 0.4, 700 - h * 0.9); x.lineTo(px + w, 700); x.fill(); }
+    x.globalAlpha = 0.35;
+    const kind = th.farKind || 'hills';
+    if (kind === 'city') for (let i = 0; i < 26; i++) { const px = r() * 2400, w = 30 + r() * 70, h = 120 + r() * 380; x.fillRect(px, 700 - h, w, h); if (r() < 0.5) { x.beginPath(); x.moveTo(px, 700 - h); x.lineTo(px + w / 2, 700 - h - 60); x.lineTo(px + w, 700 - h); x.fill(); } if (r() < 0.4) { x.beginPath(); x.ellipse(px + w / 2, 700 - h, w * 0.7, w * 0.5, 0, Math.PI, 0); x.fill(); } }
+    else if (kind === 'castle') for (let i = 0; i < 7; i++) { const px = r() * 2400, w = 60 + r() * 80, h = 200 + r() * 260; x.fillRect(px, 700 - h, w, h); for (let j = 0; j < w; j += 20) x.fillRect(px + j, 700 - h - 16, 11, 16); if (r() < 0.6) { x.beginPath(); x.moveTo(px - 6, 700 - h - 16); x.lineTo(px + w / 2, 700 - h - 90); x.lineTo(px + w + 6, 700 - h - 16); x.fill(); } }
+    else if (kind === 'grid') { x.globalAlpha = 0.5; x.strokeStyle = th.far; x.lineWidth = 2; for (let i = -20; i <= 20; i++) { x.beginPath(); x.moveTo(1200 + i * 60, 420); x.lineTo(1200 + i * 260, 700); x.stroke(); } for (let j = 0; j < 8; j++) { const y = 420 + (j * j) * 4.5; x.beginPath(); x.moveTo(0, y); x.lineTo(2400, y); x.stroke(); } }
+    else for (let i = 0; i < 9; i++) { const px = r() * 2400, w = 30 + r() * 50, h = 180 + r() * 260; x.beginPath(); x.moveTo(px - w, 700); x.lineTo(px - w * 0.3, 700 - h); x.lineTo(px + w * 0.4, 700 - h * 0.9); x.lineTo(px + w, 700); x.fill(); }
     x.globalAlpha = 1;
     R.bg = { far, rays: Array.from({ length: 6 }, () => ({ x: r(), w: 60 + r() * 120, a: 0.6 + r() * 0.8, v: 0.002 + r() * 0.004 })) };
   }
@@ -161,7 +215,7 @@ function createRenderer(cv, mini) {
   }
   function boomFx(e) {
     const col = BOOMC[e.kind] || '#FFB547', size = Math.max(e.rx, e.ry), tier = size < 60 ? 1 : size < 120 ? 2 : 3;
-    R.fx.push({ kind: 'shape', x: e.x, y: e.y, rx: e.rx, ry: e.ry, thin: e.thin, t: 0, life: 0.55 + tier * 0.1, col });
+    R.fx.push({ kind: 'shape', x: e.x, y: e.y, rx: e.rx, ry: e.ry, thin: e.thin, box: e.box, t: 0, life: 0.55 + tier * 0.1, col });
     R.fx.push({ kind: 'ring', x: e.x, y: e.y, r: size * 0.8, t: 0, life: 0.5, w: 2 + tier });
     bubbles(e.x, e.y, [10, 18, 30][tier - 1], size * 0.8, true);
     debris(e.x, e.y, [4, 8, 14][tier - 1]);
@@ -177,7 +231,8 @@ function createRenderer(cv, mini) {
     for (const e of ev) {
       const t = e.idx != null && e.idx >= 0 ? m.subs[e.idx] : null;
       switch (e.type) {
-        case 'carve': carveTexture(e.x, e.y, e.rx, e.ry); break;
+        case 'carve': carveTexture(e.x, e.y, e.rx, e.ry, e.box); break;
+        case 'rockfall': debris(e.x, e.y + 10, 8); R.onSfx('hit', { n: 1 }); break;
         case 'boom': boomFx(e); break;
         case 'dmg':
           dmgText(e, e.kind === 'sudden' ? '#C9A6FF' : e.kind === 'shock' ? '#BFA8FF' : e.kind === 'graze' ? '#CFE6FF' : e.kind === 'friendly' ? '#FFD0A0' : e.kind === 'ram' || e.kind === 'crush' ? '#FFB4A4' : '#FFFFFF');
@@ -206,7 +261,7 @@ function createRenderer(cv, mini) {
         case 'shocked': text(e.x, e.y - 80, '감전', '#BFA8FF'); break;
         case 'impact': bubbles(e.x, e.y, 6, 10); break;
         case 'pickup': text(e.x, e.y - 60, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
-        case 'heal': text(e.x, e.y - 60, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
+        case 'heal': text(e.x, e.y - 60, (e.spa ? '온천 +' : '+') + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t) { text(t.x, t.y - 60, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '장외', '#CFE6FF'); break;
@@ -318,7 +373,9 @@ function createRenderer(cv, mini) {
     ctx.strokeStyle = 'rgba(255,90,74,0.45)'; ctx.setLineDash([16, 12]); ctx.lineWidth = 3 / cam.zoom; ctx.strokeRect(0, 0, m.W, m.H); ctx.setLineDash([]);
     const rx = clamp(Math.floor(left), 0, m.W), ry = clamp(Math.floor(top), 0, m.H);
     const rw = clamp(Math.ceil(left + v.w), 0, m.W) - rx, rh = clamp(Math.ceil(top + v.h), 0, m.H) - ry;
+    drawZones(left, top, v);
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
+    drawMapExtras();
     for (const c of m.crates) drawCrate(c);
     for (const f of R.fx) if (f.kind === 'wreck') drawFx(f);
     if (ui) drawAim(ui); // (the game passes no aim: the curve lives only on the aiming panel)
@@ -346,6 +403,30 @@ function createRenderer(cv, mini) {
     drawMini(left, top, v);
   }
   function mix(a, b, f) { const pa = a.match(/\w\w/g).map(h => parseInt(h, 16)), pb = b.match(/\w\w/g).map(h => parseInt(h, 16)); return `rgb(${Math.round(lerp(pa[0], pb[0], f))},${Math.round(lerp(pa[1], pb[1], f))},${Math.round(lerp(pa[2], pb[2], f))})`; }
+  // map-rule visuals under the rock: the Bermuda triangle, the Nautilus swirl, spa bubble columns, 12신 wrap edges
+  function drawZones(left, top, v) {
+    const m = R.m, Rr = m.rules, z = R.cam.zoom;
+    if (Rr.tri) { const t = Rr.tri; ctx.fillStyle = 'rgba(110,230,206,0.07)'; ctx.beginPath(); ctx.moveTo(t[0][0], t[0][1]); ctx.lineTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(110,230,206,0.25)'; ctx.setLineDash([18 / z, 14 / z]); ctx.lineWidth = 2 / z; ctx.stroke(); ctx.setLineDash([]); }
+    if (Rr.swirl) { const w = Rr.swirl; ctx.strokeStyle = 'rgba(200,250,255,0.10)'; ctx.lineWidth = 3; for (let i = 0; i < 6; i++) { const r = w.r * (0.25 + i * 0.13), a0 = R.t * (0.6 - i * 0.06) + i; ctx.beginPath(); ctx.ellipse(w.x, w.y, r, r * 0.8, 0, a0, a0 + 1.6); ctx.stroke(); } }
+    if (Rr.lift) for (const q of Rr.lift) { if (vrnd() < 0.25) R.fx.push({ kind: 'bubble', x: q[0] + vrnd() * (q[1] - q[0]), y: q[3] - vrnd() * 40, vx: 0, vy: -70 - vrnd() * 60, t: 0, life: 4, r: 2 + vrnd() * 3 }); }
+    if (Rr.heal) for (const q of Rr.heal) { if (vrnd() < 0.06) R.fx.push({ kind: 'bubble', x: q[0] + vrnd() * (q[1] - q[0]), y: q[2] + 10, vx: (vrnd() - 0.5) * 10, vy: -25, t: 0, life: 2.5, r: 6 + vrnd() * 6 }); }
+    if (Rr.wrapX) { for (const ex of [0, m.W]) { const g = ctx.createLinearGradient(ex - 60, 0, ex + 60, 0); g.addColorStop(0, 'rgba(56,225,255,0)'); g.addColorStop(0.5, `rgba(56,225,255,${0.18 + 0.08 * Math.sin(R.t * 3)})`); g.addColorStop(1, 'rgba(56,225,255,0)'); ctx.fillStyle = g; ctx.fillRect(ex - 60, top, 120, v.h); } }
+  }
+  // map objects over the rock: mines (배틀 필드), falling stalactites (케이브), the castle-guard mark (듀크)
+  function drawMapExtras() {
+    const m = R.m;
+    for (const q of m.mines) {
+      if (!q.alive) continue;
+      const an = R.anchors || (R.anchors = {}); if (an[q.id] === undefined) { an[q.id] = q.y; for (let y = q.y + 24; y < m.H; y += 6) if (m.mask[Math.floor(y) * m.W + Math.floor(q.x)]) { an[q.id] = y; break; } }
+      ctx.strokeStyle = 'rgba(40,40,36,0.8)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(q.x, q.y + 20); ctx.lineTo(q.x + Math.sin(R.t + q.id) * 6, an[q.id]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.save(); ctx.translate(q.x, q.y + Math.sin(R.t * 1.3 + q.id) * 3);
+      ctx.strokeStyle = '#2A2A26'; ctx.lineWidth = 4; for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(Math.cos(a) * 16, Math.sin(a) * 16); ctx.lineTo(Math.cos(a) * 26, Math.sin(a) * 26); ctx.stroke(); }
+      const g = ctx.createRadialGradient(-6, -6, 2, 0, 0, 20); g.addColorStop(0, '#6A6A60'); g.addColorStop(1, '#22221E'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 19, 0, 7); ctx.fill();
+      ctx.fillStyle = Math.sin(R.t * 5 + q.id) > 0 ? '#FF3A2A' : '#5A1A14'; ctx.beginPath(); ctx.arc(0, -8, 3.5, 0, 7); ctx.fill();
+      ctx.restore();
+    }
+    for (const f of m.falls) { ctx.fillStyle = `rgb(${R.th.edge.join(',')})`; ctx.beginPath(); ctx.moveTo(f.x - 16, f.y - 30); ctx.lineTo(f.x + 16, f.y - 30); ctx.lineTo(f.x, f.y + 14); ctx.fill(); }
+  }
   function drawSub(t, ui) {
     const v = viewOf(t.idx), m = R.m, bob = Math.sin(R.t * 1.6 + v.bob) * 2.5;
     const face = v.face >= 0 ? 1 : -1, squash = Math.max(0.15, Math.abs(v.face));
@@ -357,6 +438,7 @@ function createRenderer(cv, mini) {
     if (t.shield) { ctx.strokeStyle = 'rgba(200,180,255,0.75)'; ctx.fillStyle = 'rgba(200,180,255,0.12)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(v.x, v.y + bob, 60, 36, 0, 0, 7); ctx.fill(); ctx.stroke(); }
   }
   function drawLabel(t) {
+    const gz = R.m.rules.guard; if (gz && t.x >= gz.x0 && t.x <= gz.x1 && t.y >= gz.y0 && t.y <= gz.y1) { const v0 = viewOf(t.idx); ctx.fillStyle = '#C9A227'; ctx.beginPath(); ctx.moveTo(v0.x + 40, v0.y - 46); ctx.lineTo(v0.x + 52, v0.y - 42); ctx.lineTo(v0.x + 50, v0.y - 30); ctx.lineTo(v0.x + 46, v0.y - 25); ctx.lineTo(v0.x + 42, v0.y - 30); ctx.lineTo(v0.x + 40, v0.y - 42); ctx.closePath(); ctx.fill(); }
     const v = viewOf(t.idx), m = R.m, cur = m.cur === t.idx && m.phase === 'aim', y = v.y - 52;
     ctx.font = '700 14px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
     ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.strokeText(t.nick, v.x, y - 10); ctx.fillStyle = t.team === 'red' ? '#FFB4A4' : '#A9D0FF'; ctx.fillText(t.nick, v.x, y - 10);
@@ -413,7 +495,8 @@ function createRenderer(cv, mini) {
     if (f.kind === 'bubble') { ctx.strokeStyle = `rgba(220,245,255,${0.7 * (1 - k)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.stroke(); ctx.fillStyle = `rgba(255,255,255,${0.35 * (1 - k)})`; ctx.beginPath(); ctx.arc(f.x - f.r * 0.3, f.y - f.r * 0.3, f.r * 0.3, 0, 7); ctx.fill(); }
     else if (f.kind === 'shape') {
       const a = 1 - k, draw = (rx, ry) => { const r = Math.max(rx, ry); ctx.save(); ctx.translate(f.x, f.y); ctx.scale(rx / r, ry / r); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r); g.addColorStop(0, `rgba(255,250,225,${0.95 * a})`); g.addColorStop(0.45, f.col + Math.round(a * 180).toString(16).padStart(2, '0')); g.addColorStop(1, f.col + '00'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * (0.75 + k * 0.25), 0, 7); ctx.fill(); ctx.restore(); ctx.strokeStyle = `rgba(255,255,255,${0.6 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(f.x, f.y, rx, ry, 0, 0, 7); ctx.stroke(); };
-      if (f.thin) { draw(f.rx, f.thin); draw(f.thin, f.ry); } else draw(f.rx, f.ry);
+      if (f.box) { const sq = (rx, ry) => { ctx.fillStyle = f.col + Math.round(a * 150).toString(16).padStart(2, '0'); ctx.fillRect(f.x - rx, f.y - ry, rx * 2, ry * 2); ctx.strokeStyle = `rgba(255,255,255,${0.7 * a})`; ctx.lineWidth = 2; ctx.strokeRect(f.x - rx, f.y - ry, rx * 2, ry * 2); }; if (f.thin) { sq(f.rx, f.thin); sq(f.thin, f.ry); } else sq(f.rx, f.ry); }
+      else if (f.thin) { draw(f.rx, f.thin); draw(f.thin, f.ry); } else draw(f.rx, f.ry);
     }
     else if (f.kind === 'ring') { ctx.strokeStyle = `rgba(220,245,255,${0.6 * (1 - k)})`; ctx.lineWidth = f.w; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.5 + k * 1.1), 0, 7); ctx.stroke(); }
     else if (f.kind === 'sonar') { ctx.strokeStyle = `rgba(111,227,225,${0.8 * (1 - k)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(f.x, f.y, f.rx * (0.3 + k), f.ry * (0.3 + k), 0, 0, 7); ctx.stroke(); }
@@ -506,6 +589,22 @@ function createRenderer(cv, mini) {
   return R;
 }
 // lobby / setup map preview
+// map previews take ~0.4 s each (the whole map is generated), so they are built one at a time after the screen shows
+const PREVIEWS = {}, previewQueue = [];
+function previewInto(canvas, id) {
+  canvas.width = 320; canvas.height = Math.round(320 * CONFIG.maps[id].H / CONFIG.maps[id].W);
+  const paint = () => canvas.getContext('2d').drawImage(PREVIEWS[id], 0, 0);
+  if (PREVIEWS[id]) return paint();
+  const x = canvas.getContext('2d'), th = MTHEMES[CONFIG.maps[id].theme]; x.fillStyle = th.water[1]; x.fillRect(0, 0, canvas.width, canvas.height);
+  previewQueue.push({ id, paint });
+  if (previewQueue.length === 1) setTimeout(nextPreview, 30);
+}
+function nextPreview() {
+  const job = previewQueue[0]; if (!job) return;
+  if (!PREVIEWS[job.id]) PREVIEWS[job.id] = mapPreview(job.id);
+  for (let i = previewQueue.length - 1; i >= 0; i--) if (previewQueue[i].id === job.id) { previewQueue[i].paint(); previewQueue.splice(i, 1); }
+  if (previewQueue.length) setTimeout(nextPreview, 30);
+}
 function mapPreview(id) {
   const meta = CONFIG.maps[id], th = MTHEMES[meta.theme];
   const mp = buildMap(id), cw = 320, ch = Math.round(320 * meta.H / meta.W);

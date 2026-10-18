@@ -69,7 +69,7 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   // non-host cannot pick the map
   ok(await B.evaluate(() => [...document.querySelectorAll('#lobbyMaps .mapc')].filter(b => !b.disabled).length === 1), '방장 아닌 사람은 맵 변경 불가');
   ok(await B.isHidden('#lobbyStart'), '방장 아닌 사람에겐 시작 버튼 없음');
-  await A.click('#lobbyMaps .mapc:nth-child(2)'); // 해저 동굴
+  await A.click('#lobbyMaps .mapc:nth-child(5)'); // 케이브
   ok(await until(async () => B.evaluate(() => __pg.ON.link.room.map === 'cave'), 4000), '방장이 맵 변경 → 모두에게 반영');
   // make the teams 2:2-ish and valid
   await until(async () => A.evaluate(() => __pg.ON.link.canStart()), 3000);

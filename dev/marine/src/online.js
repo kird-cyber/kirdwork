@@ -208,11 +208,13 @@ function renderLobby() {
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
+  { const mm = CONFIG.maps[room.map]; if (mm) $('lobbyMapRule').textContent = `${mm.name} — ${mm.desc} ★ ${mm.rule}`; }
   for (const [k, meta] of Object.entries(CONFIG.maps)) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (room.map === k ? ' sel' : '');
-    b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
+    b.append((() => { const c = document.createElement('canvas'); previewInto(c, k); return c; })());
     const inner = document.createElement('div'); inner.className = 'in';
     inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
+    b.title = `${meta.name} (${meta.en}) — ${meta.desc}\n★ ${meta.rule}`;
     b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
     if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
     maps.append(b);

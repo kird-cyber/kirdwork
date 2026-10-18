@@ -270,7 +270,8 @@ function updateHud() {
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const cd = Math.abs(m.current), cmax = CONFIG.turn.currentMax;
   setTxt('windLbl', '해류');
-  setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.current === 0 ? '없음' : (m.current < 0 ? '← ' : '') + cd + (m.current > 0 ? ' →' : '')) + (m.turn && m.turn.calm ? ' (정류탄)' : ''));
+  setTxt('mapRule', '★ ' + (CONFIG.maps[m.mapId].rule || ''));
+  setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.current === 0 ? '없음' : (m.current < 0 ? '← ' : '') + cd + (m.current > 0 ? ' →' : '')) + (m.rules.currentMul && m.current ? ` (×${m.rules.currentMul})` : '') + (m.turn && m.turn.calm ? ' (정류탄)' : ''));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const n = Math.ceil(cd * 5 / cmax); const on = m.current < 0 ? (i < 5 && i >= 5 - n) : (i >= 5 && i < 5 + n); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
   const key = t.items.join(',') + '|' + used + '|' + mineNow + '|' + m.turnNo;
@@ -398,7 +399,7 @@ document.querySelectorAll('[data-k]').forEach(b => {
 window.addEventListener('resize', () => R.resize());
 
 // ---------------------------------------------------------------- setup
-const setup = { map: 'reef', red: 2, blue: 2, slots: { red: [], blue: [] } };
+const setup = { map: 'atlantic', red: 2, blue: 2, slots: { red: [], blue: [] } };
 let thumbs = {};
 function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: PICK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % PICK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
 const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
@@ -411,9 +412,9 @@ function renderSetup() {
   const maps = $('maps'); maps.innerHTML = '';
   for (const [k, meta] of Object.entries(CONFIG.maps)) {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (setup.map === k ? ' sel' : '');
-    b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
+    b.append((() => { const c = document.createElement('canvas'); previewInto(c, k); return c; })());
     const inner = document.createElement('div'); inner.className = 'in';
-    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span><span class="d">${meta.desc}</span>`;
+    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.en} · ${meta.tag}</span><span class="d">${meta.desc}</span><span class="r">★ ${meta.rule}</span>`;
     b.append(inner); b.onclick = () => { setup.map = k; saveSetup(); renderSetup(); };
     maps.appendChild(b);
   }
@@ -460,8 +461,8 @@ function startTutorial() {
   TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false; PAD.used = false;
   const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', subId: 'uboat' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', subId: 'sona', bot: 'easy' }];
   ON.active = false;
-  // fixed layout (seed 7): the player moves first, open water on all sides, a clear line to the bot ~1000px away
-  beginMatch({ seed: 7, mapId: 'reef', players }, practiceOpts({ b0: 'easy' }));
+  // fixed tutorial layout (아틀란틱, seed 3)
+  beginMatch({ seed: 3, mapId: 'atlantic', players }, practiceOpts({ b0: 'easy' })); // fixed: I move first, open water, clear line ~1250px
   showScreen('game'); showCoach();
 }
 function showCoach() {

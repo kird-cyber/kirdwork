@@ -47,63 +47,63 @@ const CONFIG = {
   // speedClass 1 = heaviest (longest wait between turns) .. 5 = quickest
   subs: {
     uboat: {
-      name: '유보트-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
+      name: '유보트-96', model: '유보트 VII-C형', hp: 970, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
       weapons: [
         { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 210, rx: 90, ry: 90 },
         { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 145, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sejong: {
-      name: '세종대왕함', model: '도산안창호급 몸체', hp: 1100, hull: 4, movePx: 240, range: 2900, turn: 90, speedClass: 2,
+      name: '세종대왕함', model: '도산안창호급 몸체', hp: 1110, hull: 4, movePx: 240, range: 2900, turn: 90, speedClass: 2,
       weapons: [
         { id: 'cheonji', name: '천지 어뢰', kind: 'cross', dmg: 200, rx: 140, ry: 140, thin: 38 },
         { id: 'singijeon', name: '신기전', kind: 'rain', dmg: 75, rx: 45, ry: 45, arrows: 5, gap: 45, height: 360, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     ohio: {
-      name: '오하이오', model: '오하이오급 전략원잠', hp: 1190, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
+      name: '오하이오', model: '오하이오급 전략원잠', hp: 1210, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
       weapons: [
-        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 220, rx: 95, ry: 95 },
-        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 275, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
+        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 225, rx: 95, ry: 95 },
+        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 280, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
       ],
     },
     nautilus: {
-      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1120, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
+      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1110, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
       weapons: [
         { id: 'drill', name: '충각 관통탄', kind: 'pierce', dmg: 205, rx: 80, ry: 80, drill: 120 },
         { id: 'maelstrom', name: '마엘스트롬', kind: 'vortex', dmg: 175, rx: 90, ry: 90, pull: 100, pullR: 220, waitTicks: 72, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     kilo: {
-      name: '킬로', model: '킬로급 디젤-전기', hp: 1050, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
+      name: '킬로', model: '킬로급 디젤-전기', hp: 1040, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
       weapons: [
         { id: 'volt', name: '전류탄', kind: 'electric', dmg: 165, rx: 85, ry: 85 },
         { id: 'chain', name: '연쇄 번개', kind: 'chain', dmg: 125, rx: 60, ry: 60, jumps: 2, jumpR: 400, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     alvin: {
-      name: '앨빈', model: '심해 탐사정', hp: 1050, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
+      name: '앨빈', model: '심해 탐사정', hp: 1060, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
       weapons: [
         { id: 'claw', name: '집게 어뢰', kind: 'circle', dmg: 225, rx: 90, ry: 90 },
         { id: 'drone', name: '해저 드론', kind: 'crawl', dmg: 210, rx: 85, ry: 85, crawl: 300, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     blue: {
-      name: '블루핀', model: '청상어형', fish: true, hp: 930, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
+      name: '블루핀', model: '청상어형', fish: true, hp: 920, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
       weapons: [
-        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 205, rx: 80, ry: 80, seek: 260, turnMax: 40 },
+        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 200, rx: 80, ry: 80, seek: 260, turnMax: 40 },
         { id: 'frenzy', name: '피 냄새 파편탄', kind: 'octo8', dmg: 70, rx: 45, ry: 45, reach: 120, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     orca: {
-      name: '오르카', model: '범고래형', fish: true, hp: 1210, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
+      name: '오르카', model: '범고래형', fish: true, hp: 1220, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
       weapons: [
         { id: 'direct', name: '직격 어뢰', kind: 'direct', dmg: 220, rx: 80, ry: 80 },
         { id: 'tail', name: '꼬리치기 어뢰', kind: 'hell', dmg: 190, rx: 150, ry: 40, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sona: {
-      name: '소나', model: '향유고래형', fish: true, hp: 1210, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
+      name: '소나', model: '향유고래형', fish: true, hp: 1200, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
       weapons: [
         { id: 'sonar', name: '음파탄', kind: 'vell', dmg: 195, rx: 45, ry: 160 },
         { id: 'blow', name: '숨구멍 대폭발', kind: 'inflate', dmg: 260, rx: 140, ry: 140, waitTicks: 60, cooldownTurns: 3, extraDelay: 150 },
@@ -129,11 +129,31 @@ const CONFIG = {
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask. W*H must be a multiple of 4.
+  // map list (order = the original's). rules: special rule per map, all deterministic (see sim.js mapRules)
   maps: {
-    reef: { name: '산호 협곡', tag: '기둥 · 버섯 바위', desc: '해저에서 솟은 기둥 위에 버섯 모양 바위가 얹혀 있습니다. 바위 밑은 좋은 은신처.', W: 4000, H: 1600, theme: 'reef' },
-    cave: { name: '해저 동굴', tag: '굴 · 주머니', desc: '가운데 거대한 바위 덩어리를 굴이 꿰뚫습니다. 굴 속에 숨으면 곡선과 튕김으로 노려야 합니다.', W: 4000, H: 1700, theme: 'cave' },
-    wreck: { name: '침몰선', tag: '선실 · 구멍', desc: '가라앉은 거대한 배. 선실 안에 숨고, 뚫린 구멍으로 쏘고 들어갑니다.', W: 4200, H: 1600, theme: 'wreck' },
-    ice: { name: '빙하 아래', tag: '고드름 · 좁은 바다', desc: '머리 위는 깨지지 않는 빙하, 고드름이 매달린 좁은 바다. 위로 밀려 나갈 수 없습니다.', W: 4000, H: 1500, theme: 'ice' },
-    vents: { name: '열수구', tag: '굴뚝 · 아치', desc: '뜨거운 굴뚝과 돌 아치가 늘어선 해저 화산 지대.', W: 3800, H: 1700, theme: 'vents' },
+    god12: { name: '12신', en: '12 GOD', tag: '사이버 신전 · 기둥 12개', desc: '네온 회로가 흐르는 사이버 신전. 천장과 바닥에서 엇갈려 뻗은 기둥 12개는 겉이 깎여도 금속 속심이 남습니다.', rule: '사이버 공간: 어뢰가 좌우 끝을 넘으면 반대편에서 다시 나옵니다', W: 4000, H: 1700, theme: 'god12',
+      rules: { wrapX: true } },
+    atlantic: { name: '아틀란틱', en: 'Atlantic', tag: '대양 · 탁 트인 전장', desc: '넓고 깊은 대서양. 십자 암초 4개뿐이라 눈대중 거리와 해류 읽기가 실력의 전부입니다.', rule: '대양 해류: 해류가 1.6배 강합니다', W: 4800, H: 1500, theme: 'atlantic',
+      rules: { currentMul: 1.6 } },
+    battlefield: { name: '배틀 필드', en: 'Battle Field', tag: '벙커 · 참호 · 기뢰', desc: '양 끝의 가라앉은 벙커, 바닥의 참호, 가운데 대잠 기둥과 그물. 총안으로 쏘고 참호로 숨습니다.', rule: '기뢰밭: 떠 있는 기뢰가 폭발이나 어뢰에 닿으면 터집니다(연쇄 폭발)', W: 4200, H: 1600, theme: 'battlefield',
+      rules: { mines: [[1600, 620], [1900, 820], [2300, 820], [2600, 620], [2100, 1050], [1450, 900], [2750, 900], [2100, 250]], mine: { r: 22, rx: 120, dmg: 120 } } },
+    bermuda: { name: '버뮤다', en: 'Bermuda', tag: '삼각지대 · 물결 암초', desc: '한가운데 거대한 삼각형 암벽과 길 잃은 배. 바깥은 지그재그 물결 암초가 휘감습니다.', rule: '버뮤다 삼각지대: 삼각형 안에서는 해류가 2배', W: 4200, H: 1700, theme: 'bermuda',
+      rules: { tri: [[2100, 260], [1350, 1250], [2850, 1250]], triMul: 2 } },
+    cave: { name: '케이브', en: 'Cave', tag: '동굴 · 종유석 · 떠 있는 바위', desc: '위아래가 출렁이는 두꺼운 동굴. 종유석과 떠 있는 바위 사이 틈으로 곡선을 꿰어야 합니다.', rule: '낙석: 천장 가까이에서 터지면 종유석이 떨어집니다(피해 90)', W: 4000, H: 1700, theme: 'cave',
+      rules: { rockfall: { ceilY: 620, chance: 0.6, dmg: 90, r: 55, reach: 520 } } },
+    cube: { name: '큐브', en: 'Cube', tag: '격자 블록 · 금속 심', desc: '크기가 다른 정육면체 블록이 격자로 떠 있고, 일부는 금속 심이 박혀 끝까지 남습니다.', rule: '큐브 세계: 모든 폭발이 네모 모양으로 터집니다', W: 3800, H: 1800, theme: 'cube',
+      rules: { box: true } },
+    duke: { name: '듀크', en: 'Duke', tag: '가라앉은 공작의 성', desc: '탑 두 개와 성벽, 아치형 성문이 뚫린 본성. 무너진 성벽 틈으로 안뜰에 숨어듭니다.', rule: '성의 가호: 성 안뜰에 있으면 받는 피해가 20% 줄어듭니다', W: 4400, H: 1700, theme: 'duke',
+      rules: { guard: { x0: 1150, x1: 3250, y0: 860, y1: 1700, mul: 0.8 } } },
+    iceberg: { name: '아이스버그', en: 'Iceberg', tag: '빙산 · 유빙', desc: '수면에 거꾸로 매달린 빙산 셋과 유빙 조각. 빙산마다 숨을 수 있는 얼음 동굴이 있습니다.', rule: '깨지는 얼음: 폭발에 파이는 크기가 1.4배', W: 4200, H: 1700, theme: 'iceberg',
+      rules: { carveMul: 1.4 } },
+    jurassic: { name: '쥬라기', en: 'Jurassic', tag: '공룡 화석 · 암모나이트', desc: '바닥에 누운 거대한 공룡 화석. 갈비뼈 아치 아래가 은신처, 물속엔 돌 조각이 가득합니다.', rule: '화석 발굴: 바위를 파면 가끔 보급 상자가 나옵니다', W: 4200, H: 1600, theme: 'jurassic',
+      rules: { fossil: 0.18 } },
+    nautilus: { name: '노틸러스', en: 'Nautilus', tag: '거대 앵무조개 껍데기', desc: '한가운데 앵무조개 껍데기의 나선 복도. 곡선을 빙글 돌려 안쪽 깊숙이 숨은 적을 노립니다.', rule: '나선 해류: 껍데기 주변 물살이 어뢰를 시계 방향으로 휘감습니다', W: 4000, H: 1700, theme: 'nautilus',
+      rules: { swirl: { x: 2000, y: 800, r: 950, v: 40 } } },
+    seacity: { name: '씨 시티', en: 'Sea City', tag: '해저 도시 · 2층 통로 · 리프트', desc: '금속 천장 아래 해저 도시. 리프트 기둥, 좌우 2층 금속 통로, 바닥의 돔과 첨탑.', rule: '도시 보급망: 보급 상자가 2턴마다 떨어집니다', W: 4200, H: 1800, theme: 'seacity',
+      rules: { crateEvery: 2 } },
+    spa: { name: '스파', en: 'Spa', tag: '해저 온천 · 대나무 · 돌 욕조', desc: '엇갈린 대나무 장대와 김이 오르는 돌 욕조 셋. 욕조 안은 아늑한 은신처입니다.', rule: '온천: 욕조 안에서 턴을 시작하면 체력 +60, 욕조 위 기포가 어뢰를 밀어 올립니다', W: 3800, H: 1500, theme: 'spa',
+      rules: { lift: [[480, 920, 400, 1240, 60], [1680, 2320, 400, 1240, 60], [2980, 3420, 400, 1240, 60]], heal: [[460, 940, 1040, 1290, 60], [1660, 2340, 1040, 1290, 60], [2960, 3440, 1040, 1290, 60]] } },
   },
 };

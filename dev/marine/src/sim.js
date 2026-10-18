@@ -15,9 +15,11 @@ function createMatch(opts) {
     cfgVersion: CONFIG.version, seed: opts.seed >>> 0, rng: opts.seed >>> 0,
     mapId: opts.mapId, W: map.W, H: map.H, mask: map.mask, theme: map.theme,
     tick: 0, turnNo: 0, current: 0, cur: -1, phase: 'settle', settle: 40, winner: null,
-    subs: [], proj: [], crates: [], sched: [], schedSeq: 0,
+    subs: [], proj: [], crates: [], sched: [], schedSeq: 0, falls: [],
     turn: null, hashes: {}, events: [], spawns: map.spawns,
+    rules: (CONFIG.maps[opts.mapId] && CONFIG.maps[opts.mapId].rules) || {},
   };
+  m.mines = (m.rules.mines || []).map(([x, y], i) => ({ x, y, alive: true, id: i }));
   // start positions: a random window of the map (sorted by x), teams interleaved left to right, never too close
   const n = opts.players.length, T0 = CONFIG.turn, sorted = map.spawns.slice().sort((a, b) => a.x - b.x || a.y - b.y);
   const span = Math.max(T0.startSpan, (n - 1) * T0.startGap);
@@ -57,22 +59,35 @@ function createMatch(opts) {
 function solidAt(m, x, y) {
   x = Math.floor(x); y = Math.floor(y);
   if (x < 0 || y < 0 || x >= m.W || y >= m.H) return false;
-  return m.mask[y * m.W + x] !== 0;
+  if (m.mask[y * m.W + x] !== 0) return true;
+  if (m.mines.length) { const r = m.rules.mine.r; for (const q of m.mines) if (q.alive && (x - q.x) * (x - q.x) + (y - q.y) * (y - q.y) <= r * r) return true; }
+  return false;
 }
 function outOfMap(m, x, y) { return x < 0 || y < 0 || x >= m.W || y >= m.H; }
 // dig an ellipse out of the rock (bedrock stays)
 function carveEllipse(m, cx, cy, rx, ry) {
-  if (rx < 1 || ry < 1) return;
+  if (rx < 1 || ry < 1) return 0;
   const W = m.W, H = m.H, mask = m.mask;
   const y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(H - 1, Math.ceil(cy + ry));
+  let n = 0;
   for (let y = y0; y <= y1; y++) {
     const dy = (y - cy) / ry, d2 = 1 - dy * dy;
     if (d2 < 0) continue;
     const dx = rx * Math.sqrt(d2);
     const xa = Math.max(0, Math.floor(cx - dx)), xb = Math.min(W - 1, Math.ceil(cx + dx));
-    for (let i = y * W + xa, e = y * W + xb; i <= e; i++) if (mask[i] === 1) mask[i] = 0;
+    for (let i = y * W + xa, e = y * W + xb; i <= e; i++) if (mask[i] === 1) { mask[i] = 0; n++; }
   }
   m.events.push({ type: 'carve', x: cx, y: cy, rx, ry });
+  return n;
+}
+// dig a rectangle (큐브 map: square bursts)
+function carveBox(m, cx, cy, rx, ry) {
+  if (rx < 1 || ry < 1) return 0;
+  const W = m.W, mask = m.mask, x0 = Math.max(0, Math.floor(cx - rx)), x1 = Math.min(W - 1, Math.ceil(cx + rx)), y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(m.H - 1, Math.ceil(cy + ry));
+  let n = 0;
+  for (let y = y0; y <= y1; y++) for (let i = y * W + x0, e = y * W + x1; i <= e; i++) if (mask[i] === 1) { mask[i] = 0; n++; }
+  m.events.push({ type: 'carve', x: cx, y: cy, rx, ry, box: true });
+  return n;
 }
 // outward surface normal at a rock contact point: average of the water directions around it
 function rockNormal(m, x, y) {
@@ -131,27 +146,79 @@ function ringOut(m, t, by) {
 // Bursts reach through rock: that is how a tall burst hits a sub hiding under an overhang.
 function explode(m, x, y, sh, dmg, owner, opts) {
   opts = opts || {};
-  const P = CONFIG.physics, cm = P.carveMul * (opts.carveMul || 1), pad = P.bodyPad;
-  if (sh.thin) { carveEllipse(m, x, y, sh.rx * cm, sh.thin * cm); carveEllipse(m, x, y, sh.thin * cm, sh.ry * cm); }
-  else carveEllipse(m, x, y, sh.rx * cm, sh.ry * cm);
+  const P = CONFIG.physics, R = m.rules, box = !!R.box, cm = P.carveMul * (opts.carveMul || 1) * (R.carveMul || 1), pad = P.bodyPad;
+  const dig = box ? carveBox : carveEllipse;
+  let carved = 0;
+  if (sh.thin) { carved += dig(m, x, y, sh.rx * cm, sh.thin * cm); carved += dig(m, x, y, sh.thin * cm, sh.ry * cm); }
+  else carved += dig(m, x, y, sh.rx * cm, sh.ry * cm);
+  // distance inside the shape: 0 centre .. 1 edge (square norm on the 큐브 map)
+  const norm = (a, b) => box ? Math.max(Math.abs(a), Math.abs(b)) : Math.sqrt(a * a + b * b);
   const hit = [];
   for (const t of m.subs) {
     if (!t.alive) continue;
     const dx = t.x - x, dy = t.y - y;
     let n;
-    if (sh.thin) {
-      const a = dx / (sh.rx + pad), b = dy / (sh.thin + pad), c = dx / (sh.thin + pad), d = dy / (sh.ry + pad);
-      n = Math.min(Math.sqrt(a * a + b * b), Math.sqrt(c * c + d * d));
-    } else { const a = dx / (sh.rx + pad), b = dy / (sh.ry + pad); n = Math.sqrt(a * a + b * b); }
+    if (sh.thin) n = Math.min(norm(dx / (sh.rx + pad), dy / (sh.thin + pad)), norm(dx / (sh.thin + pad), dy / (sh.ry + pad)));
+    else n = norm(dx / (sh.rx + pad), dy / (sh.ry + pad));
     if (n > 1) continue;
     let v = dmg * (1 - (1 - P.edgeDmg) * n);
     if (t.shield) v *= CONFIG.items.shield.mul;
+    const g = R.guard; if (g && t.x >= g.x0 && t.x <= g.x1 && t.y >= g.y0 && t.y <= g.y1) v *= g.mul;
     hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
     hit.push(t);
   }
-  for (const c of m.crates) if (!c.dead) { const a = (c.x - x) / (sh.rx + 10), b = (c.y - y) / (sh.ry + 10); if (a * a + b * b <= 1) c.dead = true; }
-  m.events.push({ type: 'boom', x, y, rx: sh.rx, ry: sh.ry, thin: sh.thin || 0, kind: opts.fx || 'hit', idx: owner ? owner.idx : -1 });
+  for (const c of m.crates) if (!c.dead) { const a = (c.x - x) / (sh.rx + 10), b = (c.y - y) / (sh.ry + 10); if (norm(a, b) <= 1) c.dead = true; }
+  m.events.push({ type: 'boom', x, y, rx: sh.rx, ry: sh.ry, thin: sh.thin || 0, kind: opts.fx || 'hit', idx: owner ? owner.idx : -1, box });
+  // 기뢰: every mine inside the burst goes off a moment later (chains)
+  for (const q of m.mines) {
+    if (!q.alive) continue;
+    const r = m.rules.mine.r;
+    if (norm((q.x - x) / (Math.max(sh.rx, sh.thin || 0) + r), (q.y - y) / (Math.max(sh.ry, sh.thin || 0) + r)) <= 1) { q.alive = false; schedule(m, 10, { kind: 'mine', x: q.x, y: q.y, idx: owner ? owner.idx : -1 }); }
+  }
+  // 낙석: a burst under the cave ceiling brings a stalactite down
+  if (R.rockfall && !opts.rock) {
+    const F = R.rockfall;
+    for (let k = 20; k <= F.reach; k += 8) if (solidAt(m, x, y - Math.max(sh.ry, sh.thin || 0) * 0.5 - k)) {
+      const ry = y - Math.max(sh.ry, sh.thin || 0) * 0.5 - k;
+      if (ry <= F.ceilY && rngNext(m) < F.chance) { m.falls.push({ x, y: ry + 16, by: owner ? owner.idx : -1, id: m.schedSeq++ }); m.events.push({ type: 'rockfall', x, y: ry }); }
+      break;
+    }
+  }
+  // 화석 발굴: digging rock sometimes uncovers a supply crate right there
+  if (R.fossil && carved > 300 && !opts.rock && rngNext(m) < R.fossil) {
+    const keys = Object.keys(CONFIG.items); let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
+    let r = rngNext(m) * total, item = keys[0]; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
+    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++ }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
+  }
   return hit;
+}
+// water push on a torpedo at (x, y) for one 3-px step: the turn's current plus the map's own water (zones)
+function driftAt(m, x, y) {
+  const P = CONFIG.physics, R = m.rules, k = 3 / P.torpSpeed;
+  let cx = m.current * P.currentPush * (R.currentMul || 1), cy = 0;
+  if (R.tri && inTri(x, y, R.tri)) cx *= R.triMul;
+  if (R.swirl) { const w = R.swirl, dx = x - w.x, dy = y - w.y, d = Math.sqrt(dx * dx + dy * dy); if (d < w.r && d > 1) { const f = w.v * (1 - d / w.r); cx += -dy / d * f; cy += dx / d * f; } }
+  if (R.lift) for (const z of R.lift) if (x >= z[0] && x <= z[1] && y >= z[2] && y <= z[3]) cy -= z[4];
+  return [cx * k, cy * k];
+}
+function inTri(x, y, t) {
+  const s = (a, b) => (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]);
+  const d1 = s(t[0], t[1]), d2 = s(t[1], t[2]), d3 = s(t[2], t[0]);
+  return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+}
+// falling stalactites (케이브): straight down, burst on rock or a hull
+function stepFalls(m) {
+  const F = m.rules.rockfall;
+  for (const f of m.falls) {
+    if (f.dead) continue;
+    f.y += 5;
+    const hitSub = m.subs.some(t => t.alive && inHull(t, f.x, f.y, 6));
+    if (f.y >= m.H - 2 || hitSub || solidAt(m, f.x, f.y + 6)) {
+      f.dead = true;
+      explode(m, f.x, f.y, { rx: F.r, ry: F.r }, F.dmg, f.by >= 0 ? m.subs[f.by] : null, { rock: true, carveMul: 0.6, fx: 'rock' });
+    }
+  }
+  m.falls = m.falls.filter(f => !f.dead);
 }
 function schedule(m, ticks, ev) { ev.at = m.tick + ticks; ev.seq = m.schedSeq++; m.sched.push(ev); }
 
@@ -266,7 +333,8 @@ function inputOf(m, extra) {
 }
 function cleanPts(m, pts) {
   const out = [];
-  for (let i = 0; i < 3; i++) { const p = pts && pts[i] ? pts[i] : [0, 0]; out.push([clampN(Math.round(+p[0] || 0), 0, m.W - 1), clampN(Math.round(+p[1] || 0), 0, m.H - 1)]); }
+  const xl = m.rules.wrapX ? -m.W / 2 : 0, xh = m.rules.wrapX ? m.W * 1.5 : m.W - 1; // 12신: points may lie past the side edges (the shot wraps)
+  for (let i = 0; i < 3; i++) { const p = pts && pts[i] ? pts[i] : [0, 0]; out.push([clampN(Math.round(+p[0] || 0), xl, xh), clampN(Math.round(+p[1] || 0), 0, m.H - 1)]); }
   return out;
 }
 // Fire: pts = three [x, y] world points (integers), gauge 0..1000 (burst point along the curve), weapon 0|1, used = ticks spent.
@@ -294,7 +362,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
 }
 function launch(m, p) {
   const a = pathAt(p.path, 0);
-  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
+  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
   m.proj.push(p);
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -343,7 +411,7 @@ function dmgOf(m, p, base) { return base * (p.amp ? CONFIG.items.amplify.mul : 1
 // one 3-px sub-step of a torpedo. Returns nothing; marks p.dead when it bursts or leaves.
 function stepTorp(m, p, w) {
   const P = CONFIG.physics, h = 3;
-  const drift = p.calm || p.mode === 'fall' || p.mode === 'crawl' ? 0 : m.current * P.currentPush * (h / P.torpSpeed);
+  const dv = p.calm || p.mode === 'fall' || p.mode === 'crawl' ? null : driftAt(m, p.x, p.y), drift = dv ? dv[0] : 0, lift = dv ? dv[1] : 0;
   const px = p.x, py = p.y;
   if (p.mode === 'path') {
     p.s += h;
@@ -353,7 +421,7 @@ function stepTorp(m, p, w) {
     }
     if (p.mode === 'path') {
       const a = pathAt(p.path, p.s);
-      p.ox += drift; p.x = a.x - a.ty * p.off + p.ox; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty;
+      p.ox += drift; p.oy = (p.oy || 0) + lift; p.x = a.x - a.ty * p.off + p.ox; p.y = a.y + a.tx * p.off + p.oy; p.dx = a.tx; p.dy = a.ty;
     }
   }
   if (p.mode === 'free') {
@@ -366,9 +434,9 @@ function stepTorp(m, p, w) {
         p.turnLeft -= step;
       }
     }
-    p.x += p.dx * h + drift; p.y += p.dy * h; p.rem -= h;
+    p.x += p.dx * h + drift; p.y += p.dy * h + lift; p.rem -= h;
   } else if (p.mode === 'mini') {
-    p.x += p.dx * h + drift; p.y += p.dy * h; p.rem -= h;
+    p.x += p.dx * h + drift; p.y += p.dy * h + lift; p.rem -= h;
   } else if (p.mode === 'fall') {
     const v = (w.kind === 'rain' ? 600 : (w.fallSpeed || 420)) * TICK / 2; p.y += v; p.rem -= v;
   } else if (p.mode === 'crawl') {
@@ -377,6 +445,8 @@ function stepTorp(m, p, w) {
     return;
   }
   p.age++;
+  // 12신: the left and right edges of cyberspace join up
+  if (m.rules.wrapX && p.y >= 0 && p.y < m.H) { if (p.x < 0) { p.x += m.W; p.ox += m.W; if (p.x >= m.W) p.x = m.W - 1e-6; } else if (p.x >= m.W) { p.x -= m.W; p.ox -= m.W; } }
   if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y }); return; }
   // rock
   if (p.piercing) {
@@ -515,6 +585,7 @@ function runScheduled(m) {
   if (!due.length) return;
   m.sched = m.sched.filter(e => e.at > m.tick);
   for (const e of due) {
+    if (e.kind === 'mine') { const M = m.rules.mine; explode(m, e.x, e.y, { rx: M.rx, ry: M.rx }, M.dmg, e.idx >= 0 ? m.subs[e.idx] : null, { fx: 'mine', rock: true }); continue; }
     const owner = m.subs[e.idx], w = CONFIG.subs[owner.subId].weapons[e.wIdx], mul = e.amp ? CONFIG.items.amplify.mul : 1;
     if (e.kind === 'fall') m.proj.push({ mode: 'fall', x: e.x, y: e.y, dx: 0, dy: 1, rem: 2400, idx: e.idx, wIdx: e.wIdx, amp: e.amp, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++ });
     else if (e.kind === 'arrow') m.proj.push({ mode: 'fall', x: e.x, y: e.y, dx: 0, dy: 1, rem: 900, idx: e.idx, wIdx: e.wIdx, amp: e.amp, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++ });
@@ -555,7 +626,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.subs.length;
   const cmax = Math.round(T.currentMax * (sudden ? T.suddenCurrentMul : 1));
   m.current = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 3.6 * (sudden ? T.suddenCurrentMul : 1)), -cmax, cmax);
-  if (m.turnNo % T.crateEveryTurns === 1) dropCrate(m);
+  const ce = m.rules.crateEvery || T.crateEveryTurns;
+  if (m.turnNo % ce === 1 % ce) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo });
   if (t.shock) {
@@ -568,6 +640,10 @@ function beginTurn(m) {
     for (const o of m.subs) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
     if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
+  // 온천: starting the turn inside a stone tub heals
+  if (m.rules.heal) for (const z of m.rules.heal) if (t.x >= z[0] && t.x <= z[1] && t.y >= z[2] && t.y <= z[3] && t.hp < t.maxhp) {
+    const v = Math.min(z[4], t.maxhp - t.hp); t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v, spa: true }); break;
+  }
   m.phase = 'aim';
 }
 function dropCrate(m) {
@@ -577,7 +653,7 @@ function dropCrate(m) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = Math.round(140 + rngNext(m) * (m.H - 280));
     let r = rngNext(m) * total, item = keys[0];
     for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y))) continue;
+    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y)) || m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
     m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ });
     m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id });
     return;
@@ -590,8 +666,9 @@ function step(m) {
   m.tick++;
   runScheduled(m);
   stepProjectiles(m);
+  if (m.falls.length) stepFalls(m);
   m.crates = m.crates.filter(x => !x.dead);
-  if (m.proj.length || m.sched.length) { m.settle = 0; return; }
+  if (m.proj.length || m.sched.length || m.falls.length) { m.settle = 0; return; }
   m.settle++;
   if (m.settle >= CONFIG.physics.settleTicks || (m.phase === 'settle' && m.turnNo === 0 && m.settle >= 40)) beginTurn(m);
 }
@@ -608,5 +685,6 @@ function stateHash(m) {
     h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-'); h = fnvU32(h, t.shield ? 1 : 0); h = fnvF64(h, t.fuel);
   }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
+  for (const q of m.mines) h = fnvU32(h, q.alive ? 1 : 0);
   return h >>> 0;
 }

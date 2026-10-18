@@ -6,7 +6,7 @@ const path = require('path');
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/ERR_|WebSocket/.test(m.text())) errs.push(m.text()); });
-  const MAPS = ['reef', 'cave', 'wreck', 'ice', 'vents'];
+  const MAPS = await (async () => ['god12', 'atlantic', 'battlefield', 'bermuda', 'cave', 'cube', 'duke', 'iceberg', 'jurassic', 'nautilus', 'seacity', 'spa'])();
   const slot = (team, i) => ({ nick: team + i, tank: 'uboat', ctl: 'human' });
   await p.goto('file://' + path.join(__dirname, '..', 'dist', 'index.html'));
   const SUBS = await p.evaluate(() => Object.keys(__pg.CONFIG.subs));

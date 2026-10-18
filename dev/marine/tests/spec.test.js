@@ -10,7 +10,8 @@ const near = (a, b, tol) => Math.abs(a - b) <= tol;
 function field(subs, rocks, opts) {
   opts = opts || {};
   const players = subs.map((s, i) => ({ id: 'p' + i, nick: 'p' + i, team: s.team || (i ? 'blue' : 'red'), subId: s.sub }));
-  const m = A.createMatch({ seed: 5, mapId: 'reef', players });
+  const m = A.createMatch({ seed: 5, mapId: opts.map || 'cave', players });
+  if (!opts.map) { m.rules = {}; m.mines = []; } // a plain field: no map rules unless a test asks for one
   m.mask.fill(0);
   for (let y = m.H - 30; y < m.H; y++) for (let x = 0; x < m.W; x++) m.mask[y * m.W + x] = 2;
   for (const r of rocks || []) for (let y = Math.floor(r.y - r.ry); y <= r.y + r.ry; y++) for (let x = Math.floor(r.x - r.rx); x <= r.x + r.rx; x++) {
@@ -232,6 +233,76 @@ function moveN(m, d, n) { let k = 0; for (let i = 0; i < n; i++) if (A.cmdMove(m
   const ally = m.subs[2], ax = ally.x;
   fire(m, line(m.subs[0], 820, 800), 1000, 1);
   check('소용돌이', '노틸러스 소용돌이는 아군을 끌어당기지 않음', `x=${ax}`, `x=${ally.x}`, ally.x === ax);
+}
+// ---- map rules (each map's special rule on a plain field of that map)
+const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }); m.rules = JSON.parse(JSON.stringify(C.maps[id].rules)); m.mines = (m.rules.mines || []).map(([x, y], i) => ({ x, y, alive: true, id: i })); return m; };
+{
+  const m = mapField('god12', [{ sub: 'uboat', x: 300, y: 800 }, { sub: 'uboat', x: 3700, y: 800 }]);
+  const ev = fire(m, [[100, 800], [-100, 800], [-300, 800]], 1000, 0);
+  check('맵 규칙', '12신: 왼쪽 끝을 넘어간 어뢰가 오른쪽에서 나와 적을 맞힘', '> 150', dmgTo(ev, 1), dmgTo(ev, 1) > 150);
+}
+{
+  const drift = id => { const m = mapField(id, [{ sub: 'uboat', x: 400, y: 600 }, { sub: 'uboat', x: 3700, y: 600 }]); m.current = 5; const ev = fire(m, line(m.subs[0], 1600, 600), 1000, 0); return booms(ev)[0].x - 1600; };
+  const base = (() => { const m = field([{ sub: 'uboat', x: 400, y: 600 }, { sub: 'uboat', x: 3700, y: 600 }]); m.current = 5; const ev = fire(m, line(m.subs[0], 1600, 600), 1000, 0); return booms(ev)[0].x - 1600; })();
+  const at = drift('atlantic');
+  check('맵 규칙', '아틀란틱: 해류 1.6배', `+${Math.round(base * 1.6)}px`, `+${Math.round(at)}px`, Math.abs(at - base * 1.6) < 6);
+}
+{
+  const m = mapField('battlefield', [{ sub: 'uboat', x: 900, y: 620 }, { sub: 'uboat', x: 1600, y: 760 }]);
+  const ev = fire(m, line(m.subs[0], 1600, 620), 1000, 0);
+  const mines = ev.filter(e => e.type === 'boom' && e.kind === 'mine').length;
+  check('맵 규칙', '배틀 필드: 어뢰가 기뢰에 닿으면 기뢰가 터져 근처 적이 피해', '기뢰 폭발 1+, 피해 > 0', `기뢰 ${mines}, 피해 ${dmgTo(ev, 1)}`, mines >= 1 && dmgTo(ev, 1) > 0);
+}
+{
+  const m = mapField('bermuda', [{ sub: 'uboat', x: 1700, y: 1000 }, { sub: 'uboat', x: 3900, y: 300 }]);
+  const inside = A.driftAt(m, 2100, 900), outside = A.driftAt(m, 300, 900); m.current = 3;
+  const a = A.driftAt(m, 2100, 900)[0], b = A.driftAt(m, 300, 900)[0];
+  check('맵 규칙', '버뮤다: 삼각형 안 해류 2배', (b * 2).toFixed(4), a.toFixed(4), Math.abs(a - b * 2) < 1e-9 && b !== 0);
+}
+{
+  const m = mapField('cave', [{ sub: 'uboat', x: 400, y: 900 }, { sub: 'uboat', x: 1600, y: 1000 }], [{ x: 1600, y: 300, rx: 400, ry: 120 }]);
+  m.rules.rockfall.chance = 1;
+  const ev = fire(m, line(m.subs[0], 1600, 520), 1000, 0);
+  check('맵 규칙', '케이브: 천장 근처 폭발 → 종유석이 떨어져 아래 적이 피해', '낙석 1, 피해 > 0', `낙석 ${ev.filter(e => e.type === 'rockfall').length}, 피해 ${dmgTo(ev, 1)}`, ev.some(e => e.type === 'rockfall') && dmgTo(ev, 1) > 0);
+}
+{
+  const hitCorner = id => { const m = id ? mapField(id, [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300 + 95, y: 800 + 95 }]) : field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1395, y: 895 }]); return dmgTo(fire(m, line(m.subs[0], 1300, 800), 1000, 0), 1); };
+  const sq = hitCorner('cube'), el = hitCorner(null);
+  check('맵 규칙', '큐브: 네모 폭발은 모서리에 있는 적도 맞힘', '네모 > 0, 원 = 0', `네모 ${sq}, 원 ${el}`, sq > 0 && el === 0);
+}
+{
+  const one = (x, y) => { const m = mapField('duke', [{ sub: 'uboat', x: x + 700, y }, { sub: 'uboat', x, y }]); return dmgTo(fire(m, line(m.subs[0], x, y), 1000, 0), 1); };
+  const inYard = one(1500, 1200), outside = one(600, 1200);
+  const boom = C.subs.uboat.weapons[0].dmg, graze = Math.round(boom * C.physics.grazeMul);
+  check('맵 규칙', '듀크: 성 안뜰에선 폭발 피해 20% 감소', `${graze + Math.round(boom * 0.8)} (밖 ${graze + boom})`, `${inYard} (밖 ${outside})`, outside === graze + boom && Math.abs(inYard - (graze + Math.round(boom * 0.8))) <= 1);
+}
+{
+  const dug = id => { const m = id ? mapField(id, [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 300 }], [{ x: 1500, y: 800, rx: 300, ry: 300, box: true }]) : field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 300 }], [{ x: 1500, y: 800, rx: 300, ry: 300, box: true }]); const before = m.mask.reduce((a, v) => a + (v === 1), 0); fire(m, line(m.subs[0], 1300, 800), 1000, 0); return before - m.mask.reduce((a, v) => a + (v === 1), 0); };
+  const ice = dug('iceberg'), rock = dug(null);
+  check('맵 규칙', '아이스버그: 얼음은 1.4배 크게 파임', `${(1.96).toFixed(2)}배 넓이 근처`, (ice / rock).toFixed(2) + '배', ice / rock > 1.6 && ice / rock < 2.3);
+}
+{
+  const m = mapField('jurassic', [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 300 }], [{ x: 1500, y: 800, rx: 300, ry: 300, box: true }]);
+  m.rules.fossil = 1; m.crates = [];
+  fire(m, line(m.subs[0], 1250, 800), 1000, 0);
+  check('맵 규칙', '쥬라기: 바위를 파면 화석 상자가 나옴', '상자 1', `상자 ${m.crates.length}`, m.crates.length === 1);
+}
+{
+  const m = mapField('nautilus', [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 300 }]); m.current = 0;
+  const near = A.driftAt(m, 2300, 800), far = A.driftAt(m, 200, 200);
+  check('맵 규칙', '노틸러스: 껍데기 주변은 해류가 없어도 휘감는 물살', '세로 물살 ≠ 0, 먼 곳 0', `${near[1].toFixed(3)} / ${far[1].toFixed(3)}`, near[1] > 0 && far[0] === 0 && far[1] === 0);
+}
+{
+  const m = mapField('seacity', [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 800 }]);
+  m.crates = []; let drops = 0;
+  for (let k = 0; k < 6; k++) { const before = m.crates.length; A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && g++ < 5000) A.step(m); if (m.crates.length > before) drops++; }
+  check('맵 규칙', '씨 시티: 보급 상자가 2턴마다', '6턴에 3번', `${drops}번`, drops === 3);
+}
+{
+  const m = mapField('spa', [{ sub: 'uboat', x: 700, y: 1180 }, { sub: 'uboat', x: 3600, y: 300 }]);
+  const t = m.subs[0]; t.hp = 500; t.delay = -1000; m.subs[1].delay = 0; m.phase = 'settle'; A.beginTurn(m);
+  const lift = A.driftAt(m, 2000, 900)[1];
+  check('맵 규칙', '스파: 욕조 안에서 턴 시작 시 +60, 욕조 위 기포가 위로 밀어 올림', '체력 560, 위로 < 0', `체력 ${t.hp}, ${lift.toFixed(3)}`, t.hp === 560 && lift < 0);
 }
 // ---- maps
 for (const id of Object.keys(C.maps)) {
