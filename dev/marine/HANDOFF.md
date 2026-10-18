@@ -49,4 +49,4 @@
 - 네트워크로 온 값은 전부 검증: 아이템 칸·used·pts·gauge·weapon, 방 정보(팀·잠수함·닉네임, `cleanGame`).
 - 인증이 없는 구조라 방 코드를 아는 사람이 차례 주인 행세를 하는 것까지는 막을 수 없음(친구용 전제).
 - 화면 루프는 try/catch로 감싸 한 프레임 오류가 게임을 멈추지 않음.
-- 그 밖에 시험: `node /tmp/...fuzz` 대신 `tests/weapons.js`(20종 무기 브라우저 발사), `tests/tutorial.js`.
+- 그 밖의 브라우저 시험: `node tests/weapons.js`(무기 20종 발사·프레임·효과 누적), `node tests/tutorial.js`(튜토리얼 진행).
