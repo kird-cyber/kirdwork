@@ -618,6 +618,7 @@ const CONFIG = {
     delayPerSec: 4,
     crateEveryTurns: 3,
     currentMax: 5,
+    maxUnits: 8000,        // most action units one turn input may carry (a real turn has at most one per tick: 7200)
     maxPlayers: 8,
     teamMax: 4,
     inventoryMax: 4,
@@ -1169,7 +1170,7 @@ function cmdMove(m, d) {
   if (ux > 0) t.facing = 1; else if (ux < 0) t.facing = -1;
   recordAction(m, { t: 'm', d, n: 1 });
   const nx = t.x + ux * st, ny = t.y + uy * st, M = P.edgeMargin;
-  if (nx < M || nx > m.W - M || ny < M || ny > m.H - M || !hullFree(m, nx, ny)) return false;
+  if ((nx < M && ux < 0) || (nx > m.W - M && ux > 0) || (ny < M && uy < 0) || (ny > m.H - M && uy > 0) || !hullFree(m, nx, ny)) return false; // a sub pushed into the margin can still move back out
   for (const o of m.subs) {
     if (o === t || !o.alive || !hullsOverlap(nx, ny, o.x, o.y)) continue;
     const enemy = o.team !== t.team;
@@ -1196,7 +1197,8 @@ function cmdMove(m, d) {
 function cmdItem(m, slot) {
   const t = curSub(m);
   if (m.phase !== 'aim' || !t || m.turn.itemUsed) return false;
-  const id = t.items[slot]; if (!id) return false;
+  if (!Number.isInteger(slot) || slot < 0 || slot >= t.items.length) return false;
+  const id = t.items[slot]; if (!Object.prototype.hasOwnProperty.call(CONFIG.items, id)) return false;
   const it = CONFIG.items[id];
   if (it.effect === 'heal') { const v = Math.min(it.amount, t.maxhp - t.hp); t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v }); }
   else if (it.effect === 'shield') t.shield = true;
@@ -1225,7 +1227,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
   pts = cleanPts(m, pts);
   gauge = clampN(Math.round(+gauge || 0), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
-  used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
+  used = clampN(Math.round(+used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pts, gauge, weapon, used });
   const w = d.weapons[weapon], path = buildPath(t, pts);
   t.facing = path.face; t.lastPts = pts; t.lastGauge = gauge;
@@ -1266,11 +1268,16 @@ function cmdTimeout(m) {
 }
 // Replay a TurnInput from another device (or a recording). Must be called at the start of that aim phase.
 function applyTurnInput(m, input) {
-  if (m.phase !== 'aim' || input.turnNo !== m.turnNo) return false;
+  if (!input || typeof input !== 'object' || m.phase !== 'aim' || input.turnNo !== m.turnNo) return false;
   if (curSub(m).id !== input.seat) return false;
-  for (const a of input.actions || []) {
-    if (a.t === 'm') { for (let i = 0; i < a.n && m.phase === 'aim'; i++) cmdMove(m, a.d); }
-    else if (a.t === 'i') cmdItem(m, a.s);
+  // refused moves are recorded too (a held key keeps trying), so every recorded unit must be replayed; a real turn has at
+  // most one unit per tick, so a corrupted input (n = 1e10, endless list) is cut at that budget instead of freezing clients
+  const acts = Array.isArray(input.actions) ? input.actions : [];
+  let budget = CONFIG.turn.maxUnits;
+  for (const a of acts) {
+    if (!a || budget <= 0) break;
+    if (a.t === 'm') { const n = clampN(Math.floor(+a.n || 0), 0, budget); budget -= n; for (let i = 0; i < n && m.phase === 'aim'; i++) cmdMove(m, a.d); }
+    else if (a.t === 'i') { budget--; cmdItem(m, a.s); }
     if (m.phase !== 'aim') break;
   }
   if (m.phase === 'aim') {
@@ -1316,7 +1323,7 @@ function stepTorp(m, p, w) {
     const v = (w.kind === 'rain' ? 600 : (w.fallSpeed || 420)) * TICK / 2; p.y += v; p.rem -= v;
   } else if (p.mode === 'crawl') {
     crawlStep(m, p); p.rem -= h;
-    if (nearestFoe(m, -1, p.x, p.y, 0, 6) || p.rem <= 0) return detonate(m, p, w);
+    if (m.subs.some(o => o.alive && o.idx !== p.idx && inHull(o, p.x, p.y, 6)) || p.rem <= 0) return detonate(m, p, w);
     return;
   }
   p.age++;
@@ -1465,7 +1472,7 @@ function runScheduled(m) {
     else if (e.kind === 'vortex') {
       // pull every sub in reach toward the centre (stops at rock or another hull), then burst
       for (const t of m.subs) {
-        if (!t.alive) continue;
+        if (!t.alive || (owner && t.team === owner.team)) continue; // enemies only (as the weapon text says)
         const dx = e.x - t.x, dy = e.y - t.y, d = Math.sqrt(dx * dx + dy * dy);
         if (d > w.pullR || d < 1) continue;
         const ux = dx / d, uy = dy / d, move = Math.min(w.pull, d - 20);
@@ -1504,12 +1511,12 @@ function beginTurn(m) {
   if (t.shock) {
     hurt(m, t, t.shock.dmg, 'shock', t.shock.by >= 0 ? m.subs[t.shock.by] : null);
     t.shock.turns--; if (t.shock.turns <= 0) t.shock = null;
-    if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+    if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
     for (const o of m.subs) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
-    if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+    if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
   m.phase = 'aim';
 }
@@ -1548,7 +1555,7 @@ function stateHash(m) {
   h >>>= 0;
   for (const t of m.subs) {
     h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
-    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-');
+    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-'); h = fnvU32(h, t.shield ? 1 : 0); h = fnvF64(h, t.fuel);
   }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
   return h >>> 0;
@@ -1603,6 +1610,7 @@ function createController(match, opts) {
     const mem = c.mem[t.idx];
     c.rel = mem ? mem.rel.map(p => p.slice()) : c.defaultRel(t);
     c.gauge = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.keys.fire = false; // Space held from before the turn must be pressed again
   };
   c.resetCurve = function () { const t = curSub(c.match); if (t && !c.charging) c.rel = c.defaultRel(t); };
   c.worldPts = function (t) {
@@ -1631,7 +1639,7 @@ function createController(match, opts) {
       if (!k.fire || c.gauge >= 1000) { c.fire(); return; }
     }
     c.timeLeft--;
-    if (c.timeLeft <= 0) c.emit(cmdTimeout(m));
+    if (c.timeLeft <= 0) { if (c.charging) c.fire(); else c.emit(cmdTimeout(m)); } // time out mid-charge = fire
   };
   c.fire = function () {
     const m = c.match, t = curSub(m), pts = c.worldPts(t);
@@ -2082,7 +2090,7 @@ function createRenderer(cv, mini) {
   };
 
   R.setMatch = function (m) {
-    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef;
+    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null;
     R.fx = []; R.texts = []; R.bolts = []; R.view = {}; R.shake = 0; R.trails = {}; R.bubbles = {}; R.snow = null;
     buildTerrainTexture(); buildBackground();
     const t0 = m.subs[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
@@ -2166,6 +2174,7 @@ function createRenderer(cv, mini) {
     }
   }
   function carveTexture(cx, cy, rx, ry) {
+    R.miniDirty = true;
     const t = R.tctx; if (!t) return;
     t.save(); t.globalCompositeOperation = 'source-atop';
     t.translate(cx, cy); t.scale(1, ry / rx);
@@ -2533,8 +2542,13 @@ function createRenderer(cv, mini) {
   function drawMini(left, top, v) {
     const m = R.m, mw = mini.width, mh = mini.height, sx = mw / m.W, sy = mh / m.H;
     mctx.clearRect(0, 0, mw, mh);
-    mctx.fillStyle = R.th.water[1]; mctx.fillRect(0, 0, mw, mh);
-    mctx.drawImage(R.terrain, 0, 0, mw, mh);
+    // the full-size terrain is scaled down once and again only after the rock changed (not every frame)
+    if (!R.miniT || R.miniT.width !== mw || R.miniT.height !== mh || (R.miniDirty && R.t - (R.miniAt || 0) > 0.25)) {
+      const c = R.miniT && R.miniT.width === mw && R.miniT.height === mh ? R.miniT : document.createElement('canvas'); c.width = mw; c.height = mh;
+      const x = c.getContext('2d'); x.fillStyle = R.th.water[1]; x.fillRect(0, 0, mw, mh); x.drawImage(R.terrain, 0, 0, mw, mh);
+      R.miniT = c; R.miniDirty = false; R.miniAt = R.t;
+    }
+    mctx.drawImage(R.miniT, 0, 0);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 2, 4, 4); }
     for (const t of m.subs) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, t.y * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
     for (const p of m.proj) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
@@ -3043,14 +3057,14 @@ function createRoomLink(o) {
       }
       pub('p/' + r.myId, null, true);
     }
-    r.closed = true;
+    r.closed = true; window.removeEventListener('pagehide', onHide);
     setTimeout(() => r.mq && r.mq.close(), 150);
   };
 
   // ---- game traffic
   function acceptInput(inp) {
-    if (typeof inp.turnNo !== 'number') return;
-    if (r.log.some(x => x.turnNo === inp.turnNo)) return;
+    if (!inp || !Number.isInteger(inp.turnNo) || typeof inp.seat !== 'string') return;
+    if (r.log.some(x => x.turnNo === inp.turnNo && x.seat === inp.seat)) return; // one per turn and seat (see online.js ik)
     r.log.push(inp);
     if (r.log.length > 1 && r.log[r.log.length - 2].turnNo > inp.turnNo) r.log.sort((a, b) => a.turnNo - b.turnNo);
     if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
@@ -3059,9 +3073,9 @@ function createRoomLink(o) {
   // fill gaps from another device's log (every device saw the same broker order, so entries agree)
   function mergeLog(list) {
     if (!Array.isArray(list)) return;
-    const have = {}; for (const x of r.log) have[x.turnNo] = 1;
+    const have = {}; for (const x of r.log) have[x.turnNo + ':' + x.seat] = 1;
     let added = 0;
-    for (const x of list) if (x && typeof x.turnNo === 'number' && !have[x.turnNo]) { r.log.push(x); have[x.turnNo] = 1; added++; }
+    for (const x of list) if (x && Number.isInteger(x.turnNo) && typeof x.seat === 'string' && !have[x.turnNo + ':' + x.seat]) { r.log.push(x); have[x.turnNo + ':' + x.seat] = 1; added++; }
     if (!added) return;
     r.log.sort((a, b) => a.turnNo - b.turnNo);
     if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
@@ -3071,7 +3085,7 @@ function createRoomLink(o) {
   r.outbox = [];
   r.sendInput = inp => { r.outbox.push({ gid: r.gid, inp }); pub('g/' + r.gid + '/in', inp); };
   function flushOutbox() {
-    r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo));
+    r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo && x.seat === o.inp.seat));
     for (const o of r.outbox) pub('g/' + o.gid + '/in', o.inp);
   }
   r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live), false, 0);
@@ -3081,7 +3095,7 @@ function createRoomLink(o) {
   r.requestTurn = turnNo => pub('cmd', { type: 'need', gid: r.gid, turnNo, from: r.myId });
   function answerNeed(turnNo) {
     const have = r.log.filter(x => x.turnNo >= turnNo);
-    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo)) have.push(o.inp);
+    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo && x.seat === o.inp.seat)) have.push(o.inp);
     have.sort((a, b) => a.turnNo - b.turnNo);
     if (!have.length) return;
     const asked = Date.now(), wait = r.isHost() ? 0 : 150 + Math.random() * 400;
@@ -3102,7 +3116,8 @@ function createRoomLink(o) {
   };
   r.resetGame = function () { r.log = []; r.myHash = {}; r.hashes = {}; };
 
-  window.addEventListener('pagehide', () => { if (!r.closed && r.mq && r.mq.connected) pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 0 }, true); });
+  const onHide = () => { if (!r.closed && r.mq && r.mq.connected) pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 0 }, true); };
+  window.addEventListener('pagehide', onHide);
   Promise.resolve().then(connect); // callers get the object before the first callback fires
   return r;
 }
@@ -3343,7 +3358,18 @@ function renderLobby() {
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
 
 // ---------------------------------------------------------------- network game
+function cleanGame(game) {
+  const ok = game && Array.isArray(game.players) && game.players.length >= 2 && game.players.length <= CONFIG.turn.maxPlayers && CONFIG.maps[game.mapId];
+  if (!ok) return null;
+  const seen = {};
+  const players = game.players.filter(p => p && typeof p.id === 'string' && !seen[p.id] && (seen[p.id] = 1)).map(p => ({
+    id: p.id, nick: String(p.nick || '').slice(0, 8) || '?', team: p.team === 'blue' ? 'blue' : 'red', subId: CONFIG.subs[p.subId] ? p.subId : PICK_KEYS[0],
+  }));
+  if (!players.some(p => p.team === 'red') || !players.some(p => p.team === 'blue')) return null;
+  return Object.assign({}, game, { seed: game.seed >>> 0, players });
+}
 function startOnlineMatch(game, late) {
+  game = cleanGame(game); if (!game) return;
   ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
   ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
   ON.spectator = !game.players.some(p => p.id === ON.myId);
@@ -3361,30 +3387,37 @@ function startOnlineMatch(game, late) {
 }
 function onlineCtrlOpts() {
   return {
-    isLocal: idx => !ON.syncing && !ON.spectator && match.subs[idx].id === ON.myId && !ON.inputs[match.turnNo],
+    isLocal: idx => !ON.syncing && !ON.spectator && match.subs[idx].id === ON.myId && !ON.inputs[ik(match.turnNo, match.subs[idx].id)],
     remote: remoteTick,
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
+// inputs are keyed by turn AND seat: a stray input for the wrong seat (a desynced device, a bad packet) can never
+// block the real one — every device takes the one whose seat matches its own simulation's current sub
+const ik = (turnNo, seat) => turnNo + ':' + seat;
+const curKey = m => ik(m.turnNo, m.cur >= 0 ? m.subs[m.cur].id : '');
+function validInput(x) { return !!x && Number.isInteger(x.turnNo) && typeof x.seat === 'string' && !!ON.game && ON.game.players.some(p => p.id === x.seat); }
 function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.pts || null, x.gauge, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
-  if (!ON.active) return;
+  if (!ON.active || !validInput(inp)) return;
   const mine = ON.applied[inp.turnNo];
-  if (mine) { if (inputKey(mine) !== inputKey(inp)) requestRebuild('input'); return; }
-  ON.inputs[inp.turnNo] = inp;
+  if (mine) { if (mine.seat === inp.seat && inputKey(mine) !== inputKey(inp)) requestRebuild('input'); return; }
+  ON.inputs[ik(inp.turnNo, inp.seat)] = inp;
 }
 function onNetLog(log) {
   if (!ON.active || ON.syncing) return;
   // a longer authoritative log than what we have seen: take the missing inputs, rebuild if anything disagrees
   for (const x of log) {
+    if (!validInput(x)) continue;
     const a = ON.applied[x.turnNo];
-    if (a && inputKey(a) !== inputKey(x)) { requestRebuild('log'); return; }
-    if (!a) ON.inputs[x.turnNo] = x;
+    if (a && a.seat === x.seat && inputKey(a) !== inputKey(x)) { requestRebuild('log'); return; }
+    if (!a) ON.inputs[ik(x.turnNo, x.seat)] = x;
   }
 }
 function actUnits(actions) { let n = 0; for (const a of actions) n += a.t === 'm' ? a.n : 1; return n; }
 // Applies whatever part of `actions` this device has not applied yet. False if what we applied is not a prefix of it.
 function applyPartial(m, actions) {
+  if (!Array.isArray(actions)) return false;
   const done = m.turn.actions;
   for (let i = 0; i < done.length; i++) {
     const a = done[i], b = actions[i];
@@ -3393,8 +3426,12 @@ function applyPartial(m, actions) {
     else if (a.s !== b.s) return false;
   }
   const U = actUnits(done); let u = 0;
+  let budget = CONFIG.turn.maxUnits; // same cut as applyTurnInput, so live and final inputs replay identically
   for (const b of actions) {
-    const n = b.t === 'm' ? b.n : 1;
+    if (!b || budget <= 0) break;
+    if (b.t !== 'm' && b.t !== 'i') continue;
+    const n = b.t === 'm' ? clampN(Math.floor(+b.n || 0), 0, budget) : 1;
+    budget -= n;
     if (u + n <= U) { u += n; continue; }
     for (let k = 0; k < n; k++, u++) {
       if (u < U) continue;
@@ -3405,16 +3442,16 @@ function applyPartial(m, actions) {
   return true;
 }
 function remoteTick(m, t) {
-  const fin = ON.inputs[m.turnNo];
+  const fin = ON.inputs[ik(m.turnNo, t.id)];
   if (fin) {
-    if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
+    if (!applyPartial(m, fin.actions || [])) { requestRebuild('partial'); return; }
     if (m.phase === 'aim') {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
       else if (fin.timeout) cmdTimeout(m);
       else if (fin.ended) { requestRebuild('ended'); return; }
       else cmdFire(m, fin.pts, fin.gauge, fin.weapon, fin.used);
     }
-    ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
+    ON.applied[m.turnNo] = fin; delete ON.inputs[ik(m.turnNo, t.id)];
     return;
   }
   const lv = ON.live;
@@ -3434,11 +3471,12 @@ function requestRebuild(why) {
 function rebuildFrom(log) {
   const g = ON.game; if (!g) return;
   const m = createMatch({ seed: g.seed, mapId: g.mapId, players: g.players });
-  const byTurn = {}; for (const x of log) byTurn[x.turnNo] = x;
+  const byKey = {}, byTurn = {}; for (const x of log) if (validInput(x) && !byKey[ik(x.turnNo, x.seat)]) byKey[ik(x.turnNo, x.seat)] = x;
   let guard = 0;
   while (m.phase !== 'over' && guard++ < 4e6) {
     if (m.phase === 'aim') {
-      const x = byTurn[m.turnNo]; if (!x) break;
+      const x = byKey[curKey(m)]; if (!x) break;
+      byTurn[x.turnNo] = x;
       applyTurnInput(m, x);
       if (m.phase === 'aim') break; // input did not end the turn (should not happen)
     } else step(m);
@@ -3446,10 +3484,12 @@ function rebuildFrom(log) {
   }
   m.events.length = 0;
   ON.applied = byTurn; ON.inputs = {}; ON.hashTurn = 0;
-  const cam = { x: R.cam.x, y: R.cam.y };
+  const cam = { x: R.cam.x, y: R.cam.y }, old = ctrl, oldTurn = match && match.turnNo;
   installMatch(m, onlineCtrlOpts());
   R.cam.x = cam.x; R.cam.y = cam.y;
-  if (m.phase === 'over') R.onOver(m.winner);
+  // same turn still running (e.g. my own turn): keep its clock, curve, weapon and curve memory
+  if (old) { ctrl.mem = old.mem; if (m.phase === 'aim' && oldTurn === m.turnNo) { ctrl.lastTurnSeen = m.turnNo; ctrl.timeLeft = old.timeLeft; ctrl.rel = old.rel; ctrl.weapon = old.weapon; } }
+  if (m.phase === 'over') R.onOver(m.winner, m.forfeit);
   ON.rebuildAt = performance.now();
 }
 
@@ -3480,12 +3520,12 @@ function onlineFrame(now) {
   }
   // stalled: waiting on someone else's turn with no sign of life for 5 s -> the turn probably ended
   // elsewhere and its input was lost on the way; ask for it again (repeats every 3 s)
-  if (!ctrl.activeLocal() && !ON.inputs[m.turnNo] && !ON.syncing) {
+  if (!ctrl.activeLocal() && !ON.inputs[curKey(m)] && !ON.syncing) {
     const lastSign = Math.max(ON.aimSince, ON.live && ON.live.turnNo === m.turnNo ? ON.liveAt : 0);
     if (now - lastSign > 5000 && now - (ON.needAt || 0) > 3000) { ON.needAt = now; L.requestTurn(m.turnNo); ON.needs = (ON.needs || 0) + 1; }
   }
   // host: skip the turn of a player who is gone (or frozen far past the time limit)
-  if (L.isHost() && t.id !== ON.myId && !ON.inputs[m.turnNo] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
+  if (L.isHost() && t.id !== ON.myId && !ON.inputs[curKey(m)] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
     // gone = offline for 8 s in a row (a short network drop reconnects well inside that and its input still arrives)
     const waited = now - ON.aimSince;
     if (L.online(t.id)) ON.goneSince = 0; else if (!ON.goneSince || ON.goneTurn !== m.turnNo) { ON.goneSince = now; ON.goneTurn = m.turnNo; }
@@ -3508,7 +3548,7 @@ function forfeitWatch(now, m, L) {
     if (!away) { ON[k] = 0; continue; }
     if (!ON[k]) ON[k] = now;
     ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
-    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
+    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[curKey(m)] && !ON.autoSent['f' + m.turnNo]) {
       ON.autoSent['f' + m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: m.subs[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
     }
@@ -3751,7 +3791,7 @@ R.onOver = (winner, forfeit) => {
   $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
-  if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격침 ${mv.st.kills}${mv.st.outs ? ` (밀어내기 ${mv.st.outs})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
+  if (mv) { $('overMvp').innerHTML = `<span class="mk">MVP</span><b></b><span class="ms">피해 ${mv.st.dealt} · 격침 ${mv.st.kills}${mv.st.outs ? ` (밀어내기 ${mv.st.outs})` : ''}</span>`; const b = $('overMvp').querySelector('b'); b.className = mv.team === 'blue' ? 'blue' : 'red'; b.textContent = mv.nick; }
   const ros = $('overRoster'); ros.innerHTML = '';
   for (const team of ['red', 'blue']) {
     const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
@@ -3867,6 +3907,8 @@ pad.addEventListener('pointermove', e => {
   PAD.hover = t ? padNearest(t, px, py, S, 14) : -1;
 });
 pad.addEventListener('pointerup', () => { PAD.drag = -1; });
+pad.addEventListener('pointercancel', () => { PAD.drag = -1; });
+pad.addEventListener('lostpointercapture', () => { PAD.drag = -1; });
 pad.addEventListener('pointerleave', () => { PAD.hover = -1; });
 pad.addEventListener('wheel', e => { e.preventDefault(); PAD.zi = clampN(PAD.zi + (e.deltaY < 0 ? 1 : -1), 0, PAD.zooms.length - 1); }, { passive: false });
 // keyboard fine-tuning of the selected handle: Tab picks, Shift+arrows nudge by 10
@@ -3966,6 +4008,7 @@ const camKeys = {};
 function inGame() { return !!match && screen === 'game'; }
 window.addEventListener('pointerdown', () => AU.unlock(), { capture: true });
 window.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return; // browser shortcuts (Ctrl+R, Cmd+1 …) are not game keys
   AU.unlock();
   if (!inGame() || e.target.tagName === 'INPUT') return;
   if (e.shiftKey && e.code.startsWith('Arrow')) { e.preventDefault(); const k = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.code]; padNudge(k[0], k[1]); return; }
@@ -3993,6 +4036,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
 cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
+cv.addEventListener('pointercancel', () => { drag = null; cv.classList.remove('dragging'); });
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -4177,6 +4221,11 @@ function startGame() {
 // ---------------------------------------------------------------- loop
 let last = performance.now();
 function loop(now) {
+  // one bad frame (e.g. a corrupt packet) must never stop the game loop for good
+  try { loopBody(now); } catch (e) { console.error('frame error', e); }
+  requestAnimationFrame(loop);
+}
+function loopBody(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (inGame()) {
     const frozen = now < freezeUntil;
@@ -4196,7 +4245,6 @@ function loop(now) {
     R.frame(frozen ? dt * 0.08 : dt, null);
     updateHud(); drawPad();
   }
-  requestAnimationFrame(loop);
 }
 window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, TUT, get screen() { return screen; } };
 (() => {

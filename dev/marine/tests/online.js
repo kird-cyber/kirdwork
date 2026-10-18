@@ -54,6 +54,7 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   const B = pages[1];
   await B.click('#myPicks .pick:nth-child(3)'); // 오하이오
   ok(await until(async () => (await S(A)).players.includes('민수:') && (await S(A)).players.split(',').find(x => x.startsWith('민수:')).endsWith(':ohio'), 5000), '참가자가 잠수함을 고르면 방장 화면에 반영');
+  if (N < 8) { // with 4 v 4 both teams are full, so team moves are (correctly) disabled
   // a player moves himself to the other team
   const bTeam0 = (await S(A)).players.split(',').find(x => x.startsWith('민수:')).split(':')[1];
   await B.click('.pc.me .mini');
@@ -64,6 +65,7 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
     await A.evaluate(n => { const cards = [...document.querySelectorAll('.pc')].filter(c => c.querySelector('b') && c.querySelector('b').textContent === n); cards[0].querySelector('.mini').click(); }, tgt);
     ok(await until(async () => (await S(pages[2])).players.split(',').find(x => x.startsWith(tgt + ':')).split(':')[1] !== before, 5000), '방장이 다른 사람 팀 이동');
   }
+  } else ok(await B.evaluate(() => document.querySelector('.pc.me .mini').disabled), '양 팀이 꽉 차면 팀 이동 버튼 비활성');
   // non-host cannot pick the map
   ok(await B.evaluate(() => [...document.querySelectorAll('#lobbyMaps .mapc')].filter(b => !b.disabled).length === 1), '방장 아닌 사람은 맵 변경 불가');
   ok(await B.isHidden('#lobbyStart'), '방장 아닌 사람에겐 시작 버튼 없음');
@@ -147,6 +149,9 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   await playTurns(6, pages, '4명 대전');
   await pages[0].screenshot({ path: SP + 'm4_game_host.png' });
 
+  // ---- 5b. a stray input for the wrong seat (desynced device / bad packet) must not block the real turn
+  await A.evaluate(() => { const m = __pg.match, wrong = m.subs.find(t => t.idx !== m.cur); __pg.ON.link.sendInput({ turnNo: m.turnNo, seat: wrong.id, actions: [{ t: 'i', s: 'length' }, { t: 'm', d: 0, n: 1e12 }], pts: [[NaN, 1], [2, 2]], gauge: 'x', weapon: 7, used: {} }); });
+  await playTurns(2, pages, '엉뚱한 좌석 입력이 끼어든 뒤');
   // ---- 6. a player reloads mid-game and catches up
   const C = pages[N - 1];
   await C.reload();

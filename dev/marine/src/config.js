@@ -34,6 +34,7 @@ const CONFIG = {
     delayPerSec: 4,
     crateEveryTurns: 3,
     currentMax: 5,
+    maxUnits: 8000,        // most action units one turn input may carry (a real turn has at most one per tick: 7200)
     maxPlayers: 8,
     teamMax: 4,
     inventoryMax: 4,

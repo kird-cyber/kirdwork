@@ -204,6 +204,35 @@ function moveN(m, d, n) { let k = 0; for (let i = 0; i < n; i++) if (A.cmdMove(m
   }
   check('재충전', '오하이오 수직 미사일: 3턴 동안 못 씀', '0,0,0,1', cds.join(','), cds.join(',') === '0,0,0,1');
 }
+// ---- robustness (found in review): bad network input, edges, sudden death
+{
+  const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
+  m.subs[0].items = ['heal'];
+  let threw = false; try { A.cmdItem(m, 'length'); A.cmdItem(m, 'constructor'); A.cmdItem(m, 1.5); } catch (e) { threw = true; }
+  check('입력 검증', '이상한 아이템 칸 번호는 무시(오류 없음)', '오류 없음, 아이템 그대로', threw ? '오류' : m.subs[0].items.join(','), !threw && m.subs[0].items.join(',') === 'heal');
+  const t0 = Date.now(), cur = A.curSub(m);
+  A.applyTurnInput(m, { turnNo: m.turnNo, seat: cur.id, actions: [{ t: 'm', d: 4, n: 1e12 }, ...Array(5000).fill({ t: 'm', d: 0, n: 1e9 })], pts: [[1, 1], [2, 2], [3, 3]], gauge: 'x', weapon: 9, used: 'x' });
+  const ms = Date.now() - t0;
+  check('입력 검증', '이동 횟수가 터무니없이 커도 멈추지 않음', '< 200ms', ms + 'ms', ms < 200);
+  check('입력 검증', '잘못된 사용 시간(used)이 숫자로 정리됨', '숫자', String(m.subs[0].delay), Number.isFinite(m.subs[0].delay));
+}
+{
+  const m = field([{ sub: 'uboat', x: 22, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
+  const x0 = m.subs[0].x; for (let i = 0; i < 40; i++) A.cmdMove(m, 0);
+  check('이동', '맵 가장자리 여백에 밀려 들어간 잠수함도 안쪽으로는 움직임', '> 0px', (m.subs[0].x - x0) + 'px', m.subs[0].x > x0);
+}
+{
+  const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
+  m.subs[1].hp = 1; m.turnNo = 200; // deep in sudden death: the next turn's drain sinks the last blue sub
+  A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m);
+  check('서든데스', '서든데스 피해로 한 팀이 전멸하면 바로 끝남', 'over / red', m.phase + ' / ' + m.winner, m.phase === 'over' && m.winner === 'red');
+}
+{
+  const m = field([{ sub: 'nautilus', x: 400, y: 800 }, { sub: 'uboat', x: 900, y: 800 }, { sub: 'uboat', x: 760, y: 800, team: 'red' }]);
+  const ally = m.subs[2], ax = ally.x;
+  fire(m, line(m.subs[0], 820, 800), 1000, 1);
+  check('소용돌이', '노틸러스 소용돌이는 아군을 끌어당기지 않음', `x=${ax}`, `x=${ally.x}`, ally.x === ax);
+}
 // ---- maps
 for (const id of Object.keys(C.maps)) {
   const mp = A.buildMap(id), ok = mp.spawns.length === 12 && mp.spawns.every(s => A.clearAround(mp.mask, mp.W, mp.H, s.x, s.y, C.physics.hullRx + 20, C.physics.hullRy + 20));

@@ -35,7 +35,7 @@ function createRenderer(cv, mini) {
   };
 
   R.setMatch = function (m) {
-    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef;
+    R.m = m; R.th = MTHEMES[m.theme] || MTHEMES.reef; R.bubblesSay = {}; R.miniT = null;
     R.fx = []; R.texts = []; R.bolts = []; R.view = {}; R.shake = 0; R.trails = {}; R.bubbles = {}; R.snow = null;
     buildTerrainTexture(); buildBackground();
     const t0 = m.subs[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
@@ -119,6 +119,7 @@ function createRenderer(cv, mini) {
     }
   }
   function carveTexture(cx, cy, rx, ry) {
+    R.miniDirty = true;
     const t = R.tctx; if (!t) return;
     t.save(); t.globalCompositeOperation = 'source-atop';
     t.translate(cx, cy); t.scale(1, ry / rx);
@@ -486,8 +487,13 @@ function createRenderer(cv, mini) {
   function drawMini(left, top, v) {
     const m = R.m, mw = mini.width, mh = mini.height, sx = mw / m.W, sy = mh / m.H;
     mctx.clearRect(0, 0, mw, mh);
-    mctx.fillStyle = R.th.water[1]; mctx.fillRect(0, 0, mw, mh);
-    mctx.drawImage(R.terrain, 0, 0, mw, mh);
+    // the full-size terrain is scaled down once and again only after the rock changed (not every frame)
+    if (!R.miniT || R.miniT.width !== mw || R.miniT.height !== mh || (R.miniDirty && R.t - (R.miniAt || 0) > 0.25)) {
+      const c = R.miniT && R.miniT.width === mw && R.miniT.height === mh ? R.miniT : document.createElement('canvas'); c.width = mw; c.height = mh;
+      const x = c.getContext('2d'); x.fillStyle = R.th.water[1]; x.fillRect(0, 0, mw, mh); x.drawImage(R.terrain, 0, 0, mw, mh);
+      R.miniT = c; R.miniDirty = false; R.miniAt = R.t;
+    }
+    mctx.drawImage(R.miniT, 0, 0);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 2, 4, 4); }
     for (const t of m.subs) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, t.y * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
     for (const p of m.proj) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }

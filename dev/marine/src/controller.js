@@ -46,6 +46,7 @@ function createController(match, opts) {
     const mem = c.mem[t.idx];
     c.rel = mem ? mem.rel.map(p => p.slice()) : c.defaultRel(t);
     c.gauge = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.keys.fire = false; // Space held from before the turn must be pressed again
   };
   c.resetCurve = function () { const t = curSub(c.match); if (t && !c.charging) c.rel = c.defaultRel(t); };
   c.worldPts = function (t) {
@@ -74,7 +75,7 @@ function createController(match, opts) {
       if (!k.fire || c.gauge >= 1000) { c.fire(); return; }
     }
     c.timeLeft--;
-    if (c.timeLeft <= 0) c.emit(cmdTimeout(m));
+    if (c.timeLeft <= 0) { if (c.charging) c.fire(); else c.emit(cmdTimeout(m)); } // time out mid-charge = fire
   };
   c.fire = function () {
     const m = c.match, t = curSub(m), pts = c.worldPts(t);

@@ -124,7 +124,7 @@ R.onOver = (winner, forfeit) => {
   $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
-  if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격침 ${mv.st.kills}${mv.st.outs ? ` (밀어내기 ${mv.st.outs})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
+  if (mv) { $('overMvp').innerHTML = `<span class="mk">MVP</span><b></b><span class="ms">피해 ${mv.st.dealt} · 격침 ${mv.st.kills}${mv.st.outs ? ` (밀어내기 ${mv.st.outs})` : ''}</span>`; const b = $('overMvp').querySelector('b'); b.className = mv.team === 'blue' ? 'blue' : 'red'; b.textContent = mv.nick; }
   const ros = $('overRoster'); ros.innerHTML = '';
   for (const team of ['red', 'blue']) {
     const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
@@ -240,6 +240,8 @@ pad.addEventListener('pointermove', e => {
   PAD.hover = t ? padNearest(t, px, py, S, 14) : -1;
 });
 pad.addEventListener('pointerup', () => { PAD.drag = -1; });
+pad.addEventListener('pointercancel', () => { PAD.drag = -1; });
+pad.addEventListener('lostpointercapture', () => { PAD.drag = -1; });
 pad.addEventListener('pointerleave', () => { PAD.hover = -1; });
 pad.addEventListener('wheel', e => { e.preventDefault(); PAD.zi = clampN(PAD.zi + (e.deltaY < 0 ? 1 : -1), 0, PAD.zooms.length - 1); }, { passive: false });
 // keyboard fine-tuning of the selected handle: Tab picks, Shift+arrows nudge by 10
@@ -339,6 +341,7 @@ const camKeys = {};
 function inGame() { return !!match && screen === 'game'; }
 window.addEventListener('pointerdown', () => AU.unlock(), { capture: true });
 window.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return; // browser shortcuts (Ctrl+R, Cmd+1 …) are not game keys
   AU.unlock();
   if (!inGame() || e.target.tagName === 'INPUT') return;
   if (e.shiftKey && e.code.startsWith('Arrow')) { e.preventDefault(); const k = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.code]; padNudge(k[0], k[1]); return; }
@@ -366,6 +369,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
 cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
+cv.addEventListener('pointercancel', () => { drag = null; cv.classList.remove('dragging'); });
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -550,6 +554,11 @@ function startGame() {
 // ---------------------------------------------------------------- loop
 let last = performance.now();
 function loop(now) {
+  // one bad frame (e.g. a corrupt packet) must never stop the game loop for good
+  try { loopBody(now); } catch (e) { console.error('frame error', e); }
+  requestAnimationFrame(loop);
+}
+function loopBody(now) {
   const dt = Math.min(0.1, (now - last) / 1000); last = now;
   if (inGame()) {
     const frozen = now < freezeUntil;
@@ -569,7 +578,6 @@ function loop(now) {
     R.frame(frozen ? dt * 0.08 : dt, null);
     updateHud(); drawPad();
   }
-  requestAnimationFrame(loop);
 }
 window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, TUT, get screen() { return screen; } };
 (() => {

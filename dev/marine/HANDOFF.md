@@ -31,9 +31,9 @@
 
 ## 시험
 - `node tests/sim.test.js 60` (봇 60판, 입력만으로 재생해 해시 일치, 무기 20종 모두 발사)
-- `node tests/spec.test.js` (규칙 43개)
+- `node tests/spec.test.js` (규칙 49개, 입력 검증·가장자리·서든데스 회귀 포함)
 - 브라우저: `node tests/smoke.js`(연습 한 판), `node tests/tutorial.js`(튜토리얼 단계 진행)
-- 온라인: `bash tests/serve.sh` 후 `NODE_PATH=/opt/npm-tools/node_modules node tests/online.js 4` (38개: 방·팀·맵·랜덤·동기화·곡선 비공개·새로고침·끊김·방장 교체·종료)
+- 온라인: `bash tests/serve.sh` 후 `NODE_PATH=/opt/npm-tools/node_modules node tests/online.js 4` (4명 39개 · 8명 42개: 방·팀·맵·랜덤·동기화·곡선 비공개·엉뚱한 입력 끼어들기·새로고침·끊김·방장 교체·종료)
 - 밸런스: `node tests/balance.js 24` (1:1 전 조합×맵 5,400판, 2코어 약 2분). 자동 조정: `node tests/tune.js 4 16` (라운드마다 새 시드).
 - 현재 밸런스(검증용 새 시드 5,400판): 10척 모두 **45.5~53.5%**. 오르카가 하단인 것은 봇이 박치기·기동을 안 쓰기 때문.
 
@@ -42,3 +42,11 @@
 
 ## 보고 형식 (단계별)
 1. 못 한 것 2. 합격 기준별 결과 3. 바뀐 점 4. 직접 해볼 테스트 3개 5. 결정할 것
+
+## 점검 메모 (2026-10-18)
+- 온라인 입력 기록의 키는 **턴 번호+좌석**(`online.js ik`). 각 기기는 자기 시뮬레이션의 현재 차례 좌석과 맞는 입력만 쓴다 → 엉뚱한 입력이 진짜 입력을 막지 못함.
+- 막힌 이동도 기록된다(키를 누르고 있으면 매 틱 시도). 그래서 재생에서 "막히면 중단"을 하면 어긋남. 대신 입력 한 개당 행동 단위 합을 `maxUnits`(8000)로 자름.
+- 네트워크로 온 값은 전부 검증: 아이템 칸·used·pts·gauge·weapon, 방 정보(팀·잠수함·닉네임, `cleanGame`).
+- 인증이 없는 구조라 방 코드를 아는 사람이 차례 주인 행세를 하는 것까지는 막을 수 없음(친구용 전제).
+- 화면 루프는 try/catch로 감싸 한 프레임 오류가 게임을 멈추지 않음.
+- 그 밖에 시험: `node /tmp/...fuzz` 대신 `tests/weapons.js`(20종 무기 브라우저 발사), `tests/tutorial.js`.

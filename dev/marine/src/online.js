@@ -233,7 +233,18 @@ function renderLobby() {
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
 
 // ---------------------------------------------------------------- network game
+function cleanGame(game) {
+  const ok = game && Array.isArray(game.players) && game.players.length >= 2 && game.players.length <= CONFIG.turn.maxPlayers && CONFIG.maps[game.mapId];
+  if (!ok) return null;
+  const seen = {};
+  const players = game.players.filter(p => p && typeof p.id === 'string' && !seen[p.id] && (seen[p.id] = 1)).map(p => ({
+    id: p.id, nick: String(p.nick || '').slice(0, 8) || '?', team: p.team === 'blue' ? 'blue' : 'red', subId: CONFIG.subs[p.subId] ? p.subId : PICK_KEYS[0],
+  }));
+  if (!players.some(p => p.team === 'red') || !players.some(p => p.team === 'blue')) return null;
+  return Object.assign({}, game, { seed: game.seed >>> 0, players });
+}
 function startOnlineMatch(game, late) {
+  game = cleanGame(game); if (!game) return;
   ON.game = game; ON.inputs = {}; ON.applied = {}; ON.live = null; ON.liveSeen = -1; ON.autoSent = {};
   ON.hashTurn = 0; ON.aimTurn = 0; ON.lastLive = ''; ON.active = true;
   ON.spectator = !game.players.some(p => p.id === ON.myId);
@@ -251,30 +262,37 @@ function startOnlineMatch(game, late) {
 }
 function onlineCtrlOpts() {
   return {
-    isLocal: idx => !ON.syncing && !ON.spectator && match.subs[idx].id === ON.myId && !ON.inputs[match.turnNo],
+    isLocal: idx => !ON.syncing && !ON.spectator && match.subs[idx].id === ON.myId && !ON.inputs[ik(match.turnNo, match.subs[idx].id)],
     remote: remoteTick,
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
+// inputs are keyed by turn AND seat: a stray input for the wrong seat (a desynced device, a bad packet) can never
+// block the real one — every device takes the one whose seat matches its own simulation's current sub
+const ik = (turnNo, seat) => turnNo + ':' + seat;
+const curKey = m => ik(m.turnNo, m.cur >= 0 ? m.subs[m.cur].id : '');
+function validInput(x) { return !!x && Number.isInteger(x.turnNo) && typeof x.seat === 'string' && !!ON.game && ON.game.players.some(p => p.id === x.seat); }
 function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.pts || null, x.gauge, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
-  if (!ON.active) return;
+  if (!ON.active || !validInput(inp)) return;
   const mine = ON.applied[inp.turnNo];
-  if (mine) { if (inputKey(mine) !== inputKey(inp)) requestRebuild('input'); return; }
-  ON.inputs[inp.turnNo] = inp;
+  if (mine) { if (mine.seat === inp.seat && inputKey(mine) !== inputKey(inp)) requestRebuild('input'); return; }
+  ON.inputs[ik(inp.turnNo, inp.seat)] = inp;
 }
 function onNetLog(log) {
   if (!ON.active || ON.syncing) return;
   // a longer authoritative log than what we have seen: take the missing inputs, rebuild if anything disagrees
   for (const x of log) {
+    if (!validInput(x)) continue;
     const a = ON.applied[x.turnNo];
-    if (a && inputKey(a) !== inputKey(x)) { requestRebuild('log'); return; }
-    if (!a) ON.inputs[x.turnNo] = x;
+    if (a && a.seat === x.seat && inputKey(a) !== inputKey(x)) { requestRebuild('log'); return; }
+    if (!a) ON.inputs[ik(x.turnNo, x.seat)] = x;
   }
 }
 function actUnits(actions) { let n = 0; for (const a of actions) n += a.t === 'm' ? a.n : 1; return n; }
 // Applies whatever part of `actions` this device has not applied yet. False if what we applied is not a prefix of it.
 function applyPartial(m, actions) {
+  if (!Array.isArray(actions)) return false;
   const done = m.turn.actions;
   for (let i = 0; i < done.length; i++) {
     const a = done[i], b = actions[i];
@@ -283,8 +301,12 @@ function applyPartial(m, actions) {
     else if (a.s !== b.s) return false;
   }
   const U = actUnits(done); let u = 0;
+  let budget = CONFIG.turn.maxUnits; // same cut as applyTurnInput, so live and final inputs replay identically
   for (const b of actions) {
-    const n = b.t === 'm' ? b.n : 1;
+    if (!b || budget <= 0) break;
+    if (b.t !== 'm' && b.t !== 'i') continue;
+    const n = b.t === 'm' ? clampN(Math.floor(+b.n || 0), 0, budget) : 1;
+    budget -= n;
     if (u + n <= U) { u += n; continue; }
     for (let k = 0; k < n; k++, u++) {
       if (u < U) continue;
@@ -295,16 +317,16 @@ function applyPartial(m, actions) {
   return true;
 }
 function remoteTick(m, t) {
-  const fin = ON.inputs[m.turnNo];
+  const fin = ON.inputs[ik(m.turnNo, t.id)];
   if (fin) {
-    if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
+    if (!applyPartial(m, fin.actions || [])) { requestRebuild('partial'); return; }
     if (m.phase === 'aim') {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
       else if (fin.timeout) cmdTimeout(m);
       else if (fin.ended) { requestRebuild('ended'); return; }
       else cmdFire(m, fin.pts, fin.gauge, fin.weapon, fin.used);
     }
-    ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
+    ON.applied[m.turnNo] = fin; delete ON.inputs[ik(m.turnNo, t.id)];
     return;
   }
   const lv = ON.live;
@@ -324,11 +346,12 @@ function requestRebuild(why) {
 function rebuildFrom(log) {
   const g = ON.game; if (!g) return;
   const m = createMatch({ seed: g.seed, mapId: g.mapId, players: g.players });
-  const byTurn = {}; for (const x of log) byTurn[x.turnNo] = x;
+  const byKey = {}, byTurn = {}; for (const x of log) if (validInput(x) && !byKey[ik(x.turnNo, x.seat)]) byKey[ik(x.turnNo, x.seat)] = x;
   let guard = 0;
   while (m.phase !== 'over' && guard++ < 4e6) {
     if (m.phase === 'aim') {
-      const x = byTurn[m.turnNo]; if (!x) break;
+      const x = byKey[curKey(m)]; if (!x) break;
+      byTurn[x.turnNo] = x;
       applyTurnInput(m, x);
       if (m.phase === 'aim') break; // input did not end the turn (should not happen)
     } else step(m);
@@ -336,10 +359,12 @@ function rebuildFrom(log) {
   }
   m.events.length = 0;
   ON.applied = byTurn; ON.inputs = {}; ON.hashTurn = 0;
-  const cam = { x: R.cam.x, y: R.cam.y };
+  const cam = { x: R.cam.x, y: R.cam.y }, old = ctrl, oldTurn = match && match.turnNo;
   installMatch(m, onlineCtrlOpts());
   R.cam.x = cam.x; R.cam.y = cam.y;
-  if (m.phase === 'over') R.onOver(m.winner);
+  // same turn still running (e.g. my own turn): keep its clock, curve, weapon and curve memory
+  if (old) { ctrl.mem = old.mem; if (m.phase === 'aim' && oldTurn === m.turnNo) { ctrl.lastTurnSeen = m.turnNo; ctrl.timeLeft = old.timeLeft; ctrl.rel = old.rel; ctrl.weapon = old.weapon; } }
+  if (m.phase === 'over') R.onOver(m.winner, m.forfeit);
   ON.rebuildAt = performance.now();
 }
 
@@ -370,12 +395,12 @@ function onlineFrame(now) {
   }
   // stalled: waiting on someone else's turn with no sign of life for 5 s -> the turn probably ended
   // elsewhere and its input was lost on the way; ask for it again (repeats every 3 s)
-  if (!ctrl.activeLocal() && !ON.inputs[m.turnNo] && !ON.syncing) {
+  if (!ctrl.activeLocal() && !ON.inputs[curKey(m)] && !ON.syncing) {
     const lastSign = Math.max(ON.aimSince, ON.live && ON.live.turnNo === m.turnNo ? ON.liveAt : 0);
     if (now - lastSign > 5000 && now - (ON.needAt || 0) > 3000) { ON.needAt = now; L.requestTurn(m.turnNo); ON.needs = (ON.needs || 0) + 1; }
   }
   // host: skip the turn of a player who is gone (or frozen far past the time limit)
-  if (L.isHost() && t.id !== ON.myId && !ON.inputs[m.turnNo] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
+  if (L.isHost() && t.id !== ON.myId && !ON.inputs[curKey(m)] && !ON.applied[m.turnNo] && !ON.autoSent[m.turnNo]) {
     // gone = offline for 8 s in a row (a short network drop reconnects well inside that and its input still arrives)
     const waited = now - ON.aimSince;
     if (L.online(t.id)) ON.goneSince = 0; else if (!ON.goneSince || ON.goneTurn !== m.turnNo) { ON.goneSince = now; ON.goneTurn = m.turnNo; }
@@ -398,7 +423,7 @@ function forfeitWatch(now, m, L) {
     if (!away) { ON[k] = 0; continue; }
     if (!ON[k]) ON[k] = now;
     ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
-    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
+    if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[curKey(m)] && !ON.autoSent['f' + m.turnNo]) {
       ON.autoSent['f' + m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: m.subs[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
     }

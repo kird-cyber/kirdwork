@@ -238,14 +238,14 @@ function createRoomLink(o) {
       }
       pub('p/' + r.myId, null, true);
     }
-    r.closed = true;
+    r.closed = true; window.removeEventListener('pagehide', onHide);
     setTimeout(() => r.mq && r.mq.close(), 150);
   };
 
   // ---- game traffic
   function acceptInput(inp) {
-    if (typeof inp.turnNo !== 'number') return;
-    if (r.log.some(x => x.turnNo === inp.turnNo)) return;
+    if (!inp || !Number.isInteger(inp.turnNo) || typeof inp.seat !== 'string') return;
+    if (r.log.some(x => x.turnNo === inp.turnNo && x.seat === inp.seat)) return; // one per turn and seat (see online.js ik)
     r.log.push(inp);
     if (r.log.length > 1 && r.log[r.log.length - 2].turnNo > inp.turnNo) r.log.sort((a, b) => a.turnNo - b.turnNo);
     if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
@@ -254,9 +254,9 @@ function createRoomLink(o) {
   // fill gaps from another device's log (every device saw the same broker order, so entries agree)
   function mergeLog(list) {
     if (!Array.isArray(list)) return;
-    const have = {}; for (const x of r.log) have[x.turnNo] = 1;
+    const have = {}; for (const x of r.log) have[x.turnNo + ':' + x.seat] = 1;
     let added = 0;
-    for (const x of list) if (x && typeof x.turnNo === 'number' && !have[x.turnNo]) { r.log.push(x); have[x.turnNo] = 1; added++; }
+    for (const x of list) if (x && Number.isInteger(x.turnNo) && typeof x.seat === 'string' && !have[x.turnNo + ':' + x.seat]) { r.log.push(x); have[x.turnNo + ':' + x.seat] = 1; added++; }
     if (!added) return;
     r.log.sort((a, b) => a.turnNo - b.turnNo);
     if (r.isHost()) pub('g/' + r.gid + '/log', r.log, true);
@@ -266,7 +266,7 @@ function createRoomLink(o) {
   r.outbox = [];
   r.sendInput = inp => { r.outbox.push({ gid: r.gid, inp }); pub('g/' + r.gid + '/in', inp); };
   function flushOutbox() {
-    r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo));
+    r.outbox = r.outbox.filter(o => o.gid === r.gid && !r.log.some(x => x.turnNo === o.inp.turnNo && x.seat === o.inp.seat));
     for (const o of r.outbox) pub('g/' + o.gid + '/in', o.inp);
   }
   r.sendLive = live => pub('g/' + r.gid + '/live', Object.assign({ from: r.myId }, live), false, 0);
@@ -276,7 +276,7 @@ function createRoomLink(o) {
   r.requestTurn = turnNo => pub('cmd', { type: 'need', gid: r.gid, turnNo, from: r.myId });
   function answerNeed(turnNo) {
     const have = r.log.filter(x => x.turnNo >= turnNo);
-    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo)) have.push(o.inp);
+    for (const o of r.outbox || []) if (o.gid === r.gid && o.inp.turnNo >= turnNo && !have.some(x => x.turnNo === o.inp.turnNo && x.seat === o.inp.seat)) have.push(o.inp);
     have.sort((a, b) => a.turnNo - b.turnNo);
     if (!have.length) return;
     const asked = Date.now(), wait = r.isHost() ? 0 : 150 + Math.random() * 400;
@@ -297,7 +297,8 @@ function createRoomLink(o) {
   };
   r.resetGame = function () { r.log = []; r.myHash = {}; r.hashes = {}; };
 
-  window.addEventListener('pagehide', () => { if (!r.closed && r.mq && r.mq.connected) pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 0 }, true); });
+  const onHide = () => { if (!r.closed && r.mq && r.mq.connected) pub('p/' + r.myId, { id: r.myId, nick: r.nick, on: 0 }, true); };
+  window.addEventListener('pagehide', onHide);
   Promise.resolve().then(connect); // callers get the object before the first callback fires
   return r;
 }

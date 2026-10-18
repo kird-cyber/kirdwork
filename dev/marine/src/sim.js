@@ -220,7 +220,7 @@ function cmdMove(m, d) {
   if (ux > 0) t.facing = 1; else if (ux < 0) t.facing = -1;
   recordAction(m, { t: 'm', d, n: 1 });
   const nx = t.x + ux * st, ny = t.y + uy * st, M = P.edgeMargin;
-  if (nx < M || nx > m.W - M || ny < M || ny > m.H - M || !hullFree(m, nx, ny)) return false;
+  if ((nx < M && ux < 0) || (nx > m.W - M && ux > 0) || (ny < M && uy < 0) || (ny > m.H - M && uy > 0) || !hullFree(m, nx, ny)) return false; // a sub pushed into the margin can still move back out
   for (const o of m.subs) {
     if (o === t || !o.alive || !hullsOverlap(nx, ny, o.x, o.y)) continue;
     const enemy = o.team !== t.team;
@@ -247,7 +247,8 @@ function cmdMove(m, d) {
 function cmdItem(m, slot) {
   const t = curSub(m);
   if (m.phase !== 'aim' || !t || m.turn.itemUsed) return false;
-  const id = t.items[slot]; if (!id) return false;
+  if (!Number.isInteger(slot) || slot < 0 || slot >= t.items.length) return false;
+  const id = t.items[slot]; if (!Object.prototype.hasOwnProperty.call(CONFIG.items, id)) return false;
   const it = CONFIG.items[id];
   if (it.effect === 'heal') { const v = Math.min(it.amount, t.maxhp - t.hp); t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v }); }
   else if (it.effect === 'shield') t.shield = true;
@@ -276,7 +277,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
   pts = cleanPts(m, pts);
   gauge = clampN(Math.round(+gauge || 0), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
-  used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
+  used = clampN(Math.round(+used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pts, gauge, weapon, used });
   const w = d.weapons[weapon], path = buildPath(t, pts);
   t.facing = path.face; t.lastPts = pts; t.lastGauge = gauge;
@@ -317,11 +318,16 @@ function cmdTimeout(m) {
 }
 // Replay a TurnInput from another device (or a recording). Must be called at the start of that aim phase.
 function applyTurnInput(m, input) {
-  if (m.phase !== 'aim' || input.turnNo !== m.turnNo) return false;
+  if (!input || typeof input !== 'object' || m.phase !== 'aim' || input.turnNo !== m.turnNo) return false;
   if (curSub(m).id !== input.seat) return false;
-  for (const a of input.actions || []) {
-    if (a.t === 'm') { for (let i = 0; i < a.n && m.phase === 'aim'; i++) cmdMove(m, a.d); }
-    else if (a.t === 'i') cmdItem(m, a.s);
+  // refused moves are recorded too (a held key keeps trying), so every recorded unit must be replayed; a real turn has at
+  // most one unit per tick, so a corrupted input (n = 1e10, endless list) is cut at that budget instead of freezing clients
+  const acts = Array.isArray(input.actions) ? input.actions : [];
+  let budget = CONFIG.turn.maxUnits;
+  for (const a of acts) {
+    if (!a || budget <= 0) break;
+    if (a.t === 'm') { const n = clampN(Math.floor(+a.n || 0), 0, budget); budget -= n; for (let i = 0; i < n && m.phase === 'aim'; i++) cmdMove(m, a.d); }
+    else if (a.t === 'i') { budget--; cmdItem(m, a.s); }
     if (m.phase !== 'aim') break;
   }
   if (m.phase === 'aim') {
@@ -367,7 +373,7 @@ function stepTorp(m, p, w) {
     const v = (w.kind === 'rain' ? 600 : (w.fallSpeed || 420)) * TICK / 2; p.y += v; p.rem -= v;
   } else if (p.mode === 'crawl') {
     crawlStep(m, p); p.rem -= h;
-    if (nearestFoe(m, -1, p.x, p.y, 0, 6) || p.rem <= 0) return detonate(m, p, w);
+    if (m.subs.some(o => o.alive && o.idx !== p.idx && inHull(o, p.x, p.y, 6)) || p.rem <= 0) return detonate(m, p, w);
     return;
   }
   p.age++;
@@ -516,7 +522,7 @@ function runScheduled(m) {
     else if (e.kind === 'vortex') {
       // pull every sub in reach toward the centre (stops at rock or another hull), then burst
       for (const t of m.subs) {
-        if (!t.alive) continue;
+        if (!t.alive || (owner && t.team === owner.team)) continue; // enemies only (as the weapon text says)
         const dx = e.x - t.x, dy = e.y - t.y, d = Math.sqrt(dx * dx + dy * dy);
         if (d > w.pullR || d < 1) continue;
         const ux = dx / d, uy = dy / d, move = Math.min(w.pull, d - 20);
@@ -555,12 +561,12 @@ function beginTurn(m) {
   if (t.shock) {
     hurt(m, t, t.shock.dmg, 'shock', t.shock.by >= 0 ? m.subs[t.shock.by] : null);
     t.shock.turns--; if (t.shock.turns <= 0) t.shock = null;
-    if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+    if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
     for (const o of m.subs) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
-    if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
+    if (!t.alive || !teamAlive(m, 'red') || !teamAlive(m, 'blue')) { m.phase = 'settle'; m.settle = 0; return; }
   }
   m.phase = 'aim';
 }
@@ -599,7 +605,7 @@ function stateHash(m) {
   h >>>= 0;
   for (const t of m.subs) {
     h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
-    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-');
+    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.shock ? t.shock.dmg + ':' + t.shock.turns : '-'); h = fnvU32(h, t.shield ? 1 : 0); h = fnvF64(h, t.fuel);
   }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
   return h >>> 0;
