@@ -191,11 +191,11 @@ function updateHud() {
   // curve box: length / range and how many points the bend limit allowed
   if (mineNow && t === cur) {
     const path = buildPath(t, ctrl.worldPts(t));
-    setTxt('angTxt', `${Math.round(path.L)} / ${d.range}`);
-    setTxt('angReal', path.used < 3 ? `점 ${path.used + 1}부터 꺾임 초과 (한도 ${d.turn}°)` : `곡선 길이 · 회전각 한도 ${d.turn}°`);
+    setTxt('angTxt', `${Math.round(path.L)}`);
+    setTxt('angReal', path.used < 3 ? `점 ${path.used + 1}부터 꺾임 초과 (한도 ${d.turn}°)` : `곡선 / 사거리 ${d.range} · 꺾임 ${d.turn}°`);
     const dk = ctrl.rel.map(p => p.map(Math.round).join(',')).join(';') + t.x + ',' + t.y + path.used;
     if (hudCache.dial !== dk) { hudCache.dial = dk; drawCurveIcon(t, path); }
-  } else if (hudCache.dial !== 'idle') { hudCache.dial = 'idle'; setTxt('angTxt', `사거리 ${d.range}`); setTxt('angReal', `회전각 한도 ${d.turn}°`); $('angDial').getContext('2d').clearRect(0, 0, 176, 96); }
+  } else if (hudCache.dial !== 'idle') { hudCache.dial = 'idle'; setTxt('angTxt', `${d.range}`); setTxt('angReal', `사거리 · 꺾임 한도 ${d.turn}°`); $('angDial').getContext('2d').clearRect(0, 0, 176, 96); }
   const pw = ctrl.charging && mineNow ? ctrl.gauge / 1000 : 0;
   $('gauge').classList.toggle('charging', ctrl.charging && mineNow);
   $('pw').style.width = (pw * 100) + '%';
@@ -424,7 +424,8 @@ function startTutorial() {
   TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false;
   const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', subId: 'uboat' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', subId: 'sona', bot: 'easy' }];
   ON.active = false;
-  beginMatch({ seed: (Math.random() * 4294967296) >>> 0, mapId: 'reef', players }, practiceOpts({ b0: 'easy' }));
+  // fixed layout (seed 7): the player moves first, open water on all sides, a clear line to the bot ~1000px away
+  beginMatch({ seed: 7, mapId: 'reef', players }, practiceOpts({ b0: 'easy' }));
   showScreen('game'); showCoach();
 }
 function showCoach() {
@@ -538,7 +539,7 @@ function loop(now) {
   }
   requestAnimationFrame(loop);
 }
-window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, get screen() { return screen; } };
+window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, TUT, get screen() { return screen; } };
 (() => {
   document.title = GAME_NAME.full;
   R.resize();

@@ -210,6 +210,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .orr.dead { opacity: 0.62; } .orr.me { outline: 1px solid var(--gold); }
 @media (max-width: 600px) { .roster { grid-template-columns: 1fr; } .overbox { padding: 22px 18px; } }
 .loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8,10,18,0.8); font-family: var(--font-display); font-size: 26px; }
+@media (max-width: 1360px) { .hud-bottom { gap: 12px; padding: 10px 12px; } .who { min-width: 0; } #portrait { width: 64px; height: 48px; } .angle .v { font-size: 28px; } .angnum { max-width: 118px; } .angle .r { white-space: normal; line-height: 1.25; } .item { width: 46px; height: 46px; } .item .t { display: none; } .power { min-width: 150px; } }
+@media (max-width: 1120px) { #portrait { display: none; } .bar { width: 96px; } .wep { padding: 5px 9px; font-size: 12px; } #angDial { width: 64px; height: 36px; } .angnum { max-width: 100px; } .power { min-width: 130px; } }
 @media (max-width: 820px) {
   .maps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .help { grid-template-columns: 1fr; }

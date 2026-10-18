@@ -1,2 +1,4 @@
 dist/
 tests/out/*.png
+tests/out/balance_*.json
+tests/out/tune.json

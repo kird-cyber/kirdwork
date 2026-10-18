@@ -46,10 +46,10 @@ const CONFIG = {
   // speedClass 1 = heaviest (longest wait between turns) .. 5 = quickest
   subs: {
     uboat: {
-      name: 'U-96', model: '유보트 VII-C형', hp: 1000, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
+      name: 'U-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
       weapons: [
-        { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 220, rx: 90, ry: 90 },
-        { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 150, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },
+        { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 210, rx: 90, ry: 90 },
+        { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 145, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sejong: {
@@ -60,60 +60,60 @@ const CONFIG = {
       ],
     },
     ohio: {
-      name: '오하이오', model: '오하이오급 전략원잠', hp: 1300, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
+      name: '오하이오', model: '오하이오급 전략원잠', hp: 1190, hull: 5, movePx: 170, range: 2500, turn: 60, speedClass: 1,
       weapons: [
-        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 245, rx: 95, ry: 95 },
-        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 300, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
+        { id: 'heavy', name: '중어뢰', kind: 'circle', dmg: 220, rx: 95, ry: 95 },
+        { id: 'vls', name: '수직 미사일', kind: 'depth', dmg: 275, rx: 100, ry: 100, waitTicks: 48, fallSpeed: 420, cooldownTurns: 3, extraDelay: 150 },
       ],
     },
     nautilus: {
-      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1100, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
+      name: '노틸러스', model: '해저 2만 리 + 원자력 1호', hp: 1120, hull: 4, movePx: 250, range: 2700, turn: 90, speedClass: 2,
       weapons: [
-        { id: 'drill', name: '충각 관통탄', kind: 'pierce', dmg: 200, rx: 80, ry: 80, drill: 120 },
-        { id: 'maelstrom', name: '마엘스트롬', kind: 'vortex', dmg: 170, rx: 90, ry: 90, pull: 100, pullR: 220, waitTicks: 72, cooldownTurns: 3, extraDelay: 120 },
+        { id: 'drill', name: '충각 관통탄', kind: 'pierce', dmg: 205, rx: 80, ry: 80, drill: 120 },
+        { id: 'maelstrom', name: '마엘스트롬', kind: 'vortex', dmg: 175, rx: 90, ry: 90, pull: 100, pullR: 220, waitTicks: 72, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     kilo: {
-      name: '킬로', model: '킬로급 디젤-전기', hp: 950, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
+      name: '킬로', model: '킬로급 디젤-전기', hp: 1050, hull: 2, movePx: 260, range: 2600, turn: 150, speedClass: 3,
       weapons: [
-        { id: 'volt', name: '전류탄', kind: 'electric', dmg: 150, rx: 85, ry: 85 },
-        { id: 'chain', name: '연쇄 번개', kind: 'chain', dmg: 110, rx: 60, ry: 60, jumps: 2, jumpR: 400, cooldownTurns: 2, extraDelay: 100 },
+        { id: 'volt', name: '전류탄', kind: 'electric', dmg: 165, rx: 85, ry: 85 },
+        { id: 'chain', name: '연쇄 번개', kind: 'chain', dmg: 125, rx: 60, ry: 60, jumps: 2, jumpR: 400, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     alvin: {
-      name: '앨빈', model: '심해 탐사정', hp: 1100, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
+      name: '앨빈', model: '심해 탐사정', hp: 1050, hull: 4, movePx: 200, range: 2600, turn: 70, speedClass: 2,
       weapons: [
-        { id: 'claw', name: '집게 어뢰', kind: 'circle', dmg: 235, rx: 90, ry: 90 },
-        { id: 'drone', name: '해저 드론', kind: 'crawl', dmg: 220, rx: 85, ry: 85, crawl: 300, cooldownTurns: 2, extraDelay: 100 },
+        { id: 'claw', name: '집게 어뢰', kind: 'circle', dmg: 225, rx: 90, ry: 90 },
+        { id: 'drone', name: '해저 드론', kind: 'crawl', dmg: 210, rx: 85, ry: 85, crawl: 300, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     blue: {
-      name: '블루핀', model: '청상어형', fish: true, hp: 900, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
+      name: '블루핀', model: '청상어형', fish: true, hp: 930, hull: 2, movePx: 300, range: 3000, turn: 120, speedClass: 4,
       weapons: [
-        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 200, rx: 80, ry: 80, seek: 260, turnMax: 40 },
+        { id: 'hunt', name: '추적 어뢰', kind: 'homing', dmg: 205, rx: 80, ry: 80, seek: 260, turnMax: 40 },
         { id: 'frenzy', name: '피 냄새 파편탄', kind: 'octo8', dmg: 70, rx: 45, ry: 45, reach: 120, cooldownTurns: 3, extraDelay: 120 },
       ],
     },
     orca: {
-      name: '오르카', model: '범고래형', fish: true, hp: 1150, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
+      name: '오르카', model: '범고래형', fish: true, hp: 1210, hull: 5, movePx: 320, range: 2600, turn: 90, speedClass: 2, ramMul: 1.5,
       weapons: [
-        { id: 'direct', name: '직격 어뢰', kind: 'direct', dmg: 210, rx: 80, ry: 80 },
-        { id: 'tail', name: '꼬리치기 어뢰', kind: 'hell', dmg: 180, rx: 150, ry: 40, cooldownTurns: 2, extraDelay: 100 },
+        { id: 'direct', name: '직격 어뢰', kind: 'direct', dmg: 220, rx: 80, ry: 80 },
+        { id: 'tail', name: '꼬리치기 어뢰', kind: 'hell', dmg: 190, rx: 150, ry: 40, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
     sona: {
-      name: '소나', model: '향유고래형', fish: true, hp: 1200, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
+      name: '소나', model: '향유고래형', fish: true, hp: 1210, hull: 4, movePx: 190, range: 2600, turn: 70, speedClass: 2,
       weapons: [
-        { id: 'sonar', name: '음파탄', kind: 'vell', dmg: 190, rx: 45, ry: 160 },
+        { id: 'sonar', name: '음파탄', kind: 'vell', dmg: 195, rx: 45, ry: 160 },
         { id: 'blow', name: '숨구멍 대폭발', kind: 'inflate', dmg: 260, rx: 140, ry: 140, waitTicks: 60, cooldownTurns: 3, extraDelay: 150 },
       ],
     },
     // random-only sub in company colours. Never pickable; "?" gives it with randomSub.chance.
     kird: {
-      name: '케이', model: '회사 색 히든', hidden: true, hp: 1050, hull: 3, movePx: 250, range: 2800, turn: 110, speedClass: 3,
+      name: '케이', model: '회사 색 히든', hidden: true, hp: 1020, hull: 3, movePx: 250, range: 2800, turn: 110, speedClass: 3,
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', kind: 'bounce', dmg: 210, rx: 85, ry: 85 },
-        { id: 'ksplit', name: 'K-분열탄', kind: 'split', dmg: 150, rx: 70, ry: 70, reach: 90, spread: 450, cooldownTurns: 2, extraDelay: 100 },
+        { id: 'kbounce', name: 'K-바운스탄', kind: 'bounce', dmg: 205, rx: 85, ry: 85 },
+        { id: 'ksplit', name: 'K-분열탄', kind: 'split', dmg: 145, rx: 70, ry: 70, reach: 90, spread: 450, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
   },

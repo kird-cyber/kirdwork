@@ -6,7 +6,7 @@ const BOT_LEVELS = {
   easy: { ptErr: 70, gaugeErr: 45, currentSeen: 0.3, offset: 260, learn: 0.8, floor: 0.55, special: 0.2 },
   normal: { ptErr: 50, gaugeErr: 32, currentSeen: 0.6, offset: 190, learn: 0.72, floor: 0.45, special: 0.4 },
   hard: { ptErr: 26, gaugeErr: 18, currentSeen: 0.9, offset: 90, learn: 0.6, floor: 0.15, special: 0.55 },
-  measure: { ptErr: 34, gaugeErr: 24, currentSeen: 1, offset: 0, learn: 1, floor: 1, special: 0.5 },
+  measure: { ptErr: 70, gaugeErr: 80, currentSeen: 1, offset: 0, learn: 1, floor: 1, special: 0.5 },
 };
 
 // damage a burst of shape sh at (x, y) would deal to sub t (same falloff as explode)

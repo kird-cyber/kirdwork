@@ -113,7 +113,7 @@ function hurt(m, t, dmg, kind, by) {
     if (by.team === t.team) by.st.friendly += real;
     else {
       by.st.dealt += real; t.lastBy = by.idx;
-      if (by.st.lastHit !== m.turnNo) { by.st.lastHit = m.turnNo; by.st.hitTurns++; }
+      if (kind !== 'shock' && by.st.lastHit !== m.turnNo) { by.st.lastHit = m.turnNo; by.st.hitTurns++; }
       if (t.hp <= 0) by.st.kills++;
     }
   }

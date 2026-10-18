@@ -51,14 +51,15 @@ const booms = ev => ev.filter(e => e.type === 'boom');
   const b = booms(fire(m, pts, 500, 0))[0];
   check('게이지', '게이지 50% = 곡선 절반 지점에서 폭발', `x≈${Math.round(want.x)}`, `x=${Math.round(b.x)}`, near(b.x, want.x, 4));
 }
-// ---- graze / centre / shapes
+// ---- graze / centre / shapes (numbers come from config so balance changes do not break the rules)
+const UD = C.subs.uboat.weapons[0].dmg, GR = Math.round(UD * C.physics.grazeMul);
 {
   const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1000, y: 800 }]);
   const t = m.subs[0], ev = fire(m, line(t, 2000, 800), 1000, 0);
-  check('피해', '뚫고 지나가면 스침 20%만', Math.round(220 * 0.2), dmgTo(ev, 1), dmgTo(ev, 1) === 44);
+  check('피해', '뚫고 지나가면 스침 20%만', GR, dmgTo(ev, 1), dmgTo(ev, 1) === GR);
   const m2 = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
   const t2 = m2.subs[0], ev2 = fire(m2, line(t2, 1300, 800), 1000, 0);
-  check('피해', '폭발 중심에 있으면 100% (+스침)', 220 + 44, dmgTo(ev2, 1), dmgTo(ev2, 1) === 264);
+  check('피해', '폭발 중심에 있으면 100% (+스침)', UD + GR, dmgTo(ev2, 1), dmgTo(ev2, 1) === UD + GR);
 }
 function shapeTest(sub, w, dx, dy) {
   const m = field([{ sub, x: 400, y: 800 }, { sub: 'uboat', x: 1300 + dx, y: 800 + dy }]);
@@ -129,7 +130,7 @@ check('모양', '세종 천지(십자): 대각선 110px 안 맞음', 0, shapeTes
 {
   const m = field([{ sub: 'kilo', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }, { sub: 'uboat', x: 1560, y: 1060, team: 'blue' }], [{ x: 1430, y: 930, rx: 50, ry: 50 }]);
   const ev = fire(m, line(m.subs[0], 1300, 800), 1000, 1);
-  check('번개', '킬로 연쇄 번개: 바위 뒤 400px 안의 두 번째 적에게 튐', 110, dmgTo(ev, 2), dmgTo(ev, 2) === 110);
+  check('번개', '킬로 연쇄 번개: 바위 뒤 400px 안의 두 번째 적에게 튐', C.subs.kilo.weapons[1].dmg, dmgTo(ev, 2), dmgTo(ev, 2) === C.subs.kilo.weapons[1].dmg);
 }
 {
   const m = field([{ sub: 'kilo', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
@@ -163,12 +164,12 @@ function moveN(m, d, n) { let k = 0; for (let i = 0; i < n; i++) if (A.cmdMove(m
   const m = field([{ sub: 'uboat', x: 1000, y: 800 }, { sub: 'uboat', x: 1080, y: 800 }]);
   const x0 = m.subs[1].x; moveN(m, 0, 40);
   const ram = C.ram.base + C.ram.perHull * 3;
-  check('박치기', '부딪히면 선체만큼 피해, 상대가 밀려남', `피해 ${ram}, 밀림 > 0`, `피해 ${1000 - m.subs[1].hp}, 밀림 ${Math.round(m.subs[1].x - x0)}px`, 1000 - m.subs[1].hp === ram && m.subs[1].x > x0);
+  check('박치기', '부딪히면 선체만큼 피해, 상대가 밀려남', `피해 ${ram}, 밀림 > 0`, `피해 ${(m.subs[1].maxhp - m.subs[1].hp)}, 밀림 ${Math.round(m.subs[1].x - x0)}px`, (m.subs[1].maxhp - m.subs[1].hp) === ram && m.subs[1].x > x0);
   const o = field([{ sub: 'orca', x: 1000, y: 800 }, { sub: 'uboat', x: 1080, y: 800 }]); moveN(o, 0, 40);
   const oram = Math.round((C.ram.base + C.ram.perHull * 5) * 1.5);
-  check('박치기', '오르카는 박치기 피해 1.5배', oram, 1000 - o.subs[1].hp, 1000 - o.subs[1].hp === oram);
+  check('박치기', '오르카는 박치기 피해 1.5배', oram, (o.subs[1].maxhp - o.subs[1].hp), (o.subs[1].maxhp - o.subs[1].hp) === oram);
   const w = field([{ sub: 'uboat', x: 1000, y: 800 }, { sub: 'uboat', x: 1080, y: 800 }], [{ x: 1150, y: 800, rx: 20, ry: 100, box: true }]); moveN(w, 0, 60);
-  check('박치기', '바위로 밀면 추가 피해', ram + C.ram.wall, 1000 - w.subs[1].hp, 1000 - w.subs[1].hp === ram + C.ram.wall);
+  check('박치기', '바위로 밀면 추가 피해', ram + C.ram.wall, (w.subs[1].maxhp - w.subs[1].hp), (w.subs[1].maxhp - w.subs[1].hp) === ram + C.ram.wall);
   const e = field([{ sub: 'uboat', x: 3880, y: 800 }, { sub: 'uboat', x: 3955, y: 800 }]);
   e.subs[0].x = 3900; e.subs[1].x = 3970; moveN(e, 0, 80);
   check('밀어내기', '맵 가장자리 밖으로 밀면 탈락', '탈락', e.subs[1].alive ? '생존' : e.subs[1].deathCause, !e.subs[1].alive && e.subs[1].deathCause === 'out');
@@ -186,11 +187,12 @@ function moveN(m, d, n) { let k = 0; for (let i = 0; i < n; i++) if (A.cmdMove(m
   const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
   m.subs[0].items = ['amplify']; A.cmdItem(m, 0);
   const ev = fire(m, line(m.subs[0], 1300, 800), 1000, 0);
-  check('아이템', '증폭: 피해 1.5배', Math.round(220 * 1.5) + Math.round(330 * 0.2), dmgTo(ev, 1), dmgTo(ev, 1) === 330 + 66);
+  const AD = Math.round(UD * C.items.amplify.mul || UD * 1.5), AX = AD + Math.round(AD * C.physics.grazeMul);
+  check('아이템', '증폭: 피해 1.5배', AX, dmgTo(ev, 1), Math.abs(dmgTo(ev, 1) - AX) <= 1);
   const s = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 1300, y: 800 }]);
   s.subs[1].shield = true;
   const ev2 = fire(s, line(s.subs[0], 1300, 800), 1000, 0);
-  check('아이템', '실드: 폭발 피해 절반', 110 + 44, dmgTo(ev2, 1), dmgTo(ev2, 1) === 154);
+  check('아이템', '실드: 폭발 피해 절반', Math.round(UD / 2) + GR, dmgTo(ev2, 1), Math.abs(dmgTo(ev2, 1) - (Math.round(UD / 2) + GR)) <= 1);
 }
 {
   const m = field([{ sub: 'ohio', x: 400, y: 800 }, { sub: 'uboat', x: 3000, y: 300 }]);
