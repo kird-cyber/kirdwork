@@ -203,7 +203,8 @@ function renderLobby() {
   // my tank
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
-  buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크');
+  buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크', k => renderTankInfo(k));
+  picks.onmouseleave = () => renderTankInfo(me ? me.tank : savedTank());
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
@@ -229,11 +230,7 @@ function renderLobby() {
     : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : '방에 들어가는 중…');
   updateNetStatus();
 }
-function renderTankInfo(k) {
-  if (k === 'random' || !CONFIG.tanks[k]) { const h = CONFIG.tanks[CONFIG.randomTank.id]; $('tankInfo').textContent = `랜덤: 시작할 때 8종 중 하나로 정해집니다 · 1/9 확률로 히든 탱크 "${h.name}" (${h.weapons[0].name} · ${h.weapons[1].name})`; return; }
-  const d = CONFIG.tanks[k];
-  $('tankInfo').textContent = `${d.name} · 체력 ${d.hp} · 이동 ${d.movePx} · 각도 ${d.angleMin}°–${d.angleMax}° · 1번 ${d.weapons[0].name} · 2번 ${d.weapons[1].name}`;
-}
+function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
 
 // ---------------------------------------------------------------- network game
 function startOnlineMatch(game, late) {

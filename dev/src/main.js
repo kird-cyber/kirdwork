@@ -21,7 +21,7 @@ function randomThumb(w, h) {
   return c;
 }
 // tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tank in full colour (shown, not pickable: only "?" can give it)
-function buildPicks(box, current, onPick, label) {
+function buildPicks(box, current, onPick, label, onInfo) {
   for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
     const hidden = HIDDEN_KEYS.includes(k);
     const b = document.createElement('button'); b.type = 'button';
@@ -30,11 +30,84 @@ function buildPicks(box, current, onPick, label) {
     const sp = document.createElement('span'); sp.textContent = tankLabel(k); b.append(sp);
     if (hidden) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = '? 랜덤 전용'; b.append(bd); }
     b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
-    if (hidden) { b.disabled = true; b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/9 확률로 나옵니다`; }
+    if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/9 확률로 나옵니다`; b.onclick = () => onInfo && onInfo(k); }
     else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
+    if (onInfo) b.onmouseenter = () => onInfo(k);
     box.append(b);
   }
 }
+
+// ---------------------------------------------------------------- tank info card (shown under the picker: stats + weapon 1/2)
+const WEAPON_DESC = {
+  rock: '무겁고 큰 돌덩이. 바람을 절반만 받아 계산이 쉽습니다.',
+  boulder: '불붙은 큰 바위. 터진 뒤 비탈 아래로 굴러가 한 번 더 폭발합니다.',
+  poisonArrow: '맞은 상대를 중독시켜 3턴 동안 매 턴 피해를 줍니다.',
+  venomBolt: '더 독한 화살. 중독된 동안 상대의 회복 효과가 절반이 됩니다.',
+  ap: '크고 검은 쇠공(검콩). 정통으로 맞히면 1.2배 치명타.',
+  redflare: '작고 빨간 고폭탄(빨콩). 폭발 범위는 좁지만 위력이 매우 큽니다. 정타 1.2배.',
+  std: '평범하고 믿음직한 기본 포탄.',
+  twin: '같은 궤도로 두 발을 연달아 쏩니다.',
+  low: '핀이 튀는 수류탄. 무난한 위력의 기본기.',
+  mines: '떨어진 자리 양옆에 지뢰 2개를 깔아 둡니다. 밟으면 폭발(맵에 최대 6개).',
+  missile: '위력 큰 미사일. 바람 영향이 70%로 줄어듭니다.',
+  mlrs: '부채꼴로 여섯 발을 흩뿌리는 지역 제압용.',
+  beam: '바람을 전혀 받지 않고 중력도 약해 곧게 뻗어 나갑니다.',
+  prism3: '세 갈래로 갈라지는 빛. 바람 무시 · 약한 중력.',
+  photon: '폭발 범위가 넓은 에너지탄.',
+  orbital: '떨어진 자리에 잠시 뒤 하늘에서 광선이 내리꽂힙니다. 엄폐물 뒤도 맨 윗면을 때립니다.',
+  kbounce: '땅에 한 번 통 튕긴 뒤 터집니다. 엄폐물 너머를 노리기 좋아요.',
+  ksplit: '가장 높이 올라간 지점에서 두 갈래로 갈라집니다.',
+};
+const ERA_LABEL = { classic: '클래식', modern: '모던', present: '현대', future: '미래' };
+function tankTraitText(d) {
+  const t = d.traits || {}, out = [];
+  if (t.ampPoison) out.push('증폭 아이템이 독 피해까지 키움');
+  if (t.hover) out.push(`공중 부양: 지뢰를 밟지 않음 · 이동 효율 ×${CONFIG.physics.hoverMoveMul}`);
+  if (t.berserk) out.push(`분노: 체력 ${Math.round(t.berserk.hpBelow * 100)}% 미만이면 피해·폭발 범위 ×${t.berserk.mul}`);
+  if (d.powerMul && d.powerMul !== 1) out.push(`포탄 속도 +${Math.round((d.powerMul - 1) * 100)}% (같은 게이지로 더 멀리)`);
+  return out;
+}
+function weaponDmgText(w) {
+  const p = w.pattern;
+  if (p.kind === 'burst') return `${w.dmg} × ${p.count}발`;
+  if (p.kind === 'spread') return `${w.dmg} × ${p.angles.length}발`;
+  if (p.kind === 'mine') return `${w.dmg} + 지뢰 ${p.mineDmg}`;
+  if (p.kind === 'roll') return `${w.dmg} + 굴러서 ${p.dmg}`;
+  return String(w.dmg);
+}
+function weaponChips(w) {
+  const c = [`피해 ${weaponDmgText(w)}`, `폭발 반경 ${w.radius}`];
+  if (w.onHit && w.onHit.poison) c.push(`독 ${w.onHit.poison.dmg} × ${w.onHit.poison.turns}턴`);
+  if (w.onHit && w.onHit.crit) c.push(`정타 ×${w.onHit.crit.mul}`);
+  if (w.windMul !== 1) c.push(w.windMul === 0 ? '바람 무시' : `바람 ${Math.round(w.windMul * 100)}%`);
+  if (w.gravityMul !== 1) c.push(`중력 ${Math.round(w.gravityMul * 100)}%`);
+  if (w.cooldownTurns) c.push(`재사용 ${w.cooldownTurns}턴 뒤`);
+  c.push(w.extraDelay ? `딜레이 +${w.extraDelay}` : '딜레이 없음');
+  return c;
+}
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+function tankCardHTML(k) {
+  if (k === 'random' || !CONFIG.tanks[k]) {
+    const h = CONFIG.tanks[CONFIG.randomTank.id];
+    return `<div class="tc-head"><b>? 랜덤</b><span class="tc-era">운에 맡기기</span></div>
+      <p class="tc-desc">전투가 시작될 때 ${PICK_KEYS.length}종 중 하나로 정해집니다. <b>1/${Math.round(1 / CONFIG.randomTank.chance)} 확률</b>로 히든 탱크 <b>${esc(h.name)}</b>가 나와요.</p>
+      <p class="tc-desc">${esc(h.name)} 무기: 1번 ${esc(h.weapons[0].name)} · 2번 ${esc(h.weapons[1].name)} (탱크를 눌러 자세히 보기)</p>`;
+  }
+  const d = CONFIG.tanks[k], all = PICK_KEYS.concat(HIDDEN_KEYS).map(x => CONFIG.tanks[x]);
+  const mx = f => Math.max(...all.map(f)), mn = f => Math.min(...all.map(f));
+  const bar = (label, v, lo, hi, text) => { const r = hi > lo ? 0.2 + 0.8 * (v - lo) / (hi - lo) : 1; return `<div class="tc-stat"><span>${label}</span><i><em style="width:${Math.round(r * 100)}%"></em></i><b>${text}</b></div>`; };
+  const delay = CONFIG.turn.baseDelay[d.speedClass];
+  const stats = bar('체력', d.hp, mn(t => t.hp), mx(t => t.hp), d.hp)
+    + bar('방어', -d.dmgTaken, -mx(t => t.dmgTaken), -mn(t => t.dmgTaken), `받는 피해 ${Math.round(d.dmgTaken * 100)}%`)
+    + bar('이동력', d.movePx, mn(t => t.movePx), mx(t => t.movePx), d.movePx)
+    + bar('속도', -delay, -mx(t => CONFIG.turn.baseDelay[t.speedClass]), -mn(t => CONFIG.turn.baseDelay[t.speedClass]), `딜레이 ${delay}`);
+  const traits = tankTraitText(d);
+  const wep = (w, i) => `<div class="tc-wep"><div class="tc-wn"><kbd>${i + 1}</kbd>${esc(w.name)}</div><p>${esc(WEAPON_DESC[w.id] || '')}</p><div class="tc-chips">${weaponChips(w).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
+  return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">? 랜덤 전용 히든 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
+    <div class="tc-body"><div class="tc-stats">${stats}${traits.length ? `<div class="tc-trait">${traits.map(esc).join('<br>')}</div>` : ''}</div>
+    <div class="tc-weps">${d.weapons.map(wep).join('')}</div></div>`;
+}
+function renderTankCard(el, k) { if (el) { el.innerHTML = tankCardHTML(k); el.dataset.tank = k; } }
 
 // ---------------------------------------------------------------- banner / over
 let bannerTimer = 0;
@@ -327,10 +400,14 @@ function renderSetup() {
     tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
     if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
-    buildPicks(picks, sl.tank, k => { sl.tank = k; saveSetup(); renderSetup(); }, sp.textContent);
+    buildPicks(picks, sl.tank, k => { sl.tank = k; setupInfo = k; saveSetup(); renderSetup(); }, sp.textContent, k => renderTankCard($('setupTankInfo'), k));
+    picks.onmouseleave = () => renderTankCard($('setupTankInfo'), setupInfo);
     row.appendChild(picks); slots.appendChild(row);
   }
+  if (!setupInfo) setupInfo = setup.slots.red[0].tank;
+  renderTankCard($('setupTankInfo'), setupInfo);
 }
+let setupInfo = null;
 document.querySelectorAll('.seg[data-team]').forEach(s => s.onclick = () => { setup[s.dataset.team] = +s.dataset.n; saveSetup(); renderSetup(); });
 $('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
 $('start').onclick = startGame;
