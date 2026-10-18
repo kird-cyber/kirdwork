@@ -96,13 +96,16 @@ const MAPGEN = {
       rectM(m, W, H, cx - 300, H - 760, cx + 300, f(cx) + 20);              // bunker block
       rectM(m, W, H, cx - 330, H - 800, cx + 330, H - 740, 2);             // concrete roof slab (metal)
       rectM(m, W, H, cx - 200, H - 640, cx + 200, H - 440, 0);              // inner room
-      rectM(m, W, H, cx + s * 200 - 20, H - 590, cx + s * 320, H - 520, 0); // firing slit toward the middle
+      rectM(m, W, H, cx + s * 200 - 20, H - 600, cx + s * 320, H - 500, 0); // firing slit toward the middle
       rectM(m, W, H, cx - s * 60, H - 440, cx + s * 40, f(cx) + 20, 0);     // stair shaft down to the trench
       for (const k of [0, 1]) { const tx = cx + s * (520 + k * 260); rectM(m, W, H, tx - 70, f(tx) - 10, tx + 70, f(tx) + 120, 0); }
     }
-    for (const x of [1550, 1800, 2400, 2650]) rectM(m, W, H, x - 14, f(x) - 520, x + 14, f(x) + 10, 2);
-    for (let x = 1550; x <= 2650; x += 20) { const t = (x - 1550) / 1100, y = H - 780 + 120 * 4 * t * (1 - t); fillEllipse(m, W, H, x, y, 12, 10); }
-    for (const [x, r] of [[2100, 120], [1300, 80], [2900, 80]]) fillEllipse(m, W, H, x, f(x) - 40, r * 1.6, r);
+    // anti-sub poles, alternating: up from the floor / hanging from surface buoys — there is always a way between them
+    for (const [x, up] of [[1500, 1], [1800, 0], [2100, 1], [2400, 0], [2700, 1]]) {
+      if (up) { rectM(m, W, H, x - 14, f(x) - 300, x + 14, f(x) + 10, 2); for (let k = 0; k < 3; k++) fillEllipse(m, W, H, x, f(x) - 300 + k * 14, 26 - k * 4, 8); }
+      else { rectM(m, W, H, x - 14, 0, x + 14, 380, 2); fillEllipse(m, W, H, x, 30, 46, 30); fillEllipse(m, W, H, x, 380, 22, 18); }
+    }
+    for (const [x, r] of [[1300, 80], [2900, 80]]) fillEllipse(m, W, H, x, f(x) - 40, r * 1.6, r);
   },
   // Bermuda: the triangle. A big hollow triangle of rock (gaps at the corners) with a lost ship inside; zig-zag reef "waves" swirl around it
   bermuda(W, H, m) {
@@ -140,16 +143,21 @@ const MAPGEN = {
   duke(W, H, m) {
     const f = x => H - 240 + 20 * tsin(x / 400); seabed(m, W, H, f);
     const crenel = (x0, x1, y) => { for (let x = x0; x < x1; x += 80) rectM(m, W, H, x, y - 50, x + 44, y + 2); };
+    // tall towers at the sides (windows through them at two heights)
     for (const cx of [1000, 3400]) {
       rectM(m, W, H, cx - 150, 520, cx + 150, f(cx) + 20); crenel(cx - 150, cx + 150, 520);
-      rectM(m, W, H, cx - 40, 640, cx + 40, 720, 0); rectM(m, W, H, cx - 40, 880, cx + 40, 960, 0);
-      rectM(m, W, H, cx - 20, 520, cx + 20, f(cx), 2);
+      rectM(m, W, H, cx - 160, 650, cx + 160, 760, 0); rectM(m, W, H, cx - 160, 1000, cx + 160, 1110, 0);
+      rectM(m, W, H, cx - 20, 520, cx + 20, 640, 2); rectM(m, W, H, cx - 20, 770, cx + 20, 990, 2); rectM(m, W, H, cx - 20, 1120, cx + 20, f(cx), 2);
     }
-    const k = 2200; rectM(m, W, H, k - 260, 380, k + 260, f(k) + 20); crenel(k - 260, k + 260, 380);
-    fillEllipse(m, W, H, k, f(k) - 220, 150, 220, 0); rectM(m, W, H, k - 150, f(k) - 220, k + 150, f(k) + 10, 0); // gate arch
-    rectM(m, W, H, k - 70, 520, k + 70, 640, 0);                                                                    // great hall window
-    for (const [a, b] of [[1150, 1940], [2460, 3250]]) { rectM(m, W, H, a, 860, b, 940); crenel(a, b, 860); }
-    for (const [g0, g1] of [[1700, 1860], [2540, 2700]]) { rectM(m, W, H, g0, 800, g1, 945, 0); fillEllipse(m, W, H, (g0 + g1) / 2, 945, 80, 40, 0); } // breached walls: the way into the courtyards
+    // a lower keep in the middle: the water above it is open; a great window and the gate arch go through it
+    const k = 2200; rectM(m, W, H, k - 260, 820, k + 260, f(k) + 20); crenel(k - 260, k + 260, 820);
+    fillEllipse(m, W, H, k, f(k) - 220, 150, 220, 0); rectM(m, W, H, k - 150, f(k) - 220, k + 150, f(k) + 10, 0); rectM(m, W, H, k - 280, f(k) - 190, k + 280, f(k) - 30, 0); // gate arch, open right through the keep
+    rectM(m, W, H, k - 270, 900, k + 270, 1000, 0);                                                                 // great hall window, end to end
+    // broken battlements floating high above the keep: they block the top lane where the keep leaves it open
+    for (const [x, y, w] of [[1950, 420, 150], [2450, 420, 150]]) { rectM(m, W, H, x - w / 2, y - 30, x + w / 2, y + 30); crenel(x - w / 2, x + w / 2, y - 30); }
+    // low curtain walls with breaches
+    for (const [a, b] of [[1150, 1940], [2460, 3250]]) { rectM(m, W, H, a, 1060, b, 1130); crenel(a, b, 1060); }
+    for (const [g0, g1] of [[1500, 1640], [2760, 2900]]) { rectM(m, W, H, g0, 1000, g1, 1135, 0); fillEllipse(m, W, H, (g0 + g1) / 2, 1135, 70, 34, 0); }
     for (const x of [300, 4100]) fillEllipse(m, W, H, x, f(x) - 30, 200, 110);
   },
   // Iceberg: icebergs hang from the surface (the bulk below water, wider than the tip), one broken floe drifting, the sea floor far down
@@ -167,12 +175,12 @@ const MAPGEN = {
     const f = floorOf(H, 220, 26, 10); seabed(m, W, H, f);
     const spineY = x => H - 560 - 60 * tsin((x - 900) / 700);
     for (let x = 900; x <= 3000; x += 70) fillEllipse(m, W, H, x, spineY(x), 34, 26);
-    for (let i = 0; i < 9; i++) { const x = 1300 + i * 140, r = 230 - Math.abs(i - 4) * 18; arcM(m, W, H, x, spineY(x) + r, r, 1900, 3500, 26); arcM(m, W, H, x, spineY(x) + r, r, 0, 300, 26); }
+    for (let i = 0; i < 9; i++) { const x = 1300 + i * 140, r = 230 - Math.abs(i - 4) * 18; if (i % 2) arcM(m, W, H, x, spineY(x) + r, r, 2500, 3500, 26); else arcM(m, W, H, x, spineY(x) + r, r, 1900, 2900, 26); } // ribs open on alternating sides
     fillPoly(m, W, H, [[3000, spineY(3000) - 60], [3380, spineY(3000) - 120], [3560, spineY(3000) + 10], [3380, spineY(3000) + 130], [3030, spineY(3000) + 90]]);
     fillEllipse(m, W, H, 3300, spineY(3000) - 40, 40, 34, 0);
     for (let x = 3080; x < 3520; x += 60) fillPoly(m, W, H, [[x, spineY(3000) + 110], [x + 30, spineY(3000) + 110], [x + 15, spineY(3000) + 170]]);
     for (const [x, y] of [[420, f(420) - 60], [3900, f(3900) - 60]]) { arcM(m, W, H, x, y, 80, 0, 3200, 30); arcM(m, W, H, x + 20, y + 10, 40, 0, 2600, 24); }
-    for (let i = 0; i < 40; i++) { const x = 200 + ((i * 977) % 3800), y = 260 + ((i * 613) % 520), s = 18 + (i * 7) % 22; rectM(m, W, H, x - s, y - s, x + s, y + s); }
+    for (let i = 0; i < 22; i++) { const x = 200 + ((i * 977) % 3800), y = 260 + ((i * 613) % 520), s = 14 + (i * 7) % 16; rectM(m, W, H, x - s, y - s, x + s, y + s); }
   },
   // Nautilus: a giant chambered nautilus shell — a spiral corridor with inner walls (each with a hole) — and swirling coral like the original's
   nautilus(W, H, m) {
@@ -187,11 +195,12 @@ const MAPGEN = {
   // Sea City: an undersea city under a metal canopy. Lift shaft from the ceiling, walkway platforms on two levels, domes and spires on the city floor
   seacity(W, H, m) {
     rectM(m, W, H, 0, 0, W, 90, 2); rectM(m, W, H, 0, 90, W, 130);
-    rectM(m, W, H, 1950, 120, 2250, 760); rectM(m, W, H, 2060, 120, 2140, 740, 2); rectM(m, W, H, 1990, 300, 2210, 420, 0); // lift shaft + cabin bay
-    for (const [x0, x1, y] of [[60, 900, 560], [3300, 4140, 560], [450, 1500, 1000], [2700, 3750, 1000]]) { rectM(m, W, H, x0, y - 22, x1, y + 22, 2); rectM(m, W, H, x0 + 40, y + 22, x1 - 40, y + 60); }
+    rectM(m, W, H, 1960, 120, 2240, 600); rectM(m, W, H, 2070, 120, 2130, 590, 2); rectM(m, W, H, 1990, 280, 2210, 400, 0); // lift shaft + cabin bay (short)
+    // walkways in two pieces each, staggered: the upper ones outside, the lower ones toward the middle, gaps between
+    for (const [x0, x1, y] of [[60, 640, 560], [820, 1300, 640], [2900, 3380, 640], [3560, 4140, 560], [450, 1000, 1000], [1250, 1750, 1080], [2450, 2950, 1080], [3200, 3750, 1000]]) { rectM(m, W, H, x0, y - 20, x1, y + 20, 2); rectM(m, W, H, x0 + 40, y + 20, x1 - 40, y + 54); }
     const f = x => H - 200 + 10 * tsin(x / 200); seabed(m, W, H, f);
-    for (const [x, r] of [[700, 230], [2100, 300], [3500, 230]]) { fillEllipse(m, W, H, x, f(x), r, r * 0.8); fillEllipse(m, W, H, x, f(x), r - 50, r * 0.8 - 50, 0); rectM(m, W, H, x - r, f(x), x + r, f(x) + 40); }
-    for (const [x, h] of [[1300, 520], [1450, 380], [2800, 460], [2950, 600]]) { rectM(m, W, H, x - 50, f(x) - h, x + 50, f(x) + 20); fillPoly(m, W, H, [[x - 50, f(x) - h], [x + 50, f(x) - h], [x, f(x) - h - 140]]); rectM(m, W, H, x - 8, f(x) - h - 140, x + 8, f(x), 2); }
+    for (const [x, r] of [[700, 230], [2100, 280], [3500, 230]]) { fillEllipse(m, W, H, x, f(x), r, r * 0.8); fillEllipse(m, W, H, x, f(x), r - 50, r * 0.8 - 50, 0); rectM(m, W, H, x - r, f(x), x + r, f(x) + 40); }
+    for (const [x, h] of [[1350, 360], [2850, 360]]) { rectM(m, W, H, x - 50, f(x) - h, x + 50, f(x) + 20); fillPoly(m, W, H, [[x - 50, f(x) - h], [x + 50, f(x) - h], [x, f(x) - h - 140]]); rectM(m, W, H, x - 8, f(x) - h - 140, x + 8, f(x), 2); }
   },
   // Spa: a cosy hot spring. Crossed bamboo poles leaning every way (the original's X sticks), stone tubs on the floor, pebble stacks
   spa(W, H, m) {
@@ -211,11 +220,11 @@ const MAPSPAWNS = {
   bermuda: [[260, 620], [500, 1200], [850, 250], [1100, 700], [1650, 380], [2100, 820], [2550, 380], [3050, 700], [3350, 250], [3700, 1250], [3900, 650], [2100, 1400]],
   cave: [[280, 700], [450, 1050], [1000, 560], [1050, 1050], [1450, 950], [1750, 560], [2350, 700], [2650, 1000], [2950, 520], [3300, 1100], [3650, 600], [3800, 1000]],
   cube: [[330, 520], [590, 330], [850, 900], [1110, 520], [1370, 1100], [1630, 330], [1890, 900], [2150, 520], [2410, 1100], [2930, 330], [3190, 900], [3450, 520]],
-  duke: [[300, 600], [600, 1150], [1000, 300], [1400, 650], [1300, 1150], [1950, 300], [2450, 300], [3100, 1150], [3000, 650], [3400, 300], [3800, 1150], [4100, 600]],
+  duke: [[300, 600], [600, 1150], [1000, 300], [1450, 700], [1300, 1250], [2200, 650], [2200, 260], [3100, 1250], [2950, 700], [3400, 300], [3800, 1150], [4100, 600]],
   iceberg: [[250, 500], [380, 1200], [700, 1050], [1250, 450], [1350, 1250], [2050, 1250], [2700, 450], [2750, 900], [3450, 1000], [3600, 1300], [3950, 500], [4000, 1150]],
   jurassic: [[250, 900], [600, 450], [900, 1050], [1150, 300], [1700, 1150], [1900, 700], [2400, 1150], [2600, 380], [3000, 300], [3300, 1100], [3700, 560], [4000, 900]],
   nautilus: [[220, 750], [500, 300], [850, 850], [1000, 1300], [1300, 400], [1700, 1300], [2700, 400], [2300, 1300], [3000, 850], [3150, 1300], [3500, 300], [3800, 800]],
-  seacity: [[300, 400], [480, 820], [700, 1250], [1200, 400], [1150, 820], [2100, 900], [2100, 1150], [3000, 400], [3050, 820], [3500, 1250], [3700, 820], [3900, 400]],
+  seacity: [[300, 400], [480, 820], [700, 1250], [1100, 450], [1100, 860], [2100, 820], [2100, 1150], [3100, 450], [3100, 860], [3500, 1250], [3700, 820], [3900, 400]],
   spa: [[250, 600], [450, 1050], [700, 250], [1000, 900], [1250, 300], [1700, 650], [2300, 250], [2250, 900], [2900, 300], [3300, 950], [3550, 650], [3650, 250]],
 };
 

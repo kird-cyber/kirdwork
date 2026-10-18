@@ -248,8 +248,8 @@ const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }
   check('맵 규칙', '아틀란틱: 해류 1.6배', `+${Math.round(base * 1.6)}px`, `+${Math.round(at)}px`, Math.abs(at - base * 1.6) < 6);
 }
 {
-  const m = mapField('battlefield', [{ sub: 'uboat', x: 900, y: 620 }, { sub: 'uboat', x: 1600, y: 760 }]);
-  const ev = fire(m, line(m.subs[0], 1600, 620), 1000, 0);
+  const mine = C.maps.battlefield.rules.mines[0], m = mapField('battlefield', [{ sub: 'uboat', x: mine[0] - 700, y: mine[1] }, { sub: 'uboat', x: mine[0], y: mine[1] + 110 }]);
+  const ev = fire(m, line(m.subs[0], mine[0] + 60, mine[1]), 1000, 0);
   const mines = ev.filter(e => e.type === 'boom' && e.kind === 'mine').length;
   check('맵 규칙', '배틀 필드: 어뢰가 기뢰에 닿으면 기뢰가 터져 근처 적이 피해', '기뢰 폭발 1+, 피해 > 0', `기뢰 ${mines}, 피해 ${dmgTo(ev, 1)}`, mines >= 1 && dmgTo(ev, 1) > 0);
 }

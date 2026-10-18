@@ -1,7 +1,7 @@
 // Browser: open every map in practice and photograph its signature spot. run: node tests/maptour.js  → tests/out/tour_<map>.png
 const { chromium } = require('/opt/npm-tools/node_modules/playwright');
 const path = require('path');
-const SPOT = { god12: [2000, 700], atlantic: [1950, 700], battlefield: [2100, 800], bermuda: [2100, 850], cave: [1450, 700], cube: [1900, 700], duke: [2200, 900], iceberg: [2050, 600], jurassic: [2000, 1000], nautilus: [2000, 800], seacity: [2100, 700], spa: [2000, 1000] };
+const SPOT = { god12: [2000, 700], atlantic: [1950, 700], battlefield: [2100, 700], bermuda: [2100, 850], cave: [1450, 700], cube: [1900, 700], duke: [2200, 800], iceberg: [2050, 600], jurassic: [2000, 1000], nautilus: [2000, 800], seacity: [2100, 700], spa: [2000, 1000] };
 (async () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
