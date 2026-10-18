@@ -8,12 +8,12 @@ const ON = {
 const DQ = s => document.querySelector(s);
 
 function onlineId() {
-  try { let id = sessionStorage.getItem('pg.id'); if (!id) { id = genId(); sessionStorage.setItem('pg.id', id); } return id; } catch (e) { return genId(); }
+  try { let id = sessionStorage.getItem('bm.id'); if (!id) { id = genId(); sessionStorage.setItem('bm.id', id); } return id; } catch (e) { return genId(); }
 }
-function savedNick() { try { return localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
-function saveNick(n) { try { localStorage.setItem('pg.nick', n); } catch (e) {} }
-function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden) ? t : 'rookie'; } catch (e) { return 'rookie'; } }
-function saveTank(t) { try { localStorage.setItem('pg.tank', t); } catch (e) {} }
+function savedNick() { try { return localStorage.getItem('bm.nick') || localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
+function saveNick(n) { try { localStorage.setItem('bm.nick', n); } catch (e) {} }
+function savedTank() { try { const t = localStorage.getItem('bm.sub'); return t === 'random' || (CONFIG.subs[t] && !CONFIG.subs[t].hidden) ? t : 'uboat'; } catch (e) { return 'uboat'; } }
+function saveTank(t) { try { localStorage.setItem('bm.sub', t); } catch (e) {} }
 function brokerOverride() { try { return new URLSearchParams(location.search).get('broker'); } catch (e) { return null; } }
 function brokerUrl(i) { return brokerOverride() || BROKERS[i] || BROKERS[0]; }
 function parseInvite() {
@@ -43,17 +43,17 @@ function showScreen(name) {
 // ---------------------------------------------------------------- home
 function homeMsg(s, bad) { const e = $('homeMsg'); e.textContent = s || ''; e.classList.toggle('bad', !!bad); }
 // per-device record of online games (no login, so it lives in this browser)
-function loadRecord() { try { return JSON.parse(localStorage.getItem('pg.record') || 'null') || { w: 0, l: 0, d: 0, last: '' }; } catch (e) { return { w: 0, l: 0, d: 0, last: '' }; } }
+function loadRecord() { try { return JSON.parse(localStorage.getItem('bm.record') || 'null') || { w: 0, l: 0, d: 0, last: '' }; } catch (e) { return { w: 0, l: 0, d: 0, last: '' }; } }
 function noteResult(gid, res) {
   const r = loadRecord(); if (r.last === gid) return; r.last = gid;
-  r[res]++; try { localStorage.setItem('pg.record', JSON.stringify(r)); } catch (e) {}
+  r[res]++; try { localStorage.setItem('bm.record', JSON.stringify(r)); } catch (e) {}
 }
 function renderHome() {
   const inv = parseInvite();
   const rec = loadRecord(), n = rec.w + rec.l + rec.d, el = $('record');
   el.hidden = n === 0;
   if (n) el.innerHTML = `내 전적 <b>${rec.w}</b>승 <b>${rec.l}</b>패` + (rec.d ? ` <b>${rec.d}</b>무` : '') + ` · 승률 ${Math.round(100 * rec.w / Math.max(1, rec.w + rec.l))}%`;
-  const pr = $('parade'); if (!pr.children.length && thumbs.rookie) for (const k of TANK_KEYS) pr.append(cloneCanvas(thumbs[k]));
+  const pr = $('parade'); if (!pr.children.length && thumbs.uboat) for (const k of SUB_KEYS) pr.append(cloneCanvas(thumbs[k]));
   $('nickIn').value = ON.nick || savedNick();
   $('inviteBox').hidden = !inv; $('joinBtn').hidden = !inv;
   if (inv) $('inviteCode').textContent = inv.code;
@@ -73,7 +73,7 @@ async function probeBrokers() {
   PROBE.state = 'busy'; showProbe();
   const order = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
   for (const i of order) {
-    const c = createMqtt(brokerUrl(i), { clientId: 'pgp' + genCode(8).toLowerCase(), keepalive: 30, timeoutMs: 5000 });
+    const c = createMqtt(brokerUrl(i), { clientId: 'bmp' + genCode(8).toLowerCase(), keepalive: 30, timeoutMs: 5000 });
     try { await c.ready; c.close(); PROBE.state = 'ok'; PROBE.idx = i; showProbe(); return; } catch (e) {}
   }
   PROBE.state = 'fail'; showProbe();
@@ -115,7 +115,7 @@ function openLink(code, idx, create) {
         if (ON.link !== link) return;
         if (s === 'online' && !done) {
           done = true; resolve(true);
-          try { history.replaceState(null, '', `#r=${code}&b=${idx}`); sessionStorage.setItem('pg.room', code); } catch (e) {}
+          try { history.replaceState(null, '', `#r=${code}&b=${idx}`); sessionStorage.setItem('bm.room', code); } catch (e) {}
           if (!link.room) homeMsg('방 정보를 받는 중…');
         }
         if (s === 'failed' && !done) { done = true; link.closed = true; ON.link = null; resolve(false); }
@@ -138,7 +138,7 @@ function openLink(code, idx, create) {
 function leaveOnline() {
   if (ON.link) ON.link.leave();
   ON.link = null; ON.game = null; ON.active = false; setTurnTitle(false);
-  try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem('pg.room'); } catch (e) {}
+  try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem('bm.room'); } catch (e) {}
   showScreen('home');
 }
 
@@ -163,7 +163,7 @@ function updateNetStatus() {
 function playerCard(p, room) {
   const L = ON.link, me = p.id === ON.myId, host = room.host === p.id, isHost = L.isHost();
   const el = document.createElement('div'); el.className = 'pc' + (me ? ' me' : '') + (L.online(p.id) || me ? '' : ' off');
-  el.append(cloneCanvas(thumbs[p.tank] || thumbs.rookie));
+  el.append(cloneCanvas(thumbs[p.tank] || thumbs.uboat));
   const info = document.createElement('div'); info.className = 'pi';
   const nm = document.createElement('b'); nm.textContent = p.nick; info.append(nm);
   const tags = document.createElement('span'); tags.className = 'tags';
@@ -203,7 +203,7 @@ function renderLobby() {
   // my tank
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
-  buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크', k => renderTankInfo(k));
+  buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 잠수함', k => renderTankInfo(k));
   picks.onmouseleave = () => renderTankInfo(me ? me.tank : savedTank());
   renderTankInfo(myTank);
   // maps
@@ -251,12 +251,12 @@ function startOnlineMatch(game, late) {
 }
 function onlineCtrlOpts() {
   return {
-    isLocal: idx => !ON.syncing && !ON.spectator && match.tanks[idx].id === ON.myId && !ON.inputs[match.turnNo],
+    isLocal: idx => !ON.syncing && !ON.spectator && match.subs[idx].id === ON.myId && !ON.inputs[match.turnNo],
     remote: remoteTick,
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
-function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.pts || null, x.gauge, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
   if (!ON.active) return;
   const mine = ON.applied[inp.turnNo];
@@ -302,7 +302,7 @@ function remoteTick(m, t) {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
       else if (fin.timeout) cmdTimeout(m);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
+      else cmdFire(m, fin.pts, fin.gauge, fin.weapon, fin.used);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
     return;
@@ -310,7 +310,7 @@ function remoteTick(m, t) {
   const lv = ON.live;
   if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
     if (m.phase !== 'aim') return;
-    t.aim = lv.aim; // the barrel turns for everyone; power and weapon choice stay private
+    ON.ghost = lv.pts ? { turnNo: m.turnNo, pts: lv.pts } : null; // the curve is shown to everyone; the gauge and weapon stay private
     if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
   }
   if (ctrl.timeLeft > 0) ctrl.timeLeft--;
@@ -358,12 +358,12 @@ function onlineFrame(now) {
   }
   forfeitWatch(now, m, L);
   if (m.phase !== 'aim') { setTurnTitle(false); return; }
-  const t = m.tanks[m.cur];
+  const t = m.subs[m.cur];
   if (ON.aimTurn !== m.turnNo) { ON.aimTurn = m.turnNo; ON.aimSince = now; }
   setTurnTitle(ctrl.activeLocal() && document.hidden);
   // live feed of my turn for everyone else
   if (ctrl.activeLocal()) {
-    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, aim: t.aim }; // power and weapon are not shared
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, pts: ctrl.worldPts(t) }; // the gauge and weapon are not shared
     const s = JSON.stringify(lv);
     if ((s !== ON.lastLive && now - ON.lastLiveAt > 250) || now - ON.lastLiveAt > 1000) {
       ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);
@@ -401,7 +401,7 @@ function forfeitWatch(now, m, L) {
     ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
     if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
       ON.autoSent['f' + m.turnNo] = true;
-      L.sendInput({ turnNo: m.turnNo, seat: m.tanks[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
+      L.sendInput({ turnNo: m.turnNo, seat: m.subs[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
     }
   }
 }
@@ -440,8 +440,8 @@ function bindOnlineUi() {
   $('practiceBtn').onclick = () => { AU.unlock(); showScreen('setup'); };
   $('tutorialBtn').onclick = () => { AU.unlock(); const n = $('nickIn').value.trim().slice(0, 8); if (n) { ON.nick = n; saveNick(n); } startTutorial(); };
   $('coachSkip').onclick = () => { TUT.on = false; showCoach(); };
-  $('rotateX').onclick = () => { $('rotateTip').hidden = true; try { sessionStorage.setItem('pg.rot', '1'); } catch (e) {} };
-  const rot = () => { let seen = false; try { seen = sessionStorage.getItem('pg.rot') === '1'; } catch (e) {} $('rotateTip').hidden = !(screen === 'game' && matchMedia('(pointer: coarse)').matches && innerHeight > innerWidth * 1.15) || seen; };
+  $('rotateX').onclick = () => { $('rotateTip').hidden = true; try { sessionStorage.setItem('bm.rot', '1'); } catch (e) {} };
+  const rot = () => { let seen = false; try { seen = sessionStorage.getItem('bm.rot') === '1'; } catch (e) {} $('rotateTip').hidden = !(screen === 'game' && matchMedia('(pointer: coarse)').matches && innerHeight > innerWidth * 1.15) || seen; };
   window.addEventListener('resize', rot); setInterval(rot, 1500);
   $('backHome').onclick = () => showScreen('home');
   $('copyBtn').onclick = async () => {
@@ -457,7 +457,7 @@ function bindOnlineUi() {
   $('readyBtn').onclick = () => { AU.play('ui'); const me = ON.link && ON.link.me(); if (me) ON.link.setReady(!me.ready); };
   $('leaveGame').onclick = () => leaveOnline();
   $('exitBtn').onclick = () => {
-    if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
+    if (ON.active) { if (confirm('게임에서 나갈까요? 내 잠수함은 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
     else if (confirm('연습을 끝내고 처음 화면으로 갈까요?')) showScreen('home');
   };
   window.addEventListener('hashchange', () => { if (screen === 'home') renderHome(); });
@@ -477,7 +477,7 @@ function onChat(c) {
     const gm = $('gameMsgs'), line = chatLine(c); gm.append(line); while (gm.children.length > 5) gm.firstChild.remove();
     setTimeout(() => line.classList.add('old'), 8000); setTimeout(() => line.remove(), 8800);
     // speech bubble over the sender's tank
-    if (match) { const t = match.tanks.find(x => x.id === c.from); if (t) R.say(t.idx, c.emote ? EMOTES.find(e => e[0] === c.emote)[1] + ' ' + c.text : c.text); }
+    if (match) { const t = match.subs.find(x => x.id === c.from); if (t) R.say(t.idx, c.emote ? EMOTES.find(e => e[0] === c.emote)[1] + ' ' + c.text : c.text); }
   }
   if (c.from !== ON.myId) AU.play('ui');
 }
@@ -510,7 +510,7 @@ function routeStart() {
   bindOnlineUi(); bindChat();
   ON.myId = onlineId(); ON.nick = savedNick();
   const inv = parseInvite();
-  let again = null; try { again = sessionStorage.getItem('pg.room'); } catch (e) {}
+  let again = null; try { again = sessionStorage.getItem('bm.room'); } catch (e) {}
   showScreen('home');
   if (inv && again === inv.code && ON.nick) joinRoom(inv.code, inv.b);
 }
