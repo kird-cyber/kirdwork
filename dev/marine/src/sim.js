@@ -557,6 +557,14 @@ function detonate(m, p, w) {
       }
       return;
     }
+    case 'magnet': {
+      // K-자석탄: an enemy within `snap` of the burst point pulls the burst onto itself
+      let best = null, bd = w.snap * w.snap;
+      for (const t of m.subs) { if (!t.alive || t.team === owner.team) continue; const dd = (t.x - x) * (t.x - x) + (t.y - y) * (t.y - y); if (dd <= bd) { bd = dd; best = t; } }
+      if (best) { m.events.push({ type: 'magnet', x1: x, y1: y, x2: best.x, y2: best.y }); explode(m, best.x, best.y, sh, dmg, owner, { fx: 'kblue' }); }
+      else explode(m, x, y, sh, dmg, owner, { fx: 'kblue' });
+      return;
+    }
     default: explode(m, x, y, sh, dmg, owner, { fx: w.kind === 'cross' ? 'cross' : w.kind === 'vell' ? 'sonar' : 'hit' });
   }
 }

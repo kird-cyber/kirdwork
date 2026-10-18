@@ -34,7 +34,7 @@ const TORP = {
   depth: ['#3A434F', '#E8402E'], pierce: ['#9AA3AD', '#5B5F66'], vortex: ['#C9A24A', '#3E9A8A', '#9FF0E0'], electric: ['#5E4F8A', '#BFA8FF', '#D8C8FF'],
   chain: ['#5E4F8A', '#BFA8FF', '#D8C8FF'], crawl: ['#F06548', '#7F8B98'], homing: ['#D6DEE8', '#FF3D3D', '#FF9A9A'], octo8: ['#7A8C9A', '#3E94F0'],
   direct: ['#1E232B', '#EEF2F5'], hell: ['#1E232B', '#EEF2F5'], vell: ['#7A8899', '#6FE3E1', '#AFFFFF'], inflate: ['#7A8899', '#A9B4C0', '#DDF6FF'],
-  bounce: ['#2E86D6', '#8CC63F', '#8CC8FF'], split: ['#8CC63F', '#2E86D6', '#D8F59A'],
+  bounce: ['#2E86D6', '#8CC63F', '#8CC8FF'], magnet: ['#2E86D6', '#8CC63F', '#8CC8FF'], split: ['#8CC63F', '#2E86D6', '#D8F59A'],
 };
 const BOOMC = { mine: '#FF6A3A', rock: '#C8B8E0', hit: '#FFB547', small: '#FFC870', big: '#FF8A30', sonar: '#6FE3E1', cross: '#F2C94C', volt: '#BFA8FF', swirl: '#6FE3E1', fire: '#FF8A30', kblue: '#5FA8FF', kgreen: '#9FE07A' };
 
@@ -250,6 +250,7 @@ function createRenderer(cv, mini) {
         case 'ringout': R.onBanner(`${t.nick} 장외 탈락!`, t.team); text(clamp(e.x, 60, m.W - 60), clamp(e.y, 80, m.H - 60), '탈락!', '#FFD24A', true); R.onSfx('fall'); break;
         case 'ram': text(e.x, e.y - 40, '쾅!', '#FFB4A4'); bubbles(e.x, e.y, 10, 30); shake(4); R.onSfx('hit', { amount: 80 }); break;
         case 'crush': text(e.x, e.y - 60, '바위에 쾅!', '#FF9A86', true); bubbles(e.x, e.y, 14, 40); debris(e.x, e.y, 6); shake(6); break;
+        case 'magnet': R.bolts.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2, t: 0, col: '#8CC8FF', big: true }); text(e.x1, e.y1 - 24, '자석!', '#8CC8FF'); R.onSfx('pickup'); break;
         case 'bounce': text(e.x, e.y - 24, '팅!', '#8CC8FF'); bubbles(e.x, e.y, 8, 16); R.onSfx('hit', { amount: 30 }); break;
         case 'stick': text(e.x, e.y - 24, '찰싹', '#FFB070'); bubbles(e.x, e.y, 8, 16); break;
         case 'drill': text(e.x, e.y - 24, '드르륵', '#FFD24A'); debris(e.x, e.y, 6); break;
@@ -474,7 +475,7 @@ function createRenderer(cv, mini) {
       ctx.fillStyle = look[0]; ctx.beginPath(); ctx.ellipse(0, 0, 9, 6, 0, 0, 7); ctx.fill(); ctx.stroke();
       ctx.strokeStyle = '#7F8B98'; ctx.lineWidth = 1.6; const k = Math.sin(R.t * 30) * 3; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(-4, s * 5); ctx.lineTo(-8 + k, s * 10); ctx.moveTo(3, s * 5); ctx.lineTo(7 - k, s * 10); ctx.stroke(); }
       ctx.fillStyle = '#FFE08A'; ctx.beginPath(); ctx.arc(6, 0, 2, 0, 7); ctx.fill();
-    } else if (w.kind === 'bounce') {
+    } else if (w.kind === 'bounce' || w.kind === 'magnet') {
       ctx.fillStyle = look[0]; ctx.beginPath(); ctx.arc(0, 0, 9, 0, 7); ctx.fill(); ctx.stroke();
       ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, -5); ctx.lineTo(-3, 5); ctx.moveTo(4, -5); ctx.lineTo(-2, 0); ctx.lineTo(4, 5); ctx.stroke();
     } else if (w.kind === 'electric' || w.kind === 'chain') {

@@ -100,9 +100,13 @@ check('모양', '세종 천지(십자): 대각선 110px 안 맞음', 0, shapeTes
   check('관통', '일반 어뢰는 바위 앞에서 폭발', 'x≈1170', `x=${Math.round(b2.x)}`, b2.x < 1200);
 }
 {
-  const m = field([{ sub: 'kird', x: 400, y: 600 }, { sub: 'uboat', x: 400, y: 1100 }], [{ x: 1000, y: 850, rx: 30, ry: 400, box: true }]);
-  const t = m.subs[0], ev = fire(m, [[600, 700], [800, 800], [1150, 975]], 1000, 0), b = booms(ev)[0], bn = ev.filter(e => e.type === 'bounce').length;
-  check('튕김', '케이 K-바운스탄: 벽에 한 번 튕긴 뒤 반대쪽으로', '튕김 1번, 벽 왼쪽에서 폭발', `튕김 ${bn}번, x=${Math.round(b.x)}`, bn === 1 && b.x < 970);
+  const near = field([{ sub: 'kird', x: 400, y: 800 }, { sub: 'uboat', x: 1330, y: 830 }]);
+  const evn = fire(near, line(near.subs[0], 1300, 800), 1000, 0), bn = booms(evn)[0];
+  const full = C.subs.kird.weapons[0].dmg;
+  check('자석', '케이 K-자석탄: 끌림 거리 안(42px)의 적에게 폭발이 끌려가 정확히 맞음', `폭발 x=1330, 피해 ${full}`, `x=${Math.round(bn.x)}, 피해 ${dmgTo(evn, 1)}`, Math.round(bn.x) === 1330 && dmgTo(evn, 1) === full && evn.some(e => e.type === 'magnet'));
+  const far = field([{ sub: 'kird', x: 400, y: 800 }, { sub: 'uboat', x: 1450, y: 900 }]);
+  const evf = fire(far, line(far.subs[0], 1300, 800), 1000, 0);
+  check('자석', '케이 K-자석탄: 끌림 거리 밖이면 끌려가지 않음', '그 자리에서 폭발', `x=${Math.round(booms(evf)[0].x)}`, !evf.some(e => e.type === 'magnet') && Math.round(booms(evf)[0].x) === 1300);
 }
 {
   // overhang: rock slab with an enemy under it; the drone sticks to the top and crawls round the edge underneath

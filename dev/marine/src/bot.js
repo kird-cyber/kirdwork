@@ -47,6 +47,7 @@ function botEval(m, t, w, path, target, curSeen, aimX, aimY) {
     if (w.kind === 'homing' && o === target && (o.x - bx) * (o.x - bx) + (o.y - by) * (o.y - by) < w.seek * w.seek) v = Math.max(v, w.dmg * 0.9);
     if (w.kind === 'chain' && o.team !== t.team && (o.x - bx) * (o.x - bx) + (o.y - by) * (o.y - by) < w.jumpR * w.jumpR) v += w.dmg * 0.8;
     if (w.kind === 'vortex' && o.team !== t.team && (o.x - bx) * (o.x - bx) + (o.y - by) * (o.y - by) < w.pullR * w.pullR) v = Math.max(v, w.dmg * 0.8);
+    if (w.kind === 'magnet' && o.team !== t.team && (o.x - bx) * (o.x - bx) + (o.y - by) * (o.y - by) <= w.snap * w.snap) v = Math.max(v, w.dmg);
     if (w.kind === 'octo8' && v > 0) v *= 2.2;
     if (w.kind === 'twin') v *= 1.7;
     if (v > 0) value(o, v);

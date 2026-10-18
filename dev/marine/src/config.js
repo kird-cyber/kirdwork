@@ -113,7 +113,7 @@ const CONFIG = {
     kird: {
       name: '케이', model: '회사 색 히든', hidden: true, hp: 1020, hull: 3, movePx: 250, range: 2800, turn: 110, speedClass: 3,
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', kind: 'bounce', dmg: 205, rx: 85, ry: 85 },
+        { id: 'kmagnet', name: 'K-자석탄', kind: 'magnet', dmg: 185, rx: 85, ry: 85, snap: 50 }, // the burst jumps onto an enemy within snap px
         { id: 'ksplit', name: 'K-분열탄', kind: 'split', dmg: 145, rx: 70, ry: 70, reach: 90, spread: 450, cooldownTurns: 2, extraDelay: 100 },
       ],
     },
