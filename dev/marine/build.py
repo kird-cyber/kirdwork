@@ -15,7 +15,11 @@ head = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
         f'<meta name="description" content="곡선을 그려 쏘는 턴제 잠수함 어뢰 대전 · 최대 4 대 4">\n'
         f'<meta property="og:type" content="website">\n<meta property="og:title" content="{full}">\n'
         '<meta property="og:description" content="곡선을 그려 바위 뒤의 적을 노리는 잠수함 대전. 설치·가입 없이 링크 하나로.">\n'
-        '<link rel="icon" href="../favicon.png">\n<meta name="theme-color" content="#06223A">\n')
+        '<meta property="og:url" content="https://kird-cyber.github.io/kirdwork/marine/">\n'
+        '<meta property="og:image" content="https://kird-cyber.github.io/kirdwork/marine/og.png">\n'
+        '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
+        '<meta name="twitter:card" content="summary_large_image">\n'
+        '<link rel="icon" href="favicon.png">\n<link rel="apple-touch-icon" href="favicon.png">\n<meta name="theme-color" content="#06223A">\n')
 style_end = out.index('</style>') + len('</style>')
 page = head + out[:style_end] + '\n</head>\n<body>\n' + out[style_end:] + '\n</body>\n</html>\n'
 (root / 'dist').mkdir(exist_ok=True)
