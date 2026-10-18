@@ -27,9 +27,9 @@ const CONFIG = {
     delayPerMovePx: 0.6,
     itemDelay: 80,
     skipDelay: 150,
-    // 턴 넘기기: no shot, delay = base x delayMul, saves one turn (max maxSaved). Spending it (연속 사격) makes that shot cost
-    // chainDelayMul of its delay and gives the same tank the next turn too: pass + chained pair = same tempo as two normal turns
-    pass: { delayMul: 0.5, chainDelayMul: 0.5, maxSaved: 1 },
+    // 턴 넘기기 (원작식): no shot, delay = base x delayMul + movement + item + time. Turn order is delay only, so a cheap pass
+    // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
+    pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
     crateEveryTurns: 3,
     windMax: 10,

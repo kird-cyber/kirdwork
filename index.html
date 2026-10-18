@@ -124,14 +124,13 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 #pwLast { position: absolute; top: -2px; bottom: -2px; width: 3px; background: #FFFFFF; left: 0; }
 .gauge .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.25); }
 .turnbox { display: flex; flex-direction: column; gap: 6px; margin-left: auto; }
-.passbtn, .chainbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 116px; padding: 7px 14px; border-radius: 12px; font: 900 16px var(--font-body); cursor: pointer; line-height: 1.1; }
+.passbtn { min-height: 56px; }
+.passbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-width: 116px; padding: 7px 14px; border-radius: 12px; font: 900 16px var(--font-body); cursor: pointer; line-height: 1.1; }
 .passbtn { color: #2A1200; background: linear-gradient(180deg, #FFC062, #FF8A1E); border: 2px solid #FFE0A8; box-shadow: 0 3px 0 #A3500A, 0 0 14px rgba(255,150,40,0.45); }
 .passbtn:not(:disabled):hover { filter: brightness(1.08); }
 .passbtn:not(:disabled):active { transform: translateY(2px); box-shadow: 0 1px 0 #A3500A; }
-.chainbtn { color: #DDE7FF; background: #22304C; border: 2px solid #4B6496; font-size: 14px; }
-.chainbtn.on { color: #08210A; background: linear-gradient(180deg, #B6F27A, #6FCB2E); border-color: #E4FFC8; box-shadow: 0 0 14px rgba(140,230,70,0.55); }
-.passbtn small, .chainbtn small { font-size: 10.5px; font-weight: 700; opacity: 0.85; }
-.passbtn:disabled, .chainbtn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; filter: grayscale(0.4); }
+.passbtn small { font-size: 10.5px; font-weight: 700; opacity: 0.85; }
+.passbtn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; filter: grayscale(0.4); }
 .items { display: flex; gap: 6px; }
 .item { width: 56px; height: 56px; border-radius: 11px; border: 2px solid #3A4660; background: #1A2030; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; cursor: pointer; position: relative; padding: 0; }
 .item:disabled { cursor: default; }
@@ -245,7 +244,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .angle { width: 60px; }
   .angle .v { font-size: 26px; }
   .item { width: 46px; height: 46px; }
-  .passbtn, .chainbtn { min-width: 92px; padding: 5px 10px; font-size: 14px; } .chainbtn { font-size: 12px; }
+  .passbtn { min-width: 92px; padding: 5px 10px; font-size: 14px; }
   .item .t { display: none; }
 }
 @media (max-width: 600px) {
@@ -347,7 +346,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   .weps { gap: 3px; } .wep { padding: 3px 8px; font-size: 11px; }
   .angle { width: auto; gap: 4px; } #angDial { width: 58px; height: 32px; } .angle .v { font-size: 20px; } .angle .r { display: none; } .angnum { min-width: 40px; }
   .power { min-width: 110px; flex: 1 1 120px; gap: 2px; } .power .row { font-size: 10px; } .power .row:last-child { display: none; } .gauge { height: 14px; }
-  .turnbox { flex-direction: row; gap: 4px; } .passbtn, .chainbtn { min-width: 0; padding: 4px 8px; font-size: 12px; border-radius: 9px; } .passbtn small, .chainbtn small { display: none; }
+  .turnbox { flex-direction: row; gap: 4px; } .passbtn { min-width: 0; min-height: 0; padding: 4px 8px; font-size: 12px; border-radius: 9px; } .passbtn small { display: none; }
   .items { gap: 4px; } .item { width: 36px; height: 36px; border-radius: 8px; } .item .t, .item .key { display: none; } .item .ic { font-size: 12px; }
   .tb { width: 48px; height: 48px; } .touch > div { grid-template-columns: repeat(2, 48px); gap: 6px; } .fire { width: 80px; height: 80px; font-size: 20px; }
   #waitTag { top: 70px; font-size: 12px; padding: 5px 12px; } #banner { font-size: 20px; top: 30%; }
@@ -445,8 +444,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     </div>
     <div class="items" id="items"></div>
     <div class="turnbox">
-      <button class="passbtn" id="passBtn" type="button" title="이번 턴은 쏘지 않고 넘깁니다. 딜레이가 절반만 쌓이고 턴 1개가 저장됩니다(최대 1개)">턴 넘기기<small>P · 턴 저장</small></button>
-      <button class="chainbtn" id="chainBtn" type="button" aria-pressed="false" title="저장한 턴을 써서 이번에 쏜 뒤 바로 한 번 더 쏩니다">연속 사격<small id="chainSub">C · 저장 턴 0/1</small></button>
+      <button class="passbtn" id="passBtn" type="button" title="이번 턴은 쏘지 않고 넘깁니다. 딜레이가 사격의 1/4 정도만 쌓여 다음 차례가 빨리 옵니다">턴 넘기기<small id="passSub">P · 딜레이 조금만</small></button>
     </div>
   </div>
 
@@ -562,8 +560,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div><b>미니맵 클릭</b>그 위치로 이동</div>
         <div><b>낙사</b>맵 아래로 떨어지면 탈락</div>
         <div><b>턴 시간</b>한 사람당 60초</div>
-        <div><b>P</b>턴 넘기기 · 딜레이 절반, 턴 1개 저장</div>
-        <div><b>C</b>저장 턴으로 연속 사격(쏜 뒤 한 번 더)</div>
+        <div><b>P</b>턴 넘기기 · 딜레이 1/4만 쌓임</div>
+        <div><b>딜레이</b>낮은 순서로 차례 · 사격·이동·2번 무기·아이템·쓴 시간(1초당 +4)이 쌓임. 차이가 크면 연속 턴</div>
       </div>
     </div>
   </div>
@@ -623,9 +621,9 @@ const CONFIG = {
     delayPerMovePx: 0.6,
     itemDelay: 80,
     skipDelay: 150,
-    // 턴 넘기기: no shot, delay = base x delayMul, saves one turn (max maxSaved). Spending it (연속 사격) makes that shot cost
-    // chainDelayMul of its delay and gives the same tank the next turn too: pass + chained pair = same tempo as two normal turns
-    pass: { delayMul: 0.5, chainDelayMul: 0.5, maxSaved: 1 },
+    // 턴 넘기기 (원작식): no shot, delay = base x delayMul + movement + item + time. Turn order is delay only, so a cheap pass
+    // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
+    pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
     crateEveryTurns: 3,
     windMax: 10,
@@ -1061,7 +1059,7 @@ function createMatch(opts) {
       idx: i, id: p.id, nick: p.nick, team: p.team, tankId: p.tankId,
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
-      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [], saved: 0, bonus: false,
+      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
       fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
       // match stats for the results screen (computed by the simulation, so every device agrees)
       st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
@@ -1299,7 +1297,7 @@ function inputOf(m, extra) {
   return Object.assign({ turnNo: m.turnNo, seat: curTank(m).id, actions: m.turn.actions.map(a => Object.assign({}, a)) }, extra);
 }
 // Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1, used = ticks spent on the turn. Returns the TurnInput.
-function cmdFire(m, angle, power, weapon, used, chain) {
+function cmdFire(m, angle, power, weapon, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   const d = CONFIG.tanks[t.tankId];
@@ -1307,8 +1305,7 @@ function cmdFire(m, angle, power, weapon, used, chain) {
   power = clampN(Math.round(power), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
-  chain = !!chain && t.saved > 0;
-  const input = inputOf(m, chain ? { angle, power, weapon, used, chain: true } : { angle, power, weapon, used });
+  const input = inputOf(m, { angle, power, weapon, used });
   t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
@@ -1325,13 +1322,10 @@ function cmdFire(m, angle, power, weapon, used, chain) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele, calm: !!m.turn.calm });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  const add = CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
-  // chain: spend the saved turn -> this shot costs less delay and the same tank gets the very next turn
-  if (chain) { t.saved--; t.bonus = true; t.delay += Math.round(add * CONFIG.turn.pass.chainDelayMul); }
-  else t.delay += add;
   m.phase = 'flight'; m.settle = 0;
-  m.events.push({ type: 'fire', idx: t.idx, weapon, chain });
+  m.events.push({ type: 'fire', idx: t.idx, weapon });
   return input;
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -1353,20 +1347,26 @@ function cmdTimeout(m) {
   m.events.push({ type: 'timeout', idx: t.idx });
   return input;
 }
-// Pass (턴 넘기기): no shot, a lighter delay, and the turn is saved (max pass.maxSaved) for a chained double turn later
+// Pass (턴 넘기기, 원작식): no shot, only a light delay. Turn order stays pure delay.
+function passCost(m, t, used) {
+  const d = CONFIG.tanks[t.tankId];
+  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
+}
+// would this tank get the very next turn again if it passed now? (same rule as beginTurn: lowest delay, then lowest idx)
+function passGetsTurnBack(m, t, used) {
+  const nd = t.delay + passCost(m, t, used);
+  return m.tanks.every(o => o === t || !o.alive || nd < o.delay || (nd === o.delay && t.idx < o.idx));
+}
 function cmdPass(m, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pass: true, used });
-  const d = CONFIG.tanks[t.tankId], P = CONFIG.turn.pass;
-  t.delay += Math.round(CONFIG.turn.baseDelay[d.speedClass] * P.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
-    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
-  const gained = t.saved < P.maxSaved;
-  if (gained) t.saved++;
+  t.delay += passCost(m, t, used);
   t.st.passes = (t.st.passes || 0) + 1;
   m.phase = 'settle'; m.settle = 0;
-  m.events.push({ type: 'pass', idx: t.idx, gained, saved: t.saved });
+  m.events.push({ type: 'pass', idx: t.idx });
   return input;
 }
 function endTurnAfterDeath(m) {
@@ -1385,7 +1385,7 @@ function applyTurnInput(m, input) {
     if (input.forfeit) cmdForfeit(m, input.forfeit);
     else if (input.timeout) cmdTimeout(m);
     else if (input.pass) cmdPass(m, input.used);
-    else cmdFire(m, input.angle, input.power, input.weapon, input.used, input.chain);
+    else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
   return true;
 }
@@ -1516,9 +1516,8 @@ function beginTurn(m) {
   const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
   if (!red || !blue) { m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw'; m.events.push({ type: 'over', winner: m.winner }); return; }
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
-  const bonus = alive.find(o => o.bonus); // a chained shot: the same tank goes again right away
-  for (const o of m.tanks) o.bonus = false;
-  const t = bonus || alive[0], base = alive[0].delay;
+  const t = alive[0], base = t.delay;
+  const again = m.cur === t.idx; // the same tank twice in a row (its turns were cheaper than everyone else's)
   for (const o of alive) o.delay -= base;
   m.turnNo++;
   m.cur = t.idx;
@@ -1531,7 +1530,7 @@ function beginTurn(m) {
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
-  m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, bonus: !!bonus });
+  m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
   if (t.poison) {
     hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
@@ -1621,7 +1620,7 @@ function stateHash(m) {
   for (let i = 0; i < words.length; i++) h = Math.imul(h ^ words[i], 0x01000193);
   h >>>= 0;
   for (const t of m.tanks) {
-    h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0); h = fnvU32(h, t.saved);
+    h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
     h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-');
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
@@ -1640,7 +1639,7 @@ function createController(match, opts) {
   const c = {
     match, acc: 0, log: [], hashes: match.hashes,
     keys: { left: false, right: false, up: false, down: false, fire: false },
-    aimF: null, powerF: 0, charging: false, weapon: 0, chain: false, timeLeft: CONFIG.turn.timeLimitTicks,
+    aimF: null, powerF: 0, charging: false, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
     onInput: opts.onInput || null,          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
@@ -1673,7 +1672,7 @@ function createController(match, opts) {
   c.onTurnStart = function () {
     const m = c.match, t = curTank(m);
     c.lastTurnSeen = m.turnNo;
-    c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.chain = false; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
   };
   c.emit = function (inp) { if (!inp) return; c.log.push(inp); if (c.onInput) c.onInput(inp); };
   c.localTick = function (t) {
@@ -1698,11 +1697,10 @@ function createController(match, opts) {
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft, c.chain));
+    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
-  // 턴 넘기기 / 연속 사격 toggle (only for the local active tank, never mid-charge)
+  // 턴 넘기기 (only for the local active tank, never mid-charge)
   c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
-  c.toggleChain = function () { const t = curTank(c.match); if (!c.activeLocal() || c.charging || !t || t.saved <= 0) return false; c.chain = !c.chain; return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
@@ -2588,9 +2586,9 @@ function createRenderer(cv, mini) {
         case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
         case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;
         case 'pillarHit': burst(e.x, e.y, '#FFB040', 14); text(e.x, e.y - 30, '불꽃 강화!', '#FFB040'); break;
-        case 'turn': R.follow = t; R.free = false; R.onBanner(e.bonus ? (R.isMine && R.isMine(t) ? '연속 사격! 한 번 더' : `${t.nick} 연속 사격!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
+        case 'turn': R.follow = t; R.free = false; R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
-        case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, e.gained ? '턴 저장 +1' : '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
+        case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
       }
     }
@@ -3868,7 +3866,7 @@ function remoteTick(m, t) {
       else if (fin.timeout) cmdTimeout(m);
       else if (fin.pass) cmdPass(m, fin.used);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used, fin.chain);
+      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
     return;
@@ -4291,9 +4289,10 @@ function updateHud() {
   // 턴 넘기기 / 연속 사격
   const myTurnNow = mineNow && t === cur && m.phase === 'aim' && !ctrl.charging;
   $('passBtn').disabled = !myTurnNow;
-  const cb = $('chainBtn'), maxS = CONFIG.turn.pass.maxSaved;
-  cb.disabled = !myTurnNow || t.saved <= 0; cb.classList.toggle('on', !!ctrl.chain && myTurnNow); cb.setAttribute('aria-pressed', String(!!ctrl.chain && myTurnNow));
-  setTxt('chainSub', ctrl.chain && myTurnNow ? '켜짐 · 쏘면 한 번 더' : `C · 저장 턴 ${t.saved}/${maxS}`);
+  if (myTurnNow) {
+    const used = CONFIG.turn.timeLimitTicks - ctrl.timeLeft;
+    setTxt('passSub', passGetsTurnBack(m, t, used) ? `P · 넘겨도 바로 다시 내 차례` : `P · 딜레이 +${Math.round(passCost(m, t, used))}`);
+  } else setTxt('passSub', 'P · 딜레이 조금만');
   const secs = Math.max(0, Math.ceil(ctrl.timeLeft / CONFIG.physics.tickRate));
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
@@ -4352,13 +4351,13 @@ function updateStatus(m, cur) {
   const L = ON.active ? ON.link : null;
   for (const c of box.querySelectorAll('.sc')) {
     const x = m.tanks[+c.dataset.idx], pos = order.indexOf(x), off = L && !L.online(x.id) && x.id !== ON.myId;
-    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0, x.saved].join(',');
+    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0].join(',');
     if (c.dataset.k === key) continue; c.dataset.k = key;
     c.classList.toggle('now', x === cur && x.alive); c.classList.toggle('dead', !x.alive); c.classList.toggle('off', !!off);
     c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
     c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
     c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
-    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '') + (x.saved ? ' · 저장턴' : '');
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
   }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
@@ -4399,12 +4398,9 @@ window.addEventListener('keydown', e => {
   if (['Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(e.code)) useItemSlot(+e.code.slice(5) - 3);
   if (e.code === 'KeyF') recenter();
   if (e.code === 'KeyP' && !e.repeat) doPass();
-  if (e.code === 'KeyC' && !e.repeat) doChain();
 });
 function doPass() { if (ctrl && ctrl.pass()) AU.play('ui'); }
-function doChain() { if (ctrl && ctrl.toggleChain()) AU.play('ui'); }
 $('passBtn').onclick = doPass;
-$('chainBtn').onclick = doChain;
 window.addEventListener('keyup', e => { if (KEYMAP[e.code] && ctrl) ctrl.keys[KEYMAP[e.code]] = false; camKeys[e.code] = false; });
 window.addEventListener('blur', () => { if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; for (const k in camKeys) camKeys[k] = false; });
 let drag = null;

@@ -7,7 +7,7 @@ function createController(match, opts) {
   const c = {
     match, acc: 0, log: [], hashes: match.hashes,
     keys: { left: false, right: false, up: false, down: false, fire: false },
-    aimF: null, powerF: 0, charging: false, weapon: 0, chain: false, timeLeft: CONFIG.turn.timeLimitTicks,
+    aimF: null, powerF: 0, charging: false, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
     onInput: opts.onInput || null,          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
@@ -40,7 +40,7 @@ function createController(match, opts) {
   c.onTurnStart = function () {
     const m = c.match, t = curTank(m);
     c.lastTurnSeen = m.turnNo;
-    c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.chain = false; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
   };
   c.emit = function (inp) { if (!inp) return; c.log.push(inp); if (c.onInput) c.onInput(inp); };
   c.localTick = function (t) {
@@ -65,11 +65,10 @@ function createController(match, opts) {
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft, c.chain));
+    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
-  // 턴 넘기기 / 연속 사격 toggle (only for the local active tank, never mid-charge)
+  // 턴 넘기기 (only for the local active tank, never mid-charge)
   c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
-  c.toggleChain = function () { const t = curTank(c.match); if (!c.activeLocal() || c.charging || !t || t.saved <= 0) return false; c.chain = !c.chain; return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };

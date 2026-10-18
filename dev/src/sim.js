@@ -45,7 +45,7 @@ function createMatch(opts) {
       idx: i, id: p.id, nick: p.nick, team: p.team, tankId: p.tankId,
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
-      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [], saved: 0, bonus: false,
+      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
       fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
       // match stats for the results screen (computed by the simulation, so every device agrees)
       st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
@@ -283,7 +283,7 @@ function inputOf(m, extra) {
   return Object.assign({ turnNo: m.turnNo, seat: curTank(m).id, actions: m.turn.actions.map(a => Object.assign({}, a)) }, extra);
 }
 // Fire: angle (integer deg), power 0..1000 (integer), weapon 0|1, used = ticks spent on the turn. Returns the TurnInput.
-function cmdFire(m, angle, power, weapon, used, chain) {
+function cmdFire(m, angle, power, weapon, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   const d = CONFIG.tanks[t.tankId];
@@ -291,8 +291,7 @@ function cmdFire(m, angle, power, weapon, used, chain) {
   power = clampN(Math.round(power), 0, 1000);
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
-  chain = !!chain && t.saved > 0;
-  const input = inputOf(m, chain ? { angle, power, weapon, used, chain: true } : { angle, power, weapon, used });
+  const input = inputOf(m, { angle, power, weapon, used });
   t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
@@ -309,13 +308,10 @@ function cmdFire(m, angle, power, weapon, used, chain) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele, calm: !!m.turn.calm });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  const add = CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
-  // chain: spend the saved turn -> this shot costs less delay and the same tank gets the very next turn
-  if (chain) { t.saved--; t.bonus = true; t.delay += Math.round(add * CONFIG.turn.pass.chainDelayMul); }
-  else t.delay += add;
   m.phase = 'flight'; m.settle = 0;
-  m.events.push({ type: 'fire', idx: t.idx, weapon, chain });
+  m.events.push({ type: 'fire', idx: t.idx, weapon });
   return input;
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -337,20 +333,26 @@ function cmdTimeout(m) {
   m.events.push({ type: 'timeout', idx: t.idx });
   return input;
 }
-// Pass (턴 넘기기): no shot, a lighter delay, and the turn is saved (max pass.maxSaved) for a chained double turn later
+// Pass (턴 넘기기, 원작식): no shot, only a light delay. Turn order stays pure delay.
+function passCost(m, t, used) {
+  const d = CONFIG.tanks[t.tankId];
+  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
+}
+// would this tank get the very next turn again if it passed now? (same rule as beginTurn: lowest delay, then lowest idx)
+function passGetsTurnBack(m, t, used) {
+  const nd = t.delay + passCost(m, t, used);
+  return m.tanks.every(o => o === t || !o.alive || nd < o.delay || (nd === o.delay && t.idx < o.idx));
+}
 function cmdPass(m, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pass: true, used });
-  const d = CONFIG.tanks[t.tankId], P = CONFIG.turn.pass;
-  t.delay += Math.round(CONFIG.turn.baseDelay[d.speedClass] * P.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
-    + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
-  const gained = t.saved < P.maxSaved;
-  if (gained) t.saved++;
+  t.delay += passCost(m, t, used);
   t.st.passes = (t.st.passes || 0) + 1;
   m.phase = 'settle'; m.settle = 0;
-  m.events.push({ type: 'pass', idx: t.idx, gained, saved: t.saved });
+  m.events.push({ type: 'pass', idx: t.idx });
   return input;
 }
 function endTurnAfterDeath(m) {
@@ -369,7 +371,7 @@ function applyTurnInput(m, input) {
     if (input.forfeit) cmdForfeit(m, input.forfeit);
     else if (input.timeout) cmdTimeout(m);
     else if (input.pass) cmdPass(m, input.used);
-    else cmdFire(m, input.angle, input.power, input.weapon, input.used, input.chain);
+    else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
   return true;
 }
@@ -500,9 +502,8 @@ function beginTurn(m) {
   const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
   if (!red || !blue) { m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw'; m.events.push({ type: 'over', winner: m.winner }); return; }
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
-  const bonus = alive.find(o => o.bonus); // a chained shot: the same tank goes again right away
-  for (const o of m.tanks) o.bonus = false;
-  const t = bonus || alive[0], base = alive[0].delay;
+  const t = alive[0], base = t.delay;
+  const again = m.cur === t.idx; // the same tank twice in a row (its turns were cheaper than everyone else's)
   for (const o of alive) o.delay -= base;
   m.turnNo++;
   m.cur = t.idx;
@@ -515,7 +516,7 @@ function beginTurn(m) {
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
-  m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, bonus: !!bonus });
+  m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
   if (t.poison) {
     hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
@@ -605,7 +606,7 @@ function stateHash(m) {
   for (let i = 0; i < words.length; i++) h = Math.imul(h ^ words[i], 0x01000193);
   h >>>= 0;
   for (const t of m.tanks) {
-    h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0); h = fnvU32(h, t.saved);
+    h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
     h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-');
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }

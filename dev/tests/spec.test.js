@@ -329,29 +329,26 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   check('공통', '이동력 30% 증가 (루키 190→247px)', 247, Math.round(ms.tanks[0].x - 1000), Math.abs(ms.tanks[0].x - 1000 - 247) < 1);
 }
 
-// ---- 턴 넘기기 / 연속 사격 / 이동력 바닥에서 방향 전환
+// ---- 턴 넘기기(원작식: 딜레이만) / 이동력 바닥에서 방향 전환
 {
-  // pass: delay base x 0.5, one saved turn (max 1)
   const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]);
   const t = m.tanks[0], d0 = t.delay;
-  A.cmdPass(m, 0);
-  check('공통', '턴 넘기기: 딜레이 = 기본의 절반(370)', 370, t.delay - d0, t.delay - d0 === 370);
-  check('공통', '턴 넘기기: 저장 턴 +1', 1, t.saved, t.saved === 1);
-  // a second pass does not stack beyond 1
-  const m2 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m2.tanks[0].saved = 1; A.cmdPass(m2, 0);
-  check('공통', '저장 턴은 최대 1개', 1, m2.tanks[0].saved, m2.tanks[0].saved === 1);
-  // chain: the same tank gets the next turn although its delay is higher than the opponent's
-  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[0].saved = 1; m3.tanks[1].delay = 10;
-  const inp = A.cmdFire(m3, 45, 300, 0, 0, true);
-  check('공통', '연속 사격: 저장 턴 소모 · 딜레이 절반', '0, 370', `${m3.tanks[0].saved}, ${m3.tanks[0].delay}`, m3.tanks[0].saved === 0 && m3.tanks[0].delay === 370 && inp.chain === true);
-  runFlight(m3);
-  check('공통', '연속 사격: 같은 탱크가 바로 한 번 더', 'rookie', m3.tanks[m3.cur].tankId, m3.tanks[m3.cur].tankId === 'rookie');
-  A.cmdFire(m3, 45, 300, 0, 0, true); // no saved turn left -> ordinary shot
-  runFlight(m3);
-  check('공통', '저장 턴 없으면 연속 사격 무시 → 상대 차례', 'trapper', m3.tanks[m3.cur].tankId, m3.tanks[m3.cur].tankId === 'trapper');
-  // tempo: pass + chained pair costs the same delay as two normal shots
-  const base = CONFIG.turn.baseDelay[CONFIG.tanks.rookie.speedClass];
-  check('공통', '넘기기+연속 2발 = 일반 2발과 같은 딜레이', 2 * base, Math.round(base * 0.5) + Math.round(base * 0.5) + base, Math.round(base * 0.5) * 2 + base === 2 * base);
+  A.cmdPass(m, 120); // 1 s used
+  check('공통', '턴 넘기기: 딜레이 = 기본 1/4 + 시간 (185+4)', 189, t.delay - d0, t.delay - d0 === 189);
+  // opponent far behind -> passing brings the turn straight back (new wind)
+  const m2 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m2.tanks[1].delay = 500;
+  A.cmdPass(m2, 0); runFlight(m2);
+  check('공통', '넘긴 뒤 상대 딜레이가 더 크면 바로 다시 내 차례', 'rookie', m2.tanks[m2.cur].tankId, m2.tanks[m2.cur].tankId === 'rookie');
+  // even pace: pass then shoot, the opponent is next (no free double)
+  A.cmdFire(m2, 45, 300, 0, 600); runFlight(m2);
+  check('공통', '넘기고 쏜 뒤엔 상대 차례', 'trapper', m2.tanks[m2.cur].tankId, m2.tanks[m2.cur].tankId === 'trapper');
+  // the opponent's expensive turn (move + weapon 2 + long think) lets me go twice in a row
+  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[1].delay = 300;
+  A.cmdFire(m3, 45, 300, 0, 0); runFlight(m3); // me: 740
+  const o = m3.tanks[m3.cur]; let g3 = 0; while (A.cmdMove(m3, -1) !== false && g3++ < 4000 && o.fuel > 0) {}
+  A.cmdFire(m3, 45, 300, 1, 60 * 120); runFlight(m3); // trapper: 300+740+100+109+240 = 1489
+  const order = [m3.tanks[m3.cur].tankId]; A.cmdFire(m3, 45, 300, 0, 0); runFlight(m3); order.push(m3.tanks[m3.cur].tankId); // me: 1480 < 1489
+  check('공통', '상대 턴이 비싸면 자동으로 연속 턴', 'rookie, rookie', order.join(', '), order[0] === 'rookie' && order[1] === 'rookie');
   // facing with no fuel
   const mf = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); const tf = mf.tanks[0];
   let g = 0; while (tf.fuel > 0 && g++ < 5000) A.cmdMove(mf, 1);
@@ -364,7 +361,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   // pass replays too
   const mp = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); const pin = A.cmdPass(mp, 600);
   const mq = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); A.applyTurnInput(mq, pin);
-  check('공통', '턴 넘기기가 다른 기기에서도 똑같이 재현', 'same', A.stateHash(mq) === A.stateHash(mp) ? 'same' : 'diff', A.stateHash(mq) === A.stateHash(mp) && mq.tanks[0].saved === 1);
+  check('공통', '턴 넘기기가 다른 기기에서도 똑같이 재현', 'same', A.stateHash(mq) === A.stateHash(mp) ? 'same' : 'diff', A.stateHash(mq) === A.stateHash(mp));
 }
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });

@@ -303,7 +303,7 @@ function remoteTick(m, t) {
       else if (fin.timeout) cmdTimeout(m);
       else if (fin.pass) cmdPass(m, fin.used);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used, fin.chain);
+      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
     return;

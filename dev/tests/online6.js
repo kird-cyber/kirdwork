@@ -1,4 +1,4 @@
-// online6: like online.js, but turns use 턴 넘기기 / 연속 사격 — hashes must still agree on every device
+// online6: like online.js, but turns use 턴 넘기기 — hashes must still agree on every device
 // M4 online test: real Mosquitto broker + several separate browsers.
 // needs: node tests/broker.js 9001  and  (cd dist && python3 -m http.server 8765)
 // run:   NODE_PATH=/opt/npm-tools/node_modules node tests/online.js [players=4]
@@ -12,7 +12,7 @@ const ok = (c, s) => { console.log((c ? 'PASS ' : 'FAIL ') + s); c ? pass++ : fa
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { if (await fn()) return true; } catch (e) {} await sleep(step); } return false; }
 
-let PASSES = 0, CHAINS = 0;
+let PASSES = 0;
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] }).catch(() => chromium.launch());
   const errors = [];
@@ -101,12 +101,9 @@ let PASSES = 0, CHAINS = 0;
           const dir = Math.random() < 0.5 ? 'ArrowLeft' : 'ArrowRight';
           await P.keyboard.down(dir); await sleep(250 + Math.random() * 400); await P.keyboard.up(dir);
           await P.keyboard.down('ArrowUp'); await sleep(150); await P.keyboard.up('ArrowUp');
-          // online6: every other turn passes (P), the rest try the chained shot (C) before firing
+          // online6: every other turn passes (P), the rest fire
           if (s.turn % 2 === 0) { await P.keyboard.press('KeyP'); PASSES++; }
-          else {
-            await P.keyboard.press('KeyC'); if (await P.evaluate(() => __pg.ctrl.chain)) CHAINS++;
-            await P.keyboard.down('Space'); await sleep(500 + Math.random() * 900); await P.keyboard.up('Space');
-          }
+          else { await P.keyboard.down('Space'); await sleep(500 + Math.random() * 900); await P.keyboard.up('Space'); }
         }
       }
       await sleep(200);
@@ -192,7 +189,7 @@ let PASSES = 0, CHAINS = 0;
 
   const realErr = errors.filter(e => !/resync|ERR_TUNNEL|status of 404|fonts\.g/.test(e));
   ok(realErr.length === 0, '페이지 오류 없음' + (realErr.length ? ' — ' + realErr.slice(0, 5).join(' | ') : ''));
-  ok(PASSES > 0 && CHAINS > 0, `턴 넘기기 ${PASSES}번 · 연속 사격 ${CHAINS}번 사용`);
+  ok(PASSES > 0, `턴 넘기기 ${PASSES}번 사용`);
   console.log(`\n${pass} passed, ${fail} failed`);
   await browser.close();
   process.exit(fail ? 1 : 0);
