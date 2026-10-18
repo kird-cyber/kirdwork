@@ -94,13 +94,14 @@ function tankCardHTML(k) {
       <p class="tc-desc">${esc(h.name)} 무기: 1번 ${esc(h.weapons[0].name)} · 2번 ${esc(h.weapons[1].name)} (탱크를 눌러 자세히 보기)</p>`;
   }
   const d = CONFIG.tanks[k], all = PICK_KEYS.concat(HIDDEN_KEYS).map(x => CONFIG.tanks[x]);
-  const mx = f => Math.max(...all.map(f)), mn = f => Math.min(...all.map(f));
-  const bar = (label, v, lo, hi, text) => { const r = hi > lo ? 0.2 + 0.8 * (v - lo) / (hi - lo) : 1; return `<div class="tc-stat"><span>${label}</span><i><em style="width:${Math.round(r * 100)}%"></em></i><b>${text}</b></div>`; };
-  const delay = CONFIG.turn.baseDelay[d.speedClass];
-  const stats = bar('체력', d.hp, mn(t => t.hp), mx(t => t.hp), d.hp)
-    + bar('방어', -d.dmgTaken, -mx(t => t.dmgTaken), -mn(t => t.dmgTaken), `받는 피해 ${Math.round(d.dmgTaken * 100)}%`)
-    + bar('이동력', d.movePx, mn(t => t.movePx), mx(t => t.movePx), d.movePx)
-    + bar('속도', -delay, -mx(t => CONFIG.turn.baseDelay[t.speedClass]), -mn(t => CONFIG.turn.baseDelay[t.speedClass]), `딜레이 ${delay}`);
+  // bars are proportional to the best value among all tanks (0 → empty, best → full), so 850 vs 1050 hp reads as 81% vs 100%
+  const mx = f => Math.max(...all.map(f));
+  const bar = (label, r, text) => `<div class="tc-stat"><span>${label}</span><i><em style="width:${Math.round(Math.min(1, r) * 100)}%"></em></i><b>${text}</b></div>`;
+  const dl = t => CONFIG.turn.baseDelay[t.speedClass], delay = dl(d);
+  const stats = bar('체력', d.hp / mx(t => t.hp), d.hp)
+    + bar('방어', mx(t => 1 / t.dmgTaken) ? (1 / d.dmgTaken) / mx(t => 1 / t.dmgTaken) : 1, `받는 피해 ${Math.round(d.dmgTaken * 100)}%`)
+    + bar('이동력', d.movePx / mx(t => t.movePx), d.movePx)
+    + bar('속도', (1 / delay) / mx(t => 1 / dl(t)), `딜레이 ${delay}`);
   const traits = tankTraitText(d);
   const wep = (w, i) => `<div class="tc-wep"><div class="tc-wn"><kbd>${i + 1}</kbd>${esc(w.name)}</div><p>${esc(WEAPON_DESC[w.id] || '')}</p><div class="tc-chips">${weaponChips(w).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
   return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">? 랜덤 전용 히든 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
