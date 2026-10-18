@@ -127,12 +127,13 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
       await P.keyboard.down('ArrowUp'); await sleep(700); await P.keyboard.up('ArrowUp');
       await P.keyboard.down('ArrowRight'); await sleep(600); await P.keyboard.up('ArrowRight');
       await sleep(500);
-      // bend the curve: drag point 3 somewhere else on the active screen
-      const scr = await P.evaluate(() => { const c = __pg.ctrl, w = c.worldPts()[2], r = __pg.R; return { x: (w[0] - r.cam.x) * r.cam.zoom + innerWidth / 2, y: (w[1] - r.cam.y) * r.cam.zoom + (innerHeight) / 2 }; });
-      await P.evaluate(() => { const t = __pg.match.subs[__pg.match.cur], c = __pg.ctrl; c.setPoint(1, t.x + 120, t.y - 160); });
+      // bend the curve on the active screen: nobody else may receive it
+      await P.evaluate(() => { const t = __pg.match.subs[__pg.match.cur]; __pg.ctrl.setPoint(1, t.x + 120, t.y - 160); });
       await sleep(900);
-      const [a, b] = await Promise.all([P.evaluate(() => { const t = __pg.match.subs[__pg.match.cur]; return JSON.stringify(__pg.ctrl.worldPts(t)) + '/' + t.x.toFixed(1); }), O.evaluate(() => { const t = __pg.match.subs[__pg.match.cur]; return JSON.stringify(__pg.ON.ghost && __pg.ON.ghost.pts) + '/' + t.x.toFixed(1); })]);
-      ok(a === b, `다른 사람 화면에도 곡선·이동이 실시간 반영 (${a} vs ${b})`);
+      const [a, b] = await Promise.all([P, O].map(x => x.evaluate(() => { const t = __pg.match.subs[__pg.match.cur]; return t.x.toFixed(1) + ',' + t.y.toFixed(1); })));
+      ok(a === b, `다른 사람 화면에도 이동이 실시간 반영 (${a} vs ${b})`);
+      const leak = await O.evaluate(() => JSON.stringify(__pg.ON.live || {}).includes('pts'));
+      ok(!leak, '곡선(조준)은 다른 사람에게 전송되지 않음');
       await P.keyboard.down('Space'); await sleep(600);
       const spec = await O.evaluate(() => ({ pw: document.getElementById('pw').style.width, who: document.getElementById('whoName').textContent, me: __pg.ON.nick }));
       const act = await P.evaluate(() => document.getElementById('pw').style.width);

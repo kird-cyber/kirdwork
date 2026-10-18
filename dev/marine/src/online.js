@@ -310,7 +310,6 @@ function remoteTick(m, t) {
   const lv = ON.live;
   if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
     if (m.phase !== 'aim') return;
-    ON.ghost = lv.pts ? { turnNo: m.turnNo, pts: lv.pts } : null; // the curve is shown to everyone; the gauge and weapon stay private
     if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
   }
   if (ctrl.timeLeft > 0) ctrl.timeLeft--;
@@ -363,7 +362,7 @@ function onlineFrame(now) {
   setTurnTitle(ctrl.activeLocal() && document.hidden);
   // live feed of my turn for everyone else
   if (ctrl.activeLocal()) {
-    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, pts: ctrl.worldPts(t) }; // the gauge and weapon are not shared
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions }; // only movement and items are live; the curve, gauge and weapon stay private
     const s = JSON.stringify(lv);
     if ((s !== ON.lastLive && now - ON.lastLiveAt > 250) || now - ON.lastLiveAt > 1000) {
       ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);

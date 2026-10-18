@@ -75,7 +75,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 #banner { position: absolute; left: 50%; top: 22%; transform: translate(-50%, -50%); padding: 12px 26px; border-radius: 14px; background: var(--panel); font-family: var(--font-display); font-size: 28px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .25s; }
 #banner.show { opacity: 1; }
-#hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(132px + env(safe-area-inset-bottom, 0px)); padding: 6px 14px; border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--muted); pointer-events: none; white-space: nowrap; }
+#hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--hudh, 120px) + 22px); padding: 6px 14px; border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--muted); pointer-events: none; white-space: nowrap; }
 
 .hud-bottom { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 12px 16px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
 .who { display: flex; align-items: center; gap: 10px; min-width: 210px; }
@@ -90,6 +90,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .wep:disabled { opacity: 0.4; cursor: not-allowed; }
 .wep small { font-weight: 500; opacity: 0.8; margin-left: 4px; }
 .angle { display: flex; align-items: center; gap: 8px; }
+.padbox { flex: 0 0 auto; }
+#aimPad { display: block; width: 400px; height: 170px; border-radius: 10px; border: 1px solid #2C4A66; background: #061A2B; cursor: crosshair; touch-action: none; }
+@media (min-width: 1600px) { #aimPad { width: 460px; height: 192px; } }
+@media (max-width: 1360px) { #aimPad { width: 330px; height: 146px; } }
+@media (max-width: 1120px) { #aimPad { width: 280px; height: 130px; } }
+@media (max-width: 1500px) { .hud-bottom .items { display: grid; grid-template-columns: repeat(2, auto); } }
 #angDial { width: 88px; height: 48px; }
 .angnum { display: flex; flex-direction: column; align-items: flex-start; min-width: 64px; }
 .setrow { display: flex; gap: 6px; }
@@ -292,7 +298,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .probe::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #6B7590; flex-shrink: 0; }
 .probe[data-s="ok"]::before { background: var(--good); } .probe[data-s="fail"] { color: #FFB4A4; } .probe[data-s="fail"]::before { background: var(--red); }
-.coach { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; background: rgba(20, 26, 43, 0.94); border: 2px solid var(--gold); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.coach { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--hudh, 150px) + 30px); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; background: rgba(20, 26, 43, 0.94); border: 2px solid var(--gold); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
 .coach .ch { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: var(--gold); }
 .coach p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
 .coach:not([hidden]) ~ #hint { display: none; }
@@ -383,7 +389,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
   <div id="gameMsgs" class="gmsgs" aria-live="polite"></div>
   <div id="netState" role="status" hidden></div>
-  <div id="hint" hidden>방향키 이동 · 노란 점 1·2·3을 끌어 곡선 · 물을 더블클릭하면 그곳으로 직선 · 스페이스를 누르고 있다가 떼면 발사 · 빈 곳 드래그로 맵 둘러보기</div>
+  <div id="hint" hidden>방향키 이동 · 아래 조준판에서 점 1·2·3을 끌어 곡선 (휠 확대 · Tab 점 선택 · Shift+방향키 미세 조정) · 스페이스를 누르고 있다가 떼면 발사</div>
 
   <div class="touch" id="touch" hidden>
     <div>
@@ -410,11 +416,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <button class="wep" id="w0" type="button"></button>
       <button class="wep" id="w1" type="button"></button>
     </div>
-    <div class="angle"><canvas id="angDial" width="176" height="96" aria-hidden="true"></canvas><div class="angnum"><span class="v" id="angTxt">-</span><span class="r" id="angReal">-</span></div></div>
+    <div class="padbox"><canvas id="aimPad" aria-label="조준판: 노란 점 1·2·3을 끌어 곡선을 그립니다"></canvas></div>
     <div class="power">
       <div class="row"><span>폭발 지점</span><span id="pwTxt">0%</span></div>
       <div class="gauge" id="gauge"><div id="pw"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div><div id="pwLast"></div></div>
-      <div class="row" style="font-weight:500"><span>곡선 처음 → 끝 · 흰 선 = 지난번 폭발 지점</span></div>
+      <div class="row" style="font-weight:500"><span>곡선 처음 → 끝 · 흰 선 = 지난번</span></div>
     </div>
     <div class="items" id="items"></div>
   </div>
@@ -522,11 +528,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
       <div class="help">
         <div><b>방향키</b>상하좌우·대각선 이동 (이동력 소모)</div>
-        <div><b>노란 점 1·2·3</b>끌어서 어뢰 곡선 그리기</div>
-        <div><b>스페이스</b>누르면 불빛이 곡선을 달림, 떼는 곳에서 폭발</div>
+        <div><b>조준판</b>아래 조준판에서 점 1·2·3을 끌어 곡선 그리기 · 한 칸 250, 굵은 줄 1000 · 맵에는 곡선이 안 보임</div>
+        <div><b>스페이스</b>누르는 동안 게이지가 참, 떼면 곡선의 그 지점에서 폭발</div>
         <div><b>1 / 2</b>무기 선택</div>
         <div><b>3 ~ 6</b>아이템 사용 (턴당 1개)</div>
         <div><b>A / D · 드래그</b>맵 둘러보기</div>
+        <div><b>Tab · Shift+방향키</b>조준판 점 선택 · 미세 조정 (휠 = 확대)</div>
         <div><b>F · R</b>내 잠수함으로 시점 복귀 · 곡선 처음으로</div>
         <div><b>미니맵 클릭</b>그 위치로 이동</div>
         <div><b>박치기</b>적을 밀어 바위에 박거나 맵 밖으로 밀면 탈락</div>

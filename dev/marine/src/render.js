@@ -320,7 +320,7 @@ function createRenderer(cv, mini) {
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
     for (const c of m.crates) drawCrate(c);
     for (const f of R.fx) if (f.kind === 'wreck') drawFx(f);
-    if (ui) drawAim(ui);
+    if (ui) drawAim(ui); // (the game passes no aim: the curve lives only on the aiming panel)
     for (const t of m.subs) if (t.alive) drawSub(t, ui);
     for (const p of m.proj) drawTorp(p);
     for (const f of R.fx) if (f.kind !== 'wreck') drawFx(f);
@@ -478,7 +478,7 @@ function createRenderer(cv, mini) {
       ctx.fillStyle = TEAMC[t.team]; ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill();
       ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(16, -8); ctx.lineTo(16, 8); ctx.fill(); ctx.restore();
       ctx.fillStyle = '#fff'; ctx.font = '900 11px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(Math.round(Math.sqrt((t.x - cam.x) ** 2 + (t.y - cam.y) ** 2) / 10) + 'm', 0, 4);
+      ctx.fillText(t.nick.slice(0, 1), 0, 4); // no distance number: range is judged by eye
       ctx.font = '700 11px "Noto Sans KR", sans-serif'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.strokeText(t.nick, 0, 31); ctx.fillText(t.nick, 0, 31);
       ctx.restore();
     }

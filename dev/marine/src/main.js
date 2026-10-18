@@ -161,25 +161,89 @@ function hudSub(m) {
   if (!ON.active && cur && PRACTICE.bots[cur.id]) { const humans = m.subs.filter(x => !PRACTICE.bots[x.id]); return humans.find(x => x.alive) || humans[0] || cur; }
   return cur;
 }
-// the aim overlay for this frame (null when nobody local is aiming)
-function aimUi(m) {
-  if (!m || m.phase !== 'aim' || m.cur < 0) return null;
-  const t = m.subs[m.cur];
-  if (!ctrl.activeLocal()) {
-    if (ON.active && ON.ghost && ON.ghost.turnNo === m.turnNo) return { ghost: true, path: buildPath(t, ON.ghost.pts) };
-    if (!ON.active && PRACTICE.bots[t.id] && BOTVIEW.pts) return { ghost: false, path: buildPath(t, BOTVIEW.pts), pts: BOTVIEW.pts, dropFrom: -1, charging: BOTVIEW.charging, gauge: BOTVIEW.gauge, shape: null };
-    return null;
-  }
-  const d = CONFIG.subs[t.subId], pts = ctrl.worldPts(t), path = buildPath(t, pts), w = d.weapons[ctrl.weapon];
-  const drift = m.current * CONFIG.physics.currentPush * (path.L / CONFIG.physics.torpSpeed);
-  const mem = ctrl.mem[t.idx];
-  return {
-    path, pts, muzzle: [path.xs[0], path.ys[0]], dropFrom: path.used < 3 ? path.used : -1, cut: path.L >= d.range - 0.5,
-    charging: ctrl.charging, gauge: ctrl.gauge, shape: { rx: w.rx, ry: w.ry, thin: w.thin || 0 },
-    driftEnd: Math.abs(drift) > 4 && !m.turn.calm ? [path.xs[path.xs.length - 1] + drift, path.ys[path.ys.length - 1]] : null,
-    last: mem && mem.burst, hover: AIMDRAG.hover, drag: AIMDRAG.idx,
-  };
+// ---------------------------------------------------------------- aiming panel (조준판)
+// The curve exists only here: a scaled-down grid centred on my sub (one cell = 250, bold line = 1000).
+// The map never shows the curve or where it will burst, so range has to be judged by eye.
+const PAD = { zooms: [0.75, 1, 1.5, 2, 3], zi: 1, drag: -1, hover: -1, sel: 2, span: 2400, used: false }; // span = world px from the centre to the side edge at ×1
+const pad = $('aimPad'), pctx = pad.getContext('2d');
+function padSize() {
+  const r = pad.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (w && h && (pad.width !== w || pad.height !== h)) { pad.width = w; pad.height = h; }
+  return { w: r.width, h: r.height, dpr };
 }
+const padScale = S => (S.w / 2) / (PAD.span / PAD.zooms[PAD.zi]); // css px per world px
+function padSub() { return match && ctrl && ctrl.activeLocal() ? match.subs[match.cur] : null; }
+function padPts(t, S) { const s = padScale(S); return ctrl.worldPts(t).map(p => [S.w / 2 + (p[0] - t.x) * s, S.h / 2 + (p[1] - t.y) * s]); }
+function drawPad() {
+  const S = padSize(); if (!S.w) return;
+  const x = pctx, W = S.w, H = S.h, cx = W / 2, cy = H / 2, s = padScale(S);
+  x.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  x.fillStyle = '#061A2B'; x.fillRect(0, 0, W, H);
+  for (const [step, col] of [[250, 'rgba(120,200,255,0.10)'], [1000, 'rgba(120,200,255,0.30)']]) {
+    x.strokeStyle = col; x.lineWidth = 1; x.beginPath();
+    for (let i = -Math.ceil(cx / (step * s)); i <= Math.ceil(cx / (step * s)); i++) { const X = Math.round(cx + i * step * s) + 0.5; x.moveTo(X, 0); x.lineTo(X, H); }
+    for (let i = -Math.ceil(cy / (step * s)); i <= Math.ceil(cy / (step * s)); i++) { const Y = Math.round(cy + i * step * s) + 0.5; x.moveTo(0, Y); x.lineTo(W, Y); }
+    x.stroke();
+  }
+  x.fillStyle = 'rgba(150,210,255,0.55)'; x.font = '600 9px "IBM Plex Mono", monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+  for (let i = 1; i * 1000 * s < cx; i++) { x.fillText(String(i), cx + i * 1000 * s, 3); x.fillText(String(i), cx - i * 1000 * s, 3); }
+  x.textBaseline = 'alphabetic';
+  const t = padSub(), me = match && hudSub(match);
+  if (me) drawSubAt(x, me.subId, cx, cy, 0.32, 0, TEAMC[me.team], t ? buildPath(t, ctrl.worldPts(t)).face : (me.idx % 2 ? -1 : 1));
+  x.font = '700 11px "Noto Sans KR", sans-serif';
+  if (!t) {
+    x.fillStyle = 'rgba(200,225,255,0.6)'; x.textAlign = 'center';
+    x.fillText(match && match.phase === 'aim' ? '내 차례에 조준합니다' : '', cx, H - 10);
+    return;
+  }
+  const d = CONFIG.subs[t.subId], path = buildPath(t, ctrl.worldPts(t)), P = padPts(t, S);
+  // range ring
+  x.strokeStyle = 'rgba(255,210,74,0.25)'; x.setLineDash([3, 4]); x.beginPath(); x.arc(cx, cy, d.range * s, 0, 7); x.stroke(); x.setLineDash([]);
+  // refused part of the control polygon (bend too sharp)
+  if (path.used < 3) {
+    x.strokeStyle = 'rgba(255,90,74,0.85)'; x.lineWidth = 1.5; x.setLineDash([4, 4]); x.beginPath();
+    const a = path.used === 0 ? [cx + (path.xs[0] - t.x) * s, cy + (path.ys[0] - t.y) * s] : P[path.used - 1];
+    x.moveTo(a[0], a[1]); for (let i = path.used; i < 3; i++) x.lineTo(P[i][0], P[i][1]); x.stroke(); x.setLineDash([]);
+  }
+  x.strokeStyle = '#FFD24A'; x.lineWidth = 2; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+  for (let i = 0; i < path.xs.length; i++) { const X = cx + (path.xs[i] - t.x) * s, Y = cy + (path.ys[i] - t.y) * s; i ? x.lineTo(X, Y) : x.moveTo(X, Y); }
+  x.stroke();
+  if (ctrl.charging) {
+    const q = pathAt(path, burstDistance(path, Math.round(ctrl.gauge))), X = cx + (q.x - t.x) * s, Y = cy + (q.y - t.y) * s;
+    x.fillStyle = '#FFF6C8'; x.beginPath(); x.arc(X, Y, 4, 0, 7); x.fill();
+  }
+  P.forEach((q, i) => {
+    const bad = i >= path.used, hot = PAD.hover === i || PAD.drag === i, r = hot ? 9 : 8;
+    x.fillStyle = bad ? '#FF7A59' : hot ? '#FFF0A8' : '#FFD24A'; x.strokeStyle = PAD.sel === i ? '#FFFFFF' : '#3A2A00'; x.lineWidth = PAD.sel === i ? 2 : 1.5;
+    x.beginPath(); x.arc(q[0], q[1], r, 0, 7); x.fill(); x.stroke();
+    x.fillStyle = '#2A1A00'; x.font = '800 10px "IBM Plex Mono", monospace'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(i + 1), q[0], q[1] + 0.5); x.textBaseline = 'alphabetic';
+  });
+  x.font = '700 10px "IBM Plex Mono", monospace'; x.textAlign = 'left'; x.fillStyle = 'rgba(220,235,255,0.8)';
+  x.fillText(`곡선 ${Math.round(path.L)} / ${d.range}` + (path.used < 3 ? `  꺾임 초과(${d.turn}°)` : `  꺾임 ${d.turn}°`), 6, H - 6);
+  x.textAlign = 'right'; x.fillText(`×${PAD.zooms[PAD.zi]}`, W - 6, H - 6);
+}
+// the hint line and the tutorial box sit just above the bottom panel, whatever its height
+try { const hb = document.querySelector('.hud-bottom'); new ResizeObserver(() => document.documentElement.style.setProperty('--hudh', hb.offsetHeight + 'px')).observe(hb); } catch (e) {}
+function padLocal(e) { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function padNearest(t, px, py, S, maxR) { let best = -1, bd = maxR * maxR; padPts(t, S).forEach((q, i) => { const dd = (q[0] - px) ** 2 + (q[1] - py) ** 2; if (dd < bd) { bd = dd; best = i; } }); return best; }
+function padSet(t, i, px, py, S) { const s = padScale(S); ctrl.setPoint(i, t.x + (px - S.w / 2) / s, t.y + (py - S.h / 2) / s); PAD.used = true; }
+pad.addEventListener('pointerdown', e => {
+  const t = padSub(); if (!t || ctrl.charging) return;
+  const S = padSize(), [px, py] = padLocal(e);
+  // grab the handle under the pointer; on empty grid the nearest handle jumps there
+  let i = padNearest(t, px, py, S, 14); if (i < 0) i = padNearest(t, px, py, S, 1e6);
+  PAD.drag = PAD.sel = i; pad.setPointerCapture(e.pointerId); padSet(t, i, px, py, S);
+});
+pad.addEventListener('pointermove', e => {
+  const t = padSub(), S = padSize(), [px, py] = padLocal(e);
+  if (PAD.drag >= 0) { if (t && !ctrl.charging) padSet(t, PAD.drag, px, py, S); else PAD.drag = -1; return; }
+  PAD.hover = t ? padNearest(t, px, py, S, 14) : -1;
+});
+pad.addEventListener('pointerup', () => { PAD.drag = -1; });
+pad.addEventListener('pointerleave', () => { PAD.hover = -1; });
+pad.addEventListener('wheel', e => { e.preventDefault(); PAD.zi = clampN(PAD.zi + (e.deltaY < 0 ? 1 : -1), 0, PAD.zooms.length - 1); }, { passive: false });
+// keyboard fine-tuning of the selected handle: Tab picks, Shift+arrows nudge by 10
+function padNudge(dx, dy) { const t = padSub(); if (!t || ctrl.charging) return; const p = ctrl.worldPts(t)[PAD.sel]; ctrl.setPoint(PAD.sel, p[0] + dx, p[1] + dy); PAD.used = true; }
 function updateHud() {
   const m = match, t = hudSub(m), cur = m.cur >= 0 ? m.subs[m.cur] : null; if (!t || !cur) return;
   const mineNow = ctrl.activeLocal();
@@ -188,14 +252,6 @@ function updateHud() {
   setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * Math.min(1, t.fuel / d.movePx)) + '%';
-  // curve box: length / range and how many points the bend limit allowed
-  if (mineNow && t === cur) {
-    const path = buildPath(t, ctrl.worldPts(t));
-    setTxt('angTxt', `${Math.round(path.L)}`);
-    setTxt('angReal', path.used < 3 ? `점 ${path.used + 1}부터 꺾임 초과 (한도 ${d.turn}°)` : `곡선 / 사거리 ${d.range} · 꺾임 ${d.turn}°`);
-    const dk = ctrl.rel.map(p => p.map(Math.round).join(',')).join(';') + t.x + ',' + t.y + path.used;
-    if (hudCache.dial !== dk) { hudCache.dial = dk; drawCurveIcon(t, path); }
-  } else if (hudCache.dial !== 'idle') { hudCache.dial = 'idle'; setTxt('angTxt', `${d.range}`); setTxt('angReal', `사거리 · 꺾임 한도 ${d.turn}°`); $('angDial').getContext('2d').clearRect(0, 0, 176, 96); }
   const pw = ctrl.charging && mineNow ? ctrl.gauge / 1000 : 0;
   $('gauge').classList.toggle('charging', ctrl.charging && mineNow);
   $('pw').style.width = (pw * 100) + '%';
@@ -238,20 +294,6 @@ function updateHud() {
   const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';
   const waitTxt = gone ? gone : botTurn ? botTurn : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
-}
-// small picture of the curve in the HUD box
-function drawCurveIcon(t, path) {
-  const c = $('angDial'), x = c.getContext('2d'), W = c.width, H = c.height;
-  x.clearRect(0, 0, W, H);
-  let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9;
-  for (let i = 0; i < path.xs.length; i++) { mnx = Math.min(mnx, path.xs[i]); mxx = Math.max(mxx, path.xs[i]); mny = Math.min(mny, path.ys[i]); mxy = Math.max(mxy, path.ys[i]); }
-  const s = Math.min((W - 24) / Math.max(1, mxx - mnx), (H - 20) / Math.max(1, mxy - mny));
-  const px = X => 12 + (X - mnx) * s + ((W - 24) - (mxx - mnx) * s) / 2, py = Y => 10 + (Y - mny) * s + ((H - 20) - (mxy - mny) * s) / 2;
-  x.strokeStyle = '#FFD24A'; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath();
-  for (let i = 0; i < path.xs.length; i++) i ? x.lineTo(px(path.xs[i]), py(path.ys[i])) : x.moveTo(px(path.xs[i]), py(path.ys[i]));
-  x.stroke();
-  x.fillStyle = TEAMC[t.team]; x.beginPath(); x.arc(px(path.xs[0]), py(path.ys[0]), 5, 0, 7); x.fill();
-  x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(px(path.xs[path.xs.length - 1]), py(path.ys[path.ys.length - 1]), 4, 0, 7); x.fill();
 }
 function updateStatus(m, cur) {
   const box = $('status');
@@ -299,6 +341,8 @@ window.addEventListener('pointerdown', () => AU.unlock(), { capture: true });
 window.addEventListener('keydown', e => {
   AU.unlock();
   if (!inGame() || e.target.tagName === 'INPUT') return;
+  if (e.shiftKey && e.code.startsWith('Arrow')) { e.preventDefault(); const k = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.code]; padNudge(k[0], k[1]); return; }
+  if (e.code === 'Tab') { e.preventDefault(); PAD.sel = (PAD.sel + (e.shiftKey ? 2 : 1)) % 3; return; }
   if (KEYMAP[e.code]) { e.preventDefault(); if (!e.repeat) { ctrl.keys[KEYMAP[e.code]] = true; if (e.code !== 'Space') R.free = false; } }
   if (['KeyA', 'KeyD', 'KeyW', 'KeyS'].includes(e.code)) camKeys[e.code] = true;
   if (e.code === 'Digit1') ctrl.selectWeapon(0);
@@ -310,30 +354,18 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (KEYMAP[e.code] && ctrl) ctrl.keys[KEYMAP[e.code]] = false; camKeys[e.code] = false; });
 window.addEventListener('blur', () => { if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; for (const k in camKeys) camKeys[k] = false; });
 // pointer: grab a curve handle (my turn) or pan the camera
-const AIMDRAG = { idx: -1, hover: -1 };
 let drag = null;
-function handleAt(e) {
-  if (!ctrl || !ctrl.activeLocal() || ctrl.charging) return -1;
-  const w = R.screenToWorld(e.clientX, e.clientY), pts = ctrl.worldPts(), r = 22 / R.cam.zoom;
-  let best = -1, bd = r * r;
-  pts.forEach((p, i) => { const dd = (p[0] - w.x) ** 2 + (p[1] - w.y) ** 2; if (dd < bd) { bd = dd; best = i; } });
-  return best;
-}
 cv.addEventListener('pointerdown', e => {
   if (!inGame()) return;
-  const h = handleAt(e);
-  if (h >= 0) { AIMDRAG.idx = h; cv.setPointerCapture(e.pointerId); return; }
   drag = { x: e.clientX, y: e.clientY, cx: R.cam.x, cy: R.cam.y, moved: false }; cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
-  if (AIMDRAG.idx >= 0) { if (!ctrl.activeLocal()) { AIMDRAG.idx = -1; return; } const w = R.screenToWorld(e.clientX, e.clientY); ctrl.setPoint(AIMDRAG.idx, w.x, w.y); return; }
-  if (!drag) { const h = inGame() ? handleAt(e) : -1; AIMDRAG.hover = h; cv.style.cursor = h >= 0 ? 'pointer' : ''; return; }
+  if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 6) { drag.moved = true; cv.classList.add('dragging'); R.free = true; }
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
-cv.addEventListener('pointerup', () => { AIMDRAG.idx = -1; drag = null; cv.classList.remove('dragging'); });
-cv.addEventListener('dblclick', e => { if (!inGame() || !ctrl.activeLocal()) return; const w = R.screenToWorld(e.clientX, e.clientY); ctrl.aimAt(w.x, w.y); AU.play('ui'); });
+cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -414,14 +446,14 @@ $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
 const TUT = { on: false, step: 0 };
 const TUT_STEPS = [
   { text: '방향키로 잠수함을 움직여 보세요. 위아래로도 갈 수 있고, 이동할수록 이동력 막대가 줄어듭니다.', done: (m, t) => Math.abs(t.x - TUT.x0) + Math.abs(t.y - TUT.y0) > 40 },
-  { text: '노란 점 1·2·3을 마우스로 끌어 어뢰가 갈 곡선을 그려 보세요. 물을 더블클릭하면 그곳까지 직선이 됩니다.', done: () => TUT.dragged },
-  { text: '스페이스(발사 버튼)를 누르고 있으면 불빛이 곡선을 따라 달립니다. 떼는 곳에서 폭발! 적 바로 옆에서 떼야 아픕니다.', done: m => m.phase !== 'aim' },
-  { text: '어뢰는 해류에 옆으로 밀립니다. 위쪽 해류 표시를 보세요. 곡선 끝의 하늘색 점선이 실제로 밀려갈 곳입니다.', done: m => m.phase === 'aim' && m.turnNo > TUT.turn0 },
+  { text: '아래 조준판의 노란 점 1·2·3을 끌어 어뢰가 갈 곡선을 그리세요. 조준판 가운데가 내 잠수함, 한 칸 = 250, 굵은 줄 = 1000입니다. 맵에는 곡선이 보이지 않으니 적까지 거리를 눈으로 재세요. (휠 = 확대, Tab·Shift+방향키 = 미세 조정)', done: () => TUT.dragged },
+  { text: '스페이스를 누르고 있으면 게이지가 찹니다. 게이지 = 곡선 처음→끝 중 터질 곳. 조준판의 흰 점이 그 위치예요. 떼면 발사!', done: m => m.phase !== 'aim' },
+  { text: '어뢰는 해류에 옆으로 밀립니다. 위쪽 해류 세기를 보고, 밀리는 만큼 곡선 끝을 반대쪽으로 옮겨 보세요.', done: m => m.phase === 'aim' && m.turnNo > TUT.turn0 },
   { text: '적이 바위 뒤에 숨으면 곡선을 휘어 돌아 들어가거나, 세로·십자로 터지는 무기로 바위 너머를 노리세요. 적을 밀어 바위에 박아도 피해!', done: (m, t, sec) => m.phase === 'aim' && !PRACTICE.bots[m.subs[m.cur].id] && sec > 5 },
   { text: '1·2 키로 무기를 바꾸고(2번은 특수 무기, 재충전 있음), 3~6 키로 보급품을 씁니다. 이제 상대를 격침해 보세요!', done: (m, t, sec) => sec > 9 },
 ];
 function startTutorial() {
-  TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false;
+  TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false; PAD.used = false;
   const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', subId: 'uboat' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', subId: 'sona', bot: 'easy' }];
   ON.active = false;
   // fixed layout (seed 7): the player moves first, open water on all sides, a clear line to the bot ~1000px away
@@ -436,7 +468,7 @@ function showCoach() {
 function tutorialFrame() {
   if (!TUT.on || !match) return;
   const m = match, t = m.subs[0], st = TUT_STEPS[TUT.step];
-  if (AIMDRAG.idx >= 0) TUT.dragged = true;
+  if (PAD.used) TUT.dragged = true;
   if (TUT.x0 === undefined || TUT.at !== TUT.step) { TUT.at = TUT.step; TUT.x0 = t.x; TUT.y0 = t.y; TUT.since = performance.now(); TUT.turn0 = m.turnNo; }
   if (st.done(m, t, (performance.now() - TUT.since) / 1000)) {
     TUT.step++; AU.play('pickup');
@@ -534,8 +566,8 @@ function loop(now) {
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
     if (ON.active) onlineFrame(now); else tutorialFrame();
-    R.frame(frozen ? dt * 0.08 : dt, aimUi(match));
-    updateHud();
+    R.frame(frozen ? dt * 0.08 : dt, null);
+    updateHud(); drawPad();
   }
   requestAnimationFrame(loop);
 }

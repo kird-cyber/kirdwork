@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="곡선을 그려 쏘는 턴제 잠수함 어뢰 대전 · 최대 4 대 4">
 <meta property="og:type" content="website">
-<meta property="og:title" content="어뢰리스">
+<meta property="og:title" content="배틀서브">
 <meta property="og:description" content="곡선을 그려 바위 뒤의 적을 노리는 잠수함 대전. 설치·가입 없이 링크 하나로.">
 <link rel="icon" href="../favicon.png">
 <meta name="theme-color" content="#06223A">
-<title>어뢰리스</title>
+<title>배틀서브</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
 <style>
@@ -86,7 +86,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 #banner { position: absolute; left: 50%; top: 22%; transform: translate(-50%, -50%); padding: 12px 26px; border-radius: 14px; background: var(--panel); font-family: var(--font-display); font-size: 28px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .25s; }
 #banner.show { opacity: 1; }
-#hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(132px + env(safe-area-inset-bottom, 0px)); padding: 6px 14px; border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--muted); pointer-events: none; white-space: nowrap; }
+#hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--hudh, 120px) + 22px); padding: 6px 14px; border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--muted); pointer-events: none; white-space: nowrap; }
 
 .hud-bottom { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 12px 16px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
 .who { display: flex; align-items: center; gap: 10px; min-width: 210px; }
@@ -101,6 +101,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .wep:disabled { opacity: 0.4; cursor: not-allowed; }
 .wep small { font-weight: 500; opacity: 0.8; margin-left: 4px; }
 .angle { display: flex; align-items: center; gap: 8px; }
+.padbox { flex: 0 0 auto; }
+#aimPad { display: block; width: 400px; height: 170px; border-radius: 10px; border: 1px solid #2C4A66; background: #061A2B; cursor: crosshair; touch-action: none; }
+@media (min-width: 1600px) { #aimPad { width: 460px; height: 192px; } }
+@media (max-width: 1360px) { #aimPad { width: 330px; height: 146px; } }
+@media (max-width: 1120px) { #aimPad { width: 280px; height: 130px; } }
+@media (max-width: 1500px) { .hud-bottom .items { display: grid; grid-template-columns: repeat(2, auto); } }
 #angDial { width: 88px; height: 48px; }
 .angnum { display: flex; flex-direction: column; align-items: flex-start; min-width: 64px; }
 .setrow { display: flex; gap: 6px; }
@@ -303,7 +309,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .probe::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #6B7590; flex-shrink: 0; }
 .probe[data-s="ok"]::before { background: var(--good); } .probe[data-s="fail"] { color: #FFB4A4; } .probe[data-s="fail"]::before { background: var(--red); }
-.coach { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(150px + env(safe-area-inset-bottom, 0px)); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; background: rgba(20, 26, 43, 0.94); border: 2px solid var(--gold); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.coach { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--hudh, 150px) + 30px); width: min(520px, calc(100vw - 32px)); padding: 12px 16px; border-radius: 14px; background: rgba(20, 26, 43, 0.94); border: 2px solid var(--gold); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
 .coach .ch { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; color: var(--gold); }
 .coach p { margin: 6px 0 0; font-size: 15px; line-height: 1.55; font-weight: 600; }
 .coach:not([hidden]) ~ #hint { display: none; }
@@ -397,7 +403,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
   <div id="gameMsgs" class="gmsgs" aria-live="polite"></div>
   <div id="netState" role="status" hidden></div>
-  <div id="hint" hidden>방향키 이동 · 노란 점 1·2·3을 끌어 곡선 · 물을 더블클릭하면 그곳으로 직선 · 스페이스를 누르고 있다가 떼면 발사 · 빈 곳 드래그로 맵 둘러보기</div>
+  <div id="hint" hidden>방향키 이동 · 아래 조준판에서 점 1·2·3을 끌어 곡선 (휠 확대 · Tab 점 선택 · Shift+방향키 미세 조정) · 스페이스를 누르고 있다가 떼면 발사</div>
 
   <div class="touch" id="touch" hidden>
     <div>
@@ -424,11 +430,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <button class="wep" id="w0" type="button"></button>
       <button class="wep" id="w1" type="button"></button>
     </div>
-    <div class="angle"><canvas id="angDial" width="176" height="96" aria-hidden="true"></canvas><div class="angnum"><span class="v" id="angTxt">-</span><span class="r" id="angReal">-</span></div></div>
+    <div class="padbox"><canvas id="aimPad" aria-label="조준판: 노란 점 1·2·3을 끌어 곡선을 그립니다"></canvas></div>
     <div class="power">
       <div class="row"><span>폭발 지점</span><span id="pwTxt">0%</span></div>
       <div class="gauge" id="gauge"><div id="pw"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div><div id="pwLast"></div></div>
-      <div class="row" style="font-weight:500"><span>곡선 처음 → 끝 · 흰 선 = 지난번 폭발 지점</span></div>
+      <div class="row" style="font-weight:500"><span>곡선 처음 → 끝 · 흰 선 = 지난번</span></div>
     </div>
     <div class="items" id="items"></div>
   </div>
@@ -438,7 +444,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup home">
       <div class="brand">
         <div>
-          <h1>어뢰<em>리스</em></h1>
+          <h1>배틀<em>서브</em></h1>
           <p>친구와 링크 하나로 붙는 턴제 잠수함 어뢰전 · 최대 4 대 4</p>
         </div>
         <div class="record" id="record" hidden></div>
@@ -464,7 +470,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="lobbyhead">
         <div>
-          <div class="lbrand">어뢰<em>리스</em></div>
+          <div class="lbrand">배틀<em>서브</em></div>
           <h2 class="lt">대기방<span id="roomCode"></span></h2>
           <div class="note" id="lobbyStatus" role="status"></div>
         </div>
@@ -502,7 +508,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="brand">
         <div>
-          <h1>어뢰<em>리스</em></h1>
+          <h1>배틀<em>서브</em></h1>
           <p>한 기기 연습 모드</p>
         </div>
         <div class="cta"><span class="note" style="max-width:380px">자리마다 사람 또는 봇(쉬움·보통·어려움)을 고르세요. 사람 자리는 한 기기에서 번갈아 조작합니다.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
@@ -536,11 +542,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
       <div class="help">
         <div><b>방향키</b>상하좌우·대각선 이동 (이동력 소모)</div>
-        <div><b>노란 점 1·2·3</b>끌어서 어뢰 곡선 그리기</div>
-        <div><b>스페이스</b>누르면 불빛이 곡선을 달림, 떼는 곳에서 폭발</div>
+        <div><b>조준판</b>아래 조준판에서 점 1·2·3을 끌어 곡선 그리기 · 한 칸 250, 굵은 줄 1000 · 맵에는 곡선이 안 보임</div>
+        <div><b>스페이스</b>누르는 동안 게이지가 참, 떼면 곡선의 그 지점에서 폭발</div>
         <div><b>1 / 2</b>무기 선택</div>
         <div><b>3 ~ 6</b>아이템 사용 (턴당 1개)</div>
         <div><b>A / D · 드래그</b>맵 둘러보기</div>
+        <div><b>Tab · Shift+방향키</b>조준판 점 선택 · 미세 조정 (휠 = 확대)</div>
         <div><b>F · R</b>내 잠수함으로 시점 복귀 · 곡선 처음으로</div>
         <div><b>미니맵 클릭</b>그 위치로 이동</div>
         <div><b>박치기</b>적을 밀어 바위에 박거나 맵 밖으로 밀면 탈락</div>
@@ -578,7 +585,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 // ============================================================== CONFIG
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, ticks (1 tick = 1/120 s). Damage shapes: rx/ry = damage reach (half width / half height) around the burst.
-const GAME_NAME = { full: '어뢰리스', a: '어뢰', b: '리스' }; // working title: change here only
+const GAME_NAME = { full: '배틀서브', a: '배틀', b: '서브' }; // working title: change here only
 const CONFIG = {
   version: '0.1.0',
   physics: {
@@ -623,7 +630,7 @@ const CONFIG = {
   // speedClass 1 = heaviest (longest wait between turns) .. 5 = quickest
   subs: {
     uboat: {
-      name: 'U-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
+      name: '유보트-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
       weapons: [
         { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 210, rx: 90, ry: 90 },
         { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 145, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },
@@ -1582,15 +1589,14 @@ function createController(match, opts) {
     step(m);
   };
   // a straight curve toward the nearest enemy (or ahead)
+  // a level straight line toward the enemy side: it tells nothing about where anyone is
   c.defaultRel = function (t) {
     const m = c.match, d = CONFIG.subs[t.subId];
-    let f = null, bd = 1e18;
-    for (const o of m.subs) if (o.alive && o.team !== t.team) { const dd = (o.x - t.x) ** 2 + (o.y - t.y) ** 2; if (dd < bd) { bd = dd; f = o; } }
-    let dx = f ? f.x - t.x : t.facing * 600, dy = f ? f.y - t.y : 0;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1, L = Math.min(len, d.range * 0.85);
-    dx = dx / len * L; dy = dy / len * L;
-    return [[dx / 3, dy / 3], [dx * 2 / 3, dy * 2 / 3], [dx, dy]];
+    let ex = 0, n = 0; for (const o of m.subs) if (o.alive && o.team !== t.team) { ex += o.x; n++; }
+    const dir = n && ex / n < t.x ? -1 : 1, L = Math.min(1000, d.range * 0.4);
+    return [[dir * L / 3, 0], [dir * L * 2 / 3, 0], [dir * L, 0]];
   };
+
   c.onTurnStart = function () {
     const m = c.match, t = curSub(m);
     c.lastTurnSeen = m.turnNo;
@@ -2361,7 +2367,7 @@ function createRenderer(cv, mini) {
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
     for (const c of m.crates) drawCrate(c);
     for (const f of R.fx) if (f.kind === 'wreck') drawFx(f);
-    if (ui) drawAim(ui);
+    if (ui) drawAim(ui); // (the game passes no aim: the curve lives only on the aiming panel)
     for (const t of m.subs) if (t.alive) drawSub(t, ui);
     for (const p of m.proj) drawTorp(p);
     for (const f of R.fx) if (f.kind !== 'wreck') drawFx(f);
@@ -2519,7 +2525,7 @@ function createRenderer(cv, mini) {
       ctx.fillStyle = TEAMC[t.team]; ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill();
       ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(16, -8); ctx.lineTo(16, 8); ctx.fill(); ctx.restore();
       ctx.fillStyle = '#fff'; ctx.font = '900 11px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(Math.round(Math.sqrt((t.x - cam.x) ** 2 + (t.y - cam.y) ** 2) / 10) + 'm', 0, 4);
+      ctx.fillText(t.nick.slice(0, 1), 0, 4); // no distance number: range is judged by eye
       ctx.font = '700 11px "Noto Sans KR", sans-serif'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.strokeText(t.nick, 0, 31); ctx.fillText(t.nick, 0, 31);
       ctx.restore();
     }
@@ -3414,7 +3420,6 @@ function remoteTick(m, t) {
   const lv = ON.live;
   if (lv && lv.turnNo === m.turnNo && lv.seat === t.id && applyPartial(m, lv.actions || [])) {
     if (m.phase !== 'aim') return;
-    ON.ghost = lv.pts ? { turnNo: m.turnNo, pts: lv.pts } : null; // the curve is shown to everyone; the gauge and weapon stay private
     if (lv.n !== ON.liveSeen) { ON.liveSeen = lv.n; ctrl.timeLeft = lv.timeLeft; return; }
   }
   if (ctrl.timeLeft > 0) ctrl.timeLeft--;
@@ -3467,7 +3472,7 @@ function onlineFrame(now) {
   setTurnTitle(ctrl.activeLocal() && document.hidden);
   // live feed of my turn for everyone else
   if (ctrl.activeLocal()) {
-    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions, pts: ctrl.worldPts(t) }; // the gauge and weapon are not shared
+    const lv = { turnNo: m.turnNo, seat: ON.myId, actions: m.turn.actions }; // only movement and items are live; the curve, gauge and weapon stay private
     const s = JSON.stringify(lv);
     if ((s !== ON.lastLive && now - ON.lastLiveAt > 250) || now - ON.lastLiveAt > 1000) {
       ON.lastLive = s; ON.lastLiveAt = now; lv.timeLeft = ctrl.timeLeft; L.sendLive(lv);
@@ -3783,25 +3788,89 @@ function hudSub(m) {
   if (!ON.active && cur && PRACTICE.bots[cur.id]) { const humans = m.subs.filter(x => !PRACTICE.bots[x.id]); return humans.find(x => x.alive) || humans[0] || cur; }
   return cur;
 }
-// the aim overlay for this frame (null when nobody local is aiming)
-function aimUi(m) {
-  if (!m || m.phase !== 'aim' || m.cur < 0) return null;
-  const t = m.subs[m.cur];
-  if (!ctrl.activeLocal()) {
-    if (ON.active && ON.ghost && ON.ghost.turnNo === m.turnNo) return { ghost: true, path: buildPath(t, ON.ghost.pts) };
-    if (!ON.active && PRACTICE.bots[t.id] && BOTVIEW.pts) return { ghost: false, path: buildPath(t, BOTVIEW.pts), pts: BOTVIEW.pts, dropFrom: -1, charging: BOTVIEW.charging, gauge: BOTVIEW.gauge, shape: null };
-    return null;
-  }
-  const d = CONFIG.subs[t.subId], pts = ctrl.worldPts(t), path = buildPath(t, pts), w = d.weapons[ctrl.weapon];
-  const drift = m.current * CONFIG.physics.currentPush * (path.L / CONFIG.physics.torpSpeed);
-  const mem = ctrl.mem[t.idx];
-  return {
-    path, pts, muzzle: [path.xs[0], path.ys[0]], dropFrom: path.used < 3 ? path.used : -1, cut: path.L >= d.range - 0.5,
-    charging: ctrl.charging, gauge: ctrl.gauge, shape: { rx: w.rx, ry: w.ry, thin: w.thin || 0 },
-    driftEnd: Math.abs(drift) > 4 && !m.turn.calm ? [path.xs[path.xs.length - 1] + drift, path.ys[path.ys.length - 1]] : null,
-    last: mem && mem.burst, hover: AIMDRAG.hover, drag: AIMDRAG.idx,
-  };
+// ---------------------------------------------------------------- aiming panel (조준판)
+// The curve exists only here: a scaled-down grid centred on my sub (one cell = 250, bold line = 1000).
+// The map never shows the curve or where it will burst, so range has to be judged by eye.
+const PAD = { zooms: [0.75, 1, 1.5, 2, 3], zi: 1, drag: -1, hover: -1, sel: 2, span: 2400, used: false }; // span = world px from the centre to the side edge at ×1
+const pad = $('aimPad'), pctx = pad.getContext('2d');
+function padSize() {
+  const r = pad.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+  if (w && h && (pad.width !== w || pad.height !== h)) { pad.width = w; pad.height = h; }
+  return { w: r.width, h: r.height, dpr };
 }
+const padScale = S => (S.w / 2) / (PAD.span / PAD.zooms[PAD.zi]); // css px per world px
+function padSub() { return match && ctrl && ctrl.activeLocal() ? match.subs[match.cur] : null; }
+function padPts(t, S) { const s = padScale(S); return ctrl.worldPts(t).map(p => [S.w / 2 + (p[0] - t.x) * s, S.h / 2 + (p[1] - t.y) * s]); }
+function drawPad() {
+  const S = padSize(); if (!S.w) return;
+  const x = pctx, W = S.w, H = S.h, cx = W / 2, cy = H / 2, s = padScale(S);
+  x.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  x.fillStyle = '#061A2B'; x.fillRect(0, 0, W, H);
+  for (const [step, col] of [[250, 'rgba(120,200,255,0.10)'], [1000, 'rgba(120,200,255,0.30)']]) {
+    x.strokeStyle = col; x.lineWidth = 1; x.beginPath();
+    for (let i = -Math.ceil(cx / (step * s)); i <= Math.ceil(cx / (step * s)); i++) { const X = Math.round(cx + i * step * s) + 0.5; x.moveTo(X, 0); x.lineTo(X, H); }
+    for (let i = -Math.ceil(cy / (step * s)); i <= Math.ceil(cy / (step * s)); i++) { const Y = Math.round(cy + i * step * s) + 0.5; x.moveTo(0, Y); x.lineTo(W, Y); }
+    x.stroke();
+  }
+  x.fillStyle = 'rgba(150,210,255,0.55)'; x.font = '600 9px "IBM Plex Mono", monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+  for (let i = 1; i * 1000 * s < cx; i++) { x.fillText(String(i), cx + i * 1000 * s, 3); x.fillText(String(i), cx - i * 1000 * s, 3); }
+  x.textBaseline = 'alphabetic';
+  const t = padSub(), me = match && hudSub(match);
+  if (me) drawSubAt(x, me.subId, cx, cy, 0.32, 0, TEAMC[me.team], t ? buildPath(t, ctrl.worldPts(t)).face : (me.idx % 2 ? -1 : 1));
+  x.font = '700 11px "Noto Sans KR", sans-serif';
+  if (!t) {
+    x.fillStyle = 'rgba(200,225,255,0.6)'; x.textAlign = 'center';
+    x.fillText(match && match.phase === 'aim' ? '내 차례에 조준합니다' : '', cx, H - 10);
+    return;
+  }
+  const d = CONFIG.subs[t.subId], path = buildPath(t, ctrl.worldPts(t)), P = padPts(t, S);
+  // range ring
+  x.strokeStyle = 'rgba(255,210,74,0.25)'; x.setLineDash([3, 4]); x.beginPath(); x.arc(cx, cy, d.range * s, 0, 7); x.stroke(); x.setLineDash([]);
+  // refused part of the control polygon (bend too sharp)
+  if (path.used < 3) {
+    x.strokeStyle = 'rgba(255,90,74,0.85)'; x.lineWidth = 1.5; x.setLineDash([4, 4]); x.beginPath();
+    const a = path.used === 0 ? [cx + (path.xs[0] - t.x) * s, cy + (path.ys[0] - t.y) * s] : P[path.used - 1];
+    x.moveTo(a[0], a[1]); for (let i = path.used; i < 3; i++) x.lineTo(P[i][0], P[i][1]); x.stroke(); x.setLineDash([]);
+  }
+  x.strokeStyle = '#FFD24A'; x.lineWidth = 2; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath();
+  for (let i = 0; i < path.xs.length; i++) { const X = cx + (path.xs[i] - t.x) * s, Y = cy + (path.ys[i] - t.y) * s; i ? x.lineTo(X, Y) : x.moveTo(X, Y); }
+  x.stroke();
+  if (ctrl.charging) {
+    const q = pathAt(path, burstDistance(path, Math.round(ctrl.gauge))), X = cx + (q.x - t.x) * s, Y = cy + (q.y - t.y) * s;
+    x.fillStyle = '#FFF6C8'; x.beginPath(); x.arc(X, Y, 4, 0, 7); x.fill();
+  }
+  P.forEach((q, i) => {
+    const bad = i >= path.used, hot = PAD.hover === i || PAD.drag === i, r = hot ? 9 : 8;
+    x.fillStyle = bad ? '#FF7A59' : hot ? '#FFF0A8' : '#FFD24A'; x.strokeStyle = PAD.sel === i ? '#FFFFFF' : '#3A2A00'; x.lineWidth = PAD.sel === i ? 2 : 1.5;
+    x.beginPath(); x.arc(q[0], q[1], r, 0, 7); x.fill(); x.stroke();
+    x.fillStyle = '#2A1A00'; x.font = '800 10px "IBM Plex Mono", monospace'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(i + 1), q[0], q[1] + 0.5); x.textBaseline = 'alphabetic';
+  });
+  x.font = '700 10px "IBM Plex Mono", monospace'; x.textAlign = 'left'; x.fillStyle = 'rgba(220,235,255,0.8)';
+  x.fillText(`곡선 ${Math.round(path.L)} / ${d.range}` + (path.used < 3 ? `  꺾임 초과(${d.turn}°)` : `  꺾임 ${d.turn}°`), 6, H - 6);
+  x.textAlign = 'right'; x.fillText(`×${PAD.zooms[PAD.zi]}`, W - 6, H - 6);
+}
+// the hint line and the tutorial box sit just above the bottom panel, whatever its height
+try { const hb = document.querySelector('.hud-bottom'); new ResizeObserver(() => document.documentElement.style.setProperty('--hudh', hb.offsetHeight + 'px')).observe(hb); } catch (e) {}
+function padLocal(e) { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+function padNearest(t, px, py, S, maxR) { let best = -1, bd = maxR * maxR; padPts(t, S).forEach((q, i) => { const dd = (q[0] - px) ** 2 + (q[1] - py) ** 2; if (dd < bd) { bd = dd; best = i; } }); return best; }
+function padSet(t, i, px, py, S) { const s = padScale(S); ctrl.setPoint(i, t.x + (px - S.w / 2) / s, t.y + (py - S.h / 2) / s); PAD.used = true; }
+pad.addEventListener('pointerdown', e => {
+  const t = padSub(); if (!t || ctrl.charging) return;
+  const S = padSize(), [px, py] = padLocal(e);
+  // grab the handle under the pointer; on empty grid the nearest handle jumps there
+  let i = padNearest(t, px, py, S, 14); if (i < 0) i = padNearest(t, px, py, S, 1e6);
+  PAD.drag = PAD.sel = i; pad.setPointerCapture(e.pointerId); padSet(t, i, px, py, S);
+});
+pad.addEventListener('pointermove', e => {
+  const t = padSub(), S = padSize(), [px, py] = padLocal(e);
+  if (PAD.drag >= 0) { if (t && !ctrl.charging) padSet(t, PAD.drag, px, py, S); else PAD.drag = -1; return; }
+  PAD.hover = t ? padNearest(t, px, py, S, 14) : -1;
+});
+pad.addEventListener('pointerup', () => { PAD.drag = -1; });
+pad.addEventListener('pointerleave', () => { PAD.hover = -1; });
+pad.addEventListener('wheel', e => { e.preventDefault(); PAD.zi = clampN(PAD.zi + (e.deltaY < 0 ? 1 : -1), 0, PAD.zooms.length - 1); }, { passive: false });
+// keyboard fine-tuning of the selected handle: Tab picks, Shift+arrows nudge by 10
+function padNudge(dx, dy) { const t = padSub(); if (!t || ctrl.charging) return; const p = ctrl.worldPts(t)[PAD.sel]; ctrl.setPoint(PAD.sel, p[0] + dx, p[1] + dy); PAD.used = true; }
 function updateHud() {
   const m = match, t = hudSub(m), cur = m.cur >= 0 ? m.subs[m.cur] : null; if (!t || !cur) return;
   const mineNow = ctrl.activeLocal();
@@ -3810,14 +3879,6 @@ function updateHud() {
   setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * Math.min(1, t.fuel / d.movePx)) + '%';
-  // curve box: length / range and how many points the bend limit allowed
-  if (mineNow && t === cur) {
-    const path = buildPath(t, ctrl.worldPts(t));
-    setTxt('angTxt', `${Math.round(path.L)}`);
-    setTxt('angReal', path.used < 3 ? `점 ${path.used + 1}부터 꺾임 초과 (한도 ${d.turn}°)` : `곡선 / 사거리 ${d.range} · 꺾임 ${d.turn}°`);
-    const dk = ctrl.rel.map(p => p.map(Math.round).join(',')).join(';') + t.x + ',' + t.y + path.used;
-    if (hudCache.dial !== dk) { hudCache.dial = dk; drawCurveIcon(t, path); }
-  } else if (hudCache.dial !== 'idle') { hudCache.dial = 'idle'; setTxt('angTxt', `${d.range}`); setTxt('angReal', `사거리 · 꺾임 한도 ${d.turn}°`); $('angDial').getContext('2d').clearRect(0, 0, 176, 96); }
   const pw = ctrl.charging && mineNow ? ctrl.gauge / 1000 : 0;
   $('gauge').classList.toggle('charging', ctrl.charging && mineNow);
   $('pw').style.width = (pw * 100) + '%';
@@ -3860,20 +3921,6 @@ function updateHud() {
   const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';
   const waitTxt = gone ? gone : botTurn ? botTurn : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
-}
-// small picture of the curve in the HUD box
-function drawCurveIcon(t, path) {
-  const c = $('angDial'), x = c.getContext('2d'), W = c.width, H = c.height;
-  x.clearRect(0, 0, W, H);
-  let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9;
-  for (let i = 0; i < path.xs.length; i++) { mnx = Math.min(mnx, path.xs[i]); mxx = Math.max(mxx, path.xs[i]); mny = Math.min(mny, path.ys[i]); mxy = Math.max(mxy, path.ys[i]); }
-  const s = Math.min((W - 24) / Math.max(1, mxx - mnx), (H - 20) / Math.max(1, mxy - mny));
-  const px = X => 12 + (X - mnx) * s + ((W - 24) - (mxx - mnx) * s) / 2, py = Y => 10 + (Y - mny) * s + ((H - 20) - (mxy - mny) * s) / 2;
-  x.strokeStyle = '#FFD24A'; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath();
-  for (let i = 0; i < path.xs.length; i++) i ? x.lineTo(px(path.xs[i]), py(path.ys[i])) : x.moveTo(px(path.xs[i]), py(path.ys[i]));
-  x.stroke();
-  x.fillStyle = TEAMC[t.team]; x.beginPath(); x.arc(px(path.xs[0]), py(path.ys[0]), 5, 0, 7); x.fill();
-  x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(px(path.xs[path.xs.length - 1]), py(path.ys[path.ys.length - 1]), 4, 0, 7); x.fill();
 }
 function updateStatus(m, cur) {
   const box = $('status');
@@ -3921,6 +3968,8 @@ window.addEventListener('pointerdown', () => AU.unlock(), { capture: true });
 window.addEventListener('keydown', e => {
   AU.unlock();
   if (!inGame() || e.target.tagName === 'INPUT') return;
+  if (e.shiftKey && e.code.startsWith('Arrow')) { e.preventDefault(); const k = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.code]; padNudge(k[0], k[1]); return; }
+  if (e.code === 'Tab') { e.preventDefault(); PAD.sel = (PAD.sel + (e.shiftKey ? 2 : 1)) % 3; return; }
   if (KEYMAP[e.code]) { e.preventDefault(); if (!e.repeat) { ctrl.keys[KEYMAP[e.code]] = true; if (e.code !== 'Space') R.free = false; } }
   if (['KeyA', 'KeyD', 'KeyW', 'KeyS'].includes(e.code)) camKeys[e.code] = true;
   if (e.code === 'Digit1') ctrl.selectWeapon(0);
@@ -3932,30 +3981,18 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { if (KEYMAP[e.code] && ctrl) ctrl.keys[KEYMAP[e.code]] = false; camKeys[e.code] = false; });
 window.addEventListener('blur', () => { if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; for (const k in camKeys) camKeys[k] = false; });
 // pointer: grab a curve handle (my turn) or pan the camera
-const AIMDRAG = { idx: -1, hover: -1 };
 let drag = null;
-function handleAt(e) {
-  if (!ctrl || !ctrl.activeLocal() || ctrl.charging) return -1;
-  const w = R.screenToWorld(e.clientX, e.clientY), pts = ctrl.worldPts(), r = 22 / R.cam.zoom;
-  let best = -1, bd = r * r;
-  pts.forEach((p, i) => { const dd = (p[0] - w.x) ** 2 + (p[1] - w.y) ** 2; if (dd < bd) { bd = dd; best = i; } });
-  return best;
-}
 cv.addEventListener('pointerdown', e => {
   if (!inGame()) return;
-  const h = handleAt(e);
-  if (h >= 0) { AIMDRAG.idx = h; cv.setPointerCapture(e.pointerId); return; }
   drag = { x: e.clientX, y: e.clientY, cx: R.cam.x, cy: R.cam.y, moved: false }; cv.setPointerCapture(e.pointerId);
 });
 cv.addEventListener('pointermove', e => {
-  if (AIMDRAG.idx >= 0) { if (!ctrl.activeLocal()) { AIMDRAG.idx = -1; return; } const w = R.screenToWorld(e.clientX, e.clientY); ctrl.setPoint(AIMDRAG.idx, w.x, w.y); return; }
-  if (!drag) { const h = inGame() ? handleAt(e) : -1; AIMDRAG.hover = h; cv.style.cursor = h >= 0 ? 'pointer' : ''; return; }
+  if (!drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.abs(dx) + Math.abs(dy) > 6) { drag.moved = true; cv.classList.add('dragging'); R.free = true; }
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
-cv.addEventListener('pointerup', () => { AIMDRAG.idx = -1; drag = null; cv.classList.remove('dragging'); });
-cv.addEventListener('dblclick', e => { if (!inGame() || !ctrl.activeLocal()) return; const w = R.screenToWorld(e.clientX, e.clientY); ctrl.aimAt(w.x, w.y); AU.play('ui'); });
+cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -4036,14 +4073,14 @@ $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
 const TUT = { on: false, step: 0 };
 const TUT_STEPS = [
   { text: '방향키로 잠수함을 움직여 보세요. 위아래로도 갈 수 있고, 이동할수록 이동력 막대가 줄어듭니다.', done: (m, t) => Math.abs(t.x - TUT.x0) + Math.abs(t.y - TUT.y0) > 40 },
-  { text: '노란 점 1·2·3을 마우스로 끌어 어뢰가 갈 곡선을 그려 보세요. 물을 더블클릭하면 그곳까지 직선이 됩니다.', done: () => TUT.dragged },
-  { text: '스페이스(발사 버튼)를 누르고 있으면 불빛이 곡선을 따라 달립니다. 떼는 곳에서 폭발! 적 바로 옆에서 떼야 아픕니다.', done: m => m.phase !== 'aim' },
-  { text: '어뢰는 해류에 옆으로 밀립니다. 위쪽 해류 표시를 보세요. 곡선 끝의 하늘색 점선이 실제로 밀려갈 곳입니다.', done: m => m.phase === 'aim' && m.turnNo > TUT.turn0 },
+  { text: '아래 조준판의 노란 점 1·2·3을 끌어 어뢰가 갈 곡선을 그리세요. 조준판 가운데가 내 잠수함, 한 칸 = 250, 굵은 줄 = 1000입니다. 맵에는 곡선이 보이지 않으니 적까지 거리를 눈으로 재세요. (휠 = 확대, Tab·Shift+방향키 = 미세 조정)', done: () => TUT.dragged },
+  { text: '스페이스를 누르고 있으면 게이지가 찹니다. 게이지 = 곡선 처음→끝 중 터질 곳. 조준판의 흰 점이 그 위치예요. 떼면 발사!', done: m => m.phase !== 'aim' },
+  { text: '어뢰는 해류에 옆으로 밀립니다. 위쪽 해류 세기를 보고, 밀리는 만큼 곡선 끝을 반대쪽으로 옮겨 보세요.', done: m => m.phase === 'aim' && m.turnNo > TUT.turn0 },
   { text: '적이 바위 뒤에 숨으면 곡선을 휘어 돌아 들어가거나, 세로·십자로 터지는 무기로 바위 너머를 노리세요. 적을 밀어 바위에 박아도 피해!', done: (m, t, sec) => m.phase === 'aim' && !PRACTICE.bots[m.subs[m.cur].id] && sec > 5 },
   { text: '1·2 키로 무기를 바꾸고(2번은 특수 무기, 재충전 있음), 3~6 키로 보급품을 씁니다. 이제 상대를 격침해 보세요!', done: (m, t, sec) => sec > 9 },
 ];
 function startTutorial() {
-  TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false;
+  TUT.on = true; TUT.step = 0; TUT.since = performance.now(); TUT.dragged = false; PAD.used = false;
   const players = [{ id: 'r0', nick: ON.nick || savedNick() || '나', team: 'red', subId: 'uboat' }, { id: 'b0', nick: '연습 상대·봇', team: 'blue', subId: 'sona', bot: 'easy' }];
   ON.active = false;
   // fixed layout (seed 7): the player moves first, open water on all sides, a clear line to the bot ~1000px away
@@ -4058,7 +4095,7 @@ function showCoach() {
 function tutorialFrame() {
   if (!TUT.on || !match) return;
   const m = match, t = m.subs[0], st = TUT_STEPS[TUT.step];
-  if (AIMDRAG.idx >= 0) TUT.dragged = true;
+  if (PAD.used) TUT.dragged = true;
   if (TUT.x0 === undefined || TUT.at !== TUT.step) { TUT.at = TUT.step; TUT.x0 = t.x; TUT.y0 = t.y; TUT.since = performance.now(); TUT.turn0 = m.turnNo; }
   if (st.done(m, t, (performance.now() - TUT.since) / 1000)) {
     TUT.step++; AU.play('pickup');
@@ -4156,8 +4193,8 @@ function loop(now) {
     if (camKeys.KeyW) { R.cam.y -= sp; R.free = true; }
     if (camKeys.KeyS) { R.cam.y += sp; R.free = true; }
     if (ON.active) onlineFrame(now); else tutorialFrame();
-    R.frame(frozen ? dt * 0.08 : dt, aimUi(match));
-    updateHud();
+    R.frame(frozen ? dt * 0.08 : dt, null);
+    updateHud(); drawPad();
   }
   requestAnimationFrame(loop);
 }

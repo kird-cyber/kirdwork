@@ -1,7 +1,7 @@
 // ============================================================== CONFIG
 // Every gameplay number lives here. The simulation reads only this object.
 // Units: px, ticks (1 tick = 1/120 s). Damage shapes: rx/ry = damage reach (half width / half height) around the burst.
-const GAME_NAME = { full: '어뢰리스', a: '어뢰', b: '리스' }; // working title: change here only
+const GAME_NAME = { full: '배틀서브', a: '배틀', b: '서브' }; // working title: change here only
 const CONFIG = {
   version: '0.1.0',
   physics: {
@@ -46,7 +46,7 @@ const CONFIG = {
   // speedClass 1 = heaviest (longest wait between turns) .. 5 = quickest
   subs: {
     uboat: {
-      name: 'U-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
+      name: '유보트-96', model: '유보트 VII-C형', hp: 960, hull: 3, movePx: 260, range: 3000, turn: 100, speedClass: 3,
       weapons: [
         { id: 'std', name: '표준 어뢰', kind: 'circle', dmg: 210, rx: 90, ry: 90 },
         { id: 'wolf', name: '늑대떼 쌍어뢰', kind: 'twin', dmg: 145, rx: 70, ry: 70, gap: 30, cooldownTurns: 2, extraDelay: 100 },

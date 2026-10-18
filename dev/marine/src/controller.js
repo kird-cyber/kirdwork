@@ -32,15 +32,14 @@ function createController(match, opts) {
     step(m);
   };
   // a straight curve toward the nearest enemy (or ahead)
+  // a level straight line toward the enemy side: it tells nothing about where anyone is
   c.defaultRel = function (t) {
     const m = c.match, d = CONFIG.subs[t.subId];
-    let f = null, bd = 1e18;
-    for (const o of m.subs) if (o.alive && o.team !== t.team) { const dd = (o.x - t.x) ** 2 + (o.y - t.y) ** 2; if (dd < bd) { bd = dd; f = o; } }
-    let dx = f ? f.x - t.x : t.facing * 600, dy = f ? f.y - t.y : 0;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1, L = Math.min(len, d.range * 0.85);
-    dx = dx / len * L; dy = dy / len * L;
-    return [[dx / 3, dy / 3], [dx * 2 / 3, dy * 2 / 3], [dx, dy]];
+    let ex = 0, n = 0; for (const o of m.subs) if (o.alive && o.team !== t.team) { ex += o.x; n++; }
+    const dir = n && ex / n < t.x ? -1 : 1, L = Math.min(1000, d.range * 0.4);
+    return [[dir * L / 3, 0], [dir * L * 2 / 3, 0], [dir * L, 0]];
   };
+
   c.onTurnStart = function () {
     const m = c.match, t = curSub(m);
     c.lastTurnSeen = m.turnNo;
