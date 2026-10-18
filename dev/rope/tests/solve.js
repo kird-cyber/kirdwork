@@ -1,7 +1,7 @@
 // Beam search over "rope moves" to prove the course can be finished with the default feel.
 // A move = face, aim, shoot, swing (+ reel), release, fall a bit. Writes tests/out/solution.json (input RLE) when it finishes.
 const fs = require('fs'), path = require('path');
-const code = ['config.js', 'core.js', 'mapgen.js', 'sim.js'].map(f => fs.readFileSync(path.join(__dirname, '../src', f), 'utf8')).join('\n');
+const code = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'weapons.js'].map(f => fs.readFileSync(path.join(__dirname, '../src', f), 'utf8')).join('\n');
 const A = new Function(code + '\n;return {ROPE_DEFAULT,IN,createCourse,createRun,stepRun,runHash,rleAppend,rleAt,hitAt};')();
 const I = A.IN, map = A.createCourse();
 const BEAM = +(process.argv[2] || 24), MAXD = +(process.argv[3] || 80);

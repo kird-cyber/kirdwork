@@ -3,7 +3,7 @@
 import pathlib, subprocess, tempfile
 root = pathlib.Path(__file__).parent
 src = root / 'src'
-ORDER = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'main.js']
+ORDER = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'weapons.js', 'main.js']
 js = '\n'.join(f'// ---- {f}\n' + (src / f).read_text() for f in ORDER)
 demo_file = root / 'tests' / 'out' / 'solution.json'
 demo = demo_file.read_text() if demo_file.exists() else 'null'

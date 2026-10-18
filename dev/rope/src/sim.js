@@ -31,19 +31,21 @@ function rayHit(map, ax, ay, bx, by, skip) {
 }
 const cross = (ax, ay, bx, by) => ax * by - ay * bx;
 
-function createRun(map, cfg) {
+function createRun(map, cfg, mode) {
   const r = {
     map, cfg: Object.assign({}, ROPE_DEFAULT, cfg || {}), tick: 0, prevBits: 0,
     x: map.start.x, y: map.start.y, vx: 0, vy: 0, state: 'ground', facing: 1, aim: 450,
     shot: null, anchors: [], L: 0, ropes: 0, cp: 0, done: false, startTick: -1, finishTick: -1,
     dead: 0, respawn: { x: map.start.x, y: map.start.y }, splashes: 0, maxSpeed: 0, events: [],
+    mode: mode || 'race', rng: (map.seed ^ 0x5bd1e995) >>> 0, targets: [], projs: [],
   };
+  if (r.mode === 'target') initTargetMode(r);
   return r;
 }
 function releaseRope(r) { r.anchors = []; r.shot = null; if (r.state === 'rope') r.state = 'air'; }
 function ropeTotal(r) { let t = r.L; for (let i = 1; i < r.anchors.length; i++) { const a = r.anchors[i - 1], b = r.anchors[i]; t += Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y)); } return t; }
 
-function stepRun(r, bits) {
+function stepRun(r, bits, cmd) {
   const c = r.cfg, m = r.map;
   const pressed = bits & ~r.prevBits; r.prevBits = bits;
   r.tick++;
@@ -149,9 +151,10 @@ function stepRun(r, bits) {
     }
   }
 
+  if (r.mode === 'target') weaponsTick(r, bits, pressed, cmd);
   // ---- sea, checkpoints
   if (r.y > m.waterY) { releaseRope(r); r.state = 'air'; r.dead = 72; r.splashes++; r.events.push({ type: 'splash', x: r.x }); return; }
-  if (!r.done && r.cp < m.course.length) {
+  if (r.mode === 'race' && !r.done && r.cp < m.course.length) {
     const cpt = m.course[r.cp], dx = cpt.x - r.x, dy = cpt.y - r.y;
     if (dx * dx + dy * dy < 34 * 34) {
       r.cp++; r.respawn = { x: cpt.x, y: cpt.y };

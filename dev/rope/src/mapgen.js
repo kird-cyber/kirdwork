@@ -73,7 +73,10 @@ function createCourse(seed) {
   // settle the start point on the ground
   let sy = start.y; while (sy < H - 1 && !courseSolid({ W, H, mask }, start.x, sy + WORM_R + 1)) sy++;
   start.y = sy;
-  return { W, H, mask, waterY, course, start, seed: seed || 20261018 };
+  // target-practice dummies (they settle onto the ground when a round starts)
+  const targets = [[470, 1420], [560, 1060], [860, 1180], [1150, 820], [1400, 1160], [1580, 1160], [2020, 1350], [2470, 720], [2850, 680], [3240, 480], [3330, 1500], [2990, 600]]
+    .map(([x, y]) => { let yy = y; while (yy > 0 && courseSolid({ W, H, mask }, x, yy)) yy -= 2; return { x, y: yy - 14 }; });
+  return { W, H, mask, waterY, course, start, targets, seed: seed || 20261018 };
 }
 function courseSolid(map, x, y) {
   x = Math.floor(x); y = Math.floor(y);

@@ -44,12 +44,35 @@ button { font-family: var(--font); color: var(--fg); }
 .touch > div { display: grid; gap: 8px; pointer-events: auto; }
 .pad { grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(2, 58px); }
 .pad [data-k="U"] { grid-column: 2; grid-row: 1; } .pad [data-k="L"] { grid-column: 1; grid-row: 2; } .pad [data-k="D"] { grid-column: 2; grid-row: 2; } .pad [data-k="R"] { grid-column: 3; grid-row: 2; }
-.act { grid-template-columns: repeat(2, auto); align-items: end; }
-.tb { width: 58px; height: 58px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.35); background: rgba(12,17,30,0.55); font-size: 20px; font-weight: 900; touch-action: none; }
+.act { grid-template-columns: repeat(2, auto); align-items: center; justify-items: center; }
+body.tmode .tb.rope, body.tmode .tb.atk { width: 76px; height: 76px; font-size: 16px; } body.tmode .tb.jump, body.tmode .tb.wsel { width: 56px; height: 56px; font-size: 13px; }
+.tb { display: flex; align-items: center; justify-content: center; width: 58px; height: 58px; border-radius: 14px; border: 2px solid rgba(255,255,255,0.35); background: rgba(12,17,30,0.55); font-size: 20px; font-weight: 900; touch-action: none; }
 .tb.on { background: rgba(255,210,74,0.5); }
 .tb.rope { width: 92px; height: 92px; border-radius: 50%; background: rgba(255,138,30,0.75); font-size: 18px; }
 .tb.jump { width: 64px; height: 64px; border-radius: 50%; font-size: 14px; }
 body.touchmode .touch { display: flex; }
+.btn.mode { background: linear-gradient(180deg, #7FD3FF, #3E94F0); color: #06213A; border-color: #CDEBFF; }
+.tmodeonly { display: none !important; } body.tmode .tmodeonly { display: flex !important; } body.tmode .raceonly { display: none !important; }
+#wChip { position: fixed; left: 10px; bottom: 12px; display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; cursor: pointer; }
+#wChip canvas { width: 44px; height: 44px; border-radius: 10px; background: #1A2234; }
+#wChip b { display: block; font-size: 16px; } #wChip small { font-size: 11.5px; color: var(--muted); font-weight: 700; }
+#wChip .k { font-size: 10.5px; color: var(--gold); font-weight: 800; }
+#wpanel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 560px; max-width: calc(100vw - 20px); max-height: calc(100vh - 20px); overflow-y: auto; padding: 14px 16px; z-index: 6; background: rgba(12,17,30,0.96); }
+#wpanel h3 { margin: 0 0 10px; font-size: 17px; display: flex; justify-content: space-between; align-items: center; }
+#wgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.wcell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 9px; border-radius: 12px; border: 2px solid var(--line); background: #1A2234; cursor: pointer; font-size: 13px; font-weight: 800; }
+.wcell canvas { width: 52px; height: 52px; }
+.wcell kbd { position: absolute; left: 6px; top: 5px; font-family: var(--font); font-size: 11px; color: var(--gold); }
+.wcell.sel { border-color: var(--gold); background: #2A2A1E; }
+.wcell:hover { background: #222C44; }
+#wHow { margin: 10px 2px 4px; font-size: 13px; line-height: 1.55; color: #DDE6F5; min-height: 40px; }
+#fuseRow { display: flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 800; margin-top: 6px; }
+.fz { width: 40px; padding: 6px 0; border-radius: 9px; border: 1px solid var(--line); background: #1A2234; font-weight: 900; cursor: pointer; }
+.fz.sel { background: var(--gold); color: #2A1A00; }
+.tb.atk { width: 92px; height: 92px; border-radius: 50%; background: rgba(226,65,47,0.8); font-size: 18px; }
+.tb.wsel { width: 64px; height: 64px; border-radius: 50%; font-size: 14px; }
+body.touchmode #wChip { bottom: auto; top: 110px; }
+@media (max-width: 560px) { #wgrid { grid-template-columns: repeat(2, 1fr); } }
 .tonly { display: none; } body.touchmode .tonly { display: block; }
 body.touchmode #panel { top: 110px; }
 @media (max-width: 520px) { .stat.st, .stat.sp .spd { display: none; } .stats { gap: 8px; padding: 6px 10px; } .stat { min-width: 40px; } }
@@ -59,16 +82,17 @@ body.touchmode #panel { top: 110px; }
 <div class="top">
   <div class="card stats">
     <div class="stat big"><span>기록</span><b id="hTime">0.00</b></div>
-    <div class="stat"><span>체크</span><b id="hCp">0 / 7</b></div>
-    <div class="stat"><span>최고</span><b id="hBest">–</b></div>
-    <div class="stat"><span>로프</span><b id="hRopes">0</b></div>
-    <div class="stat sp"><span>속도</span><b id="hSpeed">0</b><div class="spd"><div id="spBar"></div></div></div>
+    <div class="stat"><span id="lCp">체크</span><b id="hCp">0 / 7</b></div>
+    <div class="stat"><span id="lBest">최고</span><b id="hBest">–</b></div>
+    <div class="stat"><span id="lRopes">로프</span><b id="hRopes">0</b></div>
+    <div class="stat sp"><span id="lSpeed">속도</span><b id="hSpeed">0</b><div class="spd"><div id="spBar"></div></div></div>
     <div class="stat st"><span>상태</span><div id="hState">-</div></div>
   </div>
   <div class="btns">
+    <button class="btn mode" id="modeBtn" type="button">표적 연습</button>
     <button class="btn hot" id="panelBtn" type="button">손맛 조절 (T)</button>
-    <button class="btn" id="watchBtn" type="button">시범 보기</button>
-    <button class="btn" id="ghostBtn" type="button" aria-pressed="true">유령 켜짐</button>
+    <button class="btn raceonly" id="watchBtn" type="button">시범 보기</button>
+    <button class="btn raceonly" id="ghostBtn" type="button" aria-pressed="true">유령 켜짐</button>
     <button class="btn" id="resetBtn" type="button">처음부터 (R)</button>
     <button class="btn" id="helpBtn" type="button">조작법 (H)</button>
   </div>
@@ -82,23 +106,37 @@ body.touchmode #panel { top: 110px; }
 </div>
 <div class="card" id="help">
   <h2>로프 연습장</h2>
-  <p>닌자 로프로 섬과 천장을 타고 <b>1 → 6 → 도착</b> 순서로 원을 통과하세요. 바다에 빠지면 마지막 체크포인트에서 다시 시작합니다. 최고 기록은 반투명 <b>유령</b>으로 같이 달립니다. 처음엔 <b>시범 유령</b>(자동 탐색으로 찾은 24초 기록)이 같이 달리고, <b>시범 보기</b>로 길을 미리 볼 수 있어요.</p>
+  <p><b>로프 레이스</b> · 닌자 로프로 섬과 천장을 타고 <b>1 → 6 → 도착</b> 순서로 원을 통과하세요. 바다에 빠지면 마지막 체크포인트에서 다시 시작합니다. 최고 기록은 반투명 <b>유령</b>으로 같이 달립니다. 처음엔 <b>시범 유령</b>(자동 탐색으로 찾은 24초 기록)이 같이 달리고, <b>시범 보기</b>로 길을 미리 볼 수 있어요.</p>
   <div class="keys">
     <kbd>← →</kbd><span>걷기 · 로프에 매달렸을 땐 <b>흔들기</b></span>
     <kbd>↑ ↓</kbd><span>조준 각도 · 로프에 매달렸을 땐 <b>줄 감기 / 풀기</b> (감으면 빨라짐)</span>
     <kbd>스페이스</kbd><span>로프 발사 · 매달린 상태에서 누르면 <b>놓기</b> (공중에서 다시 발사 가능)</span>
     <kbd>Enter</kbd><span>앞으로 점프 (매달린 상태면 놓기)</span>
     <kbd>Backspace</kbd><span>뒤로 높이 점프</span>
-    <kbd>R · T · G</kbd><span>처음부터 · 손맛 조절 · 유령 켜기/끄기</span>
+    <kbd>R · T · G · M</kbd><span>처음부터 · 손맛 조절 · 유령 켜기/끄기 · 모드 바꾸기</span>
     <kbd>휠 · + −</kbd><span>화면 확대 / 축소</span>
   </div>
-  <p class="tonly">휴대폰: <b>◀ ▶</b> 걷기·흔들기 · <b>▲ ▼</b> 조준·줄 감기 · <b>로프</b> 발사·놓기 · <b>점프</b>. 가로 화면이 편합니다.</p>
+  <p><b>표적 연습</b> (오른쪽 위 파란 버튼) · 무기 8종으로 표적 12개를 부수거나 바다에 빠뜨리세요. 땅이 파이고, 폭발에 지렁이도 날아갑니다(로켓 점프 가능). 로프에 매달린 채로도 쏠 수 있어요.</p>
+  <div class="keys">
+    <kbd>Tab · 우클릭</kbd><span><b>무기판</b> 열기 (숫자키 1~8로 바로 선택)</span>
+    <kbd>F · 좌클릭</kbd><span>무기 사용 · 바주카·수류탄은 <b>누르고 있다 떼면</b> 발사(파워)</span>
+    <kbd>마우스</kbd><span>조준 (키보드 ↑ ↓도 됨) · 공중 폭격은 맵을 클릭해 목표 지정</span>
+    <kbd>Q · E</kbd><span>수류탄·클러스터 타이머 1~5초</span>
+  </div>
+  <p class="tonly">휴대폰: <b>◀ ▶</b> 걷기·흔들기 · <b>▲ ▼</b> 조준·줄 감기 · <b>로프</b> 발사·놓기 · <b>점프</b>. 표적 연습에선 <b>무기</b> 버튼으로 고르고 <b>공격</b> 버튼(길게 누르면 파워), 공중 폭격은 맵을 터치해 목표. 가로 화면이 편합니다.</p>
   <p>요령: 줄을 건 뒤 ← →로 크게 흔들고, 앞으로 갈 때 ↑로 감아 속도를 붙인 다음, 높이 올라가는 순간 스페이스로 놓고 날아가서 다시 거세요. 벽에 부딪히면 튕기면서 속도를 얻습니다(2세대 손맛).</p>
   <button class="btn hot" id="helpClose" type="button">시작하기</button>
 </div>
 <div class="card" id="watchTag" hidden>시범 주행 중 · 아무 키나 누르거나 화면을 누르면 직접 달리기</div>
+<div class="card tmodeonly" id="wChip" role="button" aria-label="무기판 열기"><canvas id="wIcon" width="88" height="88"></canvas><div><span class="k">무기 (Tab)</span><b id="wName">바주카</b><small id="wSub"></small></div></div>
+<div class="card" id="wpanel" hidden>
+  <h3>무기판 <button class="btn" id="wClose" type="button">닫기 (Esc)</button></h3>
+  <div id="wgrid"></div>
+  <div id="wHow"></div>
+  <div id="fuseRow" hidden>타이머 <button class="fz" data-f="1" type="button">1</button><button class="fz" data-f="2" type="button">2</button><button class="fz" data-f="3" type="button">3</button><button class="fz" data-f="4" type="button">4</button><button class="fz" data-f="5" type="button">5</button> 초</div>
+</div>
 <div class="card" id="result" hidden>
-  <div class="t">도착 기록</div>
+  <div class="t" id="resTitle">도착 기록</div>
   <div id="resTime">0.00</div>
   <div id="resSub"></div>
   <button class="btn hot" id="againBtn" type="button">다시 달리기 (R)</button>
@@ -111,6 +149,8 @@ body.touchmode #panel { top: 110px; }
     <button class="tb" data-k="R" type="button" aria-label="오른쪽">▶</button>
   </div>
   <div class="act">
+    <button class="tb wsel tmodeonly" id="wBtn" type="button">무기</button>
+    <button class="tb atk tmodeonly" data-k="ATK" type="button">공격</button>
     <button class="tb jump" data-k="JUMP" type="button">점프</button>
     <button class="tb rope" data-k="FIRE" type="button">로프</button>
   </div>
