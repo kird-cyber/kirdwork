@@ -1,4 +1,4 @@
-// online test (어뢰리스): real Mosquitto broker + several separate browsers.
+// online test (배틀서브): real Mosquitto broker + several separate browsers.
 // needs: node tests/broker.js 9001  and  (cd dist && python3 -m http.server 8766)
 // run:   NODE_PATH=/opt/npm-tools/node_modules node tests/online.js [players=4]
 const { chromium } = require('playwright');
