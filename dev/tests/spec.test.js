@@ -2,7 +2,7 @@
 // run: node tests/spec.test.js  -> prints a table and writes tests/out/spec.json
 const fs = require('fs'), path = require('path');
 const code = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'controller.js'].map(f => fs.readFileSync(path.join(__dirname, '../src', f), 'utf8')).join('\n');
-const A = new Function(code + '\n;return {CONFIG,createMatch,step,cmdFire,cmdMove,cmdItem,cmdTimeout,explode,tankCenter,updateTilt,surfaceAt,stateHash,curTank,beginTurn};')();
+const A = new Function(code + '\n;return {CONFIG,createMatch,step,cmdFire,cmdMove,cmdItem,cmdTimeout,cmdPass,applyTurnInput,explode,tankCenter,updateTilt,surfaceAt,stateHash,curTank,beginTurn};')();
 const { CONFIG } = A;
 const GROUND = 800;
 const rows = [];
@@ -327,6 +327,44 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   check('공통', '느린 턴(아이템·이동·시간) 뒤 상대가 2번 연속', 'prism, prism', order.slice(0, 2).join(', '), order[0] === 'prism' && order[1] === 'prism');
   const ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); let n = 0; while (A.cmdMove(ms, 1) !== false && n < 5000 && ms.tanks[0].fuel > 0) n++;
   check('공통', '이동력 30% 증가 (루키 190→247px)', 247, Math.round(ms.tanks[0].x - 1000), Math.abs(ms.tanks[0].x - 1000 - 247) < 1);
+}
+
+// ---- 턴 넘기기 / 연속 사격 / 이동력 바닥에서 방향 전환
+{
+  // pass: delay base x 0.5, one saved turn (max 1)
+  const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]);
+  const t = m.tanks[0], d0 = t.delay;
+  A.cmdPass(m, 0);
+  check('공통', '턴 넘기기: 딜레이 = 기본의 절반(370)', 370, t.delay - d0, t.delay - d0 === 370);
+  check('공통', '턴 넘기기: 저장 턴 +1', 1, t.saved, t.saved === 1);
+  // a second pass does not stack beyond 1
+  const m2 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m2.tanks[0].saved = 1; A.cmdPass(m2, 0);
+  check('공통', '저장 턴은 최대 1개', 1, m2.tanks[0].saved, m2.tanks[0].saved === 1);
+  // chain: the same tank gets the next turn although its delay is higher than the opponent's
+  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[0].saved = 1; m3.tanks[1].delay = 10;
+  const inp = A.cmdFire(m3, 45, 300, 0, 0, true);
+  check('공통', '연속 사격: 저장 턴 소모 · 딜레이 절반', '0, 370', `${m3.tanks[0].saved}, ${m3.tanks[0].delay}`, m3.tanks[0].saved === 0 && m3.tanks[0].delay === 370 && inp.chain === true);
+  runFlight(m3);
+  check('공통', '연속 사격: 같은 탱크가 바로 한 번 더', 'rookie', m3.tanks[m3.cur].tankId, m3.tanks[m3.cur].tankId === 'rookie');
+  A.cmdFire(m3, 45, 300, 0, 0, true); // no saved turn left -> ordinary shot
+  runFlight(m3);
+  check('공통', '저장 턴 없으면 연속 사격 무시 → 상대 차례', 'trapper', m3.tanks[m3.cur].tankId, m3.tanks[m3.cur].tankId === 'trapper');
+  // tempo: pass + chained pair costs the same delay as two normal shots
+  const base = CONFIG.turn.baseDelay[CONFIG.tanks.rookie.speedClass];
+  check('공통', '넘기기+연속 2발 = 일반 2발과 같은 딜레이', 2 * base, Math.round(base * 0.5) + Math.round(base * 0.5) + base, Math.round(base * 0.5) * 2 + base === 2 * base);
+  // facing with no fuel
+  const mf = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); const tf = mf.tanks[0];
+  let g = 0; while (tf.fuel > 0 && g++ < 5000) A.cmdMove(mf, 1);
+  const x0 = tf.x; A.cmdMove(mf, -1);
+  check('공통', '이동력 0에서도 방향 전환 (위치는 그대로)', '-1, 0', `${tf.facing}, ${tf.x - x0}`, tf.facing === -1 && tf.x === x0);
+  // and the same input replays to the same facing on another device
+  const fin = A.cmdFire(mf, 50, 300, 0, 0);
+  const mr = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); A.applyTurnInput(mr, fin);
+  check('공통', '방향 전환이 다른 기기에서도 똑같이 재현', -1, mr.tanks[0].facing, mr.tanks[0].facing === -1 && A.stateHash(mr) === A.stateHash(mf));
+  // pass replays too
+  const mp = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); const pin = A.cmdPass(mp, 600);
+  const mq = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); A.applyTurnInput(mq, pin);
+  check('공통', '턴 넘기기가 다른 기기에서도 똑같이 재현', 'same', A.stateHash(mq) === A.stateHash(mp) ? 'same' : 'diff', A.stateHash(mq) === A.stateHash(mp) && mq.tanks[0].saved === 1);
 }
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });

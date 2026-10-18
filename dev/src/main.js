@@ -204,6 +204,12 @@ function updateHud() {
     if (hudCache['w' + i] !== label) { hudCache['w' + i] = label; b.textContent = label; }
     b.classList.toggle('sel', ctrl.weapon === i && (mineNow || !ON.active)); b.disabled = (i === 1 && t.cd > 0) || (ON.active && !mineNow);
   }
+  // 턴 넘기기 / 연속 사격
+  const myTurnNow = mineNow && t === cur && m.phase === 'aim' && !ctrl.charging;
+  $('passBtn').disabled = !myTurnNow;
+  const cb = $('chainBtn'), maxS = CONFIG.turn.pass.maxSaved;
+  cb.disabled = !myTurnNow || t.saved <= 0; cb.classList.toggle('on', !!ctrl.chain && myTurnNow); cb.setAttribute('aria-pressed', String(!!ctrl.chain && myTurnNow));
+  setTxt('chainSub', ctrl.chain && myTurnNow ? '켜짐 · 쏘면 한 번 더' : `C · 저장 턴 ${t.saved}/${maxS}`);
   const secs = Math.max(0, Math.ceil(ctrl.timeLeft / CONFIG.physics.tickRate));
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
@@ -262,13 +268,13 @@ function updateStatus(m, cur) {
   const L = ON.active ? ON.link : null;
   for (const c of box.querySelectorAll('.sc')) {
     const x = m.tanks[+c.dataset.idx], pos = order.indexOf(x), off = L && !L.online(x.id) && x.id !== ON.myId;
-    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0].join(',');
+    const key = [x.hp, x.alive, pos, off, x.poison ? 1 : 0, x.shield ? 1 : 0, x.saved].join(',');
     if (c.dataset.k === key) continue; c.dataset.k = key;
     c.classList.toggle('now', x === cur && x.alive); c.classList.toggle('dead', !x.alive); c.classList.toggle('off', !!off);
     c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
     c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
     c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
-    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '') + (x.saved ? ' · 저장턴' : '');
   }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
@@ -308,7 +314,13 @@ window.addEventListener('keydown', e => {
   if (e.code === 'Digit2') ctrl.selectWeapon(1);
   if (['Digit3', 'Digit4', 'Digit5', 'Digit6'].includes(e.code)) useItemSlot(+e.code.slice(5) - 3);
   if (e.code === 'KeyF') recenter();
+  if (e.code === 'KeyP' && !e.repeat) doPass();
+  if (e.code === 'KeyC' && !e.repeat) doChain();
 });
+function doPass() { if (ctrl && ctrl.pass()) AU.play('ui'); }
+function doChain() { if (ctrl && ctrl.toggleChain()) AU.play('ui'); }
+$('passBtn').onclick = doPass;
+$('chainBtn').onclick = doChain;
 window.addEventListener('keyup', e => { if (KEYMAP[e.code] && ctrl) ctrl.keys[KEYMAP[e.code]] = false; camKeys[e.code] = false; });
 window.addEventListener('blur', () => { if (ctrl) for (const k in ctrl.keys) ctrl.keys[k] = false; for (const k in camKeys) camKeys[k] = false; });
 let drag = null;

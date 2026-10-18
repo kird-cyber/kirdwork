@@ -301,8 +301,9 @@ function remoteTick(m, t) {
     if (m.phase === 'aim') {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
       else if (fin.timeout) cmdTimeout(m);
+      else if (fin.pass) cmdPass(m, fin.used);
       else if (fin.ended) { requestRebuild('ended'); return; }
-      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
+      else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used, fin.chain);
     }
     ON.applied[m.turnNo] = fin; delete ON.inputs[m.turnNo];
     return;
