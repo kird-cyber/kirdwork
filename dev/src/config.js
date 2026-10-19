@@ -158,6 +158,8 @@ const CONFIG = {
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask.
   maps: {
+    campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird', special: 'KIRD 기관 전용' },
+    songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake', special: 'KIRD 기관 전용' },
     temple: { name: '사막 신전', tag: '계단식 · 고지대 쟁탈', desc: '양끝이 높고 가운데가 파인 계단 지형. 높은 자리를 먼저 잡는 쪽이 유리합니다.', W: 5000, H: 1500, theme: 'desert' },
     valley: { name: '협곡 도시', tag: '얇은 지형 · 번지전', desc: '아주 얇은 골짜기 지형과 그 아래 한 겹 더. 발밑을 뚫어 떨어뜨리는 싸움이 핵심입니다.', W: 4800, H: 1500, theme: 'valley' },
     clouds: { name: '구름 대륙', tag: '넓은 맵 · 장거리전', desc: '두껍고 넓은 구름 대륙 세 개와 작은 구름섬. 멀리 떨어진 상대와 장거리 포격전을 벌입니다.', W: 6000, H: 1600, theme: 'clouds' },
@@ -165,8 +167,6 @@ const CONFIG = {
     snow: { name: '설원 요새', tag: '성벽 · 엄폐전', desc: '눈 덮인 언덕 양쪽에 돌 성벽이 서 있습니다. 성벽 뒤에 숨거나 넘겨 쏘는 싸움.', W: 5200, H: 1500, theme: 'snow' },
     lava: { name: '화산 지대', tag: '용암 구덩이 · 고지대', desc: '가운데 화산과 용암 구덩이 두 개. 구덩이 위 떠 있는 바위를 차지하면 유리합니다.', W: 5000, H: 1500, theme: 'lava' },
     moon: { name: '달 기지', tag: '저중력 · 장거리', desc: '중력이 약해 포탄이 멀리, 오래 날아갑니다. 분화구와 평평한 고원.', W: 5600, H: 1600, theme: 'moon', gravity: 0.62 },
-    songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake' },
-    campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird' },
     islands: { name: '푸른 군도', tag: '섬 · 낙사 주의', desc: '바다 위 다섯 개의 섬. 섬 사이 바다에 빠지면 탈락입니다.', W: 5400, H: 1500, theme: 'sea' },
   },
 };

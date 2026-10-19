@@ -209,10 +209,10 @@ function renderLobby() {
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
   for (const [k, meta] of Object.entries(CONFIG.maps)) {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (room.map === k ? ' sel' : '');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mapc' + (room.map === k ? ' sel' : '') + (meta.special ? ' kird' : '');
     b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
     const inner = document.createElement('div'); inner.className = 'in';
-    inner.innerHTML = `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
+    inner.innerHTML = (meta.special ? `<span class="kb">${meta.special}</span>` : '') + `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
     b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
     if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
     maps.append(b);

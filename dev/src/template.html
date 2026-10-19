@@ -147,6 +147,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .mapc .d { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
 .mapc .g { font-size: 11px; font-weight: 700; color: var(--gold); }
 .mapc.sel { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 210, 74, 0.25); }
+/* KIRD 기관 전용 maps: a blue-green outline and a badge so they stand out from the rest */
+.mapc.kird { position: relative; border: 3px solid transparent; background: linear-gradient(var(--panel-solid), var(--panel-solid)) padding-box, linear-gradient(120deg, #2E86D6, #5BB84A) border-box; box-shadow: 0 0 16px rgba(70, 170, 220, 0.35); }
+.mapc.kird.sel { background: linear-gradient(var(--panel-solid), var(--panel-solid)) padding-box, linear-gradient(120deg, #FFD24A, #5BB84A) border-box; box-shadow: 0 0 0 3px rgba(255, 210, 74, 0.3), 0 0 18px rgba(91, 184, 74, 0.45); }
+.mapc .kb { align-self: flex-start; padding: 2px 9px; border-radius: 999px; background: linear-gradient(90deg, #2E86D6, #5BB84A); color: #FFFFFF; font-size: 11px; font-weight: 900; letter-spacing: 0.02em; }
 .modes { display: flex; gap: 8px; flex-wrap: wrap; }
 .seg { padding: 9px 16px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel-solid); font-weight: 700; cursor: pointer; }
 .seg.sel { border-color: var(--gold); color: var(--gold); }
