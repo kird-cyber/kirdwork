@@ -15,7 +15,7 @@ out = tpl.replace('/*__JS__*/', js).replace('__SPRITES__', sprites)
 head = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
         '<meta name="description" content="친구와 링크 하나로 붙는 턴제 포격 대전 · 최대 4 대 4">\n'
-        '<meta property="og:type" content="website">\n<meta property="og:title" content="포격리스">\n'
+        '<meta property="og:type" content="website">\n<meta property="og:title" content="케이요새">\n'
         '<meta property="og:description" content="그 시절 그 포격전, 링크 하나로 친구들과 다시. 설치·가입 없이 최대 4 대 4.">\n'
         '<meta property="og:image" content="https://kird-cyber.github.io/kirdwork/og.png">\n'
         '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'

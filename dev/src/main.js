@@ -505,7 +505,7 @@ const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨�
 function announceHappening() {
   const kd = match && match.tanks.filter(t => CONFIG.tanks[t.tankId].hidden);
   if (kd && kd.length) setTimeout(() => { if (match && match.tanks.includes(kd[0])) banner(`히든 탱크 등장! ${kd.map(t => t.nick).join(', ')} — ${CONFIG.tanks[kd[0].tankId].name}`); }, 5000);
-  const g = showMapGuide(), d = g ? 4600 : 0;
+  const g = showMapGuide(), d = g ? 9600 : 0;
   const h = match && match.happening; if (!h) return;
   const hp = [happenName(match, h, 0) || HAPPEN[h][0], happenName(match, h, 1) || HAPPEN[h][1]];
   setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + hp[0]); }, 1700 + d);
@@ -520,7 +520,7 @@ function showMapGuide() {
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
   el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
-  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 4500);
+  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
   return true;
 }
 function startGame() {

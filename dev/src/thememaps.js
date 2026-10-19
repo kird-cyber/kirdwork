@@ -115,7 +115,7 @@ const TMAP_ART = (() => {
   }
   function clouds(x, list, alpha) {
     for (const [cx, cy, s] of list) {
-      x.save(); x.globalAlpha = alpha || 0.95; x.filter = 'blur(6px)';
+      x.save(); x.globalAlpha = alpha || 0.95;
       for (const [dx, dy, r] of [[-1, 0.1, 0.55], [-0.45, -0.25, 0.7], [0.15, -0.35, 0.8], [0.7, -0.1, 0.6], [1.1, 0.15, 0.45], [0, 0.2, 0.7]]) { x.fillStyle = rg(x, cx + dx * s, cy + dy * s - r * s * 0.3, 0, r * s, [[0, '#FFFFFF'], [0.7, '#F4F8FC'], [1, 'rgba(230,238,248,0)']]); x.beginPath(); x.arc(cx + dx * s, cy + dy * s, r * s, 0, 7); x.fill(); }
       x.restore();
     }
@@ -519,8 +519,9 @@ const TMAP_ART = (() => {
     x.save(); x.globalCompositeOperation = 'source-atop'; S1.solid(x); x.restore();
     x.save(); S1.front(x, surface); x.restore();
   }
-  function backdrop(m) { // the scene behind the terrain, at half resolution
-    const c = document.createElement('canvas'); c.width = m.W / 2; c.height = m.H / 2; const x = c.getContext('2d'); x.scale(0.5, 0.5); S[m.mapId].back(x); return c;
+  const BACK_RES = 1; // backdrop pixels per world px (was 0.5: twice as sharp now, same size as the terrain picture)
+  function backdrop(m) { // the scene behind the terrain
+    const k = BACK_RES, c = document.createElement('canvas'); c.width = Math.round(m.W * k); c.height = Math.round(m.H * k); const x = c.getContext('2d'); x.scale(k, k); S[m.mapId].back(x); c.k = k; return c;
   }
   return { has: id => !!S[id], paint, backdrop, beacons: id => (S[id] && S[id].beacons) || [], ceil: id => S[id] && S[id].ceil, stamp, flame };
 })();

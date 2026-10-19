@@ -820,7 +820,7 @@ function createRenderer(cv, mini) {
     if (MAPDECO[m.mapId]) drawKirdBack(MAPDECO[m.mapId]);
     const ceil = TMAP_ART.ceil(m.mapId); // indoor maps: no sky outside the room
     if (ceil) { ctx.fillStyle = ceil; if (top < 0) ctx.fillRect(left - 10, top - 10, v.w + 20, -top + 10); if (left < 0) ctx.fillRect(left - 10, 0, -left + 10, m.H); if (left + v.w > m.W) ctx.fillRect(m.W, 0, left + v.w - m.W + 10, m.H); }
-    if (R.tback && rw > 0 && rh > 0) ctx.drawImage(R.tback, rx / 2, ry / 2, rw / 2, rh / 2, rx, ry, rw, rh);
+    if (R.tback && rw > 0 && rh > 0) { const k = R.tback.k; ctx.drawImage(R.tback, rx * k, ry * k, rw * k, rh * k, rx, ry, rw, rh); }
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
     for (const [bx, by] of TMAP_ART.beacons(m.mapId)) { const a = 0.35 + 0.35 * Math.sin(R.t * 6 + bx); const g = ctx.createRadialGradient(bx, by, 2, bx, by, 70); g.addColorStop(0, `rgba(255,70,50,${a})`); g.addColorStop(1, 'rgba(255,70,50,0)'); ctx.fillStyle = g; ctx.fillRect(bx - 70, by - 70, 140, 140); }
     for (const b of R.beams) {
