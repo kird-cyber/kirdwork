@@ -31,7 +31,11 @@ const CONFIG = {
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
-    crateEveryTurns: 3,
+    crateEveryTurns: 2,
+    crateNear: [300, 600],  // a crate lands this far (sideways) from one tank picked at random, at most crateNearDy above/below it
+    crateNearDy: 300,
+    crateMax: 8,            // most crates lying around at once (no new drop past this)
+    crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     maxPlayers: 8,
     teamMax: 4,

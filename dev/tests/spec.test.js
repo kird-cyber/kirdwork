@@ -365,6 +365,21 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
 }
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
+// supply crates: every 2 turns, 300~600 px to the side of a tank, never nearer than 300 to any tank, gone after a few rounds
+{
+  const tk = Object.keys(CONFIG.tanks)[0], T = CONFIG.turn;
+  const m = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]);
+  let drops = 0, bad = 0;
+  for (let k = 0; k < 12; k++) {
+    m.events.length = 0; A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m);
+    for (const e of m.events) if (e.type === 'crate') { drops++; const dx = Math.min(...m.tanks.map(t => Math.abs(t.x - e.x))); if (dx < T.crateNear[0] || dx > T.crateNear[1] + 1) bad++; }
+  }
+  check('보급 상자', `${T.crateEveryTurns}턴마다, 탱크 옆 ${T.crateNear.join('~')}px`, '12턴에 6번, 벗어남 0', `${drops}번, 벗어남 ${bad}`, drops === 6 && bad === 0);
+  const life = T.crateLifeRounds * m.tanks.length, born = m.turnNo;
+  m.crates = [{ x: 1800, y: GROUND, item: Object.keys(CONFIG.items)[0], dead: false, id: 7777, born }];
+  for (let k = 0; k < life; k++) { A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m); }
+  check('보급 상자', `아무도 안 먹으면 ${life}턴 뒤 사라짐`, '사라짐', m.crates.some(c => c.id === 7777) ? '남음' : '사라짐', !m.crates.some(c => c.id === 7777));
+}
 fs.writeFileSync(path.join(__dirname, 'out', 'spec.json'), JSON.stringify(rows, null, 1));
 const fails = rows.filter(r => !r.pass);
 for (const r of rows) console.log((r.pass ? 'PASS' : 'FAIL') + ` | ${r.tank} | ${r.item} | 기대 ${r.expected} | 실제 ${r.actual}`);

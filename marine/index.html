@@ -628,7 +628,10 @@ const CONFIG = {
     itemDelay: 80,
     skipDelay: 150,
     delayPerSec: 4,
-    crateEveryTurns: 3,
+    crateEveryTurns: 2,
+    crateNear: [300, 600],  // a crate appears this far from one sub picked at random (no sub nearer than the minimum)
+    crateMax: 8,            // most crates lying in the sea at once (no new drop past this)
+    crateLifeRounds: 4,     // a crate nobody took sinks away after every sub had about this many own turns (turns = this x players)
     currentMax: 5,
     maxUnits: 8000,        // most action units one turn input may carry (a real turn has at most one per tick: 7200)
     maxPlayers: 8,
@@ -751,7 +754,7 @@ const CONFIG = {
     nautilus: { name: '노틸러스', en: 'Nautilus', tag: '거대 앵무조개 껍데기', desc: '한가운데 앵무조개 껍데기의 나선 복도. 곡선을 빙글 돌려 안쪽 깊숙이 숨은 적을 노립니다.', rule: '나선 해류: 껍데기 주변 물살이 어뢰를 시계 방향으로 휘감습니다', W: 4000, H: 1700, theme: 'nautilus',
       rules: { swirl: { x: 2000, y: 800, r: 950, v: 40 } } },
     seacity: { name: '씨 시티', en: 'Sea City', tag: '해저 도시 · 2층 통로 · 리프트', desc: '금속 천장 아래 해저 도시. 짧은 리프트 기둥, 엇갈려 놓인 2층 금속 통로, 바닥의 돔과 첨탑 사이로 길이 나 있습니다.', rule: '도시 보급망: 보급 상자가 2턴마다 떨어집니다', W: 4200, H: 1800, theme: 'seacity',
-      rules: { crateEvery: 2 } },
+      rules: { crateEvery: 1 } },
     spa: { name: '스파', en: 'Spa', tag: '해저 온천 · 대나무 · 돌 욕조', desc: '엇갈린 대나무 장대와 김이 오르는 돌 욕조 셋. 욕조 안은 아늑한 은신처입니다.', rule: '온천: 욕조 안에서 턴을 시작하면 체력 +60, 욕조 위 기포가 어뢰를 밀어 올립니다', W: 3800, H: 1500, theme: 'spa',
       rules: { lift: [[480, 920, 400, 1240, 60], [1680, 2320, 400, 1240, 60], [2980, 3420, 400, 1240, 60]], heal: [[460, 940, 1040, 1290, 60], [1660, 2340, 1040, 1290, 60], [2960, 3440, 1040, 1290, 60]] } },
   },
@@ -1265,7 +1268,7 @@ function explode(m, x, y, sh, dmg, owner, opts) {
   if (R.fossil && carved > 300 && !opts.rock && rngNext(m) < R.fossil) {
     const keys = Object.keys(CONFIG.items); let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
     let r = rngNext(m) * total, item = keys[0]; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++ }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
+    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++, born: m.turnNo }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
   }
   return hit;
 }
@@ -1749,6 +1752,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.subs.length;
   const cmax = Math.round(T.currentMax * (sudden ? T.suddenCurrentMul : 1));
   m.current = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 3.6 * (sudden ? T.suddenCurrentMul : 1)), -cmax, cmax);
+  for (const c of m.crates) if (m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
+  m.crates = m.crates.filter(c => !c.dead);
   const ce = m.rules.crateEvery || T.crateEveryTurns;
   if (m.turnNo % ce === 1 % ce) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
@@ -1769,15 +1774,25 @@ function beginTurn(m) {
   }
   m.phase = 'aim';
 }
+function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.subs.length; }
+// a supply crate near one sub (300~600 px, nobody closer than 300): out of reach this turn, but 2~3 turns of driving get it
 function dropCrate(m) {
-  const keys = Object.keys(CONFIG.items);
+  const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
+  if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
-  for (let tries = 0; tries < 30; tries++) {
-    const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = Math.round(140 + rngNext(m) * (m.H - 280));
-    let r = rngNext(m) * total, item = keys[0];
-    for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y)) || m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
-    m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ });
+  const alive = m.subs.filter(t => t.alive); if (!alive.length) return;
+  const lo = T.crateNear[0], hi = T.crateNear[1];
+  for (let tries = 0; tries < 60; tries++) {
+    const t = alive[Math.floor(rngNext(m) * alive.length)], a = Math.floor(rngNext(m) * 3600), r = lo + rngNext(m) * (hi - lo);
+    const x = Math.round(t.x + r * cosD10(a)), y = Math.round(t.y + r * sinD10(a));
+    let item = keys[0], rr = rngNext(m) * total;
+    for (const k of keys) { rr -= CONFIG.items[k].dropWeight; if (rr < 0) { item = k; break; } }
+    if (x < 100 || x > m.W - 100 || y < 100 || y > m.H - 100) continue;
+    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36)) continue;
+    if (alive.some(o => (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) < lo * lo)) continue;
+    if (m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
+    if (m.crates.some(c => (c.x - x) * (c.x - x) + (c.y - y) * (c.y - y) < 120 * 120)) continue;
+    m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo });
     m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id });
     return;
   }
@@ -2624,6 +2639,7 @@ function createRenderer(cv, mini) {
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '장외', '#CFE6FF'); break;
         case 'crate': R.onSfx('crate'); bubbles(e.x, e.y, 12, 30); break;
+        case 'crategone': bubbles(e.x, e.y, 10, 24); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'sudden': R.onBanner('서든데스! 매 턴 모두 체력 감소 · 해류 강화'); R.onSfx('death'); shake(6); break;
         case 'timeout': R.onBanner('시간 초과'); break;
@@ -2820,7 +2836,8 @@ function createRenderer(cv, mini) {
   }
   function drawCrate(c) {
     const b = Math.sin(R.t * 2 + c.id) * 4, meta = CONFIG.items[c.item];
-    ctx.save(); ctx.translate(c.x, c.y + b);
+    const last = R.m && R.m.turnNo - (c.born || 0) >= crateLife(R.m) - R.m.subs.length; // sinks away within a round: blink
+    ctx.save(); ctx.translate(c.x, c.y + b); if (last) ctx.globalAlpha = 0.45 + 0.45 * Math.abs(Math.sin(R.t * 5));
     ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, 7); ctx.fill();
     ctx.fillStyle = '#E8C24A'; ctx.strokeStyle = '#3A2A00'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-15, -12, 30, 24, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = meta.color; ctx.font = '900 10px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(meta.label, 0, 4);

@@ -514,6 +514,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
+  for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
+  m.crates = m.crates.filter(c => !c.dead);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
@@ -555,15 +557,29 @@ function beginTurn(m) {
   }
   m.phase = 'aim';
 }
+function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
+// a crate lands 300~600 px to the side of one tank (open sky above, not much higher or lower, no tank nearer than 300):
+// out of reach this turn, but 2~3 turns of driving get it. Nowhere like that: anywhere, as before.
 function dropCrate(m) {
-  const keys = Object.keys(CONFIG.items);
+  const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
+  if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
-  for (let tries = 0; tries < 20; tries++) {
-    const x = Math.round(200 + rngNext(m) * (m.W - 400));
+  const pick = () => { let r = rngNext(m) * total; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) return k; } return keys[0]; };
+  const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
+  const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0], hi = T.crateNear[1];
+  for (let tries = 0; alive.length && tries < 40; tries++) {
+    const t = alive[Math.floor(rngNext(m) * alive.length)], side = rngNext(m) < 0.5 ? -1 : 1;
+    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo))), item = pick();
+    if (x < 100 || x > m.W - 100) continue;
     const y = surfaceAt(m, x, 0);
-    let r = rngNext(m) * total, item = keys[0];
-    for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (y >= 0) { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); return; }
+    if (y < 0 || Math.abs(y - t.y) > T.crateNearDy) continue;
+    if (alive.some(o => Math.abs(o.x - x) < lo && Math.abs(o.y - y) < T.crateNearDy)) continue;
+    if (m.crates.some(c => Math.abs(c.x - x) < 80)) continue;
+    put(x, y, item); return;
+  }
+  for (let tries = 0; tries < 20; tries++) {
+    const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();
+    if (y >= 0) { put(x, y, item); return; }
   }
 }
 

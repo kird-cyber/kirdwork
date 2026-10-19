@@ -32,7 +32,10 @@ const CONFIG = {
     itemDelay: 80,
     skipDelay: 150,
     delayPerSec: 4,
-    crateEveryTurns: 3,
+    crateEveryTurns: 2,
+    crateNear: [300, 600],  // a crate appears this far from one sub picked at random (no sub nearer than the minimum)
+    crateMax: 8,            // most crates lying in the sea at once (no new drop past this)
+    crateLifeRounds: 4,     // a crate nobody took sinks away after every sub had about this many own turns (turns = this x players)
     currentMax: 5,
     maxUnits: 8000,        // most action units one turn input may carry (a real turn has at most one per tick: 7200)
     maxPlayers: 8,
@@ -155,7 +158,7 @@ const CONFIG = {
     nautilus: { name: '노틸러스', en: 'Nautilus', tag: '거대 앵무조개 껍데기', desc: '한가운데 앵무조개 껍데기의 나선 복도. 곡선을 빙글 돌려 안쪽 깊숙이 숨은 적을 노립니다.', rule: '나선 해류: 껍데기 주변 물살이 어뢰를 시계 방향으로 휘감습니다', W: 4000, H: 1700, theme: 'nautilus',
       rules: { swirl: { x: 2000, y: 800, r: 950, v: 40 } } },
     seacity: { name: '씨 시티', en: 'Sea City', tag: '해저 도시 · 2층 통로 · 리프트', desc: '금속 천장 아래 해저 도시. 짧은 리프트 기둥, 엇갈려 놓인 2층 금속 통로, 바닥의 돔과 첨탑 사이로 길이 나 있습니다.', rule: '도시 보급망: 보급 상자가 2턴마다 떨어집니다', W: 4200, H: 1800, theme: 'seacity',
-      rules: { crateEvery: 2 } },
+      rules: { crateEvery: 1 } },
     spa: { name: '스파', en: 'Spa', tag: '해저 온천 · 대나무 · 돌 욕조', desc: '엇갈린 대나무 장대와 김이 오르는 돌 욕조 셋. 욕조 안은 아늑한 은신처입니다.', rule: '온천: 욕조 안에서 턴을 시작하면 체력 +60, 욕조 위 기포가 어뢰를 밀어 올립니다', W: 3800, H: 1500, theme: 'spa',
       rules: { lift: [[480, 920, 400, 1240, 60], [1680, 2320, 400, 1240, 60], [2980, 3420, 400, 1240, 60]], heal: [[460, 940, 1040, 1290, 60], [1660, 2340, 1040, 1290, 60], [2960, 3440, 1040, 1290, 60]] } },
   },

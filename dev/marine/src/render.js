@@ -277,6 +277,7 @@ function createRenderer(cv, mini) {
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '장외', '#CFE6FF'); break;
         case 'crate': R.onSfx('crate'); bubbles(e.x, e.y, 12, 30); break;
+        case 'crategone': bubbles(e.x, e.y, 10, 24); break;
         case 'turn': R.follow = t; R.free = false; R.onBanner(R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'sudden': R.onBanner('서든데스! 매 턴 모두 체력 감소 · 해류 강화'); R.onSfx('death'); shake(6); break;
         case 'timeout': R.onBanner('시간 초과'); break;
@@ -473,7 +474,8 @@ function createRenderer(cv, mini) {
   }
   function drawCrate(c) {
     const b = Math.sin(R.t * 2 + c.id) * 4, meta = CONFIG.items[c.item];
-    ctx.save(); ctx.translate(c.x, c.y + b);
+    const last = R.m && R.m.turnNo - (c.born || 0) >= crateLife(R.m) - R.m.subs.length; // sinks away within a round: blink
+    ctx.save(); ctx.translate(c.x, c.y + b); if (last) ctx.globalAlpha = 0.45 + 0.45 * Math.abs(Math.sin(R.t * 5));
     ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.arc(0, 0, 26, 0, 7); ctx.fill();
     ctx.fillStyle = '#E8C24A'; ctx.strokeStyle = '#3A2A00'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-15, -12, 30, 24, 6); ctx.fill(); ctx.stroke();
     ctx.fillStyle = meta.color; ctx.font = '900 10px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(meta.label, 0, 4);

@@ -13,7 +13,7 @@ const path = require('path'), OUT = path.join(__dirname, 'out');
   const ok = (name, v) => { res.push((v ? 'PASS ' : 'FAIL ') + name); };
   ok('내 차례 옴', await waitMine());
   // a crate just ahead of the nose: hold the arrow key toward it
-  const dir = await p.evaluate(() => { const m = __pg.match, t = m.subs[m.cur]; t.items = []; const s = t.x < m.W / 2 ? 1 : -1; m.crates.push({ x: Math.round(t.x + s * 66), y: Math.round(t.y), item: 'double', dead: false, id: 9001 }); return s > 0 ? 'ArrowRight' : 'ArrowLeft'; });
+  const dir = await p.evaluate(() => { const m = __pg.match, t = m.subs[m.cur]; t.items = []; const s = t.x < m.W / 2 ? 1 : -1; m.crates.push({ x: Math.round(t.x + s * 66), y: Math.round(t.y), item: 'double', dead: false, id: 9001, born: m.turnNo }); return s > 0 ? 'ArrowRight' : 'ArrowLeft'; });
   await p.waitForTimeout(300); await p.screenshot({ path: OUT + '/item_1_crate.png' });
   await p.keyboard.down(dir); await p.waitForTimeout(250); await p.keyboard.up(dir); await p.waitForTimeout(400);
   ok('몸이 닿은 상자 획득', await p.evaluate(() => __pg.match.subs[__pg.match.cur].items[0] === 'double'));

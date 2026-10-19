@@ -188,7 +188,7 @@ function explode(m, x, y, sh, dmg, owner, opts) {
   if (R.fossil && carved > 300 && !opts.rock && rngNext(m) < R.fossil) {
     const keys = Object.keys(CONFIG.items); let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
     let r = rngNext(m) * total, item = keys[0]; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++ }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
+    if (clearAround(m.mask, m.W, m.H, x, y, 30, 30)) { const c = { x: Math.round(x), y: Math.round(y), item, dead: false, id: m.schedSeq++, born: m.turnNo }; m.crates.push(c); m.events.push({ type: 'crate', x: c.x, y: c.y, item, id: c.id, fossil: true }); }
   }
   return hit;
 }
@@ -672,6 +672,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.subs.length;
   const cmax = Math.round(T.currentMax * (sudden ? T.suddenCurrentMul : 1));
   m.current = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 3.6 * (sudden ? T.suddenCurrentMul : 1)), -cmax, cmax);
+  for (const c of m.crates) if (m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
+  m.crates = m.crates.filter(c => !c.dead);
   const ce = m.rules.crateEvery || T.crateEveryTurns;
   if (m.turnNo % ce === 1 % ce) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
@@ -692,15 +694,25 @@ function beginTurn(m) {
   }
   m.phase = 'aim';
 }
+function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.subs.length; }
+// a supply crate near one sub (300~600 px, nobody closer than 300): out of reach this turn, but 2~3 turns of driving get it
 function dropCrate(m) {
-  const keys = Object.keys(CONFIG.items);
+  const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
+  if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
-  for (let tries = 0; tries < 30; tries++) {
-    const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = Math.round(140 + rngNext(m) * (m.H - 280));
-    let r = rngNext(m) * total, item = keys[0];
-    for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36) || m.subs.some(t => t.alive && hullsOverlap(x, y, t.x, t.y)) || m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
-    m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ });
+  const alive = m.subs.filter(t => t.alive); if (!alive.length) return;
+  const lo = T.crateNear[0], hi = T.crateNear[1];
+  for (let tries = 0; tries < 60; tries++) {
+    const t = alive[Math.floor(rngNext(m) * alive.length)], a = Math.floor(rngNext(m) * 3600), r = lo + rngNext(m) * (hi - lo);
+    const x = Math.round(t.x + r * cosD10(a)), y = Math.round(t.y + r * sinD10(a));
+    let item = keys[0], rr = rngNext(m) * total;
+    for (const k of keys) { rr -= CONFIG.items[k].dropWeight; if (rr < 0) { item = k; break; } }
+    if (x < 100 || x > m.W - 100 || y < 100 || y > m.H - 100) continue;
+    if (!clearAround(m.mask, m.W, m.H, x, y, 36, 36)) continue;
+    if (alive.some(o => (o.x - x) * (o.x - x) + (o.y - y) * (o.y - y) < lo * lo)) continue;
+    if (m.mines.some(q => q.alive && (q.x - x) * (q.x - x) + (q.y - y) * (q.y - y) < 90 * 90)) continue;
+    if (m.crates.some(c => (c.x - x) * (c.x - x) + (c.y - y) * (c.y - y) < 120 * 120)) continue;
+    m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo });
     m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id });
     return;
   }

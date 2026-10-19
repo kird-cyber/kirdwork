@@ -429,6 +429,7 @@ function createRenderer(cv, mini) {
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
         case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
+        case 'crategone': debris(e.x, e.y - 14, 5); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
         case 'weatherStart': R.onBanner(e.kind === 'tornado' ? '토네이도 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : '불기둥 발생! 통과한 포탄 위력 1.5배'); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
@@ -813,7 +814,8 @@ function createRenderer(cv, mini) {
   function drawCrate(c) {
     const dr = R.crateDrop[c.id], fall = dr ? Math.min(1, dr.t / 2.2) : 1;
     const e = 1 - Math.pow(1 - fall, 2), y = c.y - (1 - e) * 900, sway = (1 - fall) * Math.sin(R.t * 2.5) * 10;
-    ctx.save(); ctx.translate(c.x + sway, y);
+    const last = R.m && R.m.turnNo - (c.born || 0) >= crateLife(R.m) - R.m.tanks.length; // gone within a round: blink
+    ctx.save(); ctx.translate(c.x + sway, y); if (last) ctx.globalAlpha = 0.45 + 0.45 * Math.abs(Math.sin(R.t * 5));
     if (fall < 1) {
       ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#5A2A3A'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(-34, -64); ctx.quadraticCurveTo(0, -104, 34, -64); ctx.quadraticCurveTo(0, -74, -34, -64); ctx.fill(); ctx.stroke();

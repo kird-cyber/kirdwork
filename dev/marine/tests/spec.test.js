@@ -300,7 +300,7 @@ const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }
   const m = mapField('seacity', [{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3600, y: 800 }]);
   m.crates = []; let drops = 0;
   for (let k = 0; k < 6; k++) { const before = m.crates.length; A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && g++ < 5000) A.step(m); if (m.crates.length > before) drops++; }
-  check('맵 규칙', '씨 시티: 보급 상자가 2턴마다', '6턴에 3번', `${drops}번`, drops === 3);
+  check('맵 규칙', '씨 시티: 보급 상자가 매 턴', '6턴에 6번', `${drops}번`, drops === 6);
 }
 {
   const m = mapField('spa', [{ sub: 'uboat', x: 700, y: 1180 }, { sub: 'uboat', x: 3600, y: 300 }]);
@@ -359,6 +359,26 @@ const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }
     g = 0; while (b.phase !== 'aim' && b.phase !== 'over' && g++ < 20000) A.step(b);
     check('아이템', `${C.items[id].name}: 입력만으로 재생하면 같은 결과`, '해시 같음', A.stateHash(a) === A.stateHash(b) ? '같음' : '다름', A.stateHash(a) === A.stateHash(b));
   }
+}
+{
+  // crates: every 2 turns, 300~600 px from a sub, never closer than 300 to any sub, at most crateMax lying around
+  const m = field([{ sub: 'uboat', x: 1000, y: 800 }, { sub: 'ohio', x: 3000, y: 800 }]); m.crates = [];
+  let drops = 0, bad = 0;
+  for (let k = 0; k < 12; k++) {
+    const before = m.crates.length; m.events.length = 0; A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && g++ < 5000) A.step(m);
+    for (const e of m.events) if (e.type === 'crate') {
+      drops++;
+      const near = Math.min(...m.subs.map(t => Math.hypot(t.x - e.x, t.y - e.y)));
+      if (near < C.turn.crateNear[0] - 1 || near > C.turn.crateNear[1] + 1) bad++;
+    }
+  }
+  check('아이템', `보급 상자: ${C.turn.crateEveryTurns}턴마다, 잠수함에서 ${C.turn.crateNear.join('~')}px`, '12턴에 6번, 거리 벗어남 0', `${drops}번, 벗어남 ${bad}`, drops === 6 && bad === 0);
+  m.crates = []; for (let k = 0; k < 20; k++) m.crates.push({ x: 100 + k * 150, y: 300, item: 'heal', dead: false, id: 500 + k, born: m.turnNo });
+  const n0 = m.crates.length; for (let k = 0; k < 4; k++) { A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && g++ < 5000) A.step(m); }
+  check('아이템', `보급 상자는 바다에 최대 ${C.turn.crateMax}개 넘으면 안 생김`, n0, m.crates.length, m.crates.length === n0);
+  for (let k = 0; k < A.crateLife(m); k++) { A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && g++ < 5000) A.step(m); }
+  const old = m.crates.filter(c => c.id >= 500 && c.id < 520).length;
+  check('아이템', `아무도 안 먹은 상자는 ${A.crateLife(m)}턴 뒤 사라짐`, 0, old, old === 0);
 }
 // ---- maps
 for (const id of Object.keys(C.maps)) {

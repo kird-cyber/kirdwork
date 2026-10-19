@@ -625,7 +625,11 @@ const CONFIG = {
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
-    crateEveryTurns: 3,
+    crateEveryTurns: 2,
+    crateNear: [300, 600],  // a crate lands this far (sideways) from one tank picked at random, at most crateNearDy above/below it
+    crateNearDy: 300,
+    crateMax: 8,            // most crates lying around at once (no new drop past this)
+    crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     maxPlayers: 8,
     teamMax: 4,
@@ -1528,6 +1532,8 @@ function beginTurn(m) {
   const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
+  for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
+  m.crates = m.crates.filter(c => !c.dead);
   if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
@@ -1569,15 +1575,29 @@ function beginTurn(m) {
   }
   m.phase = 'aim';
 }
+function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
+// a crate lands 300~600 px to the side of one tank (open sky above, not much higher or lower, no tank nearer than 300):
+// out of reach this turn, but 2~3 turns of driving get it. Nowhere like that: anywhere, as before.
 function dropCrate(m) {
-  const keys = Object.keys(CONFIG.items);
+  const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
+  if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
-  for (let tries = 0; tries < 20; tries++) {
-    const x = Math.round(200 + rngNext(m) * (m.W - 400));
+  const pick = () => { let r = rngNext(m) * total; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) return k; } return keys[0]; };
+  const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
+  const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0], hi = T.crateNear[1];
+  for (let tries = 0; alive.length && tries < 40; tries++) {
+    const t = alive[Math.floor(rngNext(m) * alive.length)], side = rngNext(m) < 0.5 ? -1 : 1;
+    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo))), item = pick();
+    if (x < 100 || x > m.W - 100) continue;
     const y = surfaceAt(m, x, 0);
-    let r = rngNext(m) * total, item = keys[0];
-    for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) { item = k; break; } }
-    if (y >= 0) { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++ }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); return; }
+    if (y < 0 || Math.abs(y - t.y) > T.crateNearDy) continue;
+    if (alive.some(o => Math.abs(o.x - x) < lo && Math.abs(o.y - y) < T.crateNearDy)) continue;
+    if (m.crates.some(c => Math.abs(c.x - x) < 80)) continue;
+    put(x, y, item); return;
+  }
+  for (let tries = 0; tries < 20; tries++) {
+    const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();
+    if (y >= 0) { put(x, y, item); return; }
   }
 }
 
@@ -2578,6 +2598,7 @@ function createRenderer(cv, mini) {
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
         case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
+        case 'crategone': debris(e.x, e.y - 14, 5); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
         case 'weatherStart': R.onBanner(e.kind === 'tornado' ? '토네이도 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : '불기둥 발생! 통과한 포탄 위력 1.5배'); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
@@ -2962,7 +2983,8 @@ function createRenderer(cv, mini) {
   function drawCrate(c) {
     const dr = R.crateDrop[c.id], fall = dr ? Math.min(1, dr.t / 2.2) : 1;
     const e = 1 - Math.pow(1 - fall, 2), y = c.y - (1 - e) * 900, sway = (1 - fall) * Math.sin(R.t * 2.5) * 10;
-    ctx.save(); ctx.translate(c.x + sway, y);
+    const last = R.m && R.m.turnNo - (c.born || 0) >= crateLife(R.m) - R.m.tanks.length; // gone within a round: blink
+    ctx.save(); ctx.translate(c.x + sway, y); if (last) ctx.globalAlpha = 0.45 + 0.45 * Math.abs(Math.sin(R.t * 5));
     if (fall < 1) {
       ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#5A2A3A'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(-34, -64); ctx.quadraticCurveTo(0, -104, 34, -64); ctx.quadraticCurveTo(0, -74, -34, -64); ctx.fill(); ctx.stroke();
