@@ -2783,9 +2783,9 @@ function createRenderer(cv, mini) {
     ctx.stroke();
   }
   // happenings
-  function drawColumn() {
+  function drawColumn() { // a column over a gap has no ground below it: draw it to the bottom of the map (it used to stop at y 0 = off screen)
     const m = R.m, c = m.column; if (!c) return;
-    const C = CONFIG.happenings[c.kind], sy = Math.max(0, surfaceAt(m, c.x, 0)), top = R.cam.y - R.viewSize().h, w = C.w;
+    const C = CONFIG.happenings[c.kind], s0 = surfaceAt(m, c.x, 0), sy = s0 < 0 ? m.H + 200 : s0, top = R.cam.y - R.viewSize().h, w = C.w;
     if (c.kind === 'tornado') {
       for (let i = 0; i < 14; i++) {
         const y = top + ((i / 14) * (sy - top)), k = (y - top) / Math.max(1, sy - top), ww = w * (1.3 - k * 0.7);
