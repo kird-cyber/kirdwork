@@ -16,10 +16,10 @@ function createMatch(opts) {
   };
   // start positions: pick random spawns, then interleave the teams from left to right so neither team
   // starts bunched on one side (smaller team spread evenly between the bigger one)
-  // start positions: fully random. 30 spots spread evenly over the standable width (map edges excluded); each player
+  // start positions: fully random. 20 spots (neighbours ~460 px apart: more than one turn of movement) spread evenly over the standable width (map edges excluded); each player
   // gets one at random, teams not interleaved. Two neighbouring spots are never both taken (unless the map runs out).
   const n = opts.players.length, cand = map.cand && map.cand.length >= n ? map.cand : map.spawns.slice().sort((a, b) => a - b);
-  const SPOTS = 30, lo = cand[0], hi = cand[cand.length - 1], spots = [];
+  const SPOTS = 20, lo = cand[0], hi = cand[cand.length - 1], spots = [];
   for (let k = 0; k < SPOTS; k++) {
     const want = lo + (hi - lo) * k / (SPOTS - 1);
     let best = cand[0]; for (const x of cand) if (Math.abs(x - want) < Math.abs(best - want)) best = x;
