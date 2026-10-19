@@ -50,6 +50,7 @@ function createMatch(opts) {
   // happening for this match
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
+  const MH = CONFIG.maps[m.mapId] && CONFIG.maps[m.mapId].happening; if (MH) m.happening = MH; // a map can fix its happening (연구실 안전: always the lab fire)
   m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death at all (1 in 4)
   m.column = null; // weather comes later
   return m;

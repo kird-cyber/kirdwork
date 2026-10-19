@@ -73,10 +73,10 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
   });
   ok(true, `프레임 시간(헤드리스, 폭발 연출 중): 중앙값 ${perf.median.toFixed(1)}ms, 95% ${perf.p95.toFixed(1)}ms`);
   // all maps boot
-  for (const id of ['valley', 'clouds', 'bridge']) {
+  for (const id of ['valley', 'scale', 'notebook', 'lab', 'archive']) {
     await p.evaluate(id => { __pg.match = null; }, id);
     await p.evaluate(() => { document.getElementById('setup').hidden = false; });
-    await p.click('.mapc >> nth=' + ['temple', 'valley', 'clouds', 'bridge'].indexOf(id));
+    await p.click(`.mapc:has(.t:text-is("${{ valley: '협곡 도시', scale: '정의의 저울', notebook: '연구노트', lab: '화학 실험동', archive: '증빙 보관실' }[id]}"))`);
     await p.evaluate(() => document.querySelectorAll('select.ctl').forEach(s => { s.value = 'human'; s.dispatchEvent(new Event('change')); })); await p.click('#start'); await p.waitForTimeout(2500);
     const ph = await p.evaluate(() => __pg.match.phase);
     ok(ph === 'aim', id + ' 맵 시작');

@@ -361,6 +361,26 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @media (max-width: 600px) { .gchat { top: 112px; } .gmsgs { top: 150px; font-size: 12px; } }
 @media (max-height: 520px) and (min-width: 601px) { .gchat { top: 84px; } .gmsgs { top: 124px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { #banner { transition: none; } #banner.show.turnin { animation: none; } }
+
+/* KIRD 주제 맵: start-of-match guide card */
+#mguide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; background: rgba(8,12,20,0.35); cursor: pointer; }
+#mguide[hidden] { display: none; }
+#mguide .mg-card { width: min(640px, 92vw); box-sizing: border-box; padding: 22px 26px 18px; border-radius: 18px; background: #FFFDF8; color: #1B2430; box-shadow: 0 18px 50px rgba(0,0,0,0.45); border-top: 8px solid #2E86D6; font-family: var(--font-body); animation: mgIn .3s cubic-bezier(.2,.9,.3,1.2); }
+#mguide .mg-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #5A6472; }
+#mguide .mg-kb { padding: 3px 10px; border-radius: 999px; background: #E6F1FB; color: #1D5E9E; }
+#mguide h2 { margin: 8px 0 2px; font-family: var(--font-display); font-weight: 400; font-size: 32px; }
+#mguide .mg-line { margin: 0 0 12px; font-size: 15px; font-weight: 700; color: #2E86D6; }
+#mguide ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 7px 16px; }
+#mguide li { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+#mguide .nm { flex: 0 0 auto; min-width: 104px; text-align: center; padding: 3px 8px; border: 2.5px solid; border-radius: 999px; font-weight: 800; background: #fff; }
+#mguide .ef { color: #3A4552; }
+#mguide .mg-hap { margin-top: 12px; padding: 9px 12px; border-radius: 10px; background: #FFF1EC; font-size: 12.5px; line-height: 1.55; }
+#mguide .mg-hap span { display: block; font-weight: 900; color: #B71C1C; margin-bottom: 2px; }
+#mguide .mg-bar { margin-top: 12px; height: 5px; border-radius: 3px; background: #E8ECEF; overflow: hidden; }
+#mguide .mg-bar i { display: block; height: 100%; background: #8CC63F; animation: mgBar 4.5s linear forwards; }
+@keyframes mgIn { from { transform: scale(.92); opacity: 0; } }
+@keyframes mgBar { from { width: 100%; } to { width: 0; } }
+@media (max-width: 560px) { #mguide ul { grid-template-columns: 1fr; } }
 </style>
 
 <div id="app">
@@ -384,6 +404,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
 
   <div id="banner" role="status"></div>
+  <div id="mguide" hidden></div>
   <div id="waitTag" hidden></div>
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
   <div id="coach" class="coach" hidden role="status"><div class="ch"><span id="coachStep"></span><button class="mini" id="coachSkip" type="button">건너뛰기</button></div><p id="coachText"></p></div>

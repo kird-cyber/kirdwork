@@ -248,6 +248,77 @@ function kirdMap(W, H, mask, id) {
 MAPGEN.songdae = (W, H, mask) => kirdMap(W, H, mask, 'songdae');
 MAPGEN.campus = (W, H, mask) => kirdMap(W, H, mask, 'campus');
 
+// ---- KIRD 주제 맵 (연구윤리 · 연구노트 · 연구실 안전 · 연구비 관리): mirror-symmetric shapes on a flat ground at TG.
+// The pictures are painted in thememaps.js over exactly these shapes; only rects, polygons and sqrt arcs here (same on every engine).
+const TG = 1150, TCX = 2600;
+function tmMirror(fn) { fn(x => x, false); fn(x => 2 * TCX - x, true); }
+function tmRect(mask, W, H, x0, y0, x1, y1, X) { const a = X(x0), b = X(x1); rectF(mask, W, H, Math.min(a, b), y0, Math.max(a, b), y1, 1); }
+function tmPoly(mask, W, H, pts, X) { fillPoly(mask, W, H, pts.map(([a, b]) => [X(a), b])); }
+function tmDisc(mask, W, H, cx, cy, r) { for (let y = Math.ceil(cy - r); y <= cy + r; y++) { const h = Math.sqrt(Math.max(0, r * r - (y - cy) * (y - cy))); rectF(mask, W, H, Math.round(cx - h), y, Math.round(cx + h), y + 1, 1); } }
+// a capsule top: rect a..b from y1 up to y0 with the top corners rounded by radius r
+function tmCapsule(mask, W, H, a, b, y0, y1, r) { fillBand(mask, W, H, a, b - 1, x => { const d = Math.min(x - a, b - x); return d >= r ? y0 : y0 + r - Math.sqrt(Math.max(0, r * r - (r - d) * (r - d))); }, () => y1); }
+function nbTop(px) { // the notebook's left page top edge (the right page mirrors it)
+  if (px < 640) return TG; const e = t => t * t * (3 - 2 * t);
+  if (px < 820) return TG - 150 - 180 * e((px - 640) / 180);
+  if (px < 2200) return TG - 330 - 10 * ((px - 820) / 1380);
+  if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
+  return TG;
+}
+const TMAPGEN = {
+  scale(W, H, m) { // 정의의 저울: two KIRD labs, a marble podium, a bronze balance whose pans and beam are the high ground
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror(X => {
+      tmPoly(m, W, H, [[0, TG], [0, TG - 300], [120, TG - 290], [260, TG - 230], [360, TG - 150], [430, TG - 60], [470, TG]], X);
+      tmRect(m, W, H, 512, TG - 370, 1188, TG, X);                                      // lab A / B (3 floors, filled)
+      tmRect(m, W, H, 1460, TG - 40, TCX, TG, X); tmRect(m, W, H, 1760, TG - 80, TCX, TG, X); tmRect(m, W, H, 2130, TG - 125, TCX, TG, X); // podium tiers
+      // the pan: a shallow bowl, flat rim on top
+      fillBand(m, W, H, X(1880) - 230, X(1880) + 230, () => TG - 390, x => { const u = (x - X(1880)) / 230; return TG - 384 + 68 * (1 - u * u); });
+    });
+    rectF(m, W, H, 2370, TG - 290, 2830, TG - 125, 1); rectF(m, W, H, 2350, TG - 300, 2850, TG - 282, 1); // plinth
+    rectF(m, W, H, 2522, TG - 330, 2678, TG - 296, 1); rectF(m, W, H, 2556, TG - 720, 2644, TG - 300, 1); rectF(m, W, H, 2530, TG - 742, 2670, TG - 712, 1); // column
+    rectF(m, W, H, 1880, TG - 770, 3320, TG - 750, 1); tmDisc(m, W, H, 1880, TG - 759, 22); tmDisc(m, W, H, 3320, TG - 759, 22); // beam
+    fillPoly(m, W, H, [[TCX - 46, TG - 772], [TCX - 40, TG - 830], [TCX, TG - 842], [TCX + 40, TG - 830], [TCX + 46, TG - 772]]); tmDisc(m, W, H, TCX, TG - 868, 30); // finial
+  },
+  notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror((X, r) => {
+      fillBand(m, W, H, r ? X(2560) : 640, r ? X(640) : 2560, x => nbTop(r ? X(x) : x), () => TG);
+      tmRect(m, W, H, 610, TG - 30, 2590, TG, X);                                       // hard cover
+      tmRect(m, W, H, 230, TG - 330, 470, TG, X);                                       // KIRD mug (left) / binder stack (right)
+    });
+    tmCapsule(m, W, H, 2150, 2910, TG - 398, TG - 346, 26); fillPoly(m, W, H, [[2906, TG - 392], [3050, TG - 374], [3056, TG - 370], [2906, TG - 352]]); // fountain pen
+    rectF(m, W, H, 2180, TG - 406, 2410, TG - 396, 1);                                    // its clip
+  },
+  lab(W, H, m) { // 연구실 안전: two cut-away labs, steel stairs to the yard, hazard drums, GHS signs, the reagent store with a fire extinguisher on top
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    const top = TG - 350;
+    tmMirror(X => {
+      tmPoly(m, W, H, [[0, TG], [0, TG - 210], [140, TG - 200], [260, TG - 120], [330, TG - 30], [350, TG]], X);
+      tmRect(m, W, H, 374, top - 10, 1506, TG, X);                                      // lab building (2 floors, filled)
+      tmRect(m, W, H, 440, top - 70, 610, top, X);                                      // air handler
+      tmRect(m, W, H, 1304, top - 150, 1336, top, X); tmRect(m, W, H, 1298, top - 156, 1342, top - 146, X); // exhaust stacks
+      tmRect(m, W, H, 1374, top - 150, 1406, top, X); tmRect(m, W, H, 1368, top - 156, 1412, top - 146, X);
+      tmPoly(m, W, H, [[1500, top + 4], [1540, top + 4], [1860, TG], [1500, TG]], X);    // emergency stair
+      tmRect(m, W, H, 1910, TG - 110, 1990, TG, X); tmRect(m, W, H, 2000, TG - 110, 2080, TG, X); tmRect(m, W, H, 1955, TG - 220, 2035, TG - 110, X); // hazard drums
+      tmRect(m, W, H, 2110, TG - 40, 2230, TG, X); tmRect(m, W, H, 2158, TG - 100, 2182, TG - 40, X); // GHS sign plinth + post
+      tmPoly(m, W, H, [[2170, TG - 284], [2265, TG - 195], [2170, TG - 100], [2075, TG - 195]], X); tmRect(m, W, H, 2140, TG - 298, 2200, TG - 282, X);
+    });
+    rectF(m, W, H, 2280, TG - 230, 2920, TG, 1); rectF(m, W, H, 2260, TG - 246, 2940, TG - 226, 1); // reagent store
+    tmCapsule(m, W, H, 2510, 2690, TG - 546, TG - 246, 70); rectF(m, W, H, 2570, TG - 596, 2630, TG - 540, 1); rectF(m, W, H, 2470, TG - 616, 2730, TG - 596, 1); // the extinguisher
+  },
+  archive(W, H, m) { // 연구비 관리: an evidence archive; receipt rolls, fund cards leaning on receipt bundles, a calculator in the middle
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror(X => {
+      tmDisc(m, W, H, X(470), TG - 240, 240);                                           // receipt roll
+      tmRect(m, W, H, 1500, TG - 280, 1860, TG, X);                                     // receipt bundle
+      tmPoly(m, W, H, [[1580, TG - 300], [1780, TG - 300], [1760, TG - 240], [1600, TG - 240]], X); // binder clip
+      tmPoly(m, W, H, [[1000, TG], [1520, TG - 310], [1705, TG]], X);                   // the fund card leaning on it: a ramp
+    });
+    rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
+  },
+};
+for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
+
 function maskSurface(mask, W, H, x, from) {
   x = Math.floor(x); if (x < 0 || x >= W) return -1;
   for (let y = Math.max(0, Math.floor(from || 0)); y < H; y++) if (mask[y * W + x]) return y;

@@ -215,7 +215,7 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
-  setTxt('windLbl', ['바람', m.happening ? HAPPEN[m.happening][0] : '', m.column ? `${HAPPEN[m.column.kind][0]} ${m.column.life}턴` : ''].filter(Boolean).join(' · '));
+  setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : ''].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
@@ -226,8 +226,8 @@ function updateHud() {
       const it = t.items[i], b = document.createElement('button'); b.type = 'button'; b.className = 'item' + (it ? '' : ' empty');
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
-        b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${meta.name}</span>`;
-        b.title = meta.name; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
+        b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${esc(itemName(m, it))}</span>`;
+        b.title = `${itemName(m, it)} — ${meta.desc || meta.name}`; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);
@@ -298,7 +298,7 @@ function useItemSlot(i) {
   if (!ctrl || !ctrl.activeLocal() || match.turn.itemUsed) return;
   AU.play('ui');
   const t = match.tanks[match.cur], it = t.items[i]; if (!it) return;
-  if (ctrl.useItem(i) && CONFIG.items[it].effect === 'teleport') banner('순간이동탄 장전 — 떨어진 곳으로 이동합니다');
+  if (ctrl.useItem(i) && CONFIG.items[it].effect === 'teleport') banner(itemName(match, it) + ' — 순간이동탄 장전, 떨어진 곳으로 이동합니다');
 }
 
 // ---------------------------------------------------------------- input
@@ -505,9 +505,23 @@ const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨�
 function announceHappening() {
   const kd = match && match.tanks.filter(t => CONFIG.tanks[t.tankId].hidden);
   if (kd && kd.length) setTimeout(() => { if (match && match.tanks.includes(kd[0])) banner(`히든 탱크 등장! ${kd.map(t => t.nick).join(', ')} — ${CONFIG.tanks[kd[0].tankId].name}`); }, 5000);
+  const g = showMapGuide(), d = g ? 4600 : 0;
   const h = match && match.happening; if (!h) return;
-  setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + HAPPEN[h][0]); }, 1700);
-  setTimeout(() => { if (match && match.happening === h) banner(HAPPEN[h][1]); }, 3300);
+  const hp = [happenName(match, h, 0) || HAPPEN[h][0], happenName(match, h, 1) || HAPPEN[h][1]];
+  setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + hp[0]); }, 1700 + d);
+  setTimeout(() => { if (match && match.happening === h) banner(hp[1]); }, 3300 + d);
+}
+// KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
+let guideTimer = 0;
+function showMapGuide() {
+  const meta = mapMetaOf(match), el = $('mguide'); if (!el) return false;
+  if (!meta.guide) { el.hidden = true; return false; }
+  const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
+  const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
+  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
+  el.hidden = false; el.onclick = () => { el.hidden = true; };
+  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 4500);
+  return true;
 }
 function startGame() {
   ON.active = false; TUT.on = false; showCoach();

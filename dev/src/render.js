@@ -165,6 +165,7 @@ function createRenderer(cv, mini) {
     R.m = m; R.th = THEMES[m.theme];
     R.helis = []; R.meteors = []; R.bubbles = {}; R.fx = []; R.texts = []; R.beams = []; R.rollers = []; R.stuck = []; R.view = {}; R.shake = 0; R.crateDrop = {}; R.trails = {};
     buildTerrainTexture(); buildBackground();
+    R.tback = TMAP_ART.has(m.mapId) ? TMAP_ART.backdrop(m) : null;
     const t0 = m.tanks[0]; R.cam.x = t0.x; R.cam.y = t0.y; R.follow = null; R.free = false;
     m.events.length = 0;
   };
@@ -187,8 +188,10 @@ function createRenderer(cv, mini) {
       }
     }
     x.putImageData(out, 0, 0);
-    if (!PAINT_DECO) decorate(x, m);
+    const tmap = TMAP_ART.has(m.mapId);
+    if (!PAINT_DECO && !tmap) decorate(x, m);
     if (PAINT_DECO) { decorateKird(x, m, PAINT_DECO); outlineSolid(x, m); }
+    if (tmap) { TMAP_ART.paint(x, m); outlineSolid(x, m); } // KIRD 주제 맵: painted scene + the same contour
     R.terrain = c; R.tctx = x;
   }
   // ================= KIRD maps: building facades, interiors, landscape (vector-drawn onto the terrain texture)
@@ -455,7 +458,7 @@ function createRenderer(cv, mini) {
     t.fillStyle = g; t.beginPath(); t.arc(0, 0, ax * 1.35, 0, 7); t.fill(); t.restore();
     t.globalCompositeOperation = 'destination-out';
     t.beginPath(); t.ellipse(cx, cy, ax + 0.5, ay + 0.5, 0, 0, 7); t.fill();
-    if (PAINT_DECO) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.ellipse(cx, cy, ax + 2, ay + 2, 0, 0, 7); t.stroke(); }
+    if (PAINT_DECO || TMAP_ART.has(R.m.mapId)) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.ellipse(cx, cy, ax + 2, ay + 2, 0, 0, 7); t.stroke(); }
     t.restore();
   }
   function buildBackground() {
@@ -668,10 +671,10 @@ function createRenderer(cv, mini) {
         }
         case 'fallout': burst(e.x, m.H - 30, '#FFFFFF', 18); R.onBanner(`${t.nick} 낙사!`, t.team); R.onSfx('fall'); break;
         case 'text': text(e.x, e.y, e.text, e.color); break;
-        case 'sudden': R.onBanner('서든데스! 매 턴 모두 체력 감소 · 바람 강화'); R.onSfx('death'); shake(6); break;
-        case 'pickup': text(e.x, e.y - 70, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
+        case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소 · 바람 강화'); R.onSfx('death'); shake(6); break;
+        case 'pickup': { const nm = itemName(m, e.item), base = CONFIG.items[e.item].name; text(e.x, e.y - 70, nm === base ? nm + ' 획득' : `${nm} 획득 — ${base}`, CONFIG.items[e.item].color); R.onSfx('pickup'); break; }
         case 'heal': text(e.x, e.y - 70, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 20 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
-        case 'item': if (t && e.item === 'tele') text(t.x, t.y - 70, '순간이동탄 장전', '#9CC6F7'); if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
+        case 'item': if (t && e.item === 'tele') text(t.x, t.y - 70, '순간이동탄 장전', '#9CC6F7'); if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, itemName(m, e.item), CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'tele': burst(e.x, e.y - 20, '#9CC6F7', 14); burst(e.x2, e.y2 - 20, '#9CC6F7', 14); viewOf(e.idx).y = e.y2; R.follow = t; R.free = false; R.onSfx('tele'); break;
         case 'shot': {
           const w = CONFIG.tanks[t.tankId].weapons[e.wIdx], v = viewOf(e.idx);
@@ -686,10 +689,10 @@ function createRenderer(cv, mini) {
         case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
         case 'crategone': debris(e.x, e.y - 14, 5); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
-        case 'quake': R.onBanner('지진! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
-        case 'weatherStart': R.onBanner(e.kind === 'tornado' ? '토네이도 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : '불기둥 발생! 통과한 포탄 위력 1.5배'); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
-        case 'weatherSoon': R.onBanner(e.kind === 'tornado' ? '토네이도가 곧 사라집니다' : '불기둥이 곧 사라집니다'); break;
-        case 'weatherEnd': R.onBanner(e.kind === 'tornado' ? '토네이도가 사라졌습니다' : '불기둥이 꺼졌습니다'); break;
+        case 'quake': R.onBanner((happenName(m, 'quake') || '지진') + '! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
+        case 'weatherStart': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + (e.kind === 'tornado' ? ' 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : ' 발생! 통과한 포탄 위력 1.5배')); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
+        case 'weatherSoon': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 곧 사라집니다'); break;
+        case 'weatherEnd': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 사라졌습니다'); break;
         case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;
         case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
         case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;
@@ -815,7 +818,11 @@ function createRenderer(cv, mini) {
     const rw = clamp(Math.ceil(left + v.w), 0, m.W) - rx, rh = clamp(Math.ceil(top + v.h), 0, m.H) - ry;
     for (const st of R.stuck) { ctx.globalAlpha = st.t > st.life - 0.5 ? (st.life - st.t) / 0.5 : 1; SHELLS.draw(ctx, st.look, { x: st.x, y: st.y, vx: Math.cos(st.ang), vy: Math.sin(st.ang), age: 0, id: st.id }); ctx.globalAlpha = 1; }
     if (MAPDECO[m.mapId]) drawKirdBack(MAPDECO[m.mapId]);
+    const ceil = TMAP_ART.ceil(m.mapId); // indoor maps: no sky outside the room
+    if (ceil) { ctx.fillStyle = ceil; if (top < 0) ctx.fillRect(left - 10, top - 10, v.w + 20, -top + 10); if (left < 0) ctx.fillRect(left - 10, 0, -left + 10, m.H); if (left + v.w > m.W) ctx.fillRect(m.W, 0, left + v.w - m.W + 10, m.H); }
+    if (R.tback && rw > 0 && rh > 0) ctx.drawImage(R.tback, rx / 2, ry / 2, rw / 2, rh / 2, rx, ry, rw, rh);
     if (rw > 0 && rh > 0) ctx.drawImage(R.terrain, rx, ry, rw, rh, rx, ry, rw, rh);
+    for (const [bx, by] of TMAP_ART.beacons(m.mapId)) { const a = 0.35 + 0.35 * Math.sin(R.t * 6 + bx); const g = ctx.createRadialGradient(bx, by, 2, bx, by, 70); g.addColorStop(0, `rgba(255,70,50,${a})`); g.addColorStop(1, 'rgba(255,70,50,0)'); ctx.fillStyle = g; ctx.fillRect(bx - 70, by - 70, 140, 140); }
     for (const b of R.beams) {
       const a = Math.sin(Math.PI * b.t / b.life), sy2 = Math.max(0, surfaceAt(m, b.x, 0));
       const g = ctx.createLinearGradient(b.x - 30, 0, b.x + 30, 0); g.addColorStop(0, 'rgba(255,61,122,0)'); g.addColorStop(0.5, `rgba(255,190,215,${a})`); g.addColorStop(1, 'rgba(255,61,122,0)');
@@ -907,14 +914,21 @@ function createRenderer(cv, mini) {
       ctx.beginPath(); ctx.ellipse(mt.x, sy, rr, rr * 0.3, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]);
       if (k === 0) { // waiting in the sky: say so above the landing spot
         ctx.font = '900 16px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-        const ly = sy - 70 - Math.abs(Math.sin(R.t * 3)) * 10; ctx.strokeText('☄ 운석 낙하 예정', mt.x, ly); ctx.fillStyle = '#FF8A5A'; ctx.fillText('☄ 운석 낙하 예정', mt.x, ly);
+        const ly = sy - 70 - Math.abs(Math.sin(R.t * 3)) * 10; const lbl = (happenName(m, 'meteor') ? '⚠ ' + happenName(m, 'meteor') : '☄ 운석 낙하') + ' 예정'; ctx.strokeText(lbl, mt.x, ly); ctx.fillStyle = '#FF8A5A'; ctx.fillText(lbl, mt.x, ly);
         ctx.strokeStyle = '#FF6A40'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(mt.x, ly + 8); ctx.lineTo(mt.x, sy - 16); ctx.moveTo(mt.x - 7, sy - 24); ctx.lineTo(mt.x, sy - 14); ctx.lineTo(mt.x + 7, sy - 24); ctx.stroke();
       }
       const mx = mt.x - (1 - e) * 260, my = sy - (1 - e) * 1100;
       const g = ctx.createLinearGradient(mx - 120, my - 220, mx, my); g.addColorStop(0, 'rgba(255,120,40,0)'); g.addColorStop(1, 'rgba(255,200,90,0.85)');
       ctx.strokeStyle = g; ctx.lineWidth = 18; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(mx - 110, my - 200); ctx.lineTo(mx, my); ctx.stroke();
+      const look = mapMetaOf(m).meteorLook;
+      if (look && look.kind === 'stamp') { TMAP_ART.stamp(ctx, mx, my, 36, look.word, '#D62828', -0.2 + Math.sin(R.t * 3) * 0.1); }
+      else if (look && look.kind === 'debris') { // burning ceiling board from the lab fire
+        ctx.save(); ctx.translate(mx, my); ctx.rotate(R.t * 2); ctx.fillStyle = '#4A3A30'; ctx.beginPath(); ctx.roundRect(-30, -18, 60, 36, 6); ctx.fill(); ctx.fillStyle = '#8A7A6A'; ctx.fillRect(-26, -14, 52, 7); ctx.restore();
+        TMAP_ART.flame(ctx, mx, my - 6, 34 + Math.sin(R.t * 18) * 4, 3);
+      } else {
       ctx.fillStyle = '#5A3A2A'; ctx.strokeStyle = '#FFB040'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(mx, my, 22, 0, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = 'rgba(255,160,60,0.35)'; ctx.beginPath(); ctx.arc(mx, my, 34 + Math.sin(R.t * 14) * 3, 0, 7); ctx.fill();
+      }
     }
   }
   function drawHelis() {
@@ -1092,6 +1106,13 @@ function createRenderer(cv, mini) {
     ctx.fillStyle = '#E8402E'; ctx.fillRect(-4, -30, 8, 30);
     ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(-12, -26, 7, 3);
     if (fall >= 1) { const g = 0.5 + 0.5 * Math.sin(R.t * 4); ctx.strokeStyle = `rgba(255,230,140,${0.3 + g * 0.4})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-20, -34, 40, 38, 6); ctx.stroke(); }
+    if (mapMetaOf(R.m).items && c.item) { // KIRD 주제 맵: the box says what it is (the name above it, in the item's colour)
+      const nm = itemName(R.m, c.item), col = CONFIG.items[c.item].color, ty = fall < 1 ? -124 : -54;
+      ctx.font = '800 17px "Noto Sans KR", sans-serif'; const tw = ctx.measureText(nm).width + 22;
+      ctx.fillStyle = 'rgba(10,18,28,0.82)'; ctx.beginPath(); ctx.roundRect(-tw / 2, ty - 14, tw, 28, 14); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-6, ty + 14); ctx.lineTo(0, ty + 21); ctx.lineTo(6, ty + 14); ctx.fill();
+      ctx.fillStyle = '#FFFFFF'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nm, 0, ty + 1); ctx.textBaseline = 'alphabetic';
+    }
     ctx.restore();
   }
   const TELE_LOOK = { shape: 'ball', color: '#9CC6F7', size: 1.1, glow: '#BFE0FF' };
