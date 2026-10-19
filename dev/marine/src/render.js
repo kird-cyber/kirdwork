@@ -263,6 +263,15 @@ function createRenderer(cv, mini) {
         case 'shocked': text(e.x, e.y - 80, '감전', '#BFA8FF'); break;
         case 'impact': bubbles(e.x, e.y, 6, 10); break;
         case 'pickup': text(e.x, e.y - 60, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
+        case 'bagfull': text(e.x, e.y - 60, '가방이 가득 (4칸)', '#FFB4A4'); break;
+        case 'tele': {
+          const v = viewOf(e.idx);
+          for (const [x, y] of [[e.x1, e.y1], [e.x2, e.y2]]) { for (let i = 0; i < 18; i++) { const a = vrnd() * 7; R.fx.push({ kind: 'bubble', x: x + Math.cos(a) * 30, y: y + Math.sin(a) * 18, vx: Math.cos(a) * 30, vy: -30 - vrnd() * 50, t: 0, life: 1.2, r: 2 + vrnd() * 3 }); } }
+          R.bolts.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2, t: 0, col: '#7CF5FF' });
+          v.x = e.x2; v.y = e.y2; v.flash = 1;
+          text(e.x2, e.y2 - 60, '순간이동!', '#7CF5FF', true); R.onSfx('item'); break;
+        }
+        case 'telefail': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '이동 실패', '#CFE6FF'); break;
         case 'heal': text(e.x, e.y - 60, (e.spa ? '온천 +' : '+') + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t) { text(t.x, t.y - 60, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
@@ -290,7 +299,7 @@ function createRenderer(cv, mini) {
   function updateCam(dt) {
     const m = R.m, cam = R.cam;
     let target = null, fast = false;
-    if (m.proj.length) { const p = m.proj[0]; target = { x: p.x + clamp((p.dx || 0) * 160, -220, 220), y: p.y + clamp((p.dy || 0) * 100, -140, 140) }; fast = true; }
+    if (m.proj.some(q => !(q.wait > 0))) { const p = m.proj.find(q => !(q.wait > 0)); target = { x: p.x + clamp((p.dx || 0) * 160, -220, 220), y: p.y + clamp((p.dy || 0) * 100, -140, 140) }; fast = true; }
     else if (!R.free && R.follow) target = R.view[R.follow.idx] ? R.view[R.follow.idx] : R.follow;
     if (target && (!R.free || fast)) {
       if (fast) R.free = false;
@@ -329,6 +338,7 @@ function createRenderer(cv, mini) {
       if (t.shock && vrnd() < dt * 6) { const a = vrnd() * 7; R.bolts.push({ x1: v.x, y1: v.y, x2: v.x + Math.cos(a) * 40, y2: v.y + Math.sin(a) * 26, t: 0, col: '#BFA8FF' }); }
     }
     for (const p of m.proj) {
+      if (p.wait > 0) continue;
       const tr = R.trails[p.id] || (R.trails[p.id] = { last: 0 });
       tr.last += dt; if (tr.last > 0.03) { tr.last = 0; R.fx.push({ kind: 'bubble', x: p.x - (p.dx || 0) * 12, y: p.y - (p.dy || 0) * 12, vx: 0, vy: -20 - vrnd() * 20, t: 0, life: 0.9, r: 1.2 + vrnd() * 2 }); }
     }
@@ -471,8 +481,16 @@ function createRenderer(cv, mini) {
     ctx.restore();
   }
   function drawTorp(p) {
+    if (p.wait > 0) return; // 2연발: the second shot is still in the tube
     const m = R.m, w = CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx], look = TORP[w.kind] || TORP.circle;
     const a = Math.atan2(p.dy || 0, p.dx || 1);
+    if (p.tele) { // 순간이동 carrier: a glowing ring
+      ctx.save(); ctx.translate(p.x, p.y);
+      const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, 18); gl.addColorStop(0, '#FFFFFF'); gl.addColorStop(0.45, '#7CF5FF'); gl.addColorStop(1, 'rgba(124,245,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, 18, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#E8FDFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 10 + Math.sin(R.t * 14) * 2, 0, 7); ctx.stroke();
+      ctx.restore(); return;
+    }
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
     if (look[2]) { ctx.fillStyle = look[2] + '44'; ctx.beginPath(); ctx.arc(0, 0, 16, 0, 7); ctx.fill(); }
     ctx.strokeStyle = '#0A1420'; ctx.lineWidth = 1.5;
@@ -593,7 +611,7 @@ function createRenderer(cv, mini) {
     mctx.drawImage(R.miniT, 0, 0);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 2, 4, 4); }
     for (const t of m.subs) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, t.y * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
-    for (const p of m.proj) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
+    for (const p of m.proj) if (!(p.wait > 0)) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
     mctx.strokeStyle = 'rgba(255,255,255,0.9)'; mctx.lineWidth = 1.5; mctx.strokeRect(left * sx, top * sy, v.w * sx, v.h * sy);
   }
   R.screenToWorld = function (cx, cy) {

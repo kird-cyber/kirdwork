@@ -88,6 +88,7 @@ function botPlan(m, level, rnd, mem) {
   const has = id => t.items.indexOf(id);
   if (has('heal') >= 0 && t.hp < t.maxhp * 0.55) cmdItem(m, has('heal'));
   else if (has('amplify') >= 0) cmdItem(m, has('amplify'));
+  else if (has('double') >= 0) cmdItem(m, has('double'));
   else if (has('shield') >= 0) cmdItem(m, has('shield'));
   else if (has('calm') >= 0 && Math.abs(m.current) >= 3) cmdItem(m, has('calm'));
   const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;

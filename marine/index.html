@@ -634,6 +634,7 @@ const CONFIG = {
     maxPlayers: 8,
     teamMax: 4,
     inventoryMax: 4,
+    pickupRx: 72, pickupRy: 44, // a crate is picked up when it sits inside this ellipse around the sub (the drawn hull + the crate)
     startSpan: 2600, startGap: 380, startMin: 700, // everyone starts inside a window this wide; two subs never closer than startMin
     suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenCurrentMul: 1.5,
   },
@@ -717,11 +718,13 @@ const CONFIG = {
   randomSub: { id: 'kird', chance: 1 / 10 },
 
   items: {
-    heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },
-    shield: { name: '실드', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' },
-    amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
-    fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
-    calm: { name: '정류탄', label: '정류', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
+    heal: { name: '회복', desc: '체력 250 회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },
+    shield: { name: '실드', desc: '다음 내 차례까지 받는 폭발 피해 절반', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' },
+    amplify: { name: '증폭', desc: '이번 발사 피해 1.5배', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
+    fuel: { name: '연료', desc: '이번 턴 이동력 한 번 더', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
+    calm: { name: '정류탄', desc: '이번 발사는 해류를 받지 않음', label: '정류', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
+    double: { name: '2연발', desc: '이번 발사를 같은 곡선으로 두 번 쏨', label: '×2', effect: 'double', gapTicks: 45, dropWeight: 1, color: '#FFB347', bg: '#3A2410' },
+    tele: { name: '순간이동', desc: '이번 발사는 터지지 않고, 멈춘 자리로 내 잠수함이 순간이동', label: '이동', effect: 'tele', search: 220, dropWeight: 1, color: '#7CF5FF', bg: '#0E2E3A' },
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask. W*H must be a multiple of 4.
@@ -1379,11 +1382,20 @@ function cmdMove(m, d) {
   t.x = nx; t.y = ny;
   t.fuel = Math.max(0, t.fuel - st);
   m.turn.movedPx += st;
-  for (const c of m.crates) if (!c.dead && (c.x - t.x) * (c.x - t.x) + (c.y - t.y) * (c.y - t.y) < 46 * 46 && t.items.length < CONFIG.turn.inventoryMax) {
+  pickupCrates(m, t);
+  return true;
+}
+// a crate is taken when the sub's drawn body reaches it (not only its centre). A full bag says so once per crate.
+function pickupCrates(m, t) {
+  const T = CONFIG.turn;
+  for (const c of m.crates) {
+    if (c.dead) continue;
+    const a = (c.x - t.x) / T.pickupRx, b = (c.y - t.y) / T.pickupRy;
+    if (a * a + b * b >= 1) continue;
+    if (t.items.length >= T.inventoryMax) { if (m.turn && !m.turn.fullSaid) { m.turn.fullSaid = 1; m.events.push({ type: 'bagfull', idx: t.idx, x: t.x, y: t.y }); } continue; }
     c.dead = true; t.items.push(c.item); m.events.push({ type: 'pickup', idx: t.idx, x: t.x, y: t.y, item: c.item });
   }
   m.crates = m.crates.filter(c => !c.dead);
-  return true;
 }
 function cmdItem(m, slot) {
   const t = curSub(m);
@@ -1396,6 +1408,8 @@ function cmdItem(m, slot) {
   else if (it.effect === 'amplify') m.turn.amp = true;
   else if (it.effect === 'fuel') t.fuel += CONFIG.subs[t.subId].movePx;
   else if (it.effect === 'calm') m.turn.calm = true;
+  else if (it.effect === 'double') m.turn.double = true;
+  else if (it.effect === 'tele') m.turn.tele = true;
   t.items.splice(slot, 1);
   m.turn.itemUsed = true;
   m.events.push({ type: 'item', idx: t.idx, item: id });
@@ -1425,8 +1439,15 @@ function cmdFire(m, pts, gauge, weapon, used) {
   t.facing = path.face; t.lastPts = pts; t.lastGauge = gauge;
   t.st.shots++;
   const det = burstDistance(path, gauge), base = { idx: t.idx, wIdx: weapon, amp: !!m.turn.amp, calm: !!m.turn.calm };
-  if (w.kind === 'twin') for (const off of [-w.gap / 2, w.gap / 2]) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off }, base));
-  else launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0 }, base));
+  if (m.turn.tele) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0, tele: true }, base)); // 순간이동: one carrier shot, no burst
+  else {
+    // 2연발: the same shot again, gapTicks later (it waits at the muzzle, unseen)
+    const shots = m.turn.double ? [0, CONFIG.items.double.gapTicks] : [0];
+    for (const wait of shots) {
+      if (w.kind === 'twin') for (const off of [-w.gap / 2, w.gap / 2]) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off, wait }, base));
+      else launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0, wait }, base));
+    }
+  }
   if (w.cooldownTurns) t.cd = w.cooldownTurns + 1; // +1: the count drops at the start of this sub's next turn
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
@@ -1436,7 +1457,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
 }
 function launch(m, p) {
   const a = pathAt(p.path, 0);
-  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
+  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++; p.wait = p.wait || 0;
   m.proj.push(p);
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -1480,7 +1501,8 @@ function applyTurnInput(m, input) {
 }
 
 // ---------------------------------------------------------------- torpedoes
-function weaponOf(m, p) { return CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx]; }
+const TELE_W = { id: 'tele', kind: 'tele', dmg: 0, rx: 0, ry: 0 }; // the 순간이동 carrier: flies the curve, passes subs, never bursts
+function weaponOf(m, p) { return p.tele ? TELE_W : CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx]; }
 function dmgOf(m, p, base) { return base * (p.amp ? CONFIG.items.amplify.mul : 1); }
 // one 3-px sub-step of a torpedo. Returns nothing; marks p.dead when it bursts or leaves.
 function stepTorp(m, p, w) {
@@ -1521,7 +1543,7 @@ function stepTorp(m, p, w) {
   p.age++;
   // 12신: the left and right edges of cyberspace join up
   if (m.rules.wrapX && p.y >= 0 && p.y < m.H) { if (p.x < 0) { p.x += m.W; p.ox += m.W; if (p.x >= m.W) p.x = m.W - 1e-6; } else if (p.x >= m.W) { p.x -= m.W; p.ox -= m.W; } }
-  if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y }); return; }
+  if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: p.tele ? 'telefail' : 'out', x: p.x, y: p.y, idx: p.idx }); return; }
   // rock
   if (p.piercing) {
     if (!solidAt(m, p.x, p.y)) { p.piercing = false; p.pierced = true; }
@@ -1591,6 +1613,7 @@ function crawlStep(m, p) {
 // the main burst of a torpedo, by weapon kind
 function detonate(m, p, w) {
   p.dead = true;
+  if (p.tele) return teleport(m, p);
   const owner = m.subs[p.idx], x = p.x, y = p.y, dmg = dmgOf(m, p, w.dmg), sh = { rx: w.rx, ry: w.ry, thin: w.thin || 0 };
   m.events.push({ type: 'impact', x, y, idx: p.idx, wIdx: p.wIdx, dx: p.dx, dy: p.dy });
   switch (w.kind) {
@@ -1642,6 +1665,22 @@ function detonate(m, p, w) {
     default: explode(m, x, y, sh, dmg, owner, { fx: w.kind === 'cross' ? 'cross' : w.kind === 'vell' ? 'sonar' : 'hit' });
   }
 }
+// 순간이동: the shooter appears where the carrier stopped — backed off along its track (it may have hit rock),
+// else the nearest open water in rings. Nowhere to fit: it stays put.
+function teleport(m, p) {
+  const t = m.subs[p.idx]; if (!t || !t.alive) return;
+  const E = CONFIG.physics.edgeMargin, fits = (x, y) => x >= E && x <= m.W - E && y >= E && y <= m.H - E && hullFree(m, x, y) && !m.subs.some(q => q !== t && q.alive && hullsOverlap(x, y, q.x, q.y));
+  let nx = null, ny = null;
+  for (let k = 0; k <= 120 && nx === null; k += 3) { const x = p.x - p.dx * k, y = p.y - p.dy * k; if (fits(x, y)) { nx = x; ny = y; } }
+  const R = CONFIG.items.tele.search;
+  for (let r = 10; r <= R && nx === null; r += 10) for (let a = 0; a < 3600; a += 150) { const x = p.x + r * cosD10(a), y = p.y + r * sinD10(a); if (fits(x, y)) { nx = x; ny = y; break; } }
+  if (nx === null) { m.events.push({ type: 'telefail', x: p.x, y: p.y, idx: t.idx }); return; }
+  const fx = t.x, fy = t.y;
+  t.x = Math.round(nx); t.y = Math.round(ny);
+  if (!fits(t.x, t.y)) { t.x = nx; t.y = ny; }
+  m.events.push({ type: 'tele', idx: t.idx, x1: fx, y1: fy, x2: t.x, y2: t.y });
+  pickupCrates(m, t);
+}
 function spawnMini(m, p, x, y, dx, dy, reach, tag) {
   m.proj.push({ mode: 'mini', x, y, dx, dy, rem: reach, idx: p.idx, wIdx: p.wIdx, amp: p.amp, calm: p.calm, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++, tag: tag || 0 });
 }
@@ -1656,6 +1695,7 @@ function burstSmall(m, p, w) {
 function stepProjectiles(m) {
   for (const p of m.proj) {
     if (p.dead) continue;
+    if (p.wait > 0) { if (--p.wait === 0) m.events.push({ type: 'fire', idx: p.idx, weapon: p.wIdx, x: p.x, y: p.y, again: true }); continue; }
     const w = weaponOf(m, p);
     for (let i = 0; i < 2 && !p.dead; i++) stepTorp(m, p, w);
   }
@@ -2569,6 +2609,15 @@ function createRenderer(cv, mini) {
         case 'shocked': text(e.x, e.y - 80, '감전', '#BFA8FF'); break;
         case 'impact': bubbles(e.x, e.y, 6, 10); break;
         case 'pickup': text(e.x, e.y - 60, CONFIG.items[e.item].name + ' 획득', CONFIG.items[e.item].color); R.onSfx('pickup'); break;
+        case 'bagfull': text(e.x, e.y - 60, '가방이 가득 (4칸)', '#FFB4A4'); break;
+        case 'tele': {
+          const v = viewOf(e.idx);
+          for (const [x, y] of [[e.x1, e.y1], [e.x2, e.y2]]) { for (let i = 0; i < 18; i++) { const a = vrnd() * 7; R.fx.push({ kind: 'bubble', x: x + Math.cos(a) * 30, y: y + Math.sin(a) * 18, vx: Math.cos(a) * 30, vy: -30 - vrnd() * 50, t: 0, life: 1.2, r: 2 + vrnd() * 3 }); } }
+          R.bolts.push({ x1: e.x1, y1: e.y1, x2: e.x2, y2: e.y2, t: 0, col: '#7CF5FF' });
+          v.x = e.x2; v.y = e.y2; v.flash = 1;
+          text(e.x2, e.y2 - 60, '순간이동!', '#7CF5FF', true); R.onSfx('item'); break;
+        }
+        case 'telefail': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), '이동 실패', '#CFE6FF'); break;
         case 'heal': text(e.x, e.y - 60, (e.spa ? '온천 +' : '+') + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 10 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t) { text(t.x, t.y - 60, CONFIG.items[e.item].name, CONFIG.items[e.item].color); R.onSfx('item'); } break;
         case 'fire': { const v = viewOf(e.idx); v.recoil = 1; bubbles(e.x, e.y, 10, 14); shake(1.5); R.onSfx('fire', { shape: 'missile' }); break; }
@@ -2596,7 +2645,7 @@ function createRenderer(cv, mini) {
   function updateCam(dt) {
     const m = R.m, cam = R.cam;
     let target = null, fast = false;
-    if (m.proj.length) { const p = m.proj[0]; target = { x: p.x + clamp((p.dx || 0) * 160, -220, 220), y: p.y + clamp((p.dy || 0) * 100, -140, 140) }; fast = true; }
+    if (m.proj.some(q => !(q.wait > 0))) { const p = m.proj.find(q => !(q.wait > 0)); target = { x: p.x + clamp((p.dx || 0) * 160, -220, 220), y: p.y + clamp((p.dy || 0) * 100, -140, 140) }; fast = true; }
     else if (!R.free && R.follow) target = R.view[R.follow.idx] ? R.view[R.follow.idx] : R.follow;
     if (target && (!R.free || fast)) {
       if (fast) R.free = false;
@@ -2635,6 +2684,7 @@ function createRenderer(cv, mini) {
       if (t.shock && vrnd() < dt * 6) { const a = vrnd() * 7; R.bolts.push({ x1: v.x, y1: v.y, x2: v.x + Math.cos(a) * 40, y2: v.y + Math.sin(a) * 26, t: 0, col: '#BFA8FF' }); }
     }
     for (const p of m.proj) {
+      if (p.wait > 0) continue;
       const tr = R.trails[p.id] || (R.trails[p.id] = { last: 0 });
       tr.last += dt; if (tr.last > 0.03) { tr.last = 0; R.fx.push({ kind: 'bubble', x: p.x - (p.dx || 0) * 12, y: p.y - (p.dy || 0) * 12, vx: 0, vy: -20 - vrnd() * 20, t: 0, life: 0.9, r: 1.2 + vrnd() * 2 }); }
     }
@@ -2777,8 +2827,16 @@ function createRenderer(cv, mini) {
     ctx.restore();
   }
   function drawTorp(p) {
+    if (p.wait > 0) return; // 2연발: the second shot is still in the tube
     const m = R.m, w = CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx], look = TORP[w.kind] || TORP.circle;
     const a = Math.atan2(p.dy || 0, p.dx || 1);
+    if (p.tele) { // 순간이동 carrier: a glowing ring
+      ctx.save(); ctx.translate(p.x, p.y);
+      const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, 18); gl.addColorStop(0, '#FFFFFF'); gl.addColorStop(0.45, '#7CF5FF'); gl.addColorStop(1, 'rgba(124,245,255,0)');
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, 18, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#E8FDFF'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 10 + Math.sin(R.t * 14) * 2, 0, 7); ctx.stroke();
+      ctx.restore(); return;
+    }
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(a);
     if (look[2]) { ctx.fillStyle = look[2] + '44'; ctx.beginPath(); ctx.arc(0, 0, 16, 0, 7); ctx.fill(); }
     ctx.strokeStyle = '#0A1420'; ctx.lineWidth = 1.5;
@@ -2899,7 +2957,7 @@ function createRenderer(cv, mini) {
     mctx.drawImage(R.miniT, 0, 0);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 2, 4, 4); }
     for (const t of m.subs) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, t.y * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
-    for (const p of m.proj) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
+    for (const p of m.proj) if (!(p.wait > 0)) { mctx.fillStyle = '#FFFFFF'; mctx.fillRect(p.x * sx - 1, p.y * sy - 1, 2, 2); }
     mctx.strokeStyle = 'rgba(255,255,255,0.9)'; mctx.lineWidth = 1.5; mctx.strokeRect(left * sx, top * sy, v.w * sx, v.h * sy);
   }
   R.screenToWorld = function (cx, cy) {
@@ -3031,6 +3089,7 @@ function botPlan(m, level, rnd, mem) {
   const has = id => t.items.indexOf(id);
   if (has('heal') >= 0 && t.hp < t.maxhp * 0.55) cmdItem(m, has('heal'));
   else if (has('amplify') >= 0) cmdItem(m, has('amplify'));
+  else if (has('double') >= 0) cmdItem(m, has('double'));
   else if (has('shield') >= 0) cmdItem(m, has('shield'));
   else if (has('calm') >= 0 && Math.abs(m.current) >= 3) cmdItem(m, has('calm'));
   const gauss = () => (rnd() + rnd() + rnd() - 1.5) / 1.5;
@@ -4285,7 +4344,7 @@ function updateHud() {
   const mineNow = ctrl.activeLocal();
   const d = CONFIG.subs[t.subId];
   setTxt('whoName', t.nick + ' · ' + d.name);
-  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
+  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') + (m.turn && m.cur === t.idx && m.phase === 'aim' ? (m.turn.double ? ' · 2연발 준비' : m.turn.tele ? ' · 순간이동 준비' : m.turn.amp ? ' · 증폭 준비' : '') : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * Math.min(1, t.fuel / d.movePx)) + '%';
   const pw = ctrl.charging && mineNow ? ctrl.gauge / 1000 : 0;
@@ -4316,7 +4375,7 @@ function updateHud() {
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
         b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${meta.name}</span>`;
-        b.title = meta.name; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
+        b.title = meta.name + ' — ' + meta.desc; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);

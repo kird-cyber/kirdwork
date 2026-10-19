@@ -5,6 +5,8 @@ const A = require('./load.js')(['bot.js']);
 const N = +(process.argv[2] || 30);
 function lcg(seed) { let s = seed >>> 0; return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296); }
 const SUBS = Object.keys(A.CONFIG.subs), MAPS = Object.keys(A.CONFIG.maps);
+// every 4th turn the sub gets a 순간이동 and every 7th a 2연발 (same on both runs), so the replay covers both items
+function give(m) { const t = A.curSub(m); if (t.items.length >= A.CONFIG.turn.inventoryMax) return; if (m.turnNo % 4 === 0) t.items.push('tele'); else if (m.turnNo % 7 === 0) t.items.push('double'); }
 const fired = {}; let fails = 0, draws = 0, turnsTotal = 0;
 for (let g = 0; g < N; g++) {
   const rnd = lcg(1000 + g), n = 2 + Math.floor(rnd() * 3) * 2; // 2, 4 or 6 players
@@ -15,7 +17,9 @@ for (let g = 0; g < N; g++) {
   let guard = 0;
   while (m.phase !== 'over' && m.turnNo <= 70 && guard++ < 600000) {
     if (m.phase === 'aim') {
-      const t = A.curSub(m), inp = A.botPlayTurn(m, ['easy', 'normal', 'hard', 'measure'][g % 4], rnd, mem[t.id] || (mem[t.id] = {}));
+      const t = A.curSub(m); give(m);
+      if (m.turnNo % 4 === 0) { const k = t.items.indexOf('tele'); if (k >= 0) A.cmdItem(m, k); }
+      const inp = A.botPlayTurn(m, ['easy', 'normal', 'hard', 'measure'][g % 4], rnd, mem[t.id] || (mem[t.id] = {}));
       if (inp) { log.push(inp); if (inp.weapon !== undefined) fired[t.subId + ':' + inp.weapon] = 1; }
     } else A.step(m);
   }
@@ -25,7 +29,7 @@ for (let g = 0; g < N; g++) {
   const r = A.createMatch(cfg), byTurn = {}; for (const x of log) byTurn[x.turnNo] = x;
   guard = 0;
   while (r.phase !== 'over' && r.turnNo <= 70 && guard++ < 600000) {
-    if (r.phase === 'aim') { const x = byTurn[r.turnNo]; if (!x) break; A.applyTurnInput(r, x); }
+    if (r.phase === 'aim') { const x = byTurn[r.turnNo]; if (!x) break; give(r); A.applyTurnInput(r, x); }
     else A.step(r);
   }
   let bad = 0;

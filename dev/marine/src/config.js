@@ -38,6 +38,7 @@ const CONFIG = {
     maxPlayers: 8,
     teamMax: 4,
     inventoryMax: 4,
+    pickupRx: 72, pickupRy: 44, // a crate is picked up when it sits inside this ellipse around the sub (the drawn hull + the crate)
     startSpan: 2600, startGap: 380, startMin: 700, // everyone starts inside a window this wide; two subs never closer than startMin
     suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenCurrentMul: 1.5,
   },
@@ -121,11 +122,13 @@ const CONFIG = {
   randomSub: { id: 'kird', chance: 1 / 10 },
 
   items: {
-    heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },
-    shield: { name: '실드', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' },
-    amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
-    fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
-    calm: { name: '정류탄', label: '정류', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
+    heal: { name: '회복', desc: '체력 250 회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' },
+    shield: { name: '실드', desc: '다음 내 차례까지 받는 폭발 피해 절반', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' },
+    amplify: { name: '증폭', desc: '이번 발사 피해 1.5배', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
+    fuel: { name: '연료', desc: '이번 턴 이동력 한 번 더', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
+    calm: { name: '정류탄', desc: '이번 발사는 해류를 받지 않음', label: '정류', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
+    double: { name: '2연발', desc: '이번 발사를 같은 곡선으로 두 번 쏨', label: '×2', effect: 'double', gapTicks: 45, dropWeight: 1, color: '#FFB347', bg: '#3A2410' },
+    tele: { name: '순간이동', desc: '이번 발사는 터지지 않고, 멈춘 자리로 내 잠수함이 순간이동', label: '이동', effect: 'tele', search: 220, dropWeight: 1, color: '#7CF5FF', bg: '#0E2E3A' },
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask. W*H must be a multiple of 4.

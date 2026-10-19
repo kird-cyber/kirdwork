@@ -251,7 +251,7 @@ function updateHud() {
   const mineNow = ctrl.activeLocal();
   const d = CONFIG.subs[t.subId];
   setTxt('whoName', t.nick + ' · ' + d.name);
-  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
+  setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.shock ? ' · 감전' : '') + (t.shield ? ' · 실드' : '') + (m.turn && m.cur === t.idx && m.phase === 'aim' ? (m.turn.double ? ' · 2연발 준비' : m.turn.tele ? ' · 순간이동 준비' : m.turn.amp ? ' · 증폭 준비' : '') : '') : (t.deathCause === 'out' ? '장외' : '격침됨') + ' · 관전 중');
   $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
   $('fuelBar').style.width = (100 * Math.min(1, t.fuel / d.movePx)) + '%';
   const pw = ctrl.charging && mineNow ? ctrl.gauge / 1000 : 0;
@@ -282,7 +282,7 @@ function updateHud() {
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
         b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${meta.name}</span>`;
-        b.title = meta.name; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
+        b.title = meta.name + ' — ' + meta.desc; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);

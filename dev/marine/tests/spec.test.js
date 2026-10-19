@@ -308,6 +308,51 @@ const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }
   const lift = A.driftAt(m, 2000, 900)[1];
   check('맵 규칙', '스파: 욕조 안에서 턴 시작 시 +60, 욕조 위 기포가 위로 밀어 올림', '체력 560, 위로 < 0', `체력 ${t.hp}, ${lift.toFixed(3)}`, t.hp === 560 && lift < 0);
 }
+// ---- supply crates and the new items (2연발, 순간이동)
+{
+  const m = field([{ sub: 'uboat', x: 1000, y: 800 }, { sub: 'uboat', x: 3000, y: 800 }]);
+  m.crates = [{ x: 1068, y: 812, item: 'heal', dead: false, id: 999 }]; // nose of the drawn hull touches it, centre 68px away
+  A.cmdMove(m, 0);
+  check('아이템', '보급 상자: 잠수함 몸이 닿으면 획득 (중심 68px)', '획득', m.subs[0].items.join(',') || '못 얻음', m.subs[0].items[0] === 'heal' && !m.crates.length);
+  const f = field([{ sub: 'uboat', x: 1000, y: 800 }, { sub: 'uboat', x: 3000, y: 800 }]);
+  f.subs[0].items = ['fuel', 'fuel', 'fuel', 'fuel']; f.crates = [{ x: 1040, y: 800, item: 'heal', dead: false, id: 998 }];
+  A.cmdMove(f, 0); A.cmdMove(f, 0); const said = f.events.filter(e => e.type === 'bagfull').length;
+  check('아이템', '가방이 가득 차면 상자는 남고 한 번만 알림', '상자 남음, 알림 1번', `상자 ${f.crates.length}개, 알림 ${said}번`, f.crates.length === 1 && said === 1);
+}
+{
+  const one = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'ohio', x: 1300, y: 800 }]);
+  const d1 = dmgTo(fire(one, line(one.subs[0], 1300, 800), 1000, 0), 1);
+  const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'ohio', x: 1300, y: 800 }]);
+  m.subs[0].items = ['double']; A.cmdItem(m, 0);
+  const ev = fire(m, line(m.subs[0], 1300, 800), 1000, 0), d2 = dmgTo(ev, 1), shots = ev.filter(e => e.type === 'fire').length;
+  check('아이템', '2연발: 같은 곡선으로 두 번 발사, 피해 2배', `발사 2번, ${d1 * 2}`, `발사 ${shots}번, ${d2}`, shots === 2 && Math.abs(d2 - d1 * 2) <= 2);
+}
+{
+  const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3000, y: 800 }, { sub: 'uboat', x: 1000, y: 800, team: 'blue' }]);
+  m.subs[0].items = ['tele']; A.cmdItem(m, 0);
+  const ev = fire(m, line(m.subs[0], 1600, 800), 1000, 0), t = m.subs[0];
+  check('아이템', '순간이동: 멈춘 자리로 이동하고, 지나간 적은 피해 없음', 'x≈1600, 피해 0', `x ${Math.round(t.x)}, 피해 ${dmgTo(ev, 2)}`, Math.abs(t.x - 1600) < 20 && dmgTo(ev, 2) === 0 && !booms(ev).length);
+  const r = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3000, y: 800 }], [{ x: 1500, y: 800, rx: 200, ry: 300 }]);
+  r.subs[0].items = ['tele']; A.cmdItem(r, 0); fire(r, line(r.subs[0], 2000, 800), 1000, 0);
+  const u = r.subs[0];
+  check('아이템', '순간이동: 바위에 막히면 바위 앞 빈 물로', '바위 앞, 겹치지 않음', `x ${Math.round(u.x)}`, u.x < 1300 && u.x > 900 && A.hullFree(r, u.x, u.y));
+  const o = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'uboat', x: 3000, y: 800 }]);
+  o.subs[0].items = ['tele']; A.cmdItem(o, 0); const ev3 = fire(o, line(o.subs[0], 400, 0), 1000, 0);
+  check('아이템', '순간이동: 맵 끝을 노려도 가장자리 안쪽에 내림', `y ≥ ${C.physics.edgeMargin}`, `y ${Math.round(o.subs[0].y)}`, o.subs[0].y >= C.physics.edgeMargin && ev3.some(e => e.type === 'tele'));
+}
+{
+  // replaying a turn with each new item gives the same state on another device
+  for (const id of ['double', 'tele']) {
+    const mk = () => { const m = field([{ sub: 'kilo', x: 600, y: 700 }, { sub: 'ohio', x: 1700, y: 900 }]); m.subs[0].items = [id]; return m; };
+    const a = mk(), b = mk();
+    A.cmdMove(a, 0); A.cmdMove(a, 0); A.cmdItem(a, 0);
+    const input = A.cmdFire(a, line(a.subs[0], 1700, 900), 900, 0, 30);
+    A.applyTurnInput(b, JSON.parse(JSON.stringify(input)));
+    let g = 0; while (a.phase !== 'aim' && a.phase !== 'over' && g++ < 20000) A.step(a);
+    g = 0; while (b.phase !== 'aim' && b.phase !== 'over' && g++ < 20000) A.step(b);
+    check('아이템', `${C.items[id].name}: 입력만으로 재생하면 같은 결과`, '해시 같음', A.stateHash(a) === A.stateHash(b) ? '같음' : '다름', A.stateHash(a) === A.stateHash(b));
+  }
+}
 // ---- maps
 for (const id of Object.keys(C.maps)) {
   const mp = A.buildMap(id), ok = mp.spawns.length === 12 && mp.spawns.every(s => A.clearAround(mp.mask, mp.W, mp.H, s.x, s.y, C.physics.hullRx + 20, C.physics.hullRy + 20));

@@ -305,11 +305,20 @@ function cmdMove(m, d) {
   t.x = nx; t.y = ny;
   t.fuel = Math.max(0, t.fuel - st);
   m.turn.movedPx += st;
-  for (const c of m.crates) if (!c.dead && (c.x - t.x) * (c.x - t.x) + (c.y - t.y) * (c.y - t.y) < 46 * 46 && t.items.length < CONFIG.turn.inventoryMax) {
+  pickupCrates(m, t);
+  return true;
+}
+// a crate is taken when the sub's drawn body reaches it (not only its centre). A full bag says so once per crate.
+function pickupCrates(m, t) {
+  const T = CONFIG.turn;
+  for (const c of m.crates) {
+    if (c.dead) continue;
+    const a = (c.x - t.x) / T.pickupRx, b = (c.y - t.y) / T.pickupRy;
+    if (a * a + b * b >= 1) continue;
+    if (t.items.length >= T.inventoryMax) { if (m.turn && !m.turn.fullSaid) { m.turn.fullSaid = 1; m.events.push({ type: 'bagfull', idx: t.idx, x: t.x, y: t.y }); } continue; }
     c.dead = true; t.items.push(c.item); m.events.push({ type: 'pickup', idx: t.idx, x: t.x, y: t.y, item: c.item });
   }
   m.crates = m.crates.filter(c => !c.dead);
-  return true;
 }
 function cmdItem(m, slot) {
   const t = curSub(m);
@@ -322,6 +331,8 @@ function cmdItem(m, slot) {
   else if (it.effect === 'amplify') m.turn.amp = true;
   else if (it.effect === 'fuel') t.fuel += CONFIG.subs[t.subId].movePx;
   else if (it.effect === 'calm') m.turn.calm = true;
+  else if (it.effect === 'double') m.turn.double = true;
+  else if (it.effect === 'tele') m.turn.tele = true;
   t.items.splice(slot, 1);
   m.turn.itemUsed = true;
   m.events.push({ type: 'item', idx: t.idx, item: id });
@@ -351,8 +362,15 @@ function cmdFire(m, pts, gauge, weapon, used) {
   t.facing = path.face; t.lastPts = pts; t.lastGauge = gauge;
   t.st.shots++;
   const det = burstDistance(path, gauge), base = { idx: t.idx, wIdx: weapon, amp: !!m.turn.amp, calm: !!m.turn.calm };
-  if (w.kind === 'twin') for (const off of [-w.gap / 2, w.gap / 2]) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off }, base));
-  else launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0 }, base));
+  if (m.turn.tele) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0, tele: true }, base)); // 순간이동: one carrier shot, no burst
+  else {
+    // 2연발: the same shot again, gapTicks later (it waits at the muzzle, unseen)
+    const shots = m.turn.double ? [0, CONFIG.items.double.gapTicks] : [0];
+    for (const wait of shots) {
+      if (w.kind === 'twin') for (const off of [-w.gap / 2, w.gap / 2]) launch(m, Object.assign({ mode: 'path', path, s: 0, det, off, wait }, base));
+      else launch(m, Object.assign({ mode: 'path', path, s: 0, det, off: 0, wait }, base));
+    }
+  }
   if (w.cooldownTurns) t.cd = w.cooldownTurns + 1; // +1: the count drops at the start of this sub's next turn
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
@@ -362,7 +380,7 @@ function cmdFire(m, pts, gauge, weapon, used) {
 }
 function launch(m, p) {
   const a = pathAt(p.path, 0);
-  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++;
+  p.x = a.x - a.ty * p.off; p.y = a.y + a.tx * p.off; p.dx = a.tx; p.dy = a.ty; p.ox = 0; p.oy = 0; p.age = 0; p.grazed = []; p.id = m.schedSeq++; p.wait = p.wait || 0;
   m.proj.push(p);
 }
 // A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
@@ -406,7 +424,8 @@ function applyTurnInput(m, input) {
 }
 
 // ---------------------------------------------------------------- torpedoes
-function weaponOf(m, p) { return CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx]; }
+const TELE_W = { id: 'tele', kind: 'tele', dmg: 0, rx: 0, ry: 0 }; // the 순간이동 carrier: flies the curve, passes subs, never bursts
+function weaponOf(m, p) { return p.tele ? TELE_W : CONFIG.subs[m.subs[p.idx].subId].weapons[p.wIdx]; }
 function dmgOf(m, p, base) { return base * (p.amp ? CONFIG.items.amplify.mul : 1); }
 // one 3-px sub-step of a torpedo. Returns nothing; marks p.dead when it bursts or leaves.
 function stepTorp(m, p, w) {
@@ -447,7 +466,7 @@ function stepTorp(m, p, w) {
   p.age++;
   // 12신: the left and right edges of cyberspace join up
   if (m.rules.wrapX && p.y >= 0 && p.y < m.H) { if (p.x < 0) { p.x += m.W; p.ox += m.W; if (p.x >= m.W) p.x = m.W - 1e-6; } else if (p.x >= m.W) { p.x -= m.W; p.ox -= m.W; } }
-  if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: 'out', x: p.x, y: p.y }); return; }
+  if (outOfMap(m, p.x, p.y)) { p.dead = true; m.events.push({ type: p.tele ? 'telefail' : 'out', x: p.x, y: p.y, idx: p.idx }); return; }
   // rock
   if (p.piercing) {
     if (!solidAt(m, p.x, p.y)) { p.piercing = false; p.pierced = true; }
@@ -517,6 +536,7 @@ function crawlStep(m, p) {
 // the main burst of a torpedo, by weapon kind
 function detonate(m, p, w) {
   p.dead = true;
+  if (p.tele) return teleport(m, p);
   const owner = m.subs[p.idx], x = p.x, y = p.y, dmg = dmgOf(m, p, w.dmg), sh = { rx: w.rx, ry: w.ry, thin: w.thin || 0 };
   m.events.push({ type: 'impact', x, y, idx: p.idx, wIdx: p.wIdx, dx: p.dx, dy: p.dy });
   switch (w.kind) {
@@ -568,6 +588,22 @@ function detonate(m, p, w) {
     default: explode(m, x, y, sh, dmg, owner, { fx: w.kind === 'cross' ? 'cross' : w.kind === 'vell' ? 'sonar' : 'hit' });
   }
 }
+// 순간이동: the shooter appears where the carrier stopped — backed off along its track (it may have hit rock),
+// else the nearest open water in rings. Nowhere to fit: it stays put.
+function teleport(m, p) {
+  const t = m.subs[p.idx]; if (!t || !t.alive) return;
+  const E = CONFIG.physics.edgeMargin, fits = (x, y) => x >= E && x <= m.W - E && y >= E && y <= m.H - E && hullFree(m, x, y) && !m.subs.some(q => q !== t && q.alive && hullsOverlap(x, y, q.x, q.y));
+  let nx = null, ny = null;
+  for (let k = 0; k <= 120 && nx === null; k += 3) { const x = p.x - p.dx * k, y = p.y - p.dy * k; if (fits(x, y)) { nx = x; ny = y; } }
+  const R = CONFIG.items.tele.search;
+  for (let r = 10; r <= R && nx === null; r += 10) for (let a = 0; a < 3600; a += 150) { const x = p.x + r * cosD10(a), y = p.y + r * sinD10(a); if (fits(x, y)) { nx = x; ny = y; break; } }
+  if (nx === null) { m.events.push({ type: 'telefail', x: p.x, y: p.y, idx: t.idx }); return; }
+  const fx = t.x, fy = t.y;
+  t.x = Math.round(nx); t.y = Math.round(ny);
+  if (!fits(t.x, t.y)) { t.x = nx; t.y = ny; }
+  m.events.push({ type: 'tele', idx: t.idx, x1: fx, y1: fy, x2: t.x, y2: t.y });
+  pickupCrates(m, t);
+}
 function spawnMini(m, p, x, y, dx, dy, reach, tag) {
   m.proj.push({ mode: 'mini', x, y, dx, dy, rem: reach, idx: p.idx, wIdx: p.wIdx, amp: p.amp, calm: p.calm, ox: 0, age: CONFIG.physics.ownerSafeTicks, grazed: [], id: m.schedSeq++, tag: tag || 0 });
 }
@@ -582,6 +618,7 @@ function burstSmall(m, p, w) {
 function stepProjectiles(m) {
   for (const p of m.proj) {
     if (p.dead) continue;
+    if (p.wait > 0) { if (--p.wait === 0) m.events.push({ type: 'fire', idx: p.idx, weapon: p.wIdx, x: p.x, y: p.y, again: true }); continue; }
     const w = weaponOf(m, p);
     for (let i = 0; i < 2 && !p.dead; i++) stepTorp(m, p, w);
   }
