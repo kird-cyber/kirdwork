@@ -57,7 +57,8 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) {
   const inp2 = (() => { const m3 = field([{ tank: id, x: 1500 }, { tank: 'rookie', x: 3500 }]); return A.cmdFire(m3, 200, 500, 0); })();
   check(d.name, '발사각 범위', `${d.angleMin}~${d.angleMax}`, `${inp.angle}~${inp2.angle}`, inp.angle === d.angleMin && inp2.angle === d.angleMax);
   // delay after a plain shot without moving
-  check(d.name, '발사 딜레이', CONFIG.turn.baseDelay[d.speedClass], m2.tanks[0].delay, m2.tanks[0].delay === CONFIG.turn.baseDelay[d.speedClass]);
+  const wantDelay = CONFIG.turn.baseDelay[d.speedClass] + (d.weapons[0].extraDelay || 0); // easy-to-hit weapons pay extra turn time
+  check(d.name, '발사 딜레이', wantDelay, m2.tanks[0].delay, m2.tanks[0].delay === wantDelay);
   // damage taken multiplier: explode 300 dmg exactly on centre
   const m4 = field([{ tank: 'rookie', x: 1000 }, { tank: id, x: 2500 }]);
   const v = m4.tanks[1], c = A.tankCenter(v), hp0 = v.hp;
