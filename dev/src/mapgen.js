@@ -174,6 +174,78 @@ const MAPGEN = {
   },
 };
 
+// ---- KIRD (국가과학기술인력개발원, 청주 오창) maps: the building as a cut-away you fight inside
+function rectF(mask, W, H, x0, y0, x1, y1, v) { for (let y = Math.max(0, y0); y < Math.min(H, y1); y++) for (let x = Math.max(0, x0); x < Math.min(W, x1); x++) mask[y * W + x] = v; }
+// the building: floors[] = slab tops from the ground up (ground first), roof last. Returns the deco description.
+function kirdBuilding(mask, W, H, b) {
+  const { x0, x1, floors, slab, wall } = b, G = floors[0], roof = floors[floors.length - 1];
+  for (let i = 1; i < floors.length; i++) rectF(mask, W, H, x0, floors[i], x1, floors[i] + slab, 1);        // slabs + roof
+  for (const [wx0, wx1] of [[x0, x0 + wall], [x1 - wall, x1]]) {
+    rectF(mask, W, H, wx0, roof, wx1, G, 1);                                                              // end walls
+    for (let i = 1; i < floors.length; i++) rectF(mask, W, H, wx0, floors[i - 1] - 96, wx1, floors[i - 1] - (i === 1 ? 0 : 34), 0); // a door at the bottom, windows above
+  }
+  for (const r of b.ramps || []) { fillPoly(mask, W, H, r.poly); rectF(mask, W, H, r.hole[0], r.hole[1], r.hole[2], r.hole[3], 0); }
+  for (const h of b.holes || []) rectF(mask, W, H, h[0], h[1], h[2], h[3], 0);                           // skylights
+  for (const o of b.blocks || []) rectF(mask, W, H, o[0], o[1], o[2], o[3], 1);                           // solid rooms / volumes
+  if (b.pent) { const [p0, p1, ph, pk] = b.pent, pm = (p0 + p1) / 2; fillPoly(mask, W, H, [[p0, roof], [p0, roof - ph], [pm, roof - ph - pk], [p1, roof - ph], [p1, roof]]); }
+  if (b.canopy) rectF(mask, W, H, b.canopy[0], b.canopy[1], b.canopy[2], b.canopy[1] + 14, 1);
+}
+// ramps between every pair of floors, alternating sides; each ramp climbs `run` px and opens a hole in the upper slab
+function autoRamps(x0, x1, floors, slab, run, wall) {
+  const out = [];
+  for (let i = 0; i + 1 < floors.length - 1; i++) {
+    const lo = floors[i], hi = floors[i + 1], left = i % 2 === 0;
+    const a = left ? x0 + wall + 40 : x1 - wall - 40, b = left ? a + run : a - run;
+    out.push({ poly: [[a, lo], [b, hi], [b, lo]], hole: left ? [b - 190, hi, b, hi + slab] : [b, hi, b + 190, hi + slab] });
+  }
+  return out;
+}
+const MAPDECO = {
+  campus: { bld: [
+      { x0: 700, x1: 2100, top: 650, bot: 1100, floors: [1100, 950, 800, 650], slab: 24, wall: 30, ramps: autoRamps(700, 2100, [1100, 950, 800, 650], 24, 380, 30),
+        holes: [[1700, 650, 1810, 674]], blocks: [[950, 674, 1300, 800]], orange: [[950, 674, 1300, 800], [1150, 540, 1650, 650]], pent: [1150, 1650, 70, 40], sign: [1150, 1650, 610] },
+      { x0: 3500, x1: 4500, top: 400, bot: 1100, floors: [1100, 960, 820, 680, 540, 400], slab: 22, wall: 28, ramps: autoRamps(3500, 4500, [1100, 960, 820, 680, 540, 400], 22, 330, 28),
+        holes: [[3980, 400, 4080, 422]], blocks: [[4500, 760, 4720, 1100]], orange: [[4500, 760, 4720, 1100]], panel: [242, 214, 150], label: '생활관', pent: [3820, 4180, 56, 0] }],
+    plaza: [500, 4900], hills: [[0, 500], [4900, 5600]], flags: [2300, 2340, 2380], bridge: [2100, 3500, 800, 690], trees: [2650, 2850, 3050, 3250] },
+  songdae: { bld: [{ x0: 450, x1: 1350, top: 640, bot: 900, floors: [900, 770, 640], slab: 22, wall: 28,
+      ramps: [{ poly: [[900, 900], [1180, 770], [1180, 900]], hole: [1040, 770, 1180, 792] }], holes: [[620, 640, 720, 662]], pent: [560, 1000, 52, 0],
+      blocks: [[1350, 700, 1520, 900]], orange: [[1350, 700, 1520, 900]], sign: [560, 1000, 618] }],
+    plaza: [300, 1560], hills: [[0, 300], [1560, 1960], [3650, 5400]], lake: [1960, 3650], decks: [[1960, 2470, 1180], [3130, 3650, 1180]], islet: [2760, 3040] },
+};
+function kirdMap(W, H, mask, id) {
+  const D = MAPDECO[id];
+  if (id === 'campus') {
+    const G = 1100;
+    const top = x => {
+      if (x < 500) { const u = (500 - x) / 500; return G - 300 * u * u * (3 - 2 * u) + 8 * tsin(x / 41); }
+      if (x > 4900) { const u = (x - 4900) / 700; return G - 360 * u * u * (3 - 2 * u) + 8 * tsin(x / 43); }
+      return G + 3 * tsin(x / 120);
+    };
+    fillBand(mask, W, H, 0, W - 1, top, () => H - 60);
+    const [b0, b1, by, br] = D.bridge;                       // the glass sky bridge: a floor and a roof (thin: it breaks)
+    rectF(mask, W, H, b0, by, b1, by + 18, 1); rectF(mask, W, H, b0, br, b1, br + 12, 1);
+    for (const x of [b0 + 1, b1 - 31]) rectF(mask, W, H, x, br, x + 30, by - 96, 1); // its door frames (a lintel over each door)
+  } else {
+    const top = x => {
+      if (x < 300) return 900 - 140 * (300 - x) / 300 + 6 * tsin(x / 23);
+      if (x < 1560) return 900;
+      if (x < 1960) { const u = (x - 1560) / 400; return 900 + 280 * u * u + 5 * tsin(x / 21); }
+      const u = (x - 3650) / 1250; if (x < 4900) return 1180 - 620 * (u < 0 ? 0 : u * u * (3 - 2 * u)) + 14 * tsin(x / 61) + 7 * tsin(x / 19);
+      return 560 + 140 * (x - 4900) / 500 + 8 * tsin(x / 29);
+    };
+    fillBand(mask, W, H, 0, 1959, top, () => H - 4);
+    fillBand(mask, W, H, 3650, W - 1, top, () => H - 4);
+    for (const [a, b, y] of D.decks) rectF(mask, W, H, a, y, b, y + 14, 1);                                      // wooden decks (thin: easy to break)
+    const [i0, i1] = D.islet, ic = (i0 + i1) / 2, hw = (i1 - i0) / 2;
+    fillBand(mask, W, H, i0, i1, x => { const u = (x - ic) / hw; return 1260 - 120 * Math.sqrt(Math.max(0, 1 - u * u)) + 4 * tsin(x / 13); }, () => H - 4);
+    fillPoly(mask, W, H, [[ic - 100, 1084], [ic - 60, 1060], [ic, 1036], [ic + 60, 1060], [ic + 100, 1084], [ic + 70, 1078], [ic, 1062], [ic - 70, 1078]]); // the islet pavilion roof (정자)
+    rectF(mask, W, H, ic - 62, 1080, ic - 52, 1150, 1); rectF(mask, W, H, ic + 52, 1080, ic + 62, 1150, 1);
+  }
+  for (const b of D.bld) kirdBuilding(mask, W, H, b);
+}
+MAPGEN.songdae = (W, H, mask) => kirdMap(W, H, mask, 'songdae');
+MAPGEN.campus = (W, H, mask) => kirdMap(W, H, mask, 'campus');
+
 function maskSurface(mask, W, H, x, from) {
   x = Math.floor(x); if (x < 0 || x >= W) return -1;
   for (let y = Math.max(0, Math.floor(from || 0)); y < H; y++) if (mask[y * W + x]) return y;

@@ -10,7 +10,8 @@ const results = []; const ok = (c, m) => { results.push((c ? 'PASS ' : 'FAIL ') 
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/fonts|ERR_TUNNEL|net::/.test(m.text())) errs.push(m.text()); });
   await p.setContent(wrap); await p.waitForTimeout(1500); await p.click('#practiceBtn');
-  ok(await p.locator('.mapc').count() === 8, '맵 8종 표시');
+  const nMaps = await p.evaluate(() => Object.keys(__pg.CONFIG.maps).length);
+  ok(await p.locator('.mapc').count() === nMaps, `맵 ${nMaps}종 표시`);
   // 4 v 4
   await p.click('.seg[data-team="red"][data-n="4"]'); await p.click('.seg[data-team="blue"][data-n="4"]');
   ok(await p.locator('.slot').count() === 8, '4:4 슬롯 8개');
