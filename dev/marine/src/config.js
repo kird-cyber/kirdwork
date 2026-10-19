@@ -127,7 +127,7 @@ const CONFIG = {
     amplify: { name: '증폭', desc: '이번 발사 피해 1.5배', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' },
     fuel: { name: '연료', desc: '이번 턴 이동력 한 번 더', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' },
     calm: { name: '정류탄', desc: '이번 발사는 해류를 받지 않음', label: '정류', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' },
-    double: { name: '2연발', desc: '이번 발사를 같은 곡선으로 두 번 쏨', label: '×2', effect: 'double', gapTicks: 45, dropWeight: 1, color: '#FFB347', bg: '#3A2410' },
+    double: { name: '2연발', desc: '이번 발사를 같은 곡선으로 두 번 쏨 (다음 차례가 조금 늦어짐, 특수 무기면 더)', label: '×2', effect: 'double', gapTicks: 45, delay: 120 /* extra wait before the next turn; a special weapon's extraDelay is paid again too */, dropWeight: 1, color: '#FFB347', bg: '#3A2410' },
     tele: { name: '순간이동', desc: '이번 발사는 터지지 않고, 멈춘 자리로 내 잠수함이 순간이동', label: '이동', effect: 'tele', search: 220, dropWeight: 1, color: '#7CF5FF', bg: '#0E2E3A' },
   },
 

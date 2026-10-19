@@ -341,6 +341,13 @@ const mapField = (id, subs, rocks) => { const m = field(subs, rocks, { map: id }
   check('아이템', '순간이동: 맵 끝을 노려도 가장자리 안쪽에 내림', `y ≥ ${C.physics.edgeMargin}`, `y ${Math.round(o.subs[0].y)}`, o.subs[0].y >= C.physics.edgeMargin && ev3.some(e => e.type === 'tele'));
 }
 {
+  // 2연발 costs turn time: weapon 1 pays the item's delay, a special weapon pays its own extra wait again on top
+  const cost = (items, w) => { const m = field([{ sub: 'uboat', x: 400, y: 800 }, { sub: 'ohio', x: 3600, y: 800 }]); const t = m.subs[0]; t.items = items; if (items.length) A.cmdItem(m, 0); const d0 = t.delay; A.cmdFire(m, line(t, 1300, 800), 500, w, 0); return t.delay - d0; };
+  const base1 = cost(['fuel'], 0), dbl1 = cost(['double'], 0), base2 = cost(['fuel'], 1), dbl2 = cost(['double'], 1);
+  const D = C.items.double.delay, X = C.subs.uboat.weapons[1].extraDelay;
+  check('아이템', '2연발: 다음 차례가 늦어짐 (1번 +' + D + ', 2번 +' + (D + X) + ')', `+${D} / +${D + X}`, `+${dbl1 - base1} / +${dbl2 - base2}`, dbl1 - base1 === D && dbl2 - base2 === D + X);
+}
+{
   // replaying a turn with each new item gives the same state on another device
   for (const id of ['double', 'tele']) {
     const mk = () => { const m = field([{ sub: 'kilo', x: 600, y: 700 }, { sub: 'ohio', x: 1700, y: 900 }]); m.subs[0].items = [id]; return m; };

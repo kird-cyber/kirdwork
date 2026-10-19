@@ -372,7 +372,8 @@ function cmdFire(m, pts, gauge, weapon, used) {
     }
   }
   if (w.cooldownTurns) t.cd = w.cooldownTurns + 1; // +1: the count drops at the start of this sub's next turn
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  const dbl = m.turn.double && !m.turn.tele ? CONFIG.items.double.delay + (w.extraDelay || 0) : 0; // 2연발 costs time (a special weapon's wait twice)
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + dbl + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon, x: path.xs[0], y: path.ys[0] });
