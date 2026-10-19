@@ -289,9 +289,10 @@ function updateHud() {
     }
   }
   updateStatus(m, cur);
-  if (hudCache.portrait !== t.subId + t.team) {
-    hudCache.portrait = t.subId + t.team; const p = $('portrait').getContext('2d'); p.clearRect(0, 0, 172, 128);
-    drawSubAt(p, t.subId, 86, 66, 1.05, 0.3, TEAMC[t.team], 1);
+  const mood = R.moodOf(t), crit = mood === 2;
+  if (hudCache.portrait !== t.subId + t.team + mood + (crit ? Math.floor(R.t * 2) % 2 : '')) {
+    hudCache.portrait = t.subId + t.team + mood + (crit ? Math.floor(R.t * 2) % 2 : ''); const p = $('portrait').getContext('2d'); p.clearRect(0, 0, 172, 128);
+    drawSubAt(p, t.subId, 86, 66, 1.05, crit ? R.t : 0.3, TEAMC[t.team], 1, mood);
   }
   const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
   const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';

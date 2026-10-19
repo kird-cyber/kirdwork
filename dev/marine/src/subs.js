@@ -2,11 +2,25 @@
 // Each drawing faces +x, centred on (0,0), about 140 x 80 units. One porthole is the face. team = accent colour.
 const SUB_OUT = '#0A1420';
 const TAU2 = Math.PI * 2;
+// face mood while drawing: 0 fine, 1 hurt (heavy eyelid), 2 critical (dizzy swirl eye + sweat drop)
+let SUB_MOOD = 0;
 function porthole(c, x, y, r, glass, pupil) {
   c.fillStyle = '#B8C3CE'; c.beginPath(); c.arc(x, y, r + 2.4, 0, TAU2); c.fill(); c.strokeStyle = SUB_OUT; c.lineWidth = 1.6; c.stroke();
   const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, glass || '#9FD4F2');
   c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, TAU2); c.fill();
-  if (pupil !== false) { c.fillStyle = '#0A1420'; c.beginPath(); c.arc(x + r * 0.25, y + r * 0.05, r * 0.45, 0, TAU2); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(x + r * 0.4, y - r * 0.15, r * 0.16, 0, TAU2); c.fill(); }
+  if (pupil === false) return;
+  if (SUB_MOOD === 2) {
+    // dizzy: a spiral instead of the pupil, a sweat drop above
+    c.strokeStyle = '#0A1420'; c.lineWidth = Math.max(1, r * 0.22); c.beginPath();
+    for (let k = 0; k <= 24; k++) { const a = k * 0.55, rr = r * 0.08 + k * r * 0.032; const px = x + rr * Math.cos(a), py = y + rr * Math.sin(a); k ? c.lineTo(px, py) : c.moveTo(px, py); }
+    c.stroke();
+    c.fillStyle = '#7FD8FF'; c.beginPath(); c.moveTo(x + r * 1.1, y - r * 2.2); c.quadraticCurveTo(x + r * 1.7, y - r * 1.2, x + r * 1.1, y - r * 1.0); c.quadraticCurveTo(x + r * 0.5, y - r * 1.2, x + r * 1.1, y - r * 2.2); c.fill();
+    return;
+  }
+  c.fillStyle = '#0A1420'; c.beginPath(); c.arc(x + r * 0.25, y + r * 0.05, r * 0.45, 0, TAU2); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(x + r * 0.4, y - r * 0.15, r * 0.16, 0, TAU2); c.fill();
+  if (SUB_MOOD === 1) { // tired: a heavy eyelid over the top half
+    c.save(); c.beginPath(); c.arc(x, y, r, 0, TAU2); c.clip(); c.fillStyle = '#5E6B78'; c.fillRect(x - r, y - r, r * 2, r * 0.95); c.strokeStyle = SUB_OUT; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x - r, y - r * 0.05); c.lineTo(x + r, y - r * 0.05); c.stroke(); c.restore();
+  }
 }
 function prop(c, x, y, t, s) {
   s = s || 1; c.save(); c.translate(x, y);
@@ -186,7 +200,11 @@ const SUBDRAW = {
     c.save(); c.translate(26, -8); c.rotate(-0.15);
     const g = c.createLinearGradient(-13, -6, 13, 6); g.addColorStop(0, '#FFFFFF'); g.addColorStop(1, '#BFE4FF');
     c.fillStyle = g; c.beginPath(); c.ellipse(0, 0, 13, 6, 0, 0, TAU2); c.fill(); c.strokeStyle = SUB_OUT; c.lineWidth = 1.6; c.stroke();
-    c.fillStyle = '#0A1420'; c.beginPath(); c.arc(5, 0.5, 2.6, 0, TAU2); c.fill(); c.restore();
+    if (SUB_MOOD === 2) { c.strokeStyle = '#0A1420'; c.lineWidth = 1.3; c.beginPath(); for (let k = 0; k <= 18; k++) { const an = k * 0.6, rr = 0.4 + k * 0.22; const px = 4 + rr * Math.cos(an), py = rr * 0.6 * Math.sin(an); k ? c.lineTo(px, py) : c.moveTo(px, py); } c.stroke(); }
+    else { c.fillStyle = '#0A1420'; c.beginPath(); c.arc(5, 0.5, 2.6, 0, TAU2); c.fill(); }
+    if (SUB_MOOD === 1) { c.beginPath(); c.ellipse(0, 0, 13, 6, 0, 0, TAU2); c.clip(); c.fillStyle = '#2A3038'; c.fillRect(-14, -7, 28, 6.5); }
+    c.restore();
+    if (SUB_MOOD === 2) { c.fillStyle = '#7FD8FF'; c.beginPath(); c.moveTo(16, -24); c.quadraticCurveTo(21, -16, 16, -14); c.quadraticCurveTo(11, -16, 16, -24); c.fill(); }
     c.strokeStyle = '#AEB6C0'; c.lineWidth = 6; c.lineCap = 'round'; c.beginPath(); c.arc(46, 3, 15, -0.95, 0.95); c.stroke(); c.lineCap = 'butt';
     c.fillStyle = '#6A737E'; for (const a of [-0.6, 0, 0.6]) { c.beginPath(); c.arc(46 + Math.cos(a) * 15, 3 + Math.sin(a) * 15, 1.4, 0, TAU2); c.fill(); }
   },
@@ -236,8 +254,30 @@ const SUBDRAW = {
 };
 
 // draw sub `id` at (x, y), scale s, facing -1 / 1
-function drawSubAt(c, id, x, y, s, t, team, facing) {
-  c.save(); c.translate(x, y); c.scale(facing < 0 ? -s : s, s); SUBDRAW[id](c, t, team); c.restore();
+function drawSubAt(c, id, x, y, s, t, team, facing, mood) {
+  SUB_MOOD = mood || 0;
+  c.save(); c.translate(x, y); c.scale(facing < 0 ? -s : s, s); SUBDRAW[id](c, t, team);
+  if (SUB_MOOD) subWounds(c, t, SUB_MOOD);
+  c.restore(); SUB_MOOD = 0;
+}
+// battle damage on the hull (sub units, facing +x): a crack and a patch when hurt; a blinking warning light when critical
+function subWounds(c, t, mood) {
+  c.save();
+  c.strokeStyle = 'rgba(10,20,32,0.85)'; c.lineWidth = 2; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(4, -2); c.lineTo(10, 4); c.lineTo(7, 7); c.lineTo(14, 13); c.stroke();
+  c.save(); c.translate(-22, -4); c.rotate(-0.35);
+  c.fillStyle = '#F2E6CC'; c.strokeStyle = SUB_OUT; c.lineWidth = 1.2;
+  c.fillRect(-11, -4, 22, 8); c.strokeRect(-11, -4, 22, 8);
+  c.rotate(0.9); c.fillRect(-11, -4, 22, 8); c.strokeRect(-11, -4, 22, 8);
+  c.fillStyle = '#D9C7A2'; for (const dx of [-6, 0, 6]) { c.beginPath(); c.arc(dx, 0, 0.9, 0, TAU2); c.fill(); }
+  c.restore();
+  if (mood === 2) {
+    c.strokeStyle = 'rgba(10,20,32,0.85)'; c.beginPath(); c.moveTo(-40, 2); c.lineTo(-34, 8); c.lineTo(-38, 11); c.lineTo(-30, 16); c.stroke();
+    const on = Math.sin(t * 9) > 0;
+    c.fillStyle = on ? '#FF3A2A' : '#5A1A14'; c.beginPath(); c.arc(-2, -20, 3.4, 0, TAU2); c.fill(); c.strokeStyle = SUB_OUT; c.lineWidth = 1; c.stroke();
+    if (on) { c.fillStyle = 'rgba(255,58,42,0.28)'; c.beginPath(); c.arc(-2, -20, 10, 0, TAU2); c.fill(); }
+  }
+  c.restore();
 }
 function subThumb(id, cw, ch, team) {
   const c = document.createElement('canvas'); c.width = cw; c.height = ch;

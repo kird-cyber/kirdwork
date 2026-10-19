@@ -238,6 +238,7 @@ function createRenderer(cv, mini) {
           dmgText(e, e.kind === 'sudden' ? '#C9A6FF' : e.kind === 'shock' ? '#BFA8FF' : e.kind === 'graze' ? '#CFE6FF' : e.kind === 'friendly' ? '#FFD0A0' : e.kind === 'ram' || e.kind === 'crush' ? '#FFB4A4' : '#FFFFFF');
           viewOf(e.idx).flash = 1; if (e.kind !== 'shock') R.onSfx('hit', { amount: e.amount });
           if (R.isMine && R.isMine(t)) R.hurtFlash = Math.min(1, 0.45 + e.amount / 400);
+          if (t && t.alive) { const before = (t.hp + e.amount) / t.maxhp, now = t.hp / t.maxhp; if (before > 1 / 3 && now <= 1 / 3) R.say(t.idx, '으악! 위험해!'); else if (before > 0.5 && now <= 0.5) R.say(t.idx, '아얏!'); }
           break;
         case 'death': {
           const v = viewOf(e.idx);
@@ -320,6 +321,11 @@ function createRenderer(cv, mini) {
       if (!t.alive) continue;
       v.fxT -= dt;
       if (v.fxT <= 0) { v.fxT = 0.18 + vrnd() * 0.25; R.fx.push({ kind: 'bubble', x: v.x - t.facing * 38, y: v.y + (vrnd() - 0.5) * 8, vx: -t.facing * 10, vy: -30 - vrnd() * 20, t: 0, life: 1.2, r: 1.5 + vrnd() * 2 }); }
+      // battle damage: air leaking from the crack when hurt; oil, more air and moaning when critical
+      const md = moodOf(t);
+      if (md >= 1 && vrnd() < dt * (md === 2 ? 4 : 1.6)) R.fx.push({ kind: 'bubble', x: v.x + t.facing * 6, y: v.y + 4, vx: (vrnd() - 0.5) * 16, vy: -40 - vrnd() * 30, t: 0, life: 1.4, r: 1.2 + vrnd() * 2.2 });
+      if (md === 2 && vrnd() < dt * 2.2) R.fx.push({ kind: 'oil', x: v.x - t.facing * 20 + (vrnd() - 0.5) * 10, y: v.y + 8, vx: (vrnd() - 0.5) * 8, vy: -14 - vrnd() * 10, t: 0, life: 2.4, r: 4 + vrnd() * 4 });
+      if (md === 2) { v.moanT = (v.moanT === undefined ? 2 + vrnd() * 4 : v.moanT) - dt; if (v.moanT <= 0 && !R.bubblesSay[t.idx]) { v.moanT = 7 + vrnd() * 5; R.say(t.idx, MOANS[Math.floor(vrnd() * MOANS.length)]); } }
       if (t.shock && vrnd() < dt * 6) { const a = vrnd() * 7; R.bolts.push({ x1: v.x, y1: v.y, x2: v.x + Math.cos(a) * 40, y2: v.y + Math.sin(a) * 26, t: 0, col: '#BFA8FF' }); }
     }
     for (const p of m.proj) {
@@ -329,7 +335,7 @@ function createRenderer(cv, mini) {
     if (!m.proj.length) R.trails = {};
     for (const f of R.fx) {
       f.t += dt; if (f.t < 0) continue;
-      if (f.kind === 'bubble' || f.kind === 'plus') { f.x += (f.vx || 0) * dt + Math.sin(f.t * 6 + f.r) * 0.3; f.y += f.vy * dt; }
+      if (f.kind === 'bubble' || f.kind === 'plus' || f.kind === 'oil') { f.x += (f.vx || 0) * dt + Math.sin(f.t * 6 + f.r) * 0.3; f.y += f.vy * dt; }
       else if (f.kind === 'chunk') { f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= 0.96; f.vy = f.vy * 0.96 + 60 * dt; }
     }
     R.fx = R.fx.filter(f => f.t < f.life);
@@ -428,12 +434,18 @@ function createRenderer(cv, mini) {
     }
     for (const f of m.falls) { ctx.fillStyle = `rgb(${R.th.edge.join(',')})`; ctx.beginPath(); ctx.moveTo(f.x - 16, f.y - 30); ctx.lineTo(f.x + 16, f.y - 30); ctx.lineTo(f.x, f.y + 14); ctx.fill(); }
   }
+  // 0 fine, 1 hurt (half health or less), 2 critical (a third or less)
+  function moodOf(t) { const k = t.hp / t.maxhp; return !t.alive ? 0 : k <= 1 / 3 ? 2 : k <= 0.5 ? 1 : 0; }
+  R.moodOf = moodOf;
+  const MOANS = ['끙…', '아야…', '으으…', '살려줘…', '물 샌다!', '수리 좀…'];
   function drawSub(t, ui) {
     const v = viewOf(t.idx), m = R.m, bob = Math.sin(R.t * 1.6 + v.bob) * 2.5;
     const face = v.face >= 0 ? 1 : -1, squash = Math.max(0.15, Math.abs(v.face));
     if (m.cur === t.idx && m.phase === 'aim') { ctx.strokeStyle = 'rgba(255,210,74,0.55)'; ctx.lineWidth = 2; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.ellipse(v.x, v.y + bob, 64, 38, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
     ctx.save(); ctx.translate(v.x - face * v.recoil * 6, v.y + bob); ctx.scale(squash, 1);
-    drawSubAt(ctx, t.subId, 0, 0, SUB_SCALE, R.t + t.idx, TEAMC[t.team], face);
+    const mood = moodOf(t);
+    const shiver = mood === 2 && !R.reduceMotion ? Math.sin(R.t * 40 + t.idx) * 0.8 : 0;
+    drawSubAt(ctx, t.subId, shiver, 0, SUB_SCALE, R.t + t.idx, TEAMC[t.team], face, mood);
     if (v.flash > 0) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = v.flash * 0.6; drawSubAt(ctx, t.subId, 0, 0, SUB_SCALE, R.t, '#FFFFFF', face); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
     ctx.restore();
     if (t.shield) { ctx.strokeStyle = 'rgba(200,180,255,0.75)'; ctx.fillStyle = 'rgba(200,180,255,0.12)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.ellipse(v.x, v.y + bob, 60, 36, 0, 0, 7); ctx.fill(); ctx.stroke(); }
@@ -494,6 +506,7 @@ function createRenderer(cv, mini) {
   function drawFx(f) {
     const k = f.t / f.life; if (f.t < 0) return;
     if (f.kind === 'bubble') { ctx.strokeStyle = `rgba(220,245,255,${0.7 * (1 - k)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, 7); ctx.stroke(); ctx.fillStyle = `rgba(255,255,255,${0.35 * (1 - k)})`; ctx.beginPath(); ctx.arc(f.x - f.r * 0.3, f.y - f.r * 0.3, f.r * 0.3, 0, 7); ctx.fill(); }
+    else if (f.kind === 'oil') { ctx.fillStyle = `rgba(24,18,12,${0.45 * (1 - k)})`; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + k * 1.6), 0, 7); ctx.fill(); }
     else if (f.kind === 'shape') {
       const a = 1 - k, draw = (rx, ry) => { const r = Math.max(rx, ry); ctx.save(); ctx.translate(f.x, f.y); ctx.scale(rx / r, ry / r); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r); g.addColorStop(0, `rgba(255,250,225,${0.95 * a})`); g.addColorStop(0.45, f.col + Math.round(a * 180).toString(16).padStart(2, '0')); g.addColorStop(1, f.col + '00'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, r * (0.75 + k * 0.25), 0, 7); ctx.fill(); ctx.restore(); ctx.strokeStyle = `rgba(255,255,255,${0.6 * a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(f.x, f.y, rx, ry, 0, 0, 7); ctx.stroke(); };
       if (f.box) { const sq = (rx, ry) => { ctx.fillStyle = f.col + Math.round(a * 150).toString(16).padStart(2, '0'); ctx.fillRect(f.x - rx, f.y - ry, rx * 2, ry * 2); ctx.strokeStyle = `rgba(255,255,255,${0.7 * a})`; ctx.lineWidth = 2; ctx.strokeRect(f.x - rx, f.y - ry, rx * 2, ry * 2); }; if (f.thin) { sq(f.rx, f.thin); sq(f.thin, f.ry); } else sq(f.rx, f.ry); }
