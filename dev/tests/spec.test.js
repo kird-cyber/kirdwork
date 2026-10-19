@@ -248,7 +248,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const windy = land(false), calm = land(true);
   check('아이템', '무풍탄: 바람 10에서도 바람 없을 때와 같은 곳에 떨어짐', still, `무풍 ${calm} / 그냥 ${windy}`, calm === still && windy !== still);
   const T = CONFIG.turn, ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);
-  const sdTurn = T.suddenBase + T.suddenPerPlayer * 2; ms.turnNo = sdTurn - 1; ms.events.length = 0;
+  const sdTurn = T.suddenBase + T.suddenPerPlayer * 2; ms.suddenOn = true; ms.turnNo = sdTurn - 1; ms.events.length = 0;
   const hp = ms.tanks.map(t => t.hp); A.cmdTimeout(ms); let g = 0; while (ms.phase !== 'aim' && g++ < 5000) A.step(ms);
   const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
   check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));

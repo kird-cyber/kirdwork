@@ -43,7 +43,8 @@ const CONFIG = {
     inventoryMax: 4,
     mineMax: 6,
     // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
-    suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenWindMul: 1.5,
+    // only some matches have it at all (suddenChance, decided from the seed), and later than before (base 10 -> 16, 4 -> 6 per player)
+    suddenChance: 0.25, suddenBase: 16, suddenPerPlayer: 6, suddenDmg: 0.04, suddenWindMul: 1.5,
   },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 

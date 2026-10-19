@@ -50,6 +50,7 @@ function createMatch(opts) {
   // happening for this match
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
+  m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death at all (1 in 4)
   m.column = null; // weather comes later
   return m;
 }
@@ -507,7 +508,7 @@ function beginTurn(m) {
   t.fuel = d.movePx; t.shield = false;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
-  const T = CONFIG.turn, sudden = m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
+  const T = CONFIG.turn, sudden = !!m.suddenOn && m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
   for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
