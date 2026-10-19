@@ -275,7 +275,7 @@ const TMAPGEN = {
       fillBand(m, W, H, X(1880) - 230, X(1880) + 230, () => TG - 390, x => { const u = (x - X(1880)) / 230; return TG - 384 + 68 * (1 - u * u); });
     });
     rectF(m, W, H, 2370, TG - 290, 2830, TG - 125, 1); rectF(m, W, H, 2350, TG - 300, 2850, TG - 282, 1); // plinth
-    rectF(m, W, H, 2522, TG - 330, 2678, TG - 296, 1); rectF(m, W, H, 2556, TG - 720, 2644, TG - 300, 1); rectF(m, W, H, 2530, TG - 742, 2670, TG - 712, 1); // column
+    // the column is background only (shells pass it): the beam, its pans and the finial float as the balance's solid parts
     rectF(m, W, H, 1880, TG - 770, 3320, TG - 750, 1); tmDisc(m, W, H, 1880, TG - 759, 22); tmDisc(m, W, H, 3320, TG - 759, 22); // beam
     fillPoly(m, W, H, [[TCX - 46, TG - 772], [TCX - 40, TG - 830], [TCX, TG - 842], [TCX + 40, TG - 830], [TCX + 46, TG - 772]]); tmDisc(m, W, H, TCX, TG - 868, 30); // finial
   },

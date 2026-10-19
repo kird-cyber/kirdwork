@@ -265,6 +265,7 @@ const TMAP_ART = (() => {
   // ---------------------------------------------------------------- 정의의 저울 (연구윤리)
   function labRoomE(x, a, top, b, bot, floor) { return labRoom(x, a, top, b, bot, floor); }
   S.scale = {
+    veil: 'rgba(232,238,246,0.30)',
     back(x) {
       x.fillStyle = rg(x, CX, 560, 20, 700, [[0, 'rgba(255,248,220,0.7)'], [0.35, 'rgba(255,236,190,0.3)'], [1, 'rgba(255,236,190,0)']]); x.fillRect(CX - 700, 0, 1400, G);
       x.fillStyle = '#9DBFA8'; x.beginPath(); x.moveTo(0, G - 120); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 170 - Math.sin(px / 520) * 60 - Math.sin(px / 190) * 14); x.lineTo(W, G); x.lineTo(0, G); x.fill();
@@ -278,6 +279,11 @@ const TMAP_ART = (() => {
       text(x, '정직 · 책임', CX - 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 }); text(x, '공정 · 관리', CX + 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 });
       kMark(x, CX, top - 110, 84);
       x.restore();
+      // the balance column: background (not solid), so shells fly past it
+      x.save(); x.globalAlpha = 0.5;
+      x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
+      x.strokeStyle = 'rgba(60,40,10,0.35)'; x.lineWidth = 2; for (let k = 1; k < 5; k++) { x.beginPath(); x.moveTo(2556 + k * 17.6, G - 700); x.lineTo(2556 + k * 17.6, G - 320); x.stroke(); }
+      x.fillStyle = bronzeH(x, 2520, 2680); rr(x, 2518, G - 332, 164, 38, 8); x.fill(); rr(x, 2526, G - 744, 148, 34, 8); x.fill(); x.restore();
       x.fillStyle = vg(x, G - 600, G, [[0, 'rgba(247,235,211,0)'], [1, 'rgba(247,235,211,0.35)']]); x.fillRect(0, G - 600, W, 600);
     },
     solid(x) {
@@ -293,9 +299,6 @@ const TMAP_ART = (() => {
       x.fillStyle = bronze(x, G - 250, G - 170); rr(x, 2440, G - 252, 320, 84, 6); x.fill();
       text(x, '연구윤리', CX, G - 226, 34, { color: '#3A2810', weight: 900, ls: 6 });
       text(x, 'RESEARCH INTEGRITY', CX, G - 188, 18, { color: '#3A2810', weight: 700, ls: 4 });
-      x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
-      x.strokeStyle = 'rgba(60,40,10,0.35)'; x.lineWidth = 2; for (let k = 1; k < 5; k++) { x.beginPath(); x.moveTo(2556 + k * 17.6, G - 700); x.lineTo(2556 + k * 17.6, G - 320); x.stroke(); }
-      x.fillStyle = bronzeH(x, 2520, 2680); rr(x, 2518, G - 332, 164, 38, 8); x.fill(); rr(x, 2526, G - 744, 148, 34, 8); x.fill();
       x.fillStyle = bronze(x, G - 776, G - 746); x.fillRect(1850, G - 790, 1500, 44);
       for (const ex of [1880, 3320]) { x.fillStyle = '#5E4018'; x.beginPath(); x.arc(ex, G - 759, 8, 0, 7); x.fill(); }
       x.fillStyle = bronze(x, G - 900, G - 772); x.fillRect(CX - 50, G - 900, 100, 130);
@@ -324,6 +327,7 @@ const TMAP_ART = (() => {
 
   // ---------------------------------------------------------------- 연구노트 (연구윤리)
   S.notebook = {
+    veil: 'rgba(246,240,228,0.34)',
     ceil: '#E9E2D4',
     back(x) {
       x.fillStyle = vg(x, 0, G, [[0, '#E9E2D4'], [1, '#D9CFBC']]); x.fillRect(0, 0, W, H);
@@ -410,6 +414,7 @@ const TMAP_ART = (() => {
 
   // ---------------------------------------------------------------- 화학 실험동 (연구실 안전)
   S.lab = {
+    veil: 'rgba(222,236,246,0.30)',
     back(x) {
       x.fillStyle = '#A9C7B2'; x.beginPath(); x.moveTo(0, G - 140); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 190 - Math.sin(px / 600) * 70 - Math.sin(px / 170) * 12); x.lineTo(W, G); x.lineTo(0, G); x.fill();
     },
@@ -462,6 +467,7 @@ const TMAP_ART = (() => {
 
   // ---------------------------------------------------------------- 증빙 보관실 (연구비 관리)
   S.archive = {
+    veil: 'rgba(16,24,34,0.38)',
     ceil: '#2C3A48',
     back(x) {
       x.fillStyle = vg(x, 0, G, [[0, '#2C3A48'], [1, '#4A5A68']]); x.fillRect(0, 0, W, H);
@@ -521,7 +527,9 @@ const TMAP_ART = (() => {
   }
   const BACK_RES = 1; // backdrop pixels per world px (was 0.5: twice as sharp now, same size as the terrain picture)
   function backdrop(m) { // the scene behind the terrain
-    const k = BACK_RES, c = document.createElement('canvas'); c.width = Math.round(m.W * k); c.height = Math.round(m.H * k); const x = c.getContext('2d'); x.scale(k, k); S[m.mapId].back(x); c.k = k; return c;
+    const k = BACK_RES, c = document.createElement('canvas'); c.width = Math.round(m.W * k); c.height = Math.round(m.H * k); const x = c.getContext('2d'); x.scale(k, k); S[m.mapId].back(x);
+    const veil = S[m.mapId].veil; if (veil) { x.fillStyle = veil; x.fillRect(0, 0, W, H); } // push the scenery back so the solid ground stands out
+    c.k = k; return c;
   }
   return { has: id => !!S[id], paint, backdrop, beacons: id => (S[id] && S[id].beacons) || [], ceil: id => S[id] && S[id].ceil, stamp, flame };
 })();

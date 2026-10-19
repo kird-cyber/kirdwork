@@ -191,7 +191,7 @@ function createRenderer(cv, mini) {
     const tmap = TMAP_ART.has(m.mapId);
     if (!PAINT_DECO && !tmap) decorate(x, m);
     if (PAINT_DECO) { decorateKird(x, m, PAINT_DECO); outlineSolid(x, m); }
-    if (tmap) { TMAP_ART.paint(x, m); outlineSolid(x, m); } // KIRD 주제 맵: painted scene + the same contour
+    if (tmap) { TMAP_ART.paint(x, m); outlineSolid(x, m, 4); } // thicker contour: walls and ground read apart from the painted scenery // KIRD 주제 맵: painted scene + the same contour
     R.terrain = c; R.tctx = x;
   }
   // ================= KIRD maps: building facades, interiors, landscape (vector-drawn onto the terrain texture)
@@ -431,18 +431,19 @@ function createRenderer(cv, mini) {
   }
   // a 3 px dark contour on every solid pixel that touches open space (KIRD maps): what you can stand on, what blocks,
   // and where you fall through are told apart at a glance from the painted background behind
-  function outlineSolid(x, m) {
+  function outlineSolid(x, m, w) {
+    w = w || 2;
     const W = m.W, H = m.H, mask = m.mask, img = x.getImageData(0, 0, W, H), o = img.data;
     const air = (px, py) => px < 0 || px >= W || py < 0 || py >= H ? false : !mask[py * W + px];
     for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
       const i = py * W + px; if (!mask[i]) continue;
       let d = 0;
-      for (let k = 1; k <= 4 && !d; k++) if (air(px - k, py) || air(px + k, py) || air(px, py - k) || air(px, py + k)) d = k;
+      for (let k = 1; k <= w + 2 && !d; k++) if (air(px - k, py) || air(px + k, py) || air(px, py - k) || air(px, py + k)) d = k;
       if (!d) continue;
       const p = i * 4, top = air(px, py - d);
-      if (d <= 2) { o[p] = 18; o[p + 1] = 24; o[p + 2] = 32; }                                     // the contour (2 px)
-      else if (d === 3 && top) { o[p] = (o[p] + 255) >> 1; o[p + 1] = (o[p + 1] + 255) >> 1; o[p + 2] = (o[p + 2] + 235) >> 1; } // lit walkable top
-      else { const k = d === 3 ? 0.62 : 0.82; o[p] *= k; o[p + 1] *= k; o[p + 2] *= k; }           // shade inside the line
+      if (d <= w) { o[p] = 18; o[p + 1] = 24; o[p + 2] = 32; }                                     // the contour (w px)
+      else if (d === w + 1 && top) { o[p] = (o[p] + 255) >> 1; o[p + 1] = (o[p + 1] + 255) >> 1; o[p + 2] = (o[p + 2] + 235) >> 1; } // lit walkable top
+      else { const k = d === w + 1 ? 0.62 : 0.82; o[p] *= k; o[p + 1] *= k; o[p + 2] *= k; }       // shade inside the line
       o[p + 3] = 255;
     }
     x.putImageData(img, 0, 0);
