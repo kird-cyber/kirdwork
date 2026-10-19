@@ -588,5 +588,7 @@ window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, TUT, get screen() { r
   for (const k of SUB_KEYS) thumbs[k] = subThumb(k, 132, 98);
   thumbs.random = randomThumb(132, 98);
   routeStart();
+  // the turn clock keeps running while this tab is hidden or frozen (requestAnimationFrame stops there)
+  setInterval(() => { try { if (inGame() && ctrl && match && match.phase === 'aim') ctrl.checkTime(); } catch (e) {} }, 500);
   requestAnimationFrame(loop);
 })();

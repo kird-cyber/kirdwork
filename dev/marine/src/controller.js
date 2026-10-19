@@ -9,6 +9,8 @@ function createController(match, opts) {
     keys: { left: false, right: false, up: false, down: false, fire: false },
     rel: [[100, 0], [200, 0], [300, 0]], charging: false, gauge: 0, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, mem: {},
+    clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
+    turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
     onInput: opts.onInput || null,
     isLocal: opts.isLocal || (() => true),
     replay: opts.replay || null,
@@ -46,7 +48,20 @@ function createController(match, opts) {
     const mem = c.mem[t.idx];
     c.rel = mem ? mem.rel.map(p => p.slice()) : c.defaultRel(t);
     c.gauge = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.turnT0 = c.clock(); c.tickUsed = 0;
     c.keys.fire = false; // Space held from before the turn must be pressed again
+  };
+  // time used = real time since the turn began (frames dropped, a frozen page or a background tab all count),
+  // or the ticks actually run when that is more (tests fast-forward ticks)
+  c.syncTime = function () {
+    const wall = Math.floor((c.clock() - c.turnT0) / 1000 * CONFIG.physics.tickRate);
+    c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
+  };
+  // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  c.checkTime = function () {
+    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen) return;
+    c.syncTime();
+    if (c.timeLeft <= 0) { if (c.charging) c.fire(); else c.emit(cmdTimeout(c.match)); }
   };
   c.resetCurve = function () { const t = curSub(c.match); if (t && !c.charging) c.rel = c.defaultRel(t); };
   c.worldPts = function (t) {
@@ -75,7 +90,7 @@ function createController(match, opts) {
       c.gauge = Math.min(1000, c.gauge + 1000 / CONFIG.aim.gaugeTicks);
       if (!k.fire || c.gauge >= 1000) { c.fire(); return; }
     }
-    c.timeLeft--;
+    c.tickUsed++; c.syncTime();
     if (c.timeLeft <= 0) { if (c.charging) c.fire(); else c.emit(cmdTimeout(m)); } // time out mid-charge = fire
   };
   c.fire = function () {
@@ -83,7 +98,7 @@ function createController(match, opts) {
     c.charging = false;
     const path = buildPath(t, pts), b = pathAt(path, burstDistance(path, Math.round(c.gauge)));
     c.mem[t.idx] = { rel: c.rel.map(p => p.slice()), burst: [b.x, b.y] };
-    c.emit(cmdFire(m, pts, Math.round(c.gauge), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
+    c.syncTime(); c.emit(cmdFire(m, pts, Math.round(c.gauge), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   c.selectWeapon = function (w) { const t = curSub(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot) { if (c.charging) return false; return cmdItem(c.match, slot); };

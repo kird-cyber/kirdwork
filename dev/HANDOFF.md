@@ -50,3 +50,9 @@
 - 지형은 `mapgen.js`의 `kirdMap`/`kirdBuilding`/`MAPDECO`(건물 좌표·데크·다리). 그림은 `render.js`의 `paintKird`(바탕 픽셀) + `decorateKird`/`drawFacade`(외벽·루버·로고·캐릭터 현수막·나무·국기, 지형 텍스처에 벡터로) + `drawKirdBack`(건물 안 배경: 커튼월·조명·책상).
 - 기관 로고와 캐릭터 이미지는 기관 소유(사용자 확인). `render.js`의 `kirdImages()`에 base64로 들어 있음.
 - 설계 캔버스: claude.ai 아티팩트 "포격리스 기관 전용 맵 제안" (안 1 KIRD 본관은 보류).
+
+## 2026-10-19 저녁 (배틀서브 세션)
+- 맵 순서: KIRD 캠퍼스·송대제가 1·2번, 카드에 청록 윤곽 + 'KIRD 기관 전용' 배지(config `special`).
+- 기관 맵 가독성: 모든 지형 경계에 2px 어두운 윤곽 + 밝은 윗면(`outlineSolid`), 건물 안 배경은 어둡게 눌러 '뒤 배경'으로 보이게, 파인 구멍도 윤곽.
+- 송대제: 데크 두께 42px(`deckT`), 데크 아래 바위 4개(`rocks`) — 부서져도 한 번 더 버팀. 봇 40판 격침 74 중 낙수 3.
+- 타이머: 화면 프레임이 아니라 실제 시간 기준(`controller.syncTime`, 차례 시작 시각 `turnT0`). 다른 창에 가 있어도 0.5초 간격 `checkTime`으로 시간 초과 처리. 쓴 시간(used)도 실제 시간.

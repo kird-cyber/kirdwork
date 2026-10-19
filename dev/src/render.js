@@ -32,7 +32,8 @@ function paintKird(D, dt, db, x, y, n) {
     return [226, 230, 234]; // overpainted by drawFacade
   }
   if (D.bridge && x >= D.bridge[0] && x < D.bridge[1] && y < D.bridge[2] + 20) return [220, 226, 230];
-  if (D.decks) for (const [a, c, yy] of D.decks) if (x >= a && x < c && y >= yy && y < yy + 14) return [150, 104, 66];
+  if (D.decks) for (const [a, c, yy] of D.decks) if (x >= a && x < c && y >= yy && y < yy + D.deckT) return [150, 104, 66];
+  if (D.rocks) for (const [a, c, top] of D.rocks) if (x >= a && x <= c && y >= top - 6) { const t = Math.min(1, dt / 90), s = Math.sin(x / 13 + y / 7) > 0.8 ? 14 : 0; return dt < 4 ? [128 + n, 160 + n, 96 + n] : [126 - t * 50 + s + n, 124 - t * 48 + s + n, 118 - t * 44 + s + n]; }
   if (D.plaza && x >= D.plaza[0] && x < D.plaza[1] && dt < 22) {
     if (dt < 2) return [236, 236, 230];
     if (dt < 14) { const k = Math.floor(x / 64) % 3; return k === 0 ? [214, 176, 150] : [222, 222, 214]; }
@@ -187,7 +188,7 @@ function createRenderer(cv, mini) {
     }
     x.putImageData(out, 0, 0);
     if (!PAINT_DECO) decorate(x, m);
-    if (PAINT_DECO) decorateKird(x, m, PAINT_DECO);
+    if (PAINT_DECO) { decorateKird(x, m, PAINT_DECO); outlineSolid(x, m); }
     R.terrain = c; R.tctx = x;
   }
   // ================= KIRD maps: building facades, interiors, landscape (vector-drawn onto the terrain texture)
@@ -326,8 +327,10 @@ function createRenderer(cv, mini) {
       x.fillStyle = '#A3312A'; x.fillRect(cx - 64, 1078, 14, 80); x.fillRect(cx + 50, 1078, 14, 80); x.restore();
     }
     for (const [a, c, yy] of D.decks || []) {
-      x.save(); x.globalCompositeOperation = 'source-atop'; x.fillStyle = vgrad(x, yy, yy + 14, [[0, '#B88A5A'], [1, '#7A5434']]); x.fillRect(a, yy, c - a, 14);
-      x.strokeStyle = 'rgba(60,36,18,0.5)'; x.lineWidth = 1; x.beginPath(); for (let px = a; px < c; px += 18) { x.moveTo(px, yy); x.lineTo(px, yy + 14); } x.stroke(); x.restore();
+      x.save(); x.globalCompositeOperation = 'source-atop'; const T = D.deckT; x.fillStyle = vgrad(x, yy, yy + 12, [[0, '#C29462'], [1, '#8A5E3A']]); x.fillRect(a, yy, c - a, 12);
+      x.fillStyle = vgrad(x, yy + 12, yy + T, [[0, '#6B4A2E'], [1, '#4A3220']]); x.fillRect(a, yy + 12, c - a, T - 12); // the beam under the planks
+      x.strokeStyle = 'rgba(60,36,18,0.5)'; x.lineWidth = 1; x.beginPath(); for (let px = a; px < c; px += 18) { x.moveTo(px, yy); x.lineTo(px, yy + 12); } x.stroke();
+      x.fillStyle = 'rgba(30,20,10,0.5)'; for (let px = a + 40; px < c; px += 120) x.fillRect(px, yy + 12, 10, T - 12); x.restore();
       x.fillStyle = '#7E2A22'; for (let px = a + 6; px < c; px += 46) x.fillRect(px, yy - 30, 5, 30);
       x.fillRect(a, yy - 30, c - a, 4); x.fillRect(a, yy - 16, c - a, 3);
     }
@@ -372,8 +375,10 @@ function createRenderer(cv, mini) {
         }
         for (const px of [a + 50, a + w - 70]) { ctx.fillStyle = '#C9C2B6'; ctx.fillRect(px, bot - 30, 20, 18); ctx.fillStyle = '#4E8A4C'; ctx.beginPath(); ctx.arc(px + 10, bot - 40, 14, 0, 7); ctx.arc(px + 4, bot - 50, 9, 0, 7); ctx.arc(px + 16, bot - 52, 9, 0, 7); ctx.fill(); }
       }
+      ctx.fillStyle = 'rgba(16,28,40,0.42)'; ctx.fillRect(b.x0, roof, b.x1 - b.x0, G - roof); // background veil
       ctx.restore();
     }
+    if (D.bridge) { const [b0, b1, by, br] = D.bridge; ctx.fillStyle = 'rgba(16,28,40,0.22)'; ctx.fillRect(b0, br + 12, b1 - b0, by - br - 12); }
   }
   // small props along the surface, themed per map. Seeded so every match on a map looks the same.
   function decorate(x, m) {
@@ -419,6 +424,24 @@ function createRenderer(cv, mini) {
       x.restore();
     }
   }
+  // a 3 px dark contour on every solid pixel that touches open space (KIRD maps): what you can stand on, what blocks,
+  // and where you fall through are told apart at a glance from the painted background behind
+  function outlineSolid(x, m) {
+    const W = m.W, H = m.H, mask = m.mask, img = x.getImageData(0, 0, W, H), o = img.data;
+    const air = (px, py) => px < 0 || px >= W || py < 0 || py >= H ? false : !mask[py * W + px];
+    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+      const i = py * W + px; if (!mask[i]) continue;
+      let d = 0;
+      for (let k = 1; k <= 4 && !d; k++) if (air(px - k, py) || air(px + k, py) || air(px, py - k) || air(px, py + k)) d = k;
+      if (!d) continue;
+      const p = i * 4, top = air(px, py - d);
+      if (d <= 2) { o[p] = 18; o[p + 1] = 24; o[p + 2] = 32; }                                     // the contour (2 px)
+      else if (d === 3 && top) { o[p] = (o[p] + 255) >> 1; o[p + 1] = (o[p + 1] + 255) >> 1; o[p + 2] = (o[p + 2] + 235) >> 1; } // lit walkable top
+      else { const k = d === 3 ? 0.62 : 0.82; o[p] *= k; o[p + 1] *= k; o[p + 2] *= k; }           // shade inside the line
+      o[p + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+  }
   function carveTexture(cx, cy, r) {
     const t = R.tctx;
     t.save();
@@ -428,6 +451,7 @@ function createRenderer(cv, mini) {
     t.fillStyle = g; t.beginPath(); t.arc(cx, cy, r * 1.35, 0, 7); t.fill();
     t.globalCompositeOperation = 'destination-out';
     t.beginPath(); t.arc(cx, cy, r + 0.5, 0, 7); t.fill();
+    if (PAINT_DECO) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.arc(cx, cy, r + 2, 0, 7); t.stroke(); }
     t.restore();
   }
   function buildBackground() {

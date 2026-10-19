@@ -9,6 +9,8 @@ function createController(match, opts) {
     keys: { left: false, right: false, up: false, down: false, fire: false },
     aimF: null, powerF: 0, charging: false, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
+    clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
+    turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
     onInput: opts.onInput || null,          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
     replay: opts.replay || null,            // map turnNo -> TurnInput (replay / remote)
@@ -41,6 +43,19 @@ function createController(match, opts) {
     const m = c.match, t = curTank(m);
     c.lastTurnSeen = m.turnNo;
     c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.turnT0 = c.clock(); c.tickUsed = 0;
+  };
+  // time used = real time since the turn began (frames dropped, a frozen page or a background tab all count),
+  // or the ticks actually run when that is more (tests fast-forward ticks)
+  c.syncTime = function () {
+    const wall = Math.floor((c.clock() - c.turnT0) / 1000 * CONFIG.physics.tickRate);
+    c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
+  };
+  // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  c.checkTime = function () {
+    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen) return;
+    c.syncTime();
+    if (c.timeLeft <= 0) { c.charging = false; c.emit(cmdTimeout(c.match)); }
   };
   c.emit = function (inp) { if (!inp) return; c.log.push(inp); if (c.onInput) c.onInput(inp); };
   c.localTick = function (t) {
@@ -59,16 +74,16 @@ function createController(match, opts) {
       c.powerF = Math.min(1000, c.powerF + 500 * TICK); // full power in 2 s
       if (!k.fire || c.powerF >= 1000) { c.fire(); return; }
     }
-    c.timeLeft--;
+    c.tickUsed++; c.syncTime();
     if (c.timeLeft <= 0) c.emit(cmdTimeout(m));
   };
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
+    c.syncTime(); c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   // 턴 넘기기 (only for the local active tank, never mid-charge)
-  c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
+  c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };

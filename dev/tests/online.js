@@ -67,7 +67,7 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   // non-host cannot pick the map
   ok(await B.evaluate(() => [...document.querySelectorAll('#lobbyMaps .mapc')].filter(b => !b.disabled).length === 1), '방장 아닌 사람은 맵 변경 불가');
   ok(await B.isHidden('#lobbyStart'), '방장 아닌 사람에겐 시작 버튼 없음');
-  await A.click('#lobbyMaps .mapc:nth-child(2)'); // 협곡 도시
+  await A.click(`#lobbyMaps .mapc:nth-child(${(await A.evaluate(() => Object.keys(__pg.CONFIG.maps).indexOf('valley'))) + 1})`); // 협곡 도시 (by id: the list order may change)
   ok(await until(async () => B.evaluate(() => __pg.ON.link.room.map === 'valley'), 4000), '방장이 맵 변경 → 모두에게 반영');
   // make the teams 2:2-ish and valid
   await until(async () => A.evaluate(() => __pg.ON.link.canStart()), 3000);

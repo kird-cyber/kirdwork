@@ -1028,7 +1028,8 @@ const MAPDECO = {
   songdae: { bld: [{ x0: 450, x1: 1350, top: 640, bot: 900, floors: [900, 770, 640], slab: 22, wall: 28,
       ramps: [{ poly: [[900, 900], [1180, 770], [1180, 900]], hole: [1040, 770, 1180, 792] }], holes: [[620, 640, 720, 662]], pent: [560, 1000, 52, 0],
       blocks: [[1350, 700, 1520, 900]], orange: [[1350, 700, 1520, 900]], sign: [560, 1000, 618] }],
-    plaza: [300, 1560], hills: [[0, 300], [1560, 1960], [3650, 5400]], lake: [1960, 3650], decks: [[1960, 2470, 1180], [3130, 3650, 1180]], islet: [2760, 3040] },
+    plaza: [300, 1560], hills: [[0, 300], [1560, 1960], [3650, 5400]], lake: [1960, 3650], decks: [[1960, 2470, 1180], [3130, 3650, 1180]], deckT: 42, islet: [2760, 3040],
+    rocks: [[2030, 2150, 1236], [2250, 2370, 1244], [3220, 3340, 1244], [3440, 3560, 1236]] }, // rocks under the decks: a broken deck drops you on one, not straight into the lake
 };
 function kirdMap(W, H, mask, id) {
   const D = MAPDECO[id];
@@ -1053,7 +1054,8 @@ function kirdMap(W, H, mask, id) {
     };
     fillBand(mask, W, H, 0, 1959, top, () => H - 4);
     fillBand(mask, W, H, 3650, W - 1, top, () => H - 4);
-    for (const [a, b, y] of D.decks) rectF(mask, W, H, a, y, b, y + 14, 1);                                      // wooden decks (thin: easy to break)
+    for (const [a, b, y] of D.decks) rectF(mask, W, H, a, y, b, y + D.deckT, 1);                                  // wooden decks (thick: takes a few hits)
+    for (const [a, b, top] of D.rocks) { const c = (a + b) / 2, hw = (b - a) / 2; fillBand(mask, W, H, a, b, x => { const u = (x - c) / hw; return top + 46 * u * u + 4 * tsin(x / 9); }, () => H - 4); } // rocks rising from the lake
     const [i0, i1] = D.islet, ic = (i0 + i1) / 2, hw = (i1 - i0) / 2;
     fillBand(mask, W, H, i0, i1, x => { const u = (x - ic) / hw; return 1260 - 120 * Math.sqrt(Math.max(0, 1 - u * u)) + 4 * tsin(x / 13); }, () => H - 4);
     fillPoly(mask, W, H, [[ic - 100, 1084], [ic - 60, 1060], [ic, 1036], [ic + 60, 1060], [ic + 100, 1084], [ic + 70, 1078], [ic, 1062], [ic - 70, 1078]]); // the islet pavilion roof (정자)
@@ -1739,6 +1741,8 @@ function createController(match, opts) {
     keys: { left: false, right: false, up: false, down: false, fire: false },
     aimF: null, powerF: 0, charging: false, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
+    clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
+    turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
     onInput: opts.onInput || null,          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
     replay: opts.replay || null,            // map turnNo -> TurnInput (replay / remote)
@@ -1771,6 +1775,19 @@ function createController(match, opts) {
     const m = c.match, t = curTank(m);
     c.lastTurnSeen = m.turnNo;
     c.aimF = t.aim; c.powerF = 0; c.charging = false; c.weapon = 0; c.timeLeft = CONFIG.turn.timeLimitTicks;
+    c.turnT0 = c.clock(); c.tickUsed = 0;
+  };
+  // time used = real time since the turn began (frames dropped, a frozen page or a background tab all count),
+  // or the ticks actually run when that is more (tests fast-forward ticks)
+  c.syncTime = function () {
+    const wall = Math.floor((c.clock() - c.turnT0) / 1000 * CONFIG.physics.tickRate);
+    c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
+  };
+  // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  c.checkTime = function () {
+    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen) return;
+    c.syncTime();
+    if (c.timeLeft <= 0) { c.charging = false; c.emit(cmdTimeout(c.match)); }
   };
   c.emit = function (inp) { if (!inp) return; c.log.push(inp); if (c.onInput) c.onInput(inp); };
   c.localTick = function (t) {
@@ -1789,16 +1806,16 @@ function createController(match, opts) {
       c.powerF = Math.min(1000, c.powerF + 500 * TICK); // full power in 2 s
       if (!k.fire || c.powerF >= 1000) { c.fire(); return; }
     }
-    c.timeLeft--;
+    c.tickUsed++; c.syncTime();
     if (c.timeLeft <= 0) c.emit(cmdTimeout(m));
   };
   c.fire = function () {
     const m = c.match, t = curTank(m);
     c.charging = false;
-    c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
+    c.syncTime(); c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   // 턴 넘기기 (only for the local active tank, never mid-charge)
-  c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
+  c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
   c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
@@ -2279,7 +2296,8 @@ function paintKird(D, dt, db, x, y, n) {
     return [226, 230, 234]; // overpainted by drawFacade
   }
   if (D.bridge && x >= D.bridge[0] && x < D.bridge[1] && y < D.bridge[2] + 20) return [220, 226, 230];
-  if (D.decks) for (const [a, c, yy] of D.decks) if (x >= a && x < c && y >= yy && y < yy + 14) return [150, 104, 66];
+  if (D.decks) for (const [a, c, yy] of D.decks) if (x >= a && x < c && y >= yy && y < yy + D.deckT) return [150, 104, 66];
+  if (D.rocks) for (const [a, c, top] of D.rocks) if (x >= a && x <= c && y >= top - 6) { const t = Math.min(1, dt / 90), s = Math.sin(x / 13 + y / 7) > 0.8 ? 14 : 0; return dt < 4 ? [128 + n, 160 + n, 96 + n] : [126 - t * 50 + s + n, 124 - t * 48 + s + n, 118 - t * 44 + s + n]; }
   if (D.plaza && x >= D.plaza[0] && x < D.plaza[1] && dt < 22) {
     if (dt < 2) return [236, 236, 230];
     if (dt < 14) { const k = Math.floor(x / 64) % 3; return k === 0 ? [214, 176, 150] : [222, 222, 214]; }
@@ -2434,7 +2452,7 @@ function createRenderer(cv, mini) {
     }
     x.putImageData(out, 0, 0);
     if (!PAINT_DECO) decorate(x, m);
-    if (PAINT_DECO) decorateKird(x, m, PAINT_DECO);
+    if (PAINT_DECO) { decorateKird(x, m, PAINT_DECO); outlineSolid(x, m); }
     R.terrain = c; R.tctx = x;
   }
   // ================= KIRD maps: building facades, interiors, landscape (vector-drawn onto the terrain texture)
@@ -2573,8 +2591,10 @@ function createRenderer(cv, mini) {
       x.fillStyle = '#A3312A'; x.fillRect(cx - 64, 1078, 14, 80); x.fillRect(cx + 50, 1078, 14, 80); x.restore();
     }
     for (const [a, c, yy] of D.decks || []) {
-      x.save(); x.globalCompositeOperation = 'source-atop'; x.fillStyle = vgrad(x, yy, yy + 14, [[0, '#B88A5A'], [1, '#7A5434']]); x.fillRect(a, yy, c - a, 14);
-      x.strokeStyle = 'rgba(60,36,18,0.5)'; x.lineWidth = 1; x.beginPath(); for (let px = a; px < c; px += 18) { x.moveTo(px, yy); x.lineTo(px, yy + 14); } x.stroke(); x.restore();
+      x.save(); x.globalCompositeOperation = 'source-atop'; const T = D.deckT; x.fillStyle = vgrad(x, yy, yy + 12, [[0, '#C29462'], [1, '#8A5E3A']]); x.fillRect(a, yy, c - a, 12);
+      x.fillStyle = vgrad(x, yy + 12, yy + T, [[0, '#6B4A2E'], [1, '#4A3220']]); x.fillRect(a, yy + 12, c - a, T - 12); // the beam under the planks
+      x.strokeStyle = 'rgba(60,36,18,0.5)'; x.lineWidth = 1; x.beginPath(); for (let px = a; px < c; px += 18) { x.moveTo(px, yy); x.lineTo(px, yy + 12); } x.stroke();
+      x.fillStyle = 'rgba(30,20,10,0.5)'; for (let px = a + 40; px < c; px += 120) x.fillRect(px, yy + 12, 10, T - 12); x.restore();
       x.fillStyle = '#7E2A22'; for (let px = a + 6; px < c; px += 46) x.fillRect(px, yy - 30, 5, 30);
       x.fillRect(a, yy - 30, c - a, 4); x.fillRect(a, yy - 16, c - a, 3);
     }
@@ -2619,8 +2639,10 @@ function createRenderer(cv, mini) {
         }
         for (const px of [a + 50, a + w - 70]) { ctx.fillStyle = '#C9C2B6'; ctx.fillRect(px, bot - 30, 20, 18); ctx.fillStyle = '#4E8A4C'; ctx.beginPath(); ctx.arc(px + 10, bot - 40, 14, 0, 7); ctx.arc(px + 4, bot - 50, 9, 0, 7); ctx.arc(px + 16, bot - 52, 9, 0, 7); ctx.fill(); }
       }
+      ctx.fillStyle = 'rgba(16,28,40,0.42)'; ctx.fillRect(b.x0, roof, b.x1 - b.x0, G - roof); // background veil
       ctx.restore();
     }
+    if (D.bridge) { const [b0, b1, by, br] = D.bridge; ctx.fillStyle = 'rgba(16,28,40,0.22)'; ctx.fillRect(b0, br + 12, b1 - b0, by - br - 12); }
   }
   // small props along the surface, themed per map. Seeded so every match on a map looks the same.
   function decorate(x, m) {
@@ -2666,6 +2688,24 @@ function createRenderer(cv, mini) {
       x.restore();
     }
   }
+  // a 3 px dark contour on every solid pixel that touches open space (KIRD maps): what you can stand on, what blocks,
+  // and where you fall through are told apart at a glance from the painted background behind
+  function outlineSolid(x, m) {
+    const W = m.W, H = m.H, mask = m.mask, img = x.getImageData(0, 0, W, H), o = img.data;
+    const air = (px, py) => px < 0 || px >= W || py < 0 || py >= H ? false : !mask[py * W + px];
+    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+      const i = py * W + px; if (!mask[i]) continue;
+      let d = 0;
+      for (let k = 1; k <= 4 && !d; k++) if (air(px - k, py) || air(px + k, py) || air(px, py - k) || air(px, py + k)) d = k;
+      if (!d) continue;
+      const p = i * 4, top = air(px, py - d);
+      if (d <= 2) { o[p] = 18; o[p + 1] = 24; o[p + 2] = 32; }                                     // the contour (2 px)
+      else if (d === 3 && top) { o[p] = (o[p] + 255) >> 1; o[p + 1] = (o[p + 1] + 255) >> 1; o[p + 2] = (o[p + 2] + 235) >> 1; } // lit walkable top
+      else { const k = d === 3 ? 0.62 : 0.82; o[p] *= k; o[p + 1] *= k; o[p + 2] *= k; }           // shade inside the line
+      o[p + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+  }
   function carveTexture(cx, cy, r) {
     const t = R.tctx;
     t.save();
@@ -2675,6 +2715,7 @@ function createRenderer(cv, mini) {
     t.fillStyle = g; t.beginPath(); t.arc(cx, cy, r * 1.35, 0, 7); t.fill();
     t.globalCompositeOperation = 'destination-out';
     t.beginPath(); t.arc(cx, cy, r + 0.5, 0, 7); t.fill();
+    if (PAINT_DECO) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.arc(cx, cy, r + 2, 0, 7); t.stroke(); }
     t.restore();
   }
   function buildBackground() {
@@ -5009,6 +5050,8 @@ window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, get screen() { return
   for (const k of TANK_KEYS) thumbs[k] = tankThumb(k, 132, 98);
   thumbs.random = randomThumb(132, 98);
   routeStart();
+  // the turn clock keeps running while this tab is hidden or frozen (requestAnimationFrame stops there)
+  setInterval(() => { try { if (inGame() && ctrl && match && match.phase === 'aim') ctrl.checkTime(); } catch (e) {} }, 500);
   requestAnimationFrame(loop);
 })();
 

@@ -210,7 +210,8 @@ const MAPDECO = {
   songdae: { bld: [{ x0: 450, x1: 1350, top: 640, bot: 900, floors: [900, 770, 640], slab: 22, wall: 28,
       ramps: [{ poly: [[900, 900], [1180, 770], [1180, 900]], hole: [1040, 770, 1180, 792] }], holes: [[620, 640, 720, 662]], pent: [560, 1000, 52, 0],
       blocks: [[1350, 700, 1520, 900]], orange: [[1350, 700, 1520, 900]], sign: [560, 1000, 618] }],
-    plaza: [300, 1560], hills: [[0, 300], [1560, 1960], [3650, 5400]], lake: [1960, 3650], decks: [[1960, 2470, 1180], [3130, 3650, 1180]], islet: [2760, 3040] },
+    plaza: [300, 1560], hills: [[0, 300], [1560, 1960], [3650, 5400]], lake: [1960, 3650], decks: [[1960, 2470, 1180], [3130, 3650, 1180]], deckT: 42, islet: [2760, 3040],
+    rocks: [[2030, 2150, 1236], [2250, 2370, 1244], [3220, 3340, 1244], [3440, 3560, 1236]] }, // rocks under the decks: a broken deck drops you on one, not straight into the lake
 };
 function kirdMap(W, H, mask, id) {
   const D = MAPDECO[id];
@@ -235,7 +236,8 @@ function kirdMap(W, H, mask, id) {
     };
     fillBand(mask, W, H, 0, 1959, top, () => H - 4);
     fillBand(mask, W, H, 3650, W - 1, top, () => H - 4);
-    for (const [a, b, y] of D.decks) rectF(mask, W, H, a, y, b, y + 14, 1);                                      // wooden decks (thin: easy to break)
+    for (const [a, b, y] of D.decks) rectF(mask, W, H, a, y, b, y + D.deckT, 1);                                  // wooden decks (thick: takes a few hits)
+    for (const [a, b, top] of D.rocks) { const c = (a + b) / 2, hw = (b - a) / 2; fillBand(mask, W, H, a, b, x => { const u = (x - c) / hw; return top + 46 * u * u + 4 * tsin(x / 9); }, () => H - 4); } // rocks rising from the lake
     const [i0, i1] = D.islet, ic = (i0 + i1) / 2, hw = (i1 - i0) / 2;
     fillBand(mask, W, H, i0, i1, x => { const u = (x - ic) / hw; return 1260 - 120 * Math.sqrt(Math.max(0, 1 - u * u)) + 4 * tsin(x / 13); }, () => H - 4);
     fillPoly(mask, W, H, [[ic - 100, 1084], [ic - 60, 1060], [ic, 1036], [ic + 60, 1060], [ic + 100, 1084], [ic + 70, 1078], [ic, 1062], [ic - 70, 1078]]); // the islet pavilion roof (정자)

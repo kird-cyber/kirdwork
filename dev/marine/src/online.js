@@ -365,7 +365,7 @@ function rebuildFrom(log) {
   installMatch(m, onlineCtrlOpts());
   R.cam.x = cam.x; R.cam.y = cam.y;
   // same turn still running (e.g. my own turn): keep its clock, curve, weapon and curve memory
-  if (old) { ctrl.mem = old.mem; if (m.phase === 'aim' && oldTurn === m.turnNo) { ctrl.lastTurnSeen = m.turnNo; ctrl.timeLeft = old.timeLeft; ctrl.rel = old.rel; ctrl.weapon = old.weapon; } }
+  if (old) { ctrl.mem = old.mem; if (m.phase === 'aim' && oldTurn === m.turnNo) { ctrl.lastTurnSeen = m.turnNo; ctrl.timeLeft = old.timeLeft; ctrl.turnT0 = old.turnT0; ctrl.tickUsed = old.tickUsed; ctrl.rel = old.rel; ctrl.weapon = old.weapon; } }
   if (m.phase === 'over') R.onOver(m.winner, m.forfeit);
   ON.rebuildAt = performance.now();
 }
