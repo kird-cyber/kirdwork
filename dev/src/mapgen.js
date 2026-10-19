@@ -189,6 +189,7 @@ function kirdBuilding(mask, W, H, b) {
   for (const o of b.blocks || []) rectF(mask, W, H, o[0], o[1], o[2], o[3], 1);                           // solid rooms / volumes
   if (b.pent) { const [p0, p1, ph, pk] = b.pent, pm = (p0 + p1) / 2; fillPoly(mask, W, H, [[p0, roof], [p0, roof - ph], [pm, roof - ph - pk], [p1, roof - ph], [p1, roof]]); }
   if (b.canopy) rectF(mask, W, H, b.canopy[0], b.canopy[1], b.canopy[2], b.canopy[1] + 14, 1);
+  if (b.fill) rectF(mask, W, H, b.x0, b.floors[b.floors.length - 1], b.x1, b.floors[0], 1); // solid inside (the rooms are painted on): shells break it open
 }
 // ramps between every pair of floors, alternating sides; each ramp climbs `run` px and opens a hole in the upper slab
 function autoRamps(x0, x1, floors, slab, run, wall) {
@@ -202,11 +203,11 @@ function autoRamps(x0, x1, floors, slab, run, wall) {
 }
 const MAPDECO = {
   campus: { bld: [
-      { x0: 700, x1: 2100, top: 650, bot: 1100, floors: [1100, 950, 800, 650], slab: 24, wall: 30, ramps: autoRamps(700, 2100, [1100, 950, 800, 650], 24, 380, 30),
+      { x0: 700, x1: 2100, top: 650, bot: 1100, floors: [1100, 950, 800, 650], slab: 24, wall: 30, ramps: autoRamps(700, 2100, [1100, 950, 800, 650], 24, 380, 30), fill: true,
         holes: [[1700, 650, 1810, 674]], blocks: [[950, 674, 1300, 800]], orange: [[950, 674, 1300, 800], [1150, 540, 1650, 650]], pent: [1150, 1650, 70, 40], sign: [1150, 1650, 610] },
-      { x0: 3500, x1: 4500, top: 400, bot: 1100, floors: [1100, 960, 820, 680, 540, 400], slab: 22, wall: 28, ramps: autoRamps(3500, 4500, [1100, 960, 820, 680, 540, 400], 22, 330, 28),
+      { x0: 3500, x1: 4500, top: 400, bot: 1100, floors: [1100, 960, 820, 680, 540, 400], slab: 22, wall: 28, ramps: autoRamps(3500, 4500, [1100, 960, 820, 680, 540, 400], 22, 330, 28), fill: true,
         holes: [[3980, 400, 4080, 422]], blocks: [[4500, 760, 4720, 1100]], orange: [[4500, 760, 4720, 1100]], panel: [242, 214, 150], label: '생활관', pent: [3820, 4180, 56, 0] }],
-    plaza: [500, 4900], hills: [[0, 500], [4900, 5600]], flags: [2300, 2340, 2380], bridge: [2100, 3500, 800, 690], trees: [2650, 2850, 3050, 3250] },
+    plaza: [500, 4900], hills: [[0, 500], [4900, 5600]], flags: [2300, 2340, 2380], bridge: [2100, 3500, 800, 690], fill: true, trees: [2650, 2850, 3050, 3250] },
   songdae: { bld: [{ x0: 450, x1: 1350, top: 640, bot: 900, floors: [900, 770, 640], slab: 22, wall: 28,
       ramps: [{ poly: [[900, 900], [1180, 770], [1180, 900]], hole: [1040, 770, 1180, 792] }], holes: [[620, 640, 720, 662]], pent: [560, 1000, 52, 0],
       blocks: [[1350, 700, 1520, 900]], orange: [[1350, 700, 1520, 900]], sign: [560, 1000, 618] }],
@@ -223,9 +224,8 @@ function kirdMap(W, H, mask, id) {
       return G + 3 * tsin(x / 120);
     };
     fillBand(mask, W, H, 0, W - 1, top, () => H - 60);
-    const [b0, b1, by, br] = D.bridge;                       // the glass sky bridge: a floor and a roof (thin: it breaks)
-    rectF(mask, W, H, b0, by, b1, by + 18, 1); rectF(mask, W, H, b0, br, b1, br + 12, 1);
-    for (const x of [b0 + 1, b1 - 31]) rectF(mask, W, H, x, br, x + 30, by - 96, 1); // its door frames (a lintel over each door)
+    const [b0, b1, by, br] = D.bridge;                       // the glass sky bridge: solid from roof to floor (break it to drop through)
+    rectF(mask, W, H, b0, br, b1, by + 18, 1);
   } else {
     const top = x => {
       if (x < 300) return 900 - 140 * (300 - x) / 300 + 6 * tsin(x / 23);

@@ -300,6 +300,7 @@ function createRenderer(cv, mini) {
     x.restore();
   }
   function decorateKird(x, m, D) {
+    if (D.fill) { x.save(); x.globalCompositeOperation = 'source-atop'; drawKirdBackOn(x, D, 0); x.restore(); } // filled buildings: the rooms are the wall texture
     for (const b of D.bld) drawFacade(x, m, b);
     if (D.bridge) { const [b0, b1, by, br] = D.bridge; x.save(); x.globalCompositeOperation = 'source-atop'; panelRect(x, b0, by, b1, by + 18); panelRect(x, b0, br, b1, br + 12); x.restore(); }
     const r = kRand(77 + m.W);
@@ -336,7 +337,8 @@ function createRenderer(cv, mini) {
     }
   }
   // the inside of a KIRD building (behind the terrain): curtain wall with the forest outside, ceiling lights, lecture rooms
-  function drawKirdBack(D) {
+  function drawKirdBack(D) { if (!D.fill) drawKirdBackOn(ctx, D, 0.42); }
+  function drawKirdBackOn(ctx, D, veil) {
     const r = kRand(4242);
     if (D.bridge) {
       const [b0, b1, by, br] = D.bridge;
@@ -375,10 +377,10 @@ function createRenderer(cv, mini) {
         }
         for (const px of [a + 50, a + w - 70]) { ctx.fillStyle = '#C9C2B6'; ctx.fillRect(px, bot - 30, 20, 18); ctx.fillStyle = '#4E8A4C'; ctx.beginPath(); ctx.arc(px + 10, bot - 40, 14, 0, 7); ctx.arc(px + 4, bot - 50, 9, 0, 7); ctx.arc(px + 16, bot - 52, 9, 0, 7); ctx.fill(); }
       }
-      ctx.fillStyle = 'rgba(16,28,40,0.42)'; ctx.fillRect(b.x0, roof, b.x1 - b.x0, G - roof); // background veil
+      if (veil) { ctx.fillStyle = `rgba(16,28,40,${veil})`; ctx.fillRect(b.x0, roof, b.x1 - b.x0, G - roof); } // background veil
       ctx.restore();
     }
-    if (D.bridge) { const [b0, b1, by, br] = D.bridge; ctx.fillStyle = 'rgba(16,28,40,0.22)'; ctx.fillRect(b0, br + 12, b1 - b0, by - br - 12); }
+    if (D.bridge && veil) { const [b0, b1, by, br] = D.bridge; ctx.fillStyle = `rgba(16,28,40,${veil * 0.5})`; ctx.fillRect(b0, br + 12, b1 - b0, by - br - 12); }
   }
   // small props along the surface, themed per map. Seeded so every match on a map looks the same.
   function decorate(x, m) {
@@ -442,16 +444,18 @@ function createRenderer(cv, mini) {
     }
     x.putImageData(img, 0, 0);
   }
-  function carveTexture(cx, cy, r) {
-    const t = R.tctx;
+  // the crater in the picture follows the simulation's ellipse (rx wide, ry deep): a scorched rim, then the hole
+  function carveTexture(cx, cy, r, rx, ry) {
+    const t = R.tctx, ax = rx || r, ay = ry || r, k = ay / ax;
     t.save();
     t.globalCompositeOperation = 'source-atop';
-    const g = t.createRadialGradient(cx, cy, r * 0.85, cx, cy, r * 1.35);
+    t.save(); t.translate(cx, cy); t.scale(1, k);
+    const g = t.createRadialGradient(0, 0, ax * 0.85, 0, 0, ax * 1.35);
     g.addColorStop(0, 'rgba(40,20,12,0.7)'); g.addColorStop(1, 'rgba(40,20,12,0)');
-    t.fillStyle = g; t.beginPath(); t.arc(cx, cy, r * 1.35, 0, 7); t.fill();
+    t.fillStyle = g; t.beginPath(); t.arc(0, 0, ax * 1.35, 0, 7); t.fill(); t.restore();
     t.globalCompositeOperation = 'destination-out';
-    t.beginPath(); t.arc(cx, cy, r + 0.5, 0, 7); t.fill();
-    if (PAINT_DECO) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.arc(cx, cy, r + 2, 0, 7); t.stroke(); }
+    t.beginPath(); t.ellipse(cx, cy, ax + 0.5, ay + 0.5, 0, 0, 7); t.fill();
+    if (PAINT_DECO) { t.globalCompositeOperation = 'source-atop'; t.strokeStyle = 'rgb(18,24,32)'; t.lineWidth = 4; t.beginPath(); t.ellipse(cx, cy, ax + 2, ay + 2, 0, 0, 7); t.stroke(); }
     t.restore();
   }
   function buildBackground() {
@@ -646,7 +650,7 @@ function createRenderer(cv, mini) {
     for (const e of ev) {
       const t = e.idx != null ? m.tanks[e.idx] : null;
       switch (e.type) {
-        case 'carve': carveTexture(e.x, e.y, e.r); break;
+        case 'carve': carveTexture(e.x, e.y, e.r, e.rx, e.ry); break;
         case 'boom': explosionFx(e.x, e.y, e.dr || e.r, e.color); break; // the flash shows the damage area
         case 'dmg':
           dmgText(e, e.kind === 'sudden' ? '#C9A6FF' : e.kind === 'poison' ? '#8EDB3A' : e.kind === 'fall' ? '#FFB4A4' : e.kind === 'friendly' ? '#FFD0A0' : '#FFFFFF');

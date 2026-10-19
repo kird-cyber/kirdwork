@@ -61,17 +61,18 @@ function solidAt(m, x, y) {
   return m.mask[y * m.W + x] === 1;
 }
 function surfaceAt(m, x, from) { return maskSurface(m.mask, m.W, m.H, x, from); }
-function carve(m, cx, cy, r) {
-  const W = m.W, H = m.H, mask = m.mask;
-  const y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(H - 1, Math.ceil(cy + r));
+// craters are ellipses: sx widens, sy deepens (default: a shallow bowl lying flat; each weapon can set its own shape)
+function carve(m, cx, cy, r, sx, sy) {
+  const W = m.W, H = m.H, mask = m.mask, rx = r * (sx || 1), ry = r * (sy || 1);
+  const y0 = Math.max(0, Math.floor(cy - ry)), y1 = Math.min(H - 1, Math.ceil(cy + ry));
   for (let y = y0; y <= y1; y++) {
-    const dy = y - cy, d2 = r * r - dy * dy;
+    const dy = (y - cy) / ry, d2 = 1 - dy * dy;
     if (d2 < 0) continue;
-    const dx = Math.sqrt(d2);
+    const dx = rx * Math.sqrt(d2);
     const xa = Math.max(0, Math.floor(cx - dx)), xb = Math.min(W - 1, Math.ceil(cx + dx));
     mask.fill(0, y * W + xa, y * W + xb + 1);
   }
-  m.events.push({ type: 'carve', x: cx, y: cy, r });
+  m.events.push({ type: 'carve', x: cx, y: cy, r, rx, ry });
 }
 
 // ---------------------------------------------------------------- tank geometry
@@ -131,7 +132,8 @@ function creditFall(m, t) {
 }
 function explode(m, x, y, r, dmg, owner, w, amp) {
   const P = CONFIG.physics, cr = r * P.blastCarveMul, reach = r * P.blastDmgMul + P.bodyRadius;
-  carve(m, x, y, cr);
+  const cs = (w && w.crater) || P.crater || [1, 1];
+  carve(m, x, y, cr, cs[0], cs[1]);
   const crit = w && w.onHit && w.onHit.crit, poison = w && w.onHit && w.onHit.poison;
   for (const t of m.tanks) {
     if (!t.alive) continue;

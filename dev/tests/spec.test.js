@@ -73,9 +73,9 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const m = field([{ tank: id, x: 1500 }, { tank: 'rookie', x: 3500 }]);
   const cx = 2500, cy = GROUND;
   A.explode(m, cx, cy, w.radius, w.dmg, m.tanks[0], w, false);
-  const cr = w.radius * CONFIG.physics.blastCarveMul;
-  const area = carvedCount(m, cx, cy, cr), half = Math.PI * cr * cr / 2;
-  check(d.name, `${w.name} 땅 파임 반경 (${w.radius}×${CONFIG.physics.blastCarveMul})`, Math.round(cr) + 'px', `파인 면적 ${Math.round(area)} (반원 ${Math.round(half)})`, Math.abs(area - half) < Math.PI * cr + 4);
+  const cr = w.radius * CONFIG.physics.blastCarveMul, cs = w.crater || CONFIG.physics.crater || [1, 1], rx = cr * cs[0], ry = cr * cs[1];
+  const area = carvedCount(m, cx, cy, Math.max(rx, ry)), half = Math.PI * rx * ry / 2; // craters are ellipses (wide x deep)
+  check(d.name, `${w.name} 땅 파임 (${Math.round(rx)}×${Math.round(ry)} 타원)`, `반타원 ${Math.round(half)}`, `파인 면적 ${Math.round(area)}`, Math.abs(area - half) < 2 * (rx + ry) + 4); // pixel rounding on each row edge
   const m2 = field([{ tank: id, x: 1000 }, { tank: 'rookie', x: 2500 }]);
   const v = m2.tanks[1], c = A.tankCenter(v); const hp0 = v.hp;
   A.explode(m2, c.x + 15, c.y, w.radius, w.dmg, m2.tanks[0], w, false);
