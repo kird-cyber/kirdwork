@@ -401,6 +401,7 @@ function createRenderer(cv, mini) {
           dmgText(e, e.kind === 'sudden' ? '#C9A6FF' : e.kind === 'poison' ? '#8EDB3A' : e.kind === 'fall' ? '#FFB4A4' : e.kind === 'friendly' ? '#FFD0A0' : '#FFFFFF');
           viewOf(e.idx).flash = 1; if (e.kind !== 'poison') R.onSfx('hit', { amount: e.amount });
           if (R.isMine && R.isMine(t)) R.hurtFlash = Math.min(1, 0.45 + e.amount / 400);
+          if (t && t.alive) { const before = (t.hp + e.amount) / t.maxhp, now = t.hp / t.maxhp; if (before > 1 / 3 && now <= 1 / 3) R.say(t.idx, '으악! 위험해!'); else if (before > 0.5 && now <= 0.5) R.say(t.idx, '아얏!'); }
           break;
         case 'death': {
           const v = viewOf(e.idx);
@@ -500,6 +501,10 @@ function createRenderer(cv, mini) {
         R.fx.push({ kind: 'dust', x: t.x - t.facing * 34, y: v.y - 4, vx: -t.facing * (20 + vrnd() * 30), vy: -10 - vrnd() * 20, t: 0, life: 0.6, r: 5 + vrnd() * 5, col: R.th.debris });
       }
       if (t.poison && v.fxT <= 0) { v.fxT = 0.25; R.fx.push({ kind: 'bubble', x: t.x + (vrnd() - 0.5) * 40, y: v.y - 30, vy: -30 - vrnd() * 20, t: 0, life: 1.1, r: 3 + vrnd() * 3 }); }
+      const md = moodOf(t);
+      if (md >= 1 && vrnd() < dt * (md === 2 ? 5 : 1.2)) R.fx.push({ kind: 'smoke', x: t.x + (vrnd() - 0.5) * 24, y: v.y - 40, vx: (vrnd() - 0.5) * 16, vy: -25 - vrnd() * 25, t: 0, life: 1.2 + vrnd() * 0.6, r: (md === 2 ? 8 : 5) + vrnd() * 6, dark: md === 2 });
+      if (md === 2 && vrnd() < dt * 1.5) R.fx.push({ kind: 'ember', x: t.x + (vrnd() - 0.5) * 40, y: v.y - 20 - vrnd() * 16, vx: (vrnd() - 0.5) * 60, vy: -40 - vrnd() * 50, t: 0, life: 0.6, col: '#FFC84A' });
+      if (md === 2) { v.moanT = (v.moanT === undefined ? 2 + vrnd() * 4 : v.moanT) - dt; if (v.moanT <= 0 && !R.bubbles[t.idx]) { v.moanT = 7 + vrnd() * 5; R.say(t.idx, MOANS[Math.floor(vrnd() * MOANS.length)]); } }
       const d = CONFIG.tanks[t.tankId];
       if (d.traits.berserk && t.hp < t.maxhp * d.traits.berserk.hpBelow && vrnd() < dt * 8) R.fx.push({ kind: 'ember', x: t.x + (vrnd() - 0.5) * 60, y: v.y - 20 - vrnd() * 20, vx: (vrnd() - 0.5) * 30, vy: -50 - vrnd() * 40, t: 0, life: 0.9, col: '#FF3D7A' });
     }
@@ -681,6 +686,25 @@ function createRenderer(cv, mini) {
     const kick = d.sprite.catapult ? -70 * Math.sin(Math.PI * Math.min(1, (1 - v.recoil) * 1.4)) * (v.recoil > 0 ? 1 : 0) : v.recoil * 7;
     return { oy, kickBack, kick };
   }
+  // battle damage (drawing only): 1 = half health or less, 2 = a third or less
+  function moodOf(t) { const k = t.hp / t.maxhp; return !t.alive ? 0 : k <= 1 / 3 ? 2 : k <= 0.5 ? 1 : 0; }
+  const MOANS = ['끙…', '아야…', '으으…', '살려줘…', '붕대 더 줘…', '엔진이…'];
+  // in tank-local units (ground at y = 0, facing +x): a bandage wrapped round the hull and a crack; more cracks when critical
+  function tankWounds(mood) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(20,16,14,0.85)'; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(10, -36); ctx.lineTo(16, -29); ctx.lineTo(12, -25); ctx.lineTo(20, -17); ctx.stroke();
+    ctx.save(); ctx.translate(-16, -30); ctx.rotate(-0.5);
+    ctx.fillStyle = '#F4EEDF'; ctx.strokeStyle = 'rgba(60,50,40,0.9)'; ctx.lineWidth = 1.2;
+    for (const dy of [-5, 2]) { ctx.fillRect(-15, dy, 30, 6); ctx.strokeRect(-15, dy, 30, 6); }
+    ctx.fillStyle = 'rgba(200,60,50,0.75)'; ctx.fillRect(-3, -4, 6, 4);
+    ctx.restore();
+    if (mood === 2) {
+      ctx.strokeStyle = 'rgba(20,16,14,0.85)'; ctx.beginPath(); ctx.moveTo(-34, -22); ctx.lineTo(-28, -16); ctx.lineTo(-32, -11); ctx.lineTo(-25, -5); ctx.stroke();
+      ctx.save(); ctx.translate(26, -40); ctx.rotate(0.6); ctx.fillStyle = '#F4EEDF'; ctx.fillRect(-10, -3, 20, 6); ctx.strokeStyle = 'rgba(60,50,40,0.9)'; ctx.lineWidth = 1.2; ctx.strokeRect(-10, -3, 20, 6); ctx.rotate(-1.2); ctx.fillRect(-10, -3, 20, 6); ctx.strokeRect(-10, -3, 20, 6); ctx.restore();
+    }
+    ctx.restore();
+  }
   function drawTank(t) {
     const v = R.view[t.idx], d = CONFIG.tanks[t.tankId], pose = tankPose(t, v, d);
     ctx.save();
@@ -688,7 +712,10 @@ function createRenderer(cv, mini) {
     ctx.translate(0, pose.oy);
     ctx.scale(t.facing, 1);
     ctx.translate(-pose.kickBack, 0);
+    const mood = moodOf(t);
+    if (mood === 2 && !R.reduceMotion) ctx.translate(Math.sin(R.t * 38 + t.idx) * 0.9, 0); // shivering
     drawTankLocal(ctx, t.tankId, t.aim, pose.kick);
+    if (mood) tankWounds(mood);
     if (v.flash > 0.02) {
       // white silhouette for the hit flash
       fctx.setTransform(1, 0, 0, 1, 0, 0); fctx.clearRect(0, 0, 256, 200);
