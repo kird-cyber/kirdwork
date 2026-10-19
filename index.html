@@ -639,8 +639,6 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
-    // start positions: everyone within startSpan px (or (players-1) x startGap if that is wider), and not closer than startMin
-    startSpan: 2400, startGap: 380, startMin: 900,
     // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
     suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenWindMul: 1.5,
   },
@@ -648,25 +646,25 @@ const CONFIG = {
 
   tanks: {
     boulder: {
-      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 146, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { heavyShot: true },
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 515, radius: 58, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 150, radius: 40, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 198, speedClass: 2, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
-        { id: 'poisonArrow', name: '독화살', dmg: 193, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 222, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
+        { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
     hammer: {
-      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 146, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
@@ -675,7 +673,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -684,7 +682,7 @@ const CONFIG = {
       ],
     },
     trapper: {
-      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 182, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 146, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
@@ -693,7 +691,7 @@ const CONFIG = {
       ],
     },
     swarm: {
-      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1.15,
+      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1.15,
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
@@ -702,7 +700,7 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 343, speedClass: 5, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
@@ -711,7 +709,7 @@ const CONFIG = {
       ],
     },
     rage: {
-      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 325, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 260, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
@@ -721,7 +719,7 @@ const CONFIG = {
     },
     // random-only tank in company colours. Never pickable; "?" gives it with randomTank.chance.
     kird: {
-      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 234, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 84, behind: true },
       weapons: [
@@ -1092,7 +1090,7 @@ function buildMap(mapId) {
   let G = 600; while (G > 20 && pick(G).length < N) G -= 10;
   const all = pick(G), spawns = [];
   for (let i = 0; i < N; i++) spawns.push(all[Math.round(i * (all.length - 1) / (N - 1))]);
-  return { id: mapId, W, H, mask, spawns, theme: meta.theme };
+  return { id: mapId, W, H, mask, spawns, cand, theme: meta.theme }; // cand: every standable x (20 px steps, map edges excluded)
 }
 
 // ---- sim.js
@@ -1114,28 +1112,22 @@ function createMatch(opts) {
   };
   // start positions: pick random spawns, then interleave the teams from left to right so neither team
   // starts bunched on one side (smaller team spread evenly between the bigger one)
-  // everyone starts within reach: a random window of the map no wider than startSpan, and not too close either
-  const n = opts.players.length, T0 = CONFIG.turn, sorted = map.spawns.slice().sort((a, b) => a - b);
-  const span = Math.max(T0.startSpan, (n - 1) * T0.startGap);
-  const starts = sorted.map((x, i) => i).filter(i => sorted.filter(x => x >= sorted[i] && x <= sorted[i] + span).length >= n);
-  let chosen = null;
-  for (let tries = 0; tries < 24 && !chosen; tries++) {
-    const lo = starts.length ? sorted[starts[Math.floor(rngNext(m) * starts.length)]] : sorted[0];
-    const win = starts.length ? sorted.filter(x => x >= lo && x <= lo + span) : sorted.slice();
-    for (let i = win.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = win[i]; win[i] = win[j]; win[j] = t; }
-    const pick = win.slice(0, n).sort((a, b) => a - b);
-    if (pick[pick.length - 1] - pick[0] >= Math.min(T0.startMin, span) || tries === 23) chosen = pick;
+  // start positions: fully random. 30 spots spread evenly over the standable width (map edges excluded); each player
+  // gets one at random, teams not interleaved. Two neighbouring spots are never both taken (unless the map runs out).
+  const n = opts.players.length, cand = map.cand && map.cand.length >= n ? map.cand : map.spawns.slice().sort((a, b) => a - b);
+  const SPOTS = 30, lo = cand[0], hi = cand[cand.length - 1], spots = [];
+  for (let k = 0; k < SPOTS; k++) {
+    const want = lo + (hi - lo) * k / (SPOTS - 1);
+    let best = cand[0]; for (const x of cand) if (Math.abs(x - want) < Math.abs(best - want)) best = x;
+    if (spots.indexOf(best) < 0) spots.push(best);
   }
-  const reds = [], blues = [];
-  opts.players.forEach((p, i) => (p.team === 'red' ? reds : blues).push(i));
-  const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; };
-  shuffle(reds); shuffle(blues);
-  const big = reds.length >= blues.length ? reds : blues, small = big === reds ? blues : reds;
-  const smallSlots = new Set(small.map((_, i) => Math.floor((i + 0.5) * n / small.length)));
-  const order = [];
-  for (let k = 0, bi = 0, si = 0; k < n; k++) order.push(smallSlots.has(k) && si < small.length ? small[si++] : big[bi++]);
-  if (rngNext(m) < 0.5) order.reverse();
-  const spawnOf = {}; order.forEach((pi, k) => { spawnOf[pi] = chosen[k]; });
+  const taken = [], free = spots.map((x, i) => i);
+  for (let k = 0; k < n; k++) {
+    let pool = free.filter(i => taken.every(j => Math.abs(i - j) > 1));
+    if (!pool.length) pool = free.filter(i => taken.indexOf(i) < 0);
+    const i = pool[Math.floor(rngNext(m) * pool.length)]; taken.push(i);
+  }
+  const spawnOf = {}; opts.players.forEach((p, i) => { spawnOf[i] = spots[taken[i]]; });
   opts.players.forEach((p, i) => {
     const d = CONFIG.tanks[p.tankId];
     const x = spawnOf[i];

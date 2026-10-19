@@ -41,8 +41,6 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
-    // start positions: everyone within startSpan px (or (players-1) x startGap if that is wider), and not closer than startMin
-    startSpan: 2400, startGap: 380, startMin: 900,
     // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
     suddenBase: 10, suddenPerPlayer: 4, suddenDmg: 0.04, suddenWindMul: 1.5,
   },
@@ -50,25 +48,25 @@ const CONFIG = {
 
   tanks: {
     boulder: {
-      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '볼더', era: 'classic', hp: 850, dmgTaken: 1.05, movePx: 146, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { heavyShot: true },
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 515, radius: 58, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 150, radius: 40, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 247, speedClass: 2, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 198, speedClass: 2, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
-        { id: 'poisonArrow', name: '독화살', dmg: 193, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 222, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
+        { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
     hammer: {
-      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 182, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '해머', era: 'classic', hp: 950, dmgTaken: 1.05, movePx: 146, speedClass: 1, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
@@ -77,7 +75,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -86,7 +84,7 @@ const CONFIG = {
       ],
     },
     trapper: {
-      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 182, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '트래퍼', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 146, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
@@ -95,7 +93,7 @@ const CONFIG = {
       ],
     },
     swarm: {
-      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 247, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1.15,
+      name: '스웜', era: 'present', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1.15,
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
@@ -104,7 +102,7 @@ const CONFIG = {
       ],
     },
     prism: {
-      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 429, speedClass: 5, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '프리즘', era: 'future', hp: 1040, dmgTaken: 1.05, movePx: 343, speedClass: 5, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { hover: true },
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
@@ -113,7 +111,7 @@ const CONFIG = {
       ],
     },
     rage: {
-      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 325, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '레이지', era: 'future', hp: 850, dmgTaken: 1.05, movePx: 260, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { berserk: { hpBelow: 0.5, mul: 1.3 } },
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
@@ -123,7 +121,7 @@ const CONFIG = {
     },
     // random-only tank in company colours. Never pickable; "?" gives it with randomTank.chance.
     kird: {
-      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 234, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 84, behind: true },
       weapons: [

@@ -327,7 +327,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   while (order.length < 3 && g++ < 200000) { if (m2.phase === 'aim') { order.push(m2.tanks[m2.cur].tankId); A.cmdFire(m2, 30, 200, 0, 5 * 120); } else A.step(m2); }
   check('공통', '느린 턴(아이템·이동·시간) 뒤 상대가 2번 연속', 'prism, prism', order.slice(0, 2).join(', '), order[0] === 'prism' && order[1] === 'prism');
   const ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); let n = 0; while (A.cmdMove(ms, 1) !== false && n < 5000 && ms.tanks[0].fuel > 0) n++;
-  check('공통', '이동력 30% 증가 (루키 190→247px)', 247, Math.round(ms.tanks[0].x - 1000), Math.abs(ms.tanks[0].x - 1000 - 247) < 1);
+  const mv = CONFIG.tanks.rookie.movePx; check('공통', `이동력 = 설정값 (루키 ${mv}px)`, mv, Math.round(ms.tanks[0].x - 1000), Math.abs(ms.tanks[0].x - 1000 - mv) < 1);
 }
 
 // ---- 턴 넘기기(원작식: 딜레이만) / 이동력 바닥에서 방향 전환
@@ -344,10 +344,10 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   A.cmdFire(m2, 45, 300, 0, 600); runFlight(m2);
   check('공통', '넘기고 쏜 뒤엔 상대 차례', 'trapper', m2.tanks[m2.cur].tankId, m2.tanks[m2.cur].tankId === 'trapper');
   // the opponent's expensive turn (move + weapon 2 + long think) lets me go twice in a row
-  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[1].delay = 300;
+  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[1].delay = 340;
   A.cmdFire(m3, 45, 300, 0, 0); runFlight(m3); // me: 740
   const o = m3.tanks[m3.cur]; let g3 = 0; while (A.cmdMove(m3, -1) !== false && g3++ < 4000 && o.fuel > 0) {}
-  A.cmdFire(m3, 45, 300, 1, 60 * 120); runFlight(m3); // trapper: 300+740+100+109+240 = 1489
+  A.cmdFire(m3, 45, 300, 1, 60 * 120); runFlight(m3); // trapper: 340+740+100+move+240 > 1480
   const order = [m3.tanks[m3.cur].tankId]; A.cmdFire(m3, 45, 300, 0, 0); runFlight(m3); order.push(m3.tanks[m3.cur].tankId); // me: 1480 < 1489
   check('공통', '상대 턴이 비싸면 자동으로 연속 턴', 'rookie, rookie', order.join(', '), order[0] === 'rookie' && order[1] === 'rookie');
   // facing with no fuel

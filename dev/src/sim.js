@@ -16,28 +16,22 @@ function createMatch(opts) {
   };
   // start positions: pick random spawns, then interleave the teams from left to right so neither team
   // starts bunched on one side (smaller team spread evenly between the bigger one)
-  // everyone starts within reach: a random window of the map no wider than startSpan, and not too close either
-  const n = opts.players.length, T0 = CONFIG.turn, sorted = map.spawns.slice().sort((a, b) => a - b);
-  const span = Math.max(T0.startSpan, (n - 1) * T0.startGap);
-  const starts = sorted.map((x, i) => i).filter(i => sorted.filter(x => x >= sorted[i] && x <= sorted[i] + span).length >= n);
-  let chosen = null;
-  for (let tries = 0; tries < 24 && !chosen; tries++) {
-    const lo = starts.length ? sorted[starts[Math.floor(rngNext(m) * starts.length)]] : sorted[0];
-    const win = starts.length ? sorted.filter(x => x >= lo && x <= lo + span) : sorted.slice();
-    for (let i = win.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = win[i]; win[i] = win[j]; win[j] = t; }
-    const pick = win.slice(0, n).sort((a, b) => a - b);
-    if (pick[pick.length - 1] - pick[0] >= Math.min(T0.startMin, span) || tries === 23) chosen = pick;
+  // start positions: fully random. 30 spots spread evenly over the standable width (map edges excluded); each player
+  // gets one at random, teams not interleaved. Two neighbouring spots are never both taken (unless the map runs out).
+  const n = opts.players.length, cand = map.cand && map.cand.length >= n ? map.cand : map.spawns.slice().sort((a, b) => a - b);
+  const SPOTS = 30, lo = cand[0], hi = cand[cand.length - 1], spots = [];
+  for (let k = 0; k < SPOTS; k++) {
+    const want = lo + (hi - lo) * k / (SPOTS - 1);
+    let best = cand[0]; for (const x of cand) if (Math.abs(x - want) < Math.abs(best - want)) best = x;
+    if (spots.indexOf(best) < 0) spots.push(best);
   }
-  const reds = [], blues = [];
-  opts.players.forEach((p, i) => (p.team === 'red' ? reds : blues).push(i));
-  const shuffle = arr => { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; };
-  shuffle(reds); shuffle(blues);
-  const big = reds.length >= blues.length ? reds : blues, small = big === reds ? blues : reds;
-  const smallSlots = new Set(small.map((_, i) => Math.floor((i + 0.5) * n / small.length)));
-  const order = [];
-  for (let k = 0, bi = 0, si = 0; k < n; k++) order.push(smallSlots.has(k) && si < small.length ? small[si++] : big[bi++]);
-  if (rngNext(m) < 0.5) order.reverse();
-  const spawnOf = {}; order.forEach((pi, k) => { spawnOf[pi] = chosen[k]; });
+  const taken = [], free = spots.map((x, i) => i);
+  for (let k = 0; k < n; k++) {
+    let pool = free.filter(i => taken.every(j => Math.abs(i - j) > 1));
+    if (!pool.length) pool = free.filter(i => taken.indexOf(i) < 0);
+    const i = pool[Math.floor(rngNext(m) * pool.length)]; taken.push(i);
+  }
+  const spawnOf = {}; opts.players.forEach((p, i) => { spawnOf[i] = spots[taken[i]]; });
   opts.players.forEach((p, i) => {
     const d = CONFIG.tanks[p.tankId];
     const x = spawnOf[i];

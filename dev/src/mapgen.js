@@ -274,5 +274,5 @@ function buildMap(mapId) {
   let G = 600; while (G > 20 && pick(G).length < N) G -= 10;
   const all = pick(G), spawns = [];
   for (let i = 0; i < N; i++) spawns.push(all[Math.round(i * (all.length - 1) / (N - 1))]);
-  return { id: mapId, W, H, mask, spawns, theme: meta.theme };
+  return { id: mapId, W, H, mask, spawns, cand, theme: meta.theme }; // cand: every standable x (20 px steps, map edges excluded)
 }
