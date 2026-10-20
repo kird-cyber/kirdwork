@@ -8,7 +8,8 @@ const SOLO = {
   botLevel: 'easy',
   meHp: 2, foeHp: 0.7,            // 1 vs 3: tuned so stand-in players clear easy 50% · normal 62% · hard 92% (72 runs each)
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)
-  shotSec: 3,                     // every shot of mine adds 3 s to the record (accuracy matters, not just speed)
+  shotSec: 3,                     // every shot of mine takes 3 s off my clock (no spam firing)
+  clockSec: 600,                  // chess clock: 10 min of MY time (foe turns and shells in flight don't count)
   boardUrl: 'https://script.google.com/macros/s/AKfycbzWnAeQJ357XRtcj-zDrepRXFCKaH_dHRVpwfIB4IEoUDpjj1Fb-oejDx6dbcDBZF7H/exec', // Google Apps Script web app (dev/leaderboard/SETUP.md). Empty = this device only
   // the three most serious forms of research misconduct (위조·변조·표절, "FFP")
   foes: [
@@ -61,7 +62,7 @@ function soloUpcoming(m) {
   }
   return out;
 }
-// record = my thinking time (sum of `used` of my turns) + 3 s per shot
+// clock used = my thinking time (sum of `used` of my turns) + 3 s per shot
 function soloScore(inputs) {
   let used = 0, shots = 0;
   for (const x of inputs) {
@@ -70,9 +71,18 @@ function soloScore(inputs) {
   }
   return { time: Math.round((used / CONFIG.physics.tickRate + shots * SOLO.shotSec) * 100) / 100, shots };
 }
+// the clock is spent: the run ends at the next aim (before a foe moves). Same rule live and in replays.
+function soloClockOut(m, inputs) {
+  if (m.phase !== 'aim' || soloScore(inputs).time < SOLO.clockSec) return false;
+  m.phase = 'over'; m.winner = 'timeup'; m.events.push({ type: 'over', winner: 'timeup' });
+  return true;
+}
+// kind: clear (all three down; rank by clock used) · timeup (10 min spent; rank by foe HP left) · out (I was destroyed; not ranked)
 function soloResult(m, inputs) {
   const me = m.tanks[0], foes = m.tanks.slice(1), sc = soloScore(inputs);
-  return { clear: m.phase === 'over' && m.winner === 'red', over: m.phase === 'over', time: sc.time, shots: sc.shots, hp: me.alive ? me.hp : 0,
+  const kind = m.phase !== 'over' ? '' : m.winner === 'red' ? 'clear' : m.winner === 'timeup' ? 'timeup' : 'out';
+  return { kind, clear: kind === 'clear', over: m.phase === 'over', time: Math.min(sc.time, kind === 'timeup' ? SOLO.clockSec : 1e9), shots: sc.shots,
+    hp: me.alive ? me.hp : 0, left: foes.reduce((a, f) => a + (f.alive ? f.hp : 0), 0),
     kills: foes.filter(f => !f.alive).length, dealt: me.st.dealt, turns: m.turnNo };
 }
 // rebuild a run from my inputs (bots replay themselves). Used to check leaderboard records.
@@ -81,6 +91,7 @@ function soloReplay(day, tankId, inputs) {
   let k = 0, guard = 0, bad = '';
   while (m.phase !== 'over' && guard++ < 4e6) {
     if (m.phase === 'aim') {
+      if (soloClockOut(m, inputs.slice(0, k))) break;
       const t = curTank(m);
       if (t.team === 'red') {
         const inp = inputs[k++];
