@@ -20,7 +20,7 @@ head = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
         '<meta property="og:image" content="https://kird-cyber.github.io/kirdwork/og.png?v=2">\n'
         '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
         '<meta name="twitter:card" content="summary_large_image">\n'
-        '<link rel="icon" href="favicon.png">\n'
+        '<link rel="icon" href="favicon.png?v=2">\n<link rel="apple-touch-icon" href="favicon.png?v=2">\n'
         '<meta name="theme-color" content="#0E1220">\n')
 title_end = out.index('</title>') + len('</title>')
 style_end = out.index('</style>') + len('</style>')
