@@ -5,8 +5,8 @@
 // the leaderboard stores them and a record can be replayed to check it (soloReplay).
 const SOLO = {
   mapId: 'notebook',              // 연구노트 (연구윤리) — open rolling pages; 정의의 저울's towers made 1 vs 3 a slog
-  botLevel: 'easy',
-  meHp: 2, foeHp: 0.7,            // 1 vs 3: tuned so stand-in players clear easy 50% · normal 62% · hard 92% (72 runs each)
+  botLevel: 'normal',             // foes hit me about 30% of their shots: I take hits but rarely go down
+  meHp: 4, foeHp: 0.5,            // with the 10-min clock, stand-in players (24 runs each): easy clear 33% / out 8% · normal 67% / 0% · hard 83% / 0%
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)
   shotSec: 3,                     // every shot of mine takes 3 s off my clock (no spam firing)
   clockSec: 600,                  // chess clock: 10 min of MY time (foe turns and shells in flight don't count)

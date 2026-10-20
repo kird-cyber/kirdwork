@@ -11,7 +11,9 @@ module.exports = function makeBoard() {
     if (/^-?\d+(\.\d+)?$/.test(v)) return Number(v);
     return v;
   };
-  const mkSheet = () => { const rows = []; return { rows, appendRow: r => rows.push(r.map(parse)), getDataRange: () => ({ getValues: () => rows.map(r => r.slice()) }) }; };
+  const mkSheet = () => { const rows = []; return { rows, appendRow: r => rows.push(r.map(parse)), getDataRange: () => ({ getValues: () => rows.map(r => r.slice()) }),
+    getLastColumn: () => rows.reduce((a, r) => Math.max(a, r.length), 0),
+    getRange: (r0, c0, nr, nc) => ({ setValues: v => { v.forEach((row, i) => { const t = rows[r0 - 1 + i] || (rows[r0 - 1 + i] = []); row.forEach((x, j) => { t[c0 - 1 + j] = parse(x); }); }); } }) }; };
   const ctx = {
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: n => sheets[n] || null, insertSheet: n => (sheets[n] = mkSheet()) }) },
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },

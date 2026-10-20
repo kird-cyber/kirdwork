@@ -3,7 +3,9 @@
 // 시트 두 장을 씁니다: 「기록」(도전 한 번 = 한 줄), 「닉네임」(닉네임마다 PIN 확인용 키). 관리자는 시트에서 직접 줄을 지우거나 고칠 수 있습니다.
 
 var REC = '기록', USERS = '닉네임';
-var REC_HEAD = ['시각', '날짜', '닉네임', '키', '결과', '기록(초)', '남은 체력', '격파', '탱크', '발사', '버전', '입력 기록'];
+// 결과: 클리어(3대 소탕) · 시간종료(10분 다 씀) · 탈락(내가 격파됨, 순위 없음). 「남은 적 체력」은 시간종료 순위에 씁니다.
+var REC_HEAD = ['시각', '날짜', '닉네임', '키', '결과', '쓴 시간(초)', '남은 체력', '격파', '탱크', '발사', '버전', '입력 기록', '남은 적 체력'];
+var KIND = { clear: '클리어', timeup: '시간종료', out: '탈락' };
 var USER_HEAD = ['닉네임', '키', '등록 시각'];
 
 function doGet(e) { return handle_(e && e.parameter ? e.parameter : {}); }
@@ -23,6 +25,7 @@ function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).set
 function sheet_(name, head) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
   if (!sh) { sh = ss.insertSheet(name); sh.appendRow(head); }
+  else if (sh.getLastColumn() < head.length) sh.getRange(1, 1, 1, head.length).setValues([head]); // older sheet: add new columns
   return sh;
 }
 function rows_(sh) { var v = sh.getDataRange().getValues(); return v.slice(1); }
@@ -32,8 +35,14 @@ function txt_(s) { return "'" + String(s); }
 function str_(v) { return v instanceof Date ? v.toISOString() : String(v); }
 function dayOf_(v) { return v instanceof Date ? Utilities.formatDate(v, 'Asia/Seoul', 'yyyy-MM-dd') : String(v); }
 
-// all clear runs → best run per nickname (shortest time, then most health left, then earliest)
-function better_(a, b) { return a.time !== b.time ? a.time < b.time : a.hp !== b.hp ? a.hp > b.hp : a.at < b.at; }
+// ranked runs → best run per nickname. Every clear beats every timeup; clears by clock used (less = better),
+// timeups by foe HP left (less = better); then my HP left (more = better), then who did it first
+function better_(a, b) {
+  var ga = a.kind === 'timeup' ? 1 : 0, gb = b.kind === 'timeup' ? 1 : 0;
+  if (ga !== gb) return ga < gb;
+  var ka = ga ? a.left : a.time, kb = gb ? b.left : b.time;
+  return ka !== kb ? ka < kb : a.hp !== b.hp ? a.hp > b.hp : a.at < b.at;
+}
 function bestPerNick_(runs) {
   var m = {}, out = [];
   runs.forEach(function (r) { if (!m[r.nick] || better_(r, m[r.nick])) m[r.nick] = r; });
@@ -43,11 +52,12 @@ function bestPerNick_(runs) {
   return out;
 }
 function runs_() {
-  return rows_(sheet_(REC, REC_HEAD)).filter(function (r) { return r[4] === '클리어'; }).map(function (r) {
-    return { at: str_(r[0]), day: dayOf_(r[1]), nick: str_(r[2]), key: str_(r[3]), time: Number(r[5]), hp: Number(r[6]), tank: String(r[8]), shots: Number(r[9]) };
+  return rows_(sheet_(REC, REC_HEAD)).filter(function (r) { return r[4] === KIND.clear || r[4] === KIND.timeup; }).map(function (r) {
+    return { at: str_(r[0]), day: dayOf_(r[1]), nick: str_(r[2]), key: str_(r[3]), kind: r[4] === KIND.clear ? 'clear' : 'timeup', time: Number(r[5]), hp: Number(r[6]),
+      tank: String(r[8]), shots: Number(r[9]), left: Number(r[12]) || 0 };
   });
 }
-function pub_(r) { return { rank: r.rank, nick: r.nick, time: r.time, hp: r.hp, tank: r.tank, shots: r.shots, day: r.day, at: r.at }; }
+function pub_(r) { return { rank: r.rank, nick: r.nick, kind: r.kind, time: r.time, left: r.left, hp: r.hp, tank: r.tank, shots: r.shots, day: r.day, at: r.at }; }
 
 function top_(p) {
   var day = String(p.day || kstDay_(Date.now())), all = runs_();
@@ -73,11 +83,12 @@ function top_(p) {
 
 function submit_(p) {
   var nick = String(p.nick || '').trim(), key = String(p.key || ''), day = String(p.day || '');
-  var time = Number(p.time), hp = Math.round(Number(p.hp) || 0), clear = !!p.clear;
+  var time = Number(p.time), hp = Math.round(Number(p.hp) || 0), left = Math.round(Number(p.left) || 0);
+  var kind = KIND[p.kind] ? p.kind : (p.clear ? 'clear' : 'out'), ranked = kind !== 'out';
   if (!nick || nick.length > 8 || !/^[0-9a-f]{64}$/.test(key)) return { ok: false, error: 'bad' };
   var now = Date.now(), today = kstDay_(now), yesterday = kstDay_(now - 864e5);
   if (day !== today && day !== yesterday) return { ok: false, error: 'day' };       // a run that crossed midnight still counts
-  if (!(time > 0 && time < 36000)) return { ok: false, error: 'bad' };
+  if (!(time >= 0 && time < 36000) || left < 0 || left > 100000) return { ok: false, error: 'bad' };
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     // nickname = first PIN wins; later records with that nickname need the same PIN
@@ -88,13 +99,13 @@ function submit_(p) {
     var before = top_({ day: day, nick: nick });
     var log = typeof p.log === 'string' ? p.log : JSON.stringify(p.log || []);
     if (log.length > 45000) log = log.slice(0, 45000);              // one cell holds 50,000 characters
-    sheet_(REC, REC_HEAD).appendRow([new Date(now).toISOString(), txt_(day), txt_(nick), txt_(key), clear ? '클리어' : '실패', Math.round(time * 100) / 100, hp,
-      Math.round(Number(p.kills) || 0), String(p.tank || ''), Math.round(Number(p.shots) || 0), txt_(p.ver || ''), txt_(log)]);
-    if (!clear) return { ok: true, saved: true, clear: false, me: before.me };
-    var after = top_({ day: day, nick: nick });
+    sheet_(REC, REC_HEAD).appendRow([new Date(now).toISOString(), txt_(day), txt_(nick), txt_(key), KIND[kind], Math.round(time * 100) / 100, hp,
+      Math.round(Number(p.kills) || 0), String(p.tank || ''), Math.round(Number(p.shots) || 0), txt_(p.ver || ''), txt_(log), left]);
+    if (!ranked) return { ok: true, saved: true, ranked: false, me: before.me };
+    var after = top_({ day: day, nick: nick }), mine = { kind: kind, time: Math.round(time * 100) / 100, left: left, hp: hp, at: new Date(now).toISOString() };
     var prev = before.me && before.me.today, cur = after.me.today, prevAll = before.me && before.me.all;
-    return { ok: true, saved: true, clear: true, best: !prev || cur.time < prev.time || (cur.time === prev.time && cur.hp > prev.hp),
-      prevRank: prev ? prev.rank : null, rank: cur.rank, prevBest: prev ? prev.time : null,
-      allBest: !prevAll || after.me.all.time < prevAll.time, allRank: after.me.all.rank, players: after.players, me: after.me };
+    return { ok: true, saved: true, ranked: true, best: !prev || better_(mine, prev),
+      prevRank: prev ? prev.rank : null, rank: cur.rank, prev: prev || null, prevBest: prev ? prev.time : null,
+      allBest: !prevAll || better_(mine, prevAll), allRank: after.me.all.rank, players: after.players, me: after.me };
   } finally { lock.releaseLock(); }
 }

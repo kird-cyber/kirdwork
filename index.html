@@ -476,6 +476,9 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @media (max-width: 760px) { .ftops { grid-template-columns: 1fr; } .frow { grid-template-columns: 40px 1.4fr 1fr 0.8fr; } .frow .x { display: none; } }
 #soloHud { position: absolute; left: 50%; transform: translateX(-50%); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 62px); padding: 7px 16px; border-radius: 999px; background: rgba(8, 34, 28, 0.88); border: 1px solid #3FD0A8; color: #DFF7EF; font-size: 13px; font-weight: 800; white-space: nowrap; pointer-events: none; z-index: 3; }
 #soloHud b { color: #FFD24A; font-variant-numeric: tabular-nums; font-size: 16px; }
+#soloHud.low { border-color: #FF5A5A; background: rgba(60, 10, 10, 0.9); }
+#soloHud.low b { color: #FF7A7A; animation: soBlink 1s steps(2) infinite; }
+@keyframes soBlink { 50% { opacity: 0.35; } }
 @media (max-width: 600px) { #soloHud { top: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); font-size: 12px; } }
 .soover { text-align: center; }
 .sokick { font-size: 13px; font-weight: 900; color: #5BE3BC; letter-spacing: 0.06em; }
@@ -651,9 +654,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <h3>규칙</h3>
         <ul>
           <li><b>차례:</b> 나 → 위조탱 → 나 → 변조탱 → 나 → 표절탱 … 적은 <b>돌아가며 한 대씩</b>만 쏴요.</li>
-          <li><b>기록 = 내 차례에 쓴 시간 + 발사 1번당 3초.</b> 적 차례와 포탄이 날아가는 시간은 빼요. 빨리, 적게 쏴서 이기세요.</li>
+          <li><b>10분 체스 시계:</b> 내 차례에 쓴 시간만 줄어요. 발사할 때마다 3초씩 더 줄어요. 적 차례와 포탄이 날아가는 시간은 빼요.</li>
+          <li><b>순위:</b> ① 3대 모두 소탕 = 쓴 시간이 적을수록 위 → ② 10분을 다 쓰면 = 남은 적 체력 합이 적을수록 위. 내 탱크가 격파되면 <b>탈락</b>(순위 없음).</li>
           <li>오늘은 모두 <b>같은 맵·바람·적 배치</b>로 겨뤄요. 자정(한국 시간)에 새 도전으로 바뀌어요.</li>
-          <li>1 대 3이라 내 체력은 2배, 적 체력은 0.7배예요. 같은 기록이면 남은 체력이 많은 사람이 위.</li>
+          <li>1 대 3이라 내 체력은 4배, 적 체력은 절반이에요. 같은 기록이면 내 남은 체력이 많은 사람이 위.</li>
           <li>도전은 몇 번이든 가능, <b>최고 기록만</b> 순위에 남아요.</li>
         </ul>
       </div>
@@ -2065,7 +2069,8 @@ function createController(match, opts) {
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
     clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
     turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
-    onInput: opts.onInput || null,          // called with every TurnInput the local side produces
+    onInput: opts.onInput || null,
+    preTick: opts.preTick || null,          // (match, ctrl) before each aim tick; true = skip this tick's input (solo clock)          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
     replay: opts.replay || null,            // map turnNo -> TurnInput (replay / remote)
     remote: opts.remote || null,            // online: called on aim ticks of tanks this device does not control
@@ -2081,6 +2086,7 @@ function createController(match, opts) {
     const m = c.match;
     if (m.phase === 'aim') {
       if (m.turnNo !== c.lastTurnSeen) c.onTurnStart();
+      if (c.preTick && c.preTick(m, c)) { step(m); return; }
       const t = curTank(m);
       if (c.replay) {
         const inp = c.replay[m.turnNo];
@@ -4439,10 +4445,11 @@ function botPlan(m, level, rnd, mem) {
 // the leaderboard stores them and a record can be replayed to check it (soloReplay).
 const SOLO = {
   mapId: 'notebook',              // 연구노트 (연구윤리) — open rolling pages; 정의의 저울's towers made 1 vs 3 a slog
-  botLevel: 'easy',
-  meHp: 2, foeHp: 0.7,            // 1 vs 3: tuned so stand-in players clear easy 50% · normal 62% · hard 92% (72 runs each)
+  botLevel: 'normal',             // foes hit me about 30% of their shots: I take hits but rarely go down
+  meHp: 4, foeHp: 0.5,            // with the 10-min clock, stand-in players (24 runs each): easy clear 33% / out 8% · normal 67% / 0% · hard 83% / 0%
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)
-  shotSec: 3,                     // every shot of mine adds 3 s to the record (accuracy matters, not just speed)
+  shotSec: 3,                     // every shot of mine takes 3 s off my clock (no spam firing)
+  clockSec: 600,                  // chess clock: 10 min of MY time (foe turns and shells in flight don't count)
   boardUrl: 'https://script.google.com/macros/s/AKfycbzWnAeQJ357XRtcj-zDrepRXFCKaH_dHRVpwfIB4IEoUDpjj1Fb-oejDx6dbcDBZF7H/exec', // Google Apps Script web app (dev/leaderboard/SETUP.md). Empty = this device only
   // the three most serious forms of research misconduct (위조·변조·표절, "FFP")
   foes: [
@@ -4495,7 +4502,7 @@ function soloUpcoming(m) {
   }
   return out;
 }
-// record = my thinking time (sum of `used` of my turns) + 3 s per shot
+// clock used = my thinking time (sum of `used` of my turns) + 3 s per shot
 function soloScore(inputs) {
   let used = 0, shots = 0;
   for (const x of inputs) {
@@ -4504,9 +4511,18 @@ function soloScore(inputs) {
   }
   return { time: Math.round((used / CONFIG.physics.tickRate + shots * SOLO.shotSec) * 100) / 100, shots };
 }
+// the clock is spent: the run ends at the next aim (before a foe moves). Same rule live and in replays.
+function soloClockOut(m, inputs) {
+  if (m.phase !== 'aim' || soloScore(inputs).time < SOLO.clockSec) return false;
+  m.phase = 'over'; m.winner = 'timeup'; m.events.push({ type: 'over', winner: 'timeup' });
+  return true;
+}
+// kind: clear (all three down; rank by clock used) · timeup (10 min spent; rank by foe HP left) · out (I was destroyed; not ranked)
 function soloResult(m, inputs) {
   const me = m.tanks[0], foes = m.tanks.slice(1), sc = soloScore(inputs);
-  return { clear: m.phase === 'over' && m.winner === 'red', over: m.phase === 'over', time: sc.time, shots: sc.shots, hp: me.alive ? me.hp : 0,
+  const kind = m.phase !== 'over' ? '' : m.winner === 'red' ? 'clear' : m.winner === 'timeup' ? 'timeup' : 'out';
+  return { kind, clear: kind === 'clear', over: m.phase === 'over', time: Math.min(sc.time, kind === 'timeup' ? SOLO.clockSec : 1e9), shots: sc.shots,
+    hp: me.alive ? me.hp : 0, left: foes.reduce((a, f) => a + (f.alive ? f.hp : 0), 0),
     kills: foes.filter(f => !f.alive).length, dealt: me.st.dealt, turns: m.turnNo };
 }
 // rebuild a run from my inputs (bots replay themselves). Used to check leaderboard records.
@@ -4515,6 +4531,7 @@ function soloReplay(day, tankId, inputs) {
   let k = 0, guard = 0, bad = '';
   while (m.phase !== 'over' && guard++ < 4e6) {
     if (m.phase === 'aim') {
+      if (soloClockOut(m, inputs.slice(0, k))) break;
       const t = curTank(m);
       if (t.team === 'red') {
         const inp = inputs[k++];
@@ -6177,15 +6194,23 @@ function soBoardUrl() {
   const s = soStore.get('board', ''); if (s) return s;
   return SOLO.boardUrl || '';
 }
-// identical ranking rules to leaderboard/Code.gs, for the on-device fallback
-function soBetter(a, b) { return a.time !== b.time ? a.time < b.time : a.hp !== b.hp ? a.hp > b.hp : a.at < b.at; }
+// a record as shown: clear = clock used, timeup = foe HP left
+const fmtRec = r => !r ? '–' : r.kind === 'timeup' ? `적 체력 ${r.left} 남김` : fmtSolo(r.time);
+// identical ranking rules to leaderboard/Code.gs, for the on-device fallback:
+// every clear beats every timeup; clears by clock used, timeups by foe HP left; then my HP, then who was first
+function soBetter(a, b) {
+  const ga = a.kind === 'timeup' ? 1 : 0, gb = b.kind === 'timeup' ? 1 : 0;
+  if (ga !== gb) return ga < gb;
+  const ka = ga ? a.left : a.time, kb = gb ? b.left : b.time;
+  return ka !== kb ? ka < kb : a.hp !== b.hp ? a.hp > b.hp : a.at < b.at;
+}
 function soBestPerNick(runs) {
   const m = {}; for (const r of runs) if (!m[r.nick] || soBetter(r, m[r.nick])) m[r.nick] = r;
   const out = Object.values(m).sort((a, b) => soBetter(a, b) ? -1 : soBetter(b, a) ? 1 : 0);
   out.forEach((r, i) => { r.rank = i + 1; }); return out;
 }
 function soLocalTop(day, nick) {
-  const all = soStore.get('runs', []).filter(r => r.clear).map(r => Object.assign({}, r));
+  const all = soStore.get('runs', []).filter(r => r.kind === 'clear' || r.kind === 'timeup').map(r => Object.assign({}, r));
   const today = soBestPerNick(all.filter(r => r.day === day)), ever = soBestPerNick(all.map(r => Object.assign({}, r)));
   const days = {}, fame = {}; for (const r of all) (days[r.day] = days[r.day] || []).push(Object.assign({}, r));
   for (const d in days) soBestPerNick(days[d]).slice(0, 10).forEach(r => { const f = fame[r.nick] = fame[r.nick] || { nick: r.nick, points: 0, firsts: 0, days: 0 }; f.points += 11 - r.rank; f.days++; if (r.rank === 1) f.firsts++; });
@@ -6199,11 +6224,11 @@ function soLocalSubmit(rec) {
   if (users[rec.nick] && users[rec.nick] !== rec.key) return { ok: false, error: 'pin', local: true };
   users[rec.nick] = rec.key; soStore.set('users', users);
   const before = soLocalTop(rec.day, rec.nick), runs = soStore.get('runs', []);
-  runs.push({ at: new Date().toISOString(), day: rec.day, nick: rec.nick, clear: rec.clear, time: rec.time, hp: rec.hp, tank: rec.tank, shots: rec.shots });
+  runs.push({ at: new Date().toISOString(), day: rec.day, nick: rec.nick, kind: rec.kind, time: rec.time, left: rec.left, hp: rec.hp, tank: rec.tank, shots: rec.shots });
   soStore.set('runs', runs.slice(-500));
-  if (!rec.clear) return { ok: true, local: true, clear: false, me: before.me };
+  if (rec.kind !== 'clear' && rec.kind !== 'timeup') return { ok: true, local: true, ranked: false, me: before.me };
   const after = soLocalTop(rec.day, rec.nick), prev = before.me && before.me.today, cur = after.me.today;
-  return { ok: true, local: true, clear: true, best: !prev || soBetter(cur, prev) || cur.time < prev.time, prevRank: prev ? prev.rank : null, rank: cur.rank, prevBest: prev ? prev.time : null, players: after.players, me: after.me };
+  return { ok: true, local: true, ranked: true, best: !prev || soBetter(runs[runs.length - 1], prev), prevRank: prev ? prev.rank : null, rank: cur.rank, prev: prev || null, players: after.players, me: after.me };
 }
 async function soTop(day, nick) {
   const url = soBoardUrl();
@@ -6233,7 +6258,7 @@ async function soloHomeRefresh() {
   try {
     const t = await soTop(day);
     const f = t.today && t.today[0];
-    el.innerHTML = f ? `오늘 1위 <b></b> · ${fmtSolo(f.time)} · 도전자 ${t.players}명` : `오늘은 아직 기록이 없어요. 첫 1위에 도전하세요!`;
+    el.innerHTML = f ? `오늘 1위 <b></b> · ${fmtRec(f)} · 도전자 ${t.players}명` : `오늘은 아직 기록이 없어요. 첫 1위에 도전하세요!`;
     if (f) el.querySelector('b').textContent = f.nick;
     if (t.local) el.innerHTML += ' <span class="note">(이 기기 기록)</span>';
   } catch (e) { el.textContent = '순위를 불러오지 못했어요 (기록 서버 연결 확인)'; }
@@ -6289,6 +6314,16 @@ function soloOpts() {
   return {
     isLocal: idx => match.tanks[idx].team === 'red',
     onInput: inp => { if (inp && SOLOPLAY.active && inp.seat === 'me') SOLOPLAY.inputs.push(JSON.parse(JSON.stringify(inp))); },
+    // the 10-min clock: spent at an aim -> the run ends (same rule as soloReplay); runs out mid-turn -> my turn ends there
+    preTick: (m, c) => {
+      if (!SOLOPLAY.active) return false;
+      if (soloClockOut(m, SOLOPLAY.inputs)) return true;
+      if (m.tanks[m.cur].team !== 'red' || c.charging) return false;
+      c.syncTime();
+      const used = CONFIG.turn.timeLimitTicks - c.timeLeft, need = Math.ceil((SOLO.clockSec - soloScore(SOLOPLAY.inputs).time) * CONFIG.physics.tickRate);
+      if (used >= need) { c.emit(cmdPass(m, Math.max(0, need))); return true; }
+      return false;
+    },
     remote: (m, t) => {
       if (!bots[t.id]) return;
       if (B.turn !== m.turnNo) { B.turn = m.turnNo; B.stage = 'think'; B.wait = 70 + Math.floor(Math.random() * 60); B.plan = null; }
@@ -6320,9 +6355,10 @@ function soloHud() {
   el.hidden = false;
   const sc = soloScore(SOLOPLAY.inputs), mine = match.phase === 'aim' && match.cur === 0;
   const now = sc.time + (mine ? (CONFIG.turn.timeLimitTicks - ctrl.timeLeft) / CONFIG.physics.tickRate : 0);
+  const rem = Math.max(0, SOLO.clockSec - now), clock = `${Math.floor(rem / 60)}:${String(Math.floor(rem % 60)).padStart(2, '0')}`;
   const left = match.tanks.filter(t => t.team === 'blue' && t.alive).map(t => t.nick);
-  const s = `연구부정 소탕전 · 기록 <b>${fmtSolo(now)}</b> · 발사 ${sc.shots} · 남은 적 ${left.length ? left.join(' ') : '없음'}`;
-  if (el.dataset.s !== s) { el.dataset.s = s; el.innerHTML = s; }
+  const s = `연구부정 소탕전 · 남은 시간 <b>${clock}</b> · 발사 ${sc.shots} · 남은 적 ${left.length ? left.join(' ') : '없음'}`;
+  if (el.dataset.s !== s) { el.dataset.s = s; el.innerHTML = s; el.classList.toggle('low', rem < 60); }
 }
 // a foe goes down: name the misconduct and what it is
 R.onDeath = t => {
@@ -6336,30 +6372,32 @@ async function soloOver(winner) {
   SOLOPLAY.active = false;
   const m = match, inputs = SOLOPLAY.inputs.slice(), res = soloResult(m, inputs);
   const foes = m.tanks.filter(t => t.team === 'blue');
-  $('sooTitle').textContent = res.clear ? '소탕 완료!' : '소탕 실패';
-  $('sooTitle').className = res.clear ? '' : 'fail';
-  $('sooTime').textContent = res.clear ? fmtSolo(res.time) : `${res.kills} / 3 소탕`;
-  $('sooSub').textContent = res.clear
-    ? `발사 ${res.shots}번 · 고민한 시간 ${fmtSolo(res.time - res.shots * SOLO.shotSec)} + 발사 ${res.shots}×3초 · 남은 체력 ${res.hp}`
-    : `준 피해 ${res.dealt} · 발사 ${res.shots}번 · 3대를 모두 소탕해야 순위에 올라요`;
+  const ranked = res.kind === 'clear' || res.kind === 'timeup';
+  $('sooTitle').textContent = res.kind === 'clear' ? '소탕 완료!' : res.kind === 'timeup' ? '시간 종료' : '탈락';
+  $('sooTitle').className = res.kind === 'clear' ? '' : 'fail';
+  $('sooTime').textContent = res.kind === 'clear' ? fmtSolo(res.time) : res.kind === 'timeup' ? `남은 적 체력 ${res.left}` : `${res.kills} / 3 소탕`;
+  $('sooSub').textContent = res.kind === 'clear'
+    ? `쓴 시간 ${fmtSolo(res.time)} (발사 ${res.shots}번 × 3초 포함) · 남은 체력 ${res.hp}`
+    : res.kind === 'timeup' ? `10분을 다 썼어요 · ${res.kills} / 3 소탕 · 남은 적 체력이 적을수록 순위가 높아요 (소탕 완료 기록 다음)`
+    : `내 탱크가 격파됐어요 · 준 피해 ${res.dealt} · 이번 도전은 순위에 오르지 않아요`;
   $('sooFoes').innerHTML = foes.map(t => `<span class="${t.alive ? '' : 'done'}">${t.alive ? '' : '✔ '}${esc(t.nick)}</span>`).join('');
-  $('sooRank').innerHTML = res.clear ? '기록을 확인하는 중…' : '';
+  $('sooRank').innerHTML = ranked ? '기록을 확인하는 중…' : '';
   setTimeout(() => { if (screen === 'game') $('soloOver').hidden = false; }, 1100);
-  if (res.clear) AU.play('pickup');
+  if (res.kind === 'clear') AU.play('pickup');
   // check the run replays from its inputs, then save it
-  let ver = 'v1';
-  try { const rp = soloReplay(SOLOPLAY.day, SOLOPLAY.tankUsed, inputs); ver += rp.clear === res.clear && rp.time === res.time && rp.hp === res.hp ? '/ok' : '/mismatch'; } catch (e) { ver += '/err'; }
-  const rec = { day: SOLOPLAY.day, nick: SOLOPLAY.nick, key: SOLOPLAY.key, clear: res.clear, time: res.time, hp: res.hp, kills: res.kills, tank: SOLOPLAY.tankUsed, shots: res.shots, ver, log: JSON.stringify(inputs) };
+  let ver = 'v2';
+  try { const rp = soloReplay(SOLOPLAY.day, SOLOPLAY.tankUsed, inputs); ver += rp.kind === res.kind && rp.time === res.time && rp.hp === res.hp && rp.left === res.left ? '/ok' : '/mismatch'; } catch (e) { ver += '/err'; }
+  const rec = { day: SOLOPLAY.day, nick: SOLOPLAY.nick, key: SOLOPLAY.key, kind: res.kind, clear: res.clear, time: res.time, left: res.left, hp: res.hp, kills: res.kills, tank: SOLOPLAY.tankUsed, shots: res.shots, ver, log: JSON.stringify(inputs) };
   try {
     const r = await soSubmit(rec);
     const el = $('sooRank');
     if (!r.ok) { el.innerHTML = r.error === 'pin' ? '<span class="bad">이 닉네임은 다른 PIN으로 등록돼 있어요. 닉네임이나 PIN을 확인해 주세요 (이번 기록은 저장 안 됨)</span>' : r.error === 'day' ? '날짜가 바뀌어 이번 기록은 저장되지 않았어요' : '기록을 저장하지 못했어요'; return; }
-    if (!res.clear) { el.textContent = r.me && r.me.today ? `오늘 내 최고 기록 ${fmtSolo(r.me.today.time)} · ${r.me.today.rank}위` : ''; return; }
+    if (!ranked) { el.textContent = r.me && r.me.today ? `오늘 내 최고 기록 ${fmtRec(r.me.today)} · ${r.me.today.rank}위` : ''; return; }
     const where = r.local ? ' <span class="note">(이 기기 기록)</span>' : '';
     if (r.best && r.prevRank && r.prevRank !== r.rank) el.innerHTML = `<span class="nr">신기록! <span class="jump">${r.prevRank}위</span>→ ${r.rank}위</span>${where}`;
     else if (r.best && r.prevRank) el.innerHTML = `<span class="nr">신기록! ${r.rank}위 유지</span>${where}`;
     else if (r.best) el.innerHTML = `<span class="nr">오늘 ${r.rank}위 등극!</span> <span class="note">도전자 ${r.players}명</span>${where}`;
-    else el.innerHTML = `오늘 ${r.rank}위 · 내 최고 기록 ${fmtSolo(r.prevBest)}은 못 넘었어요${where}`;
+    else el.innerHTML = `오늘 ${r.rank}위 · 내 최고 기록 ${fmtRec(r.prev)}은 못 넘었어요${where}`;
     if (r.best && r.rank === 1) AU.play('pickup');
   } catch (e) { $('sooRank').textContent = '기록 서버에 연결하지 못했어요'; }
 }
@@ -6374,17 +6412,17 @@ async function renderFame() {
   try { t = await soTop(day, nick); } catch (e) { $('fTable').innerHTML = '<div class="note bad">순위를 불러오지 못했어요. 인터넷이나 기록 서버 연결을 확인해 주세요.</div>'; return; }
   SOLOPLAY.lastBoard = t;
   const f = t.today && t.today[0];
-  $('fTop1').innerHTML = f ? `<span class="k">오늘 1위</span><span class="nm"></span><span class="tm">${fmtSolo(f.time)}</span><span class="sm">${esc(CONFIG.tanks[f.tank] ? CONFIG.tanks[f.tank].name : f.tank)} · 남은 체력 ${f.hp} · 도전자 ${t.players}명</span>`
+  $('fTop1').innerHTML = f ? `<span class="k">오늘 1위</span><span class="nm"></span><span class="tm">${fmtRec(f)}</span><span class="sm">${esc(CONFIG.tanks[f.tank] ? CONFIG.tanks[f.tank].name : f.tank)} · 남은 체력 ${f.hp} · 도전자 ${t.players}명</span>`
     : `<span class="k">오늘 1위</span><span class="nm">비어 있음</span><span class="sm">첫 기록의 주인공이 되어 보세요</span>`;
   if (f) $('fTop1').querySelector('.nm').textContent = f.nick;
   const me = t.me;
   $('fMe').innerHTML = !nick ? `<span class="k">내 기록</span><span class="sm">도전 화면에서 닉네임을 넣으면 내 기록이 보여요</span>`
     : `<span class="k">내 기록 · ${esc(nick)}</span>` +
-      `<span class="sm">오늘 최고 <b class="tm">${me && me.today ? fmtSolo(me.today.time) : '–'}</b> ${me && me.today ? `· ${me.today.rank}위` : ''}</span>` +
-      `<span class="sm">역대 최고 ${me && me.all ? `${fmtSolo(me.all.time)} · ${me.all.rank}위` : '–'}</span>` +
+      `<span class="sm">오늘 최고 <b class="tm">${me && me.today ? fmtRec(me.today) : '–'}</b> ${me && me.today ? `· ${me.today.rank}위` : ''}</span>` +
+      `<span class="sm">역대 최고 ${me && me.all ? `${fmtRec(me.all)} · ${me.all.rank}위` : '–'}</span>` +
       `<span class="sm">명예의 전당 ${me && me.fame ? `${me.fame.points}점 · 일간 1위 ${me.fame.firsts}회` : '–'}</span>`;
   drawFameTable(t, nick);
-  $('fNote').textContent = (t.local ? '기록 서버 연결 전이라 이 기기에서 한 기록만 보여요. ' : '') + '명예의 전당 점수: 매일 순위 1위 10점 · 2위 9점 … 10위 1점을 쌓아요.';
+  $('fNote').textContent = (t.local ? '기록 서버 연결 전이라 이 기기에서 한 기록만 보여요. ' : '') + '순위: 소탕 완료(쓴 시간이 적은 순) → 시간 종료(남은 적 체력이 적은 순). 명예의 전당 점수: 매일 1위 10점 · 2위 9점 … 10위 1점.';
 }
 function drawFameTable(t, nick) {
   const tab = SOLOPLAY.tab, tb = $('fTable');
@@ -6399,7 +6437,7 @@ function drawFameTable(t, nick) {
   }
   const list = tab === 'all' ? t.all || [] : t.today || [];
   head = `<div class="frow h"><span>순위</span><span>닉네임</span><span>기록</span><span>남은 체력</span><span class="x">탱크</span><span class="x">${tab === 'all' ? '날짜' : '발사'}</span></div>`;
-  rows = list.map(r => `<div class="frow r${r.rank}${r.nick === nick ? ' me' : ''}"><span class="r">${r.rank}</span><b data-n></b><span class="t">${fmtSolo(r.time)}</span><span>${r.hp}</span><span class="x">${esc(tankName(r.tank))}</span><span class="x">${tab === 'all' ? esc(soDayText(String(r.day))) : (r.shots || '–') + '번'}</span></div>`);
+  rows = list.map(r => `<div class="frow r${r.rank}${r.nick === nick ? ' me' : ''}"><span class="r">${r.rank}</span><b data-n></b><span class="t">${fmtRec(r)}</span><span>${r.hp}</span><span class="x">${esc(tankName(r.tank))}</span><span class="x">${tab === 'all' ? esc(soDayText(String(r.day))) : (r.shots || '–') + '번'}</span></div>`);
   tb.innerHTML = head + (rows.join('') || `<div class="note">${tab === 'all' ? '아직 기록이 없어요' : '오늘은 아직 기록이 없어요. 첫 1위에 도전하세요!'}</div>`);
   list.forEach((r, i) => { tb.querySelectorAll('[data-n]')[i].textContent = r.nick; });
 }

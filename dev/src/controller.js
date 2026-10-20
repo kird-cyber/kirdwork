@@ -11,7 +11,8 @@ function createController(match, opts) {
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
     clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
     turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
-    onInput: opts.onInput || null,          // called with every TurnInput the local side produces
+    onInput: opts.onInput || null,
+    preTick: opts.preTick || null,          // (match, ctrl) before each aim tick; true = skip this tick's input (solo clock)          // called with every TurnInput the local side produces
     isLocal: opts.isLocal || (() => true),  // does this device control tank idx?
     replay: opts.replay || null,            // map turnNo -> TurnInput (replay / remote)
     remote: opts.remote || null,            // online: called on aim ticks of tanks this device does not control
@@ -27,6 +28,7 @@ function createController(match, opts) {
     const m = c.match;
     if (m.phase === 'aim') {
       if (m.turnNo !== c.lastTurnSeen) c.onTurnStart();
+      if (c.preTick && c.preTick(m, c)) { step(m); return; }
       const t = curTank(m);
       if (c.replay) {
         const inp = c.replay[m.turnNo];

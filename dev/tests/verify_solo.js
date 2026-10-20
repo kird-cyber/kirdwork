@@ -13,14 +13,16 @@ if (/\.csv$/i.test(file)) {
     if (q) { if (c === '"' && text[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
     else if (c === '"') q = true; else if (c === ',') { row.push(cur); cur = ''; } else if (c === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; } else if (c !== '\r') cur += c; }
   if (cur || row.length) { row.push(cur); rows.push(row); }
-  recs = rows.slice(1).map(r => ({ day: r[1], nick: r[2], clear: r[4] === '클리어', time: +r[5], hp: +r[6], tank: r[8], log: r[11] }));
+  const K = { '클리어': 'clear', '시간종료': 'timeup', '탈락': 'out' };
+  recs = rows.slice(1).map(r => ({ day: r[1], nick: r[2], kind: K[r[4]] || 'out', time: +r[5], hp: +r[6], tank: r[8], log: r[11], left: +(r[12] || 0) }));
 } else recs = JSON.parse(text);
 let bad = 0;
 for (const r of recs) {
   let inputs; try { inputs = typeof r.log === 'string' ? JSON.parse(r.log) : r.log; } catch (e) { console.log(`?? ${r.day} ${r.nick}: 입력 기록을 읽을 수 없음`); bad++; continue; }
   const rp = A.soloReplay(r.day, r.tank, inputs || []);
-  const same = rp.clear === !!r.clear && (!r.clear || (Math.abs(rp.time - r.time) < 0.011 && rp.hp === r.hp));
+  const kind = r.kind || (r.clear ? 'clear' : 'out');
+  const same = rp.kind === kind && Math.abs(rp.time - r.time) < 0.011 && rp.hp === r.hp && (kind !== 'timeup' || rp.left === r.left);
   if (!same) bad++;
-  console.log(`${same ? 'OK ' : 'XX '} ${r.day} ${r.nick} ${r.tank}: 저장 ${r.clear ? r.time + 's/' + r.hp : '실패'} · 재실행 ${rp.clear ? rp.time + 's/' + rp.hp : '실패'}${rp.bad ? ' (' + rp.bad + ')' : ''}`);
+  console.log(`${same ? 'OK ' : 'XX '} ${r.day} ${r.nick} ${r.tank}: 저장 ${kind} ${r.time}s/${r.hp}/적${r.left || 0} · 재실행 ${rp.kind} ${rp.time}s/${rp.hp}/적${rp.left}${rp.bad ? ' (' + rp.bad + ')' : ''}`);
 }
 console.log(`\n${recs.length - bad}/${recs.length} 일치`); process.exit(bad ? 1 : 0);

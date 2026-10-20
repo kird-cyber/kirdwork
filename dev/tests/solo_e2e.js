@@ -36,7 +36,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL 
     }, 100);
   });
   await p.waitForTimeout(4000);
-  ok(await p.isVisible('#soloHud') && (await p.textContent('#soloHud')).includes('기록'), 'running record at the top: ' + (await p.textContent('#soloHud')));
+  ok(await p.isVisible('#soloHud') && /남은 시간 [0-9]:[0-5][0-9]/.test(await p.textContent('#soloHud')), 'chess clock at the top: ' + (await p.textContent('#soloHud')));
   await p.screenshot({ path: SP + 'so_game.png' });
   const order = await p.evaluate(() => new Promise(res => { const seen = []; let last = -1; const iv = setInterval(() => { const m = __pg.match; if (m.phase === 'aim' && m.turnNo !== last) { last = m.turnNo; seen.push(m.tanks[m.cur].nick); } if (seen.length >= 6 || m.phase === 'over') { clearInterval(iv); res(seen); } }, 50); }));
   console.log('   turns:', order.join(' → '));
@@ -73,6 +73,32 @@ let pass = 0, fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL 
   await p.screenshot({ path: SP + 'so_fame.png', fullPage: true });
   await p.click('.ftabs [data-tab="fame"]'); await p.waitForTimeout(200);
   await p.screenshot({ path: SP + 'so_fame2.png', fullPage: true });
+  // second run: slow player. 11 passes of 50 s, then idle on my turn -> the clock runs out mid-turn -> 시간 종료
+  await p.click('#fPlayBtn'); await p.waitForTimeout(300); await p.click('#soStart');
+  await p.waitForTimeout(1500); console.log('   2nd:', await p.evaluate(() => [document.getElementById('soMsg').textContent, __pg.match.phase, __pg.match.turnNo, !document.getElementById('solo').hidden]));
+  await p.waitForFunction(() => __pg.match && __pg.match.phase !== 'over', null, { timeout: 15000 });
+  const tu = await p.evaluate(() => new Promise(res => {
+    let n = 0, passes = 0, low = false;
+    const pump = () => {
+      const m = __pg.match, c = __pg.ctrl, G = __pg;
+      for (let i = 0; i < 4000 && m.phase !== 'over'; i++, n++) {
+        if (m.phase === 'aim' && m.cur === 0 && !c.charging && c.lastTurnSeen === m.turnNo && passes < 11) { c.emit(G.cmdPass(m, 6000)); passes++; }
+        c.tickOnce();
+        if (document.getElementById('soloHud').classList.contains('low')) low = true;
+      }
+      if (m.phase === 'over' || n > 3e6) res({ n, passes, winner: m.winner, low, hud: document.getElementById('soloHud').textContent }); else setTimeout(pump, 0);
+    };
+    pump();
+  }));
+  console.log('   timeup run:', JSON.stringify(tu));
+  await p.waitForSelector('#soloOver:not([hidden])', { timeout: 5000 });
+  await p.waitForFunction(() => !/확인하는 중/.test(document.getElementById('sooRank').textContent), null, { timeout: 15000 });
+  const t2 = await p.textContent('#sooTitle'), tm2 = await p.textContent('#sooTime');
+  console.log('   result:', t2, '·', tm2, '·', await p.textContent('#sooSub'), '·', await p.textContent('#sooRank'));
+  ok(tu.winner === 'timeup' && t2 === '시간 종료' && /남은 적 체력 \d+/.test(tm2), 'clock ran out mid-turn → 시간 종료 with foe HP left');
+  const dump = await (await fetch('http://127.0.0.1:8790/exec?action=dump')).json(), last = dump[dump.length - 1];
+  ok(last[4] === '시간종료' && last[5] === 600 && last[12] > 0 && /^v2\/ok/.test(String(last[10])), `sheet row: ${last[4]} · ${last[5]}s · 남은 적 체력 ${last[12]} · ${last[10]}`);
+  await p.screenshot({ path: SP + 'so_timeup.png' });
   ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close();
   console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
