@@ -505,7 +505,7 @@ const TMAP_ART = (() => {
       }
       for (let i = 0; i < 9; i++) { const lx = 300 + i * 575; x.fillStyle = '#E8F4FF'; x.fillRect(lx - 90, 220, 180, 10); x.fillStyle = vg(x, 230, 700, [[0, 'rgba(220,240,255,0.25)'], [1, 'rgba(220,240,255,0)']]); poly(x, [[lx - 90, 230], [lx + 90, 230], [lx + 260, 760], [lx - 260, 760]]); x.fill(); }
       x.fillStyle = 'rgba(30,44,58,0.35)'; x.fillRect(0, 0, W, G);
-      x.fillStyle = '#FAFBFC'; rr(x, CX - 300, 250, 600, 90, 10); x.fill(); logoOnly(x, CX - 140, 295, 50); text(x, '증빙 보관실', CX + 120, 296, 34, { color: '#1E2A36', weight: 900 });
+      x.fillStyle = '#FAFBFC'; rr(x, CX - 300, 250, 600, 90, 10); x.fill(); logoOnly(x, CX - 140, 295, 50); text(x, '신뢰의 집행실', CX + 120, 296, 34, { color: '#1E2A36', weight: 900 });
       mascotBanner(x, 1260, 430, 130, '증빙은 꼼꼼히');
       board(x, 140, 300, 960, '연구비, 어디서 하나요?', [['과제 공고 · 신청 · 협약', 'IRIS'], ['집행 · 정산 (gaia.go.kr)', '통합이지바로'], ['집행 · 정산 (산업부 계열 등)', '통합RCMS'], ['과제 · 성과 정보', 'NTIS']], { color: '#1D5E9E' });
       board(x, mx(1100), 300, 960, '연구비 집행 원칙', [['연구비카드 · 계좌이체가 원칙', '현금 예외'], ['증빙자료 보관', '종료 후 5년'], ['정산', '종료 후 3개월 내'], ['용도 외 사용 → 제재 + 환수', '최대 10년·5배']], { color: '#2E7D4F', badge: '혁신법 · 연구개발비 사용 기준' });
