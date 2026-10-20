@@ -132,7 +132,8 @@ function matchAwards(m) {
   return { mvp, out };
 }
 R.onOver = (winner, forfeit) => {
-  if (SOLOPLAY.active) { soloOver(winner); return; }
+  if (SOLOPLAY.active) { tipRecap('sooTips'); soloOver(winner); return; }
+  tipRecap('overTips');
   const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
   let title, cls;
@@ -503,7 +504,7 @@ function setPowerMark(e) {
   e.preventDefault(); e.stopPropagation();
 }
 function installMatch(m, opts) {
-  pwMarks = {};
+  pwMarks = {}; resetTips();
   match = m;
   ctrl = createController(match, opts || {});
   for (const k in hudCache) delete hudCache[k];
@@ -525,25 +526,58 @@ function announceHappening() {
   setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + hp[0]); }, 1700 + d);
   setTimeout(() => { if (match && match.happening === h) banner(hp[1]); }, 3300 + d);
 }
-// 알고 계셨나요? — one verified fact about the map's theme (CONFIG.maps[..].tips): on the start card, then now and then during play
-const TIPS = { last: '', turn: -1, timer: 0 };
+// 알고 계셨나요? — verified one-liners from tips.js (TIP_POOLS, each [text, weight]: 중요도 A=3 · B=2 · C=1).
+// The map's own pool (CONFIG.maps[..].tipPool) mixed 3:1 with the 국가R&D 공통 pool; weighted draw without repeats in a match.
+// Multiplayer: from turn 2, at most once every 3 turns and never within 45 s of the last one. Solo: every 45 s.
+// UI only (Math.random): never touches the lockstep sim.
+const TIP_RULE = { firstTurn: 2, everyTurns: 3, minGapMs: 45000, showMs: 8000, soloFirstMs: 20000, soloGapMs: 45000, commonEvery: 4, recap: 3 };
+const TIPS = { turn: -1, lastTurn: -1, lastAt: 0, n: 0, timer: 0, seen: new Set(), shown: [] };
+const tipPoolOf = meta => (meta && meta.tipPool && typeof TIP_POOLS !== 'undefined' && TIP_POOLS[meta.tipPool]) || null;
+function resetTips() { Object.assign(TIPS, { turn: -1, lastTurn: -1, lastAt: 0, n: 0, seen: new Set(), shown: [] }); }
+function drawTip(pool) {
+  let list = pool.filter(t => !TIPS.seen.has(t[0]));
+  if (!list.length) { for (const t of pool) TIPS.seen.delete(t[0]); list = pool; }
+  let r = Math.random() * list.reduce((s, t) => s + t[1], 0), pick = list[list.length - 1];
+  for (const t of list) { r -= t[1]; if (r < 0) { pick = t; break; } }
+  TIPS.seen.add(pick[0]); return pick;
+}
 function pickTip(meta) {
-  const l = meta.tips || []; if (!l.length) return '';
-  let t = l[Math.floor(Math.random() * l.length)]; if (t === TIPS.last && l.length > 1) t = l[(l.indexOf(t) + 1) % l.length];
-  return (TIPS.last = t);
+  const own = tipPoolOf(meta); if (!own) return null;
+  const common = TIP_POOLS.common, useCommon = common && TIPS.n % TIP_RULE.commonEvery === TIP_RULE.commonEvery - 1;
+  TIPS.n++;
+  const t = drawTip(useCommon ? common : own);
+  TIPS.shown.push(t); return t;
 }
 function showTip(t) {
   const el = $('tipToast'); if (!el || !t) return;
-  el.innerHTML = '<b>💡 알고 계셨나요?</b><span></span>'; el.querySelector('span').textContent = t;
+  el.innerHTML = '<b>💡 알고 계셨나요?</b><span></span>'; el.querySelector('span').textContent = t[0];
   el.hidden = false; void el.offsetWidth; el.classList.add('show');
-  clearTimeout(TIPS.timer); TIPS.timer = setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 400); }, 7000);
+  clearTimeout(TIPS.timer); TIPS.timer = setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 400); }, TIP_RULE.showMs);
 }
-// during play: turn 6, then every 10 turns (only on maps with tips, only while the game screen is up)
 function tipTick() {
-  if (!match || screen !== 'game' || match.phase === 'over' || match.turnNo === TIPS.turn) return;
+  if (!match || screen !== 'game' || match.phase === 'over') return;
+  const meta = mapMetaOf(match); if (!tipPoolOf(meta) || !$('mguide').hidden) return;
+  const now = performance.now();
+  if (match.solo) { // 혼자 하기: time based (only my turns, so turns would come too fast)
+    if (!TIPS.lastAt) TIPS.lastAt = now - TIP_RULE.soloGapMs + TIP_RULE.soloFirstMs;
+    else if (now - TIPS.lastAt >= TIP_RULE.soloGapMs) { TIPS.lastAt = now; showTip(pickTip(meta)); }
+    return;
+  }
+  if (match.turnNo === TIPS.turn) return; // only when a new turn starts (never while a shell is flying)
   TIPS.turn = match.turnNo;
-  const meta = mapMetaOf(match);
-  if (meta.tips && match.turnNo >= 6 && (match.turnNo - 6) % 10 === 0 && $('mguide').hidden) showTip(pickTip(meta));
+  if (match.turnNo < TIP_RULE.firstTurn) return;
+  if (TIPS.lastTurn >= 0 && match.turnNo - TIPS.lastTurn < TIP_RULE.everyTurns) return;
+  if (TIPS.lastAt && now - TIPS.lastAt < TIP_RULE.minGapMs) return;
+  TIPS.lastTurn = match.turnNo; TIPS.lastAt = now; showTip(pickTip(meta));
+}
+// result screens: the most important tips seen this match (A first), as a short review
+function tipRecap(id) {
+  const el = $(id); if (!el) return;
+  const seen = [...new Map(TIPS.shown.map(t => [t[0], t])).values()];
+  const top = seen.map((t, i) => [t, i]).sort((a, b) => b[0][1] - a[0][1] || a[1] - b[1]).slice(0, TIP_RULE.recap).map(x => x[0]);
+  el.hidden = !top.length; if (!top.length) return;
+  el.innerHTML = '<div class="trh">💡 이번 판에서 본 문장</div><ul></ul>';
+  const ul = el.querySelector('ul'); for (const t of top) { const li = document.createElement('li'); li.textContent = t[0]; ul.append(li); }
 }
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0;
@@ -552,7 +586,7 @@ function showMapGuide() {
   if (!meta.guide) { el.hidden = true; return false; }
   const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
-  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${meta.tips ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc(pickTip(meta))}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
+  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${tipPoolOf(meta) ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc((pickTip(meta) || [''])[0])}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
   clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
   return true;

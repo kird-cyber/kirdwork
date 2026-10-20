@@ -5,7 +5,7 @@ dist/index.html        full document for GitHub Pages"""
 import json, pathlib
 root = pathlib.Path(__file__).parent
 src = root / 'src'
-ORDER = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'controller.js', 'audio.js', 'shells.js', 'thememaps.js', 'render.js', 'bot.js', 'solo.js', 'mqtt.js', 'net.js', 'online.js', 'main.js', 'soloui.js']
+ORDER = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'controller.js', 'audio.js', 'shells.js', 'thememaps.js', 'render.js', 'bot.js', 'solo.js', 'mqtt.js', 'net.js', 'online.js', 'tips.js', 'main.js', 'soloui.js']
 js = '\n'.join(f'// ---- {f}\n' + (src / f).read_text() for f in ORDER)
 tpl = (src / 'template.html').read_text()
 sprites = (root / 'assets' / 'sprites.json').read_text()
