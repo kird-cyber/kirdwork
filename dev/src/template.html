@@ -275,7 +275,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .start:disabled, .ghost:disabled { opacity: 0.45; cursor: not-allowed; }
 .note.bad, .bad { color: #FFB4A4; }
 #homeMsg { min-height: 20px; }
-.credit { position: absolute; top: max(12px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); font-size: 12px; letter-spacing: .02em; color: var(--muted); opacity: .75; pointer-events: none; user-select: none; }
+.brandside { align-self: stretch; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; gap: 10px; margin-left: auto; }
+.credit { font-size: 12px; letter-spacing: .02em; color: var(--muted); opacity: .75; pointer-events: none; user-select: none; }
 .lobbyhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .lbrand { font-family: var(--font-display); font-size: 18px; color: var(--muted); letter-spacing: 0.04em; } .lbrand em { font-style: normal; color: var(--gold); }
 .lt { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; }
@@ -571,14 +572,16 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 
   <div class="overlay" id="home">
-    <div class="credit">Made by tykim(KIRD) · 2026</div>
     <div class="setup home">
       <div class="brand">
         <div>
           <h1><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></h1>
           <p>과학기술인의 요새를 지켜라 — R&amp;D 턴제 포격전</p>
         </div>
-        <div class="record" id="record" hidden></div>
+        <div class="brandside">
+          <div class="credit">Made by tykim(KIRD) · 2026</div>
+          <div class="record" id="record" hidden></div>
+        </div>
       </div>
       <div class="parade" id="parade" aria-hidden="true"></div>
       <div class="card">
