@@ -302,6 +302,16 @@
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { refresh(); loop(); } });
   window.addEventListener('storage', e => { if (DEMO && e.key === MK.DEMO_KEY) refresh(); });
   window.addEventListener('hashchange', startHash);
-  refresh().then(() => { startHash(); loop(); });
+  // QR on the printed card: ?c=CODE fills the code and logs in (then the code leaves the address bar)
+  // (after the first load, so that load's answer cannot log the new session out again)
+  const qc = new URLSearchParams(location.search).get('c');
+  if (qc) history.replaceState(null, '', location.pathname + location.hash);
+  const qrLogin = () => {
+    const norm = String(qc || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (norm.length !== 8 || (S.tok && String(S.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '') === norm)) return;
+    if (S.tok) logout(true);
+    fillCells(norm); openLogin(); setTimeout(() => { const b = $('#lgBtn'); if (b && !b.disabled) $('#lgForm').requestSubmit(); }, 60);
+  };
+  refresh().then(() => { startHash(); loop(); if (qc) qrLogin(); });
   window.__mk = S;
 })();
