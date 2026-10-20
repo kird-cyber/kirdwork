@@ -20,18 +20,38 @@ function createMatch(opts) {
   // start positions: fully random. 20 spots (neighbours ~460 px apart: more than one turn of movement) spread evenly over the standable width (map edges excluded); each player
   // gets one at random, teams not interleaved. Two neighbouring spots are never both taken (unless the map runs out).
   const n = opts.players.length, cand = map.cand && map.cand.length >= n ? map.cand : map.spawns.slice().sort((a, b) => a - b);
-  const SPOTS = 20, lo = cand[0], hi = cand[cand.length - 1], spots = [];
+  // few players (1:1, 2:2): the outer 20% at each end is left out, so the fight starts in the middle of the wide map
+  const C = CONFIG.turn, trim = n <= C.spawnTrimMaxPlayers ? C.spawnTrim * (cand[cand.length - 1] - cand[0]) : 0;
+  const SPOTS = 20, lo = cand[0] + trim, hi = cand[cand.length - 1] - trim, spots = [];
   for (let k = 0; k < SPOTS; k++) {
     const want = lo + (hi - lo) * k / (SPOTS - 1);
     let best = cand[0]; for (const x of cand) if (Math.abs(x - want) < Math.abs(best - want)) best = x;
     if (spots.indexOf(best) < 0) spots.push(best);
   }
-  const taken = [], free = spots.map((x, i) => i);
-  for (let k = 0; k < n; k++) {
-    let pool = free.filter(i => taken.every(j => Math.abs(i - j) > 1));
-    if (!pool.length) pool = free.filter(i => taken.indexOf(i) < 0);
-    const i = pool[Math.floor(rngNext(m) * pool.length)]; taken.push(i);
-  }
+  // every tank's nearest enemy should be spawnEnemy[0]~[1] px away (not too close, not a blind shot across the map):
+  // draw up to 200 layouts and keep the first that fits, or the one that misses by the least
+  const free = spots.map((x, i) => i), [eLo, eHi] = C.spawnEnemy;
+  const draw = () => {
+    const tk = [];
+    for (let k = 0; k < n; k++) {
+      let pool = free.filter(i => tk.every(j => Math.abs(i - j) > 1));
+      if (!pool.length) pool = free.filter(i => tk.indexOf(i) < 0);
+      tk.push(pool[Math.floor(rngNext(m) * pool.length)]);
+    }
+    return tk;
+  };
+  const miss = tk => {
+    let bad = 0;
+    for (let a = 0; a < n; a++) {
+      let near = Infinity;
+      for (let b = 0; b < n; b++) if (opts.players[b].team !== opts.players[a].team) near = Math.min(near, Math.abs(spots[tk[a]] - spots[tk[b]]));
+      if (near === Infinity) continue;
+      bad += near < eLo ? eLo - near : near > eHi ? near - eHi : 0;
+    }
+    return bad;
+  };
+  let taken = null, best = Infinity;
+  for (let tries = 0; tries < 200 && best > 0; tries++) { const tk = draw(), b = miss(tk); if (b < best) { best = b; taken = tk; } }
   const spawnOf = {}; opts.players.forEach((p, i) => { spawnOf[i] = spots[taken[i]]; });
   opts.players.forEach((p, i) => {
     const d = CONFIG.tanks[p.tankId];
@@ -157,7 +177,15 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
   for (const mi of m.mines) if (!mi.dead && Math.sqrt((mi.x - x) * (mi.x - x) + (mi.y - y) * (mi.y - y)) < cr + 6) {
     mi.dead = true; schedule(m, 18, { kind: 'mineBoom', x: mi.x, y: mi.y - 4, owner: mi.owner });
   }
-  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < cr) c.dead = true;
+  // a blast that reaches a crate: the shooter takes the item (inventory full or no shooter: the crate is just gone)
+  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < cr + CONFIG.turn.crateShotPad) {
+    c.dead = true;
+    if (owner && owner.alive && owner.items.length < CONFIG.turn.inventoryMax) {
+      owner.items.push(c.item);
+      m.events.push({ type: 'text', x: c.x, y: c.y - 40, text: '상자 명중!', color: CONFIG.items[c.item].color });
+      m.events.push({ type: 'pickup', idx: owner.idx, x: owner.x, y: owner.y, item: c.item, shot: true });
+    } else m.events.push({ type: 'crategone', x: c.x, y: c.y });
+  }
   m.events.push({ type: 'boom', x, y, r, dr: r * P.blastDmgMul, color: (w && w.look && w.look.glow) || '#FFB040' });
   resettleObjects(m);
 }
@@ -524,7 +552,7 @@ function beginTurn(m) {
   m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
   for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
   m.crates = m.crates.filter(c => !c.dead);
-  if (m.turnNo % CONFIG.turn.crateEveryTurns === 1) dropCrate(m);
+  { const [k, per] = CONFIG.turn.crateRate; if (Math.floor(m.turnNo * k / per) !== Math.floor((m.turnNo - 1) * k / per)) dropCrate(m); }
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
   if (t.poison) {
@@ -566,23 +594,24 @@ function beginTurn(m) {
   m.phase = 'aim';
 }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
-// a crate lands 300~600 px to the side of one tank (open sky above, not much higher or lower, no tank nearer than 300):
-// out of reach this turn, but 2~3 turns of driving get it. Nowhere like that: anywhere, as before.
+// a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
+// drive there, take it and fire in the same turn. Nowhere like that: anywhere, as before.
 function dropCrate(m) {
   const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
   if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
   const pick = () => { let r = rngNext(m) * total; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) return k; } return keys[0]; };
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
-  const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0], hi = T.crateNear[1];
+  const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
   for (let tries = 0; alive.length && tries < 40; tries++) {
     const t = alive[Math.floor(rngNext(m) * alive.length)], side = rngNext(m) < 0.5 ? -1 : 1;
+    const hi = Math.max(lo + 20, Math.round(CONFIG.tanks[t.tankId].movePx * T.crateNearMove)); // within this tank's one turn of driving
     const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo))), item = pick();
     if (x < 100 || x > m.W - 100) continue;
     const y = surfaceAt(m, x, 0);
     if (y < 0 || Math.abs(y - t.y) > T.crateNearDy) continue;
     if (alive.some(o => Math.abs(o.x - x) < lo && Math.abs(o.y - y) < T.crateNearDy)) continue;
-    if (m.crates.some(c => Math.abs(c.x - x) < 80)) continue;
+    if (m.crates.some(c => Math.abs(c.x - x) < 50)) continue;
     put(x, y, item); return;
   }
   for (let tries = 0; tries < 20; tries++) {

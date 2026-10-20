@@ -32,9 +32,13 @@ const CONFIG = {
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
-    crateEveryTurns: 2,
-    crateNear: [300, 600],  // a crate lands this far (sideways) from one tank picked at random, at most crateNearDy above/below it
-    crateNearDy: 300,
+    crateRate: [3, 4],      // 3 crates every 4 turns (was 1 every 2: x1.5)
+    crateNear: [60],        // a crate lands 60 px ~ (movePx x crateNearMove) sideways from one tank: reachable this turn
+    crateNearMove: 0.9,
+    crateNearDy: 120,       // at most this far above/below that tank
+    crateShotPad: 18,       // a blast this much wider than its crater still takes a crate (shooter gets the item)
+    // start positions: with this many players or fewer the outer spawnTrim of the width is left out; nearest enemy kept spawnEnemy px away
+    spawnTrimMaxPlayers: 4, spawnTrim: 0.2, spawnEnemy: [600, 1600],
     crateMax: 8,            // most crates lying around at once (no new drop past this)
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,

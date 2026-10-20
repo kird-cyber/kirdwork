@@ -50,7 +50,7 @@ if (g.res.clear) { const forged = g.inputs.slice(0, Math.max(1, g.inputs.length 
 let clears = 0, total = 0, times = [], outs = 0;
 for (let s = 1; s <= 12; s++) { const r = play(['rookie', 'hammer', 'swarm', 'viper'][s % 4], 'normal', s * 31).res; total++; if (r.clear) { clears++; times.push(r.time); } if (r.kind === 'out') outs++; }
 console.log(`   'normal'-bot player clears ${clears}/${total}, destroyed ${outs}` + (times.length ? `, times ${times.map(t => t.toFixed(0)).join(',')}s` : ''));
-ok(clears > 0 && clears < total, 'a normal-level player can clear sometimes, not always');
+ok(clears >= total / 2, 'a normal-level player clears at least half the time (participation first; speed decides the rank)');
 ok(outs <= 1, 'a normal-level player is rarely destroyed (high HP)');
 // 10-min chess clock: a slow player (45 s a turn) runs out; the run ends at the next aim, before a foe moves
 const slow = play('rookie', 'easy', 5, 5400);

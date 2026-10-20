@@ -205,7 +205,7 @@ async function soloOver(winner) {
   setTimeout(() => { if (screen === 'game') $('soloOver').hidden = false; }, 1100);
   if (res.kind === 'clear') AU.play('pickup');
   // check the run replays from its inputs, then save it
-  let ver = 'v2';
+  let ver = 'v3'; // v3: start spots near the enemy, crates within reach / shot to take (2026-10-20 evening)
   try { const rp = soloReplay(SOLOPLAY.day, SOLOPLAY.tankUsed, inputs); ver += rp.kind === res.kind && rp.time === res.time && rp.hp === res.hp && rp.left === res.left ? '/ok' : '/mismatch'; } catch (e) { ver += '/err'; }
   const rec = { day: SOLOPLAY.day, nick: SOLOPLAY.nick, key: SOLOPLAY.key, kind: res.kind, clear: res.clear, time: res.time, left: res.left, hp: res.hp, kills: res.kills, tank: SOLOPLAY.tankUsed, shots: res.shots, ver, log: JSON.stringify(inputs) };
   try {

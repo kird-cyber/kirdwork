@@ -97,7 +97,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL 
   console.log('   result:', t2, '·', tm2, '·', await p.textContent('#sooSub'), '·', await p.textContent('#sooRank'));
   ok(tu.winner === 'timeup' && t2 === '시간 종료' && /남은 적 체력 \d+/.test(tm2), 'clock ran out mid-turn → 시간 종료 with foe HP left');
   const dump = await (await fetch('http://127.0.0.1:8790/exec?action=dump')).json(), last = dump[dump.length - 1];
-  ok(last[4] === '시간종료' && last[5] === 600 && last[12] > 0 && /^v2\/ok/.test(String(last[10])), `sheet row: ${last[4]} · ${last[5]}s · 남은 적 체력 ${last[12]} · ${last[10]}`);
+  ok(last[4] === '시간종료' && last[5] === 600 && last[12] > 0 && /^v3\/ok/.test(String(last[10])), `sheet row: ${last[4]} · ${last[5]}s · 남은 적 체력 ${last[12]} · ${last[10]}`);
   await p.screenshot({ path: SP + 'so_timeup.png' });
   ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close();

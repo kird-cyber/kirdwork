@@ -61,6 +61,15 @@ function botPlan(m, level, rnd, mem) {
   const t = curTank(m), d = CONFIG.tanks[t.tankId], L = BOT_LEVELS[level] || BOT_LEVELS.normal;
   const foes = m.tanks.filter(o => o.alive && o.team !== t.team);
   if (!foes.length) return null;
+  // a crate within this turn's driving (about the same height): usually drive over it first, like a person would
+  if (t.items.length < CONFIG.turn.inventoryMax) {
+    const c = m.crates.filter(k => !k.dead && Math.abs(k.y - t.y) < 120 && Math.abs(k.x - t.x) <= t.fuel * 0.95).sort((p, q) => Math.abs(p.x - t.x) - Math.abs(q.x - t.x))[0];
+    if (c && rnd() < 0.8) {
+      const dir = c.x > t.x ? 1 : -1;
+      for (let g = 0; g < 4000 && !c.dead && m.phase === 'aim' && Math.abs(c.x - t.x) > 2; g++) if (!cmdMove(m, dir)) break;
+      if (m.phase !== 'aim') return null;
+    }
+  }
   // items: heal when hurt, otherwise use whatever buffs it holds
   const hasItem = id => t.items.indexOf(id);
   if (hasItem('heal') >= 0 && t.hp < t.maxhp * 0.55) cmdItem(m, hasItem('heal'));

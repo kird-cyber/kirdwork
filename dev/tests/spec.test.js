@@ -366,20 +366,48 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
 }
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
-// supply crates: every 2 turns, 300~600 px to the side of a tank, never nearer than 300 to any tank, gone after a few rounds
+// supply crates: 3 every 4 turns, 120 px ~ one turn of driving to the side of a tank, gone after a few rounds; a blast takes them
 {
   const tk = Object.keys(CONFIG.tanks)[0], T = CONFIG.turn;
   const m = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]);
   let drops = 0, bad = 0;
   for (let k = 0; k < 12; k++) {
     m.events.length = 0; A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m);
-    for (const e of m.events) if (e.type === 'crate') { drops++; const dx = Math.min(...m.tanks.map(t => Math.abs(t.x - e.x))); if (dx < T.crateNear[0] || dx > T.crateNear[1] + 1) bad++; }
+    for (const e of m.events) if (e.type === 'crate') { drops++; const dx = Math.min(...m.tanks.map(t => Math.abs(t.x - e.x))); if (dx < T.crateNear[0] || dx > CONFIG.tanks[tk].movePx * T.crateNearMove + 1) bad++; }
+    m.crates = []; // taken (nobody drives in this test)
   }
-  check('보급 상자', `${T.crateEveryTurns}턴마다, 탱크 옆 ${T.crateNear.join('~')}px`, '12턴에 6번, 벗어남 0', `${drops}번, 벗어남 ${bad}`, drops === 6 && bad === 0);
+  check('보급 상자', `4턴에 ${T.crateRate[0]}개, 탱크 옆 ${T.crateNear[0]}~${Math.round(CONFIG.tanks[tk].movePx * T.crateNearMove)}px (한 턴 이동 안)`, '12턴에 9번, 벗어남 0', `${drops}번, 벗어남 ${bad}`, drops === 9 && bad === 0);
+  { // drive to the crate and take it in the same turn
+    const md = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]), it = Object.keys(CONFIG.items)[1];
+    md.crates = [{ x: 1000 + Math.round(CONFIG.tanks[tk].movePx * T.crateNearMove), y: GROUND, item: it, dead: false, id: 9001, born: 1 }];
+    for (let k = 0; k < 400 && md.tanks[0].fuel > 0; k++) A.cmdMove(md, 1);
+    check('보급 상자', '가장 먼 자리에 떨어져도 이번 턴 이동으로 먹음', '획득', md.tanks[0].items.includes(it) ? '획득' : '못 먹음', md.tanks[0].items.includes(it));
+  }
+  { // shoot the crate: the item goes to the shooter
+    const ms = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]), it = Object.keys(CONFIG.items)[2];
+    ms.crates = [{ x: 1500, y: GROUND, item: it, dead: false, id: 9002, born: 1 }];
+    A.explode(ms, 1500, GROUND - 10, 30, 100, ms.tanks[0], null, false);
+    check('보급 상자', '내 포탄 폭발이 상자에 닿으면 아이템이 나에게', '획득', ms.tanks[0].items.includes(it) && !ms.crates.some(c => !c.dead) ? '획득' : '못 받음', ms.tanks[0].items.includes(it));
+    const mf = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]); mf.tanks[0].items = new Array(T.inventoryMax).fill(it);
+    mf.crates = [{ x: 1500, y: GROUND, item: it, dead: false, id: 9003, born: 1 }];
+    A.explode(mf, 1500, GROUND - 10, 30, 100, mf.tanks[0], null, false);
+    check('보급 상자', '가방이 꽉 차 있으면 상자만 부서짐', `${T.inventoryMax}개 그대로`, mf.tanks[0].items.length + '개', mf.tanks[0].items.length === T.inventoryMax);
+  }
   const life = T.crateLifeRounds * m.tanks.length, born = m.turnNo;
   m.crates = [{ x: 1800, y: GROUND, item: Object.keys(CONFIG.items)[0], dead: false, id: 7777, born }];
   for (let k = 0; k < life; k++) { A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m); }
   check('보급 상자', `아무도 안 먹으면 ${life}턴 뒤 사라짐`, '사라짐', m.crates.some(c => c.id === 7777) ? '남음' : '사라짐', !m.crates.some(c => c.id === 7777));
+}
+// start positions: few players use the middle of the map, nearest enemy 600~1600 px
+{
+  const T = CONFIG.turn, maps = Object.keys(CONFIG.maps); let all = 0, ok = 0, edge = 0;
+  for (const n of [2, 4, 8]) for (const mapId of maps) for (let s = 1; s <= 6; s++) {
+    const pl = []; for (let i = 0; i < n; i++) pl.push({ id: 'p' + i, nick: 'p', team: i % 2 ? 'blue' : 'red', tankId: 'rookie' });
+    const m = A.createMatch({ seed: s * 131 + n, mapId, players: pl });
+    for (const t of m.tanks) { const d = Math.min(...m.tanks.filter(o => o.team !== t.team).map(o => Math.abs(o.x - t.x))); all++; if (d >= T.spawnEnemy[0] && d <= T.spawnEnemy[1]) ok++; if (n <= 4 && (t.x < m.W * 0.15 || t.x > m.W * 0.85)) edge++; }
+  }
+  check('시작 위치', `가장 가까운 적 ${T.spawnEnemy.join('~')}px`, '95% 이상', `${(ok / all * 100).toFixed(1)}%`, ok / all >= 0.95);
+  check('시작 위치', '1:1·2:2는 맵 양 끝에서 시작 안 함', '0', edge, edge === 0);
 }
 fs.writeFileSync(path.join(__dirname, 'out', 'spec.json'), JSON.stringify(rows, null, 1));
 const fails = rows.filter(r => !r.pass);
