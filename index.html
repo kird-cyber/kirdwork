@@ -1012,7 +1012,7 @@ const CONFIG = {
   maps: {
     campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird', special: 'KIRD 기관 전용' },
     songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake', special: 'KIRD 기관 전용' },
-    scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '대리석 단 위 청동 저울. 두 접시는 늘 같은 높이, 저울대 위가 맵의 꼭대기. 양쪽 끝은 KIRD 연구실.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
+    scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '연구윤리 실험실. 벽엔 위조·변조·표절 예방 포스터, 바닥엔 원본 데이터 보관함·출처 표기 서가·논문 원고 두루마리, 가운데는 밑으로 지나다니는 연구노트 서명대.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
       tips: ['연구진실성의 5가치: 객관성·정직성·개방성·책무성·공정성이에요.', '위조: 존재하지 않는 데이터나 연구 결과를 거짓으로 만들어 내는 것이에요.', '변조: 연구 재료·과정을 조작하거나 데이터를 임의로 바꾸고 빼는 것이에요.', '표절: 남의 아이디어·글·결과를 출처 없이 내 것처럼 쓰는 것이에요.', '부당한 저자 표시: 기여한 사람을 빼거나, 기여하지 않은 사람을 저자로 넣는 것이에요.', '부당한 중복게재: 내 이전 연구 결과를 출처 없이 다시 싣는 것도 부정행위예요.', '국가연구개발혁신법 제31조는 연구비 용도 외 사용도 부정행위로 금지해요.', '거짓이나 부정한 방법으로 과제를 신청·수행하는 것도 부정행위예요.', '부정행위 검증은 예비조사 → 본조사 → 판정 순서로, 6개월 안에 끝내요.', '부정행위를 제보한 사람은 신분상 불이익을 받지 않도록 보호돼요.', '판정에 이의가 있으면 통보를 받은 날부터 30일 안에 신청할 수 있어요.', '부정행위 참여제한은 최대 10년, 2027년 3월부터는 최대 20년으로 늘어나요.', '연구개발기관은 자체 연구윤리규정을 마련해 운영해야 해요.'],
       guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
     notebook: { name: '증명의 노트', tag: '내 연구를 지켜 주는 가장 강력한 기록', desc: '책상 위에 펼친 거대한 연구노트. 두 쪽은 언덕, 가운데 제본선은 골짜기, 만년필이 다리.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구노트',
@@ -1350,20 +1350,6 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   return TG;
 }
 const TMAPGEN = {
-  scale(W, H, m) { // 정의의 저울: two KIRD labs, a marble podium, a bronze balance whose pans and beam are the high ground
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmPoly(m, W, H, [[0, TG], [0, TG - 300], [120, TG - 290], [260, TG - 230], [360, TG - 150], [430, TG - 60], [470, TG]], X);
-      tmRect(m, W, H, 512, TG - 370, 1188, TG, X);                                      // lab A / B (3 floors, filled)
-      tmRect(m, W, H, 1460, TG - 40, TCX, TG, X); tmRect(m, W, H, 1760, TG - 80, TCX, TG, X); tmRect(m, W, H, 2130, TG - 125, TCX, TG, X); // podium tiers
-      // the pan: a shallow bowl, flat rim on top
-      fillBand(m, W, H, X(1880) - 230, X(1880) + 230, () => TG - 390, x => { const u = (x - X(1880)) / 230; return TG - 384 + 68 * (1 - u * u); });
-    });
-    rectF(m, W, H, 2370, TG - 290, 2830, TG - 125, 1); rectF(m, W, H, 2350, TG - 300, 2850, TG - 282, 1); // plinth
-    // the column is background only (shells pass it): the beam, its pans and the finial float as the balance's solid parts
-    rectF(m, W, H, 1880, TG - 770, 3320, TG - 750, 1); tmDisc(m, W, H, 1880, TG - 759, 22); tmDisc(m, W, H, 3320, TG - 759, 22); // beam
-    fillPoly(m, W, H, [[TCX - 46, TG - 772], [TCX - 40, TG - 830], [TCX, TG - 842], [TCX + 40, TG - 830], [TCX + 46, TG - 772]]); tmDisc(m, W, H, TCX, TG - 868, 30); // finial
-  },
   notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
     rectF(m, W, H, 0, TG, W, H - 4, 1);
     tmMirror((X, r) => {
@@ -1400,6 +1386,19 @@ const TMAPGEN = {
       tmPoly(m, W, H, [[1000, TG], [1520, TG - 310], [1705, TG]], X);                   // the fund card leaning on it: a ramp
     });
     rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
+  },
+  scale(W, H, m) { // 진실의 전당 (연구윤리 실험실): flat lab floor; lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror(X => {
+      tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
+      tmRect(m, W, H, 1250, TG - 190, 1530, TG, X);                                    // data cabinet (L) / citation shelf (R)
+      tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
+      tmRect(m, W, H, 740, TG - 62, 880, TG, X);                                       // lab-notebook stack (L) / IRB file box (R)
+      tmRect(m, W, H, 1960, TG - 44, 2080, TG, X);                                     // peer-review magnifier stand (L) / data backup drive (R)
+      tmCapsule(m, W, H, Math.min(X(1650), X(1920)), Math.max(X(1650), X(1920)), TG - 64, TG, 32); // rolled manuscript (low cover)
+    });
+    rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
+    rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
   },
 };
 for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
@@ -2921,68 +2920,113 @@ const TMAP_ART = (() => {
   }
 
   const S = {};
-  // ---------------------------------------------------------------- 정의의 저울 (연구윤리)
-  function labRoomE(x, a, top, b, bot, floor) { return labRoom(x, a, top, b, bot, floor); }
+  // ---------------------------------------------------------------- 진실의 전당 (연구윤리): 연구윤리 실험실 — 위조·변조·표절 예방
+  function ethBoards(x, y) {
+    board(x, 150, y, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
+    board(x, mx(1330), y, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
+  }
+  function values5(x, cy, size, col) { text(x, '객관성 · 정직성 · 개방성 · 책무성 · 공정성', CX, cy, size, { color: col || '#7A6440', weight: 900, ls: 6 }); }
+  // a "no" sign: white disc, red ring and slash over a word
+  function banSign(x, cx, cy, r, word) {
+    x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
+    text(x, word, cx, cy + 2, r * 0.62, { color: '#1E2A36', weight: 900 });
+    x.strokeStyle = '#E3232B'; x.lineWidth = r * 0.16; x.beginPath(); x.arc(cx, cy, r * 0.9, 0, 7); x.stroke();
+    x.beginPath(); x.moveTo(cx - r * 0.64, cy - r * 0.64); x.lineTo(cx + r * 0.64, cy + r * 0.64); x.stroke();
+  }
+  // a prevention poster: the misconduct crossed out, and what prevents it
+  function ffpPoster(x, cx, top, w, word, how, sub, col) {
+    const h = w * 1.25;
+    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, cx - w / 2 + 6, top + 8, w, h, 16); x.fill();
+    x.fillStyle = '#FFFDF7'; rr(x, cx - w / 2, top, w, h, 16); x.fill();
+    x.fillStyle = col; rr(x, cx - w / 2, top, w, 56, [16, 16, 0, 0]); x.fill();
+    text(x, word + ' 예방', cx, top + 29, 30, { color: '#FFF', weight: 900 });
+    banSign(x, cx, top + 56 + w * 0.32, w * 0.24, word);
+    text(x, how, cx, top + h - 92, 30, { color: '#1E2A36', weight: 900 });
+    text(x, sub, cx, top + h - 48, 21, { color: '#56657A', weight: 700 });
+  }
+  // a mascot cut-out on the wall with a speech bubble (dir: which side the bubble's tail points from)
+  function mascotWall(x, cx, base, h, say, dir) {
+    const M = IMG.mascot, w = h * 360 / 340, top = base - h;
+    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, cx - w / 2 - 6, top - 4, w + 24, h + 58, 24); x.fill();
+    x.fillStyle = '#FFFFFF'; rr(x, cx - w / 2 - 12, top - 12, w + 24, h + 58, 24); x.fill();
+    x.save(); rr(x, cx - w / 2, top, w, h, 16); x.clip(); x.drawImage(M, 20, 0, 360, 340, cx - w / 2, top, w, h); x.restore();
+    text(x, '연구윤리 지킴이', cx, base + 22, 22, { color: '#1E3A5A', weight: 900 });
+    const bw = say.length * 26 + 50, bx = cx - bw / 2, by = base - h - 96;
+    x.fillStyle = '#FFFFFF'; rr(x, bx, by, bw, 64, 30); x.fill(); x.strokeStyle = '#2E86D6'; x.lineWidth = 4; x.stroke();
+    x.fillStyle = '#FFFFFF'; poly(x, [[cx - 14, by + 62], [cx + 14, by + 62], [cx + dir * 4, by + 92]]); x.fill();
+    text(x, say, cx, by + 33, 26, { color: '#1E3A5A', weight: 900 });
+  }
+  const FFP = [['위조', '원본 데이터 보관', '없는 결과를 만들지 않는다', '#C0392B'], ['변조', '기록하고 서명하기', '데이터를 임의로 바꾸지 않는다', '#D9822B'], ['표절', '출처를 밝히기', '남의 것을 내 것처럼 쓰지 않는다', '#2E86D6']];
+
   S.scale = {
-    veil: 'rgba(232,238,246,0.30)',
+    veil: 'rgba(236,240,244,0.26)', ceil: '#DDE3E8',
     back(x) {
-      x.fillStyle = rg(x, CX, 560, 20, 700, [[0, 'rgba(255,248,220,0.7)'], [0.35, 'rgba(255,236,190,0.3)'], [1, 'rgba(255,236,190,0)']]); x.fillRect(CX - 700, 0, 1400, G);
-      x.fillStyle = '#9DBFA8'; x.beginPath(); x.moveTo(0, G - 120); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 170 - Math.sin(px / 520) * 60 - Math.sin(px / 190) * 14); x.lineTo(W, G); x.lineTo(0, G); x.fill();
-      x.save(); x.globalAlpha = 0.82;
-      const base = G - 120, top = base - 520;
-      x.fillStyle = '#EDE8DC'; x.fillRect(1450, base - 30, 2300, 30);
-      for (let i = 0; i < 10; i++) { const cx = 1560 + i * 231; if (Math.abs(cx - CX) < 150) continue; columnBack(x, cx, base - 30, 470, 70); }
-      x.fillStyle = vg(x, top - 30, top + 40, [[0, '#F6F2E8'], [1, '#D8D1C2']]); x.fillRect(1420, top - 30, 2360, 70);
-      x.fillStyle = '#E4DED1'; poly(x, [[1400, top - 30], [CX, top - 250], [3800, top - 30]]); x.fill();
-      x.strokeStyle = '#CFC7B6'; x.lineWidth = 8; poly(x, [[1440, top - 34], [CX, top - 236], [3760, top - 34]]); x.stroke();
-      text(x, '객관성 · 정직성 · 개방성', CX - 400, top + 6, 36, { color: '#7A6440', weight: 900, ls: 3 }); text(x, '책무성 · 공정성', CX + 420, top + 6, 38, { color: '#7A6440', weight: 900, ls: 6 });
-      kMark(x, CX, top - 110, 84);
-      x.restore();
-      board(x, 150, 120, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
-      board(x, mx(1330), 120, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
-      // the balance column: background (not solid), so shells fly past it
-      x.save(); x.globalAlpha = 0.5;
-      x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
-      x.strokeStyle = 'rgba(60,40,10,0.35)'; x.lineWidth = 2; for (let k = 1; k < 5; k++) { x.beginPath(); x.moveTo(2556 + k * 17.6, G - 700); x.lineTo(2556 + k * 17.6, G - 320); x.stroke(); }
-      x.fillStyle = bronzeH(x, 2520, 2680); rr(x, 2518, G - 332, 164, 38, 8); x.fill(); rr(x, 2526, G - 744, 148, 34, 8); x.fill(); x.restore();
-      x.fillStyle = vg(x, G - 600, G, [[0, 'rgba(247,235,211,0)'], [1, 'rgba(247,235,211,0.35)']]); x.fillRect(0, G - 600, W, 600);
+      x.fillStyle = vg(x, 0, G, [[0, '#E9EEF1'], [1, '#D3DADF']]); x.fillRect(0, 0, W, H);
+      x.fillStyle = vg(x, G - 240, G, [[0, '#C9D2D8'], [1, '#B3BDC4']]); x.fillRect(0, G - 240, W, 240); x.fillStyle = '#9FAAB2'; x.fillRect(0, G - 246, W, 8);
+      for (let px = 100; px < W; px += 400) { x.fillStyle = 'rgba(255,255,230,0.55)'; x.fillRect(px, 40, 240, 14); x.fillStyle = vg(x, 54, 520, [[0, 'rgba(255,255,230,0.22)'], [1, 'rgba(255,255,230,0)']]); poly(x, [[px, 54], [px + 240, 54], [px + 330, 520], [px - 90, 520]]); x.fill(); }
+      ethBoards(x, 110);
+      x.fillStyle = '#FFFFFF'; rr(x, CX - 760, 120, 1520, 90, 14); x.fill(); x.strokeStyle = '#C9A55A'; x.lineWidth = 4; x.stroke();
+      text(x, '연구진실성', CX - 560, 165, 34, { color: '#8A5A1C', weight: 900 }); values5(x, 165, 30); 
+      FFP.forEach(([w, how, sub, c], i) => ffpPoster(x, [1390, CX, mx(1390)][i], 330, 340, w, how, sub, c));
+      // the KIRD mascots on the back wall, each with a reminder
+      mascotWall(x, 1990, G - 300, 250, '원본 데이터는 있는 그대로!', -1);
+      mascotWall(x, mx(1990), G - 300, 250, '출처 표기, 잊지 마세요!', 1);
+      // wall bits: clock, IRB whiteboard, a shelf of lab notebooks
+      x.fillStyle = '#FFFFFF'; rr(x, 520, 560, 380, 220, 10); x.fill(); x.strokeStyle = '#9AA3AB'; x.lineWidth = 8; x.stroke();
+      text(x, 'IRB 심의', 710, 600, 26, { color: '#1E3A5A', weight: 900 });
+      ['☑ 연구계획 승인', '☑ 동의서 확보', '☐ 결과 보고'].forEach((t, i) => text(x, t, 560, 646 + i * 40, 22, { color: '#2E86D6', weight: 700, align: 'left' }));
+      x.fillStyle = '#6B4A2C'; x.fillRect(mx(900), 760, 380, 14);
+      ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(900) + 14 + i * 50, 640 + (i % 2) * 12, 40, 120 - (i % 2) * 12); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(900) + 20 + i * 50, 670, 28, 20); });
+      text(x, '연구노트 2024 · 2025 · 2026', mx(900) + 190, 610, 20, { color: '#34404E', weight: 800 });
     },
     solid(x) {
-      noiseBand(x, 0, W, G, H, [[0, '#B6AC9C'], [0.15, '#8E8474'], [1, '#5E564B']], 3); blocks(x, 0, W, G + 26, H, 'rgba(50,42,34,0.35)');
-      marble(x, 0, G, W, G + 26, 2);
-      both(x, () => { x.fillStyle = vg(x, G - 300, G, [[0, '#7A9A52'], [0.08, '#6E5A3E'], [1, '#5A4A36']]); x.fillRect(0, G - 310, 480, 310); });
-      kirdBlock(x, 520, 1180, 3, 120, { room: labRoomE });
-      kirdBlock(x, mx(1180), mx(520), 3, 120, { room: labRoomE, louvre: [mx(1180) + 470, mx(520) - 20, G - 370] });
-      mascotBanner(x, (mx(1180) + 470 + mx(520) - 20) / 2, G - 330, 110, '연구윤리 지킴이');
-      [[1460, 40], [1760, 80], [2130, 125]].forEach(([a, hgt], i) => marble(x, a, G - hgt, mx(a), G - hgt + 46, 20 + i));
-      x.fillStyle = vg(x, G - 290, G - 125, [[0, '#4C5560'], [1, '#2B3138']]); x.fillRect(2370, G - 290, 460, 165);
-      x.fillStyle = '#5F6974'; x.fillRect(2350, G - 300, 500, 18);
-      x.fillStyle = bronze(x, G - 250, G - 170); rr(x, 2440, G - 252, 320, 84, 6); x.fill();
-      text(x, '연구윤리', CX, G - 226, 34, { color: '#3A2810', weight: 900, ls: 6 });
-      text(x, 'RESEARCH INTEGRITY', CX, G - 188, 18, { color: '#3A2810', weight: 700, ls: 4 });
-      x.fillStyle = bronze(x, G - 776, G - 746); x.fillRect(1850, G - 790, 1500, 44);
-      for (const ex of [1880, 3320]) { x.fillStyle = '#5E4018'; x.beginPath(); x.arc(ex, G - 759, 8, 0, 7); x.fill(); }
-      x.fillStyle = bronze(x, G - 900, G - 772); x.fillRect(CX - 50, G - 900, 100, 130);
-      x.fillStyle = 'rgba(255,250,220,0.8)'; x.beginPath(); x.arc(CX - 9, G - 878, 9, 0, 7); x.fill();
-      for (const pc of [1880, 3320]) {
-        const py = G - 390; x.fillStyle = bronze(x, py - 10, py + 70); x.fillRect(pc - 240, py - 4, 480, 84);
-        x.fillStyle = 'rgba(255,240,190,0.7)'; x.fillRect(pc - 228, py, 456, 4);
-        x.strokeStyle = 'rgba(70,45,15,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(pc - 190, py + 22); x.quadraticCurveTo(pc, py + 40, pc + 190, py + 22); x.stroke();
-      }
+      x.fillStyle = vg(x, G, H, [[0, '#9AA6AE'], [0.05, '#7D8991'], [1, '#4E585F']]); x.fillRect(0, G, W, H - G);
+      x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, G + 40); x.stroke(); }
+      x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(0, G, W, 3);
+      both(x, () => {
+        x.fillStyle = vg(x, G - 120, G, [[0, '#2F3A44'], [0.1, '#E9EDF0'], [1, '#B9C1C7']]); x.fillRect(0, G - 120, 420, 120);
+        x.fillStyle = '#2F3A44'; x.fillRect(0, G - 122, 300, 12);
+      });
+      // data cabinet (left): a locked server rack
+      x.fillStyle = vg(x, G - 190, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(1170, G - 190, 440, 190);
+      for (let k = 0; k < 6; k++) { x.fillStyle = '#2A343E'; x.fillRect(1262, G - 176 + k * 28, 256, 22); x.fillStyle = k % 2 ? '#3FD07A' : '#7FC4E8'; x.fillRect(1272, G - 168 + k * 28, 8, 6); x.fillRect(1288, G - 168 + k * 28, 8, 6); }
+      // citation shelf (right): books with source tags
+      x.fillStyle = vg(x, G - 190, G, [[0, '#8A6240'], [1, '#5E3F26']]); x.fillRect(mx(1610), G - 190, 440, 190);
+      ['#2E86D6', '#C0392B', '#8CC63F', '#F2C230', '#3B4A5A', '#9B6BC9', '#2E86D6', '#D9822B'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 172, 26, 74); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(1530) + 12 + i * 33, G - 150, 18, 10); });
+      x.fillStyle = '#4A3018'; x.fillRect(mx(1530), G - 96, 280, 8);
+      ['#3B4A5A', '#8CC63F', '#C0392B', '#2E86D6', '#F2C230', '#8CC63F', '#3B4A5A', '#9B6BC9'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 82, 26, 74); });
+      // lab-notebook stack (left) / IRB file box (right)
+      ['#2E86D6', '#8CC63F', '#E9EDF0', '#2E86D6', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(740 + (i % 2) * 6, G - 12 - i * 12, 134, 12); });
+      x.fillStyle = vg(x, G - 62, G, [[0, '#D8DDE1'], [1, '#9AA3AB']]); x.fillRect(mx(880), G - 62, 140, 62); x.fillStyle = '#FFF'; x.fillRect(mx(880) + 24, G - 46, 92, 26);
+      // magnifier stand (left) / backup drive (right)
+      x.fillStyle = vg(x, G - 44, G, [[0, '#8A6240'], [1, '#4A3018']]); x.fillRect(1960, G - 44, 120, 44);
+      x.fillStyle = vg(x, G - 44, G, [[0, '#4A5A6C'], [1, '#1C2530']]); x.fillRect(mx(2080), G - 44, 120, 44); x.fillStyle = '#3FD07A'; x.fillRect(mx(2080) + 12, G - 30, 10, 6);
+      // rolled manuscripts lying on the floor (low cover), one on each side
+      both(x, () => {
+        x.fillStyle = vg(x, G - 64, G, [[0, '#FFFDF4'], [0.45, '#F1E8D2'], [1, '#C9BB98']]); x.fillRect(1640, G - 70, 290, 70);
+        x.strokeStyle = 'rgba(120,100,70,0.35)'; x.lineWidth = 2; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(1700, G - 46 + k * 9); x.lineTo(1870, G - 46 + k * 9); x.stroke(); }
+        x.fillStyle = '#C0392B'; x.fillRect(1782, G - 64, 14, 64);
+        for (const ex of [1682, 1888]) { x.strokeStyle = 'rgba(140,115,80,0.6)'; x.lineWidth = 2.5; for (let r = 6; r < 26; r += 6) { x.beginPath(); x.arc(ex, G - 32, r, 0, 7); x.stroke(); } }
+      });
+      // signing desk (middle)
+      x.fillStyle = vg(x, G - 190, G - 166, [[0, '#C9925A'], [1, '#8C6640']]); x.fillRect(2360, G - 190, 480, 24); x.fillStyle = '#6B4A2C'; x.fillRect(2380, G - 166, 40, 166); x.fillRect(2780, G - 166, 40, 166);
     },
-    front(x, surface) {
-      for (const pc of [1880, 3320]) {
-        const top = [pc, G - 740], py = G - 390;
-        for (const dx of [-215, 0, 215]) {
-          x.strokeStyle = '#7A5A26'; x.lineWidth = 5; x.setLineDash([12, 6]); x.beginPath(); x.moveTo(top[0], top[1]); x.lineTo(pc + dx, py); x.stroke();
-          x.strokeStyle = '#E7C77A'; x.lineWidth = 2; x.beginPath(); x.moveTo(top[0], top[1]); x.lineTo(pc + dx, py); x.stroke(); x.setLineDash([]);
-        }
-      }
-      logoPlate(x, 850, G - 404, 40);
-      const r = rng(31);
-      both(x, () => { for (const tx of [90, 210, 330]) tree(x, tx, surface(tx, 600) + 4, 110 + r() * 40, r, tx === 210 ? 'pine' : 'dark'); tree(x, 1330, G + 2, 130, r, 'light'); });
-      both(x, () => { for (const lx of [1270, 1420]) { x.strokeStyle = '#4A535B'; x.lineWidth = 4; x.beginPath(); x.moveTo(lx, G); x.lineTo(lx, G - 100); x.stroke(); x.fillStyle = '#F7F3D8'; x.beginPath(); x.arc(lx, G - 104, 8, 0, 7); x.fill(); } });
-      both(x, () => grassTop(x, [[0, G - 300], [120, G - 290], [260, G - 230], [360, G - 150], [430, G - 60]], '#6FA34E'));
+    front(x) {
+      for (const [cx, t] of [[1390, '원본 데이터 보관함'], [mx(1390), '출처 표기 서가']]) { x.fillStyle = '#FFFDF7'; rr(x, cx - 112, G - 34, 224, 28, 6); x.fill(); text(x, t, cx, G - 20, 18, { color: '#1E2A36', weight: 900 }); }
+      // open lab notebook + pen on the desk
+      x.fillStyle = '#FFFFFF'; poly(x, [[2440, G - 192], [2600, G - 204], [2760, G - 192], [2760, G - 190], [2440, G - 190]]); x.fill();
+      x.strokeStyle = '#1F3A93'; x.lineWidth = 2; for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(2460, G - 197 + k * 0); x.stroke(); }
+      text(x, '연구노트 서명대', CX, G - 178, 17, { color: '#FFF7E8', weight: 900 });
+      for (const cx of [1742, mx(1742)]) text(x, '논문 원고', cx, G - 22, 15, { color: '#5A4630', weight: 900 });
+      for (const cx of [1834, mx(1834)]) text(x, '[1] [2]', cx, G - 22, 13, { color: '#8A6240', weight: 800 });
+      text(x, '연구노트', 810, G - 36, 15, { color: '#1E2A36', weight: 900 });
+      text(x, 'IRB 승인', mx(810), G - 33, 17, { color: '#1E2A36', weight: 900 });
+      // the peer-review magnifier on its stand
+      x.strokeStyle = '#6B4A2C'; x.lineWidth = 8; x.beginPath(); x.moveTo(2020, G - 44); x.lineTo(2020, G - 110); x.stroke();
+      x.strokeStyle = '#3B4A5A'; x.lineWidth = 10; x.beginPath(); x.arc(2020, G - 150, 42, 0, 7); x.stroke(); x.fillStyle = 'rgba(170,220,245,0.45)'; x.fill();
+      text(x, '동료 검증', 2020, G - 22, 16, { color: '#FFF7E8', weight: 900 });
+      text(x, '데이터 백업', mx(2020) + 8, G - 14, 14, { color: '#DFF7EF', weight: 900 });
+      logoPlate(x, CX, G - 90, 34);
     },
   };
 
@@ -4528,7 +4572,7 @@ function botPlan(m, level, rnd, mem) {
 // The bots draw their random numbers from (seed, turn), so a run is fully reproducible from my inputs alone:
 // the leaderboard stores them and a record can be replayed to check it (soloReplay).
 const SOLO = {
-  mapId: 'notebook',              // 연구노트 (연구윤리) — open rolling pages; 정의의 저울's towers made 1 vs 3 a slog
+  mapId: 'scale',                 // 진실의 전당 (연구윤리 실험실): flat floor, low cover — the 연구윤리 map itself (was 연구노트 until 2026-10-20)
   botLevel: 'normal',             // foes hit me about 30% of their shots: I take hits but rarely go down
   meHp: 4, foeHp: 0.5,            // with the 10-min clock, stand-in players (24 runs each): easy clear 33% / out 8% · normal 67% / 0% · hard 83% / 0%
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)
@@ -6489,7 +6533,7 @@ async function soloOver(winner) {
   setTimeout(() => { if (screen === 'game') $('soloOver').hidden = false; }, 1100);
   if (res.kind === 'clear') AU.play('pickup');
   // check the run replays from its inputs, then save it
-  let ver = 'v3'; // v3: start spots near the enemy, crates within reach / shot to take (2026-10-20 evening)
+  let ver = 'v4'; // v4: 연구윤리 map (진실의 전당, redesigned) — v3: spawns near the enemy, crates within reach (2026-10-20)
   try { const rp = soloReplay(SOLOPLAY.day, SOLOPLAY.tankUsed, inputs); ver += rp.kind === res.kind && rp.time === res.time && rp.hp === res.hp && rp.left === res.left ? '/ok' : '/mismatch'; } catch (e) { ver += '/err'; }
   const rec = { day: SOLOPLAY.day, nick: SOLOPLAY.nick, key: SOLOPLAY.key, kind: res.kind, clear: res.clear, time: res.time, left: res.left, hp: res.hp, kills: res.kills, tank: SOLOPLAY.tankUsed, shots: res.shots, ver, log: JSON.stringify(inputs) };
   try {

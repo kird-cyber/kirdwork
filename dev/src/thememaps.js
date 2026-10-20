@@ -280,72 +280,7 @@ const TMAP_ART = (() => {
   }
 
   const S = {};
-  // ---------------------------------------------------------------- 정의의 저울 (연구윤리)
-  function labRoomE(x, a, top, b, bot, floor) { return labRoom(x, a, top, b, bot, floor); }
-  S.scale = {
-    veil: 'rgba(232,238,246,0.30)',
-    back(x) {
-      x.fillStyle = rg(x, CX, 560, 20, 700, [[0, 'rgba(255,248,220,0.7)'], [0.35, 'rgba(255,236,190,0.3)'], [1, 'rgba(255,236,190,0)']]); x.fillRect(CX - 700, 0, 1400, G);
-      x.fillStyle = '#9DBFA8'; x.beginPath(); x.moveTo(0, G - 120); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 170 - Math.sin(px / 520) * 60 - Math.sin(px / 190) * 14); x.lineTo(W, G); x.lineTo(0, G); x.fill();
-      x.save(); x.globalAlpha = 0.82;
-      const base = G - 120, top = base - 520;
-      x.fillStyle = '#EDE8DC'; x.fillRect(1450, base - 30, 2300, 30);
-      for (let i = 0; i < 10; i++) { const cx = 1560 + i * 231; if (Math.abs(cx - CX) < 150) continue; columnBack(x, cx, base - 30, 470, 70); }
-      x.fillStyle = vg(x, top - 30, top + 40, [[0, '#F6F2E8'], [1, '#D8D1C2']]); x.fillRect(1420, top - 30, 2360, 70);
-      x.fillStyle = '#E4DED1'; poly(x, [[1400, top - 30], [CX, top - 250], [3800, top - 30]]); x.fill();
-      x.strokeStyle = '#CFC7B6'; x.lineWidth = 8; poly(x, [[1440, top - 34], [CX, top - 236], [3760, top - 34]]); x.stroke();
-      text(x, '객관성 · 정직성 · 개방성', CX - 400, top + 6, 36, { color: '#7A6440', weight: 900, ls: 3 }); text(x, '책무성 · 공정성', CX + 420, top + 6, 38, { color: '#7A6440', weight: 900, ls: 6 });
-      kMark(x, CX, top - 110, 84);
-      x.restore();
-      board(x, 150, 120, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
-      board(x, mx(1330), 120, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
-      // the balance column: background (not solid), so shells fly past it
-      x.save(); x.globalAlpha = 0.5;
-      x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
-      x.strokeStyle = 'rgba(60,40,10,0.35)'; x.lineWidth = 2; for (let k = 1; k < 5; k++) { x.beginPath(); x.moveTo(2556 + k * 17.6, G - 700); x.lineTo(2556 + k * 17.6, G - 320); x.stroke(); }
-      x.fillStyle = bronzeH(x, 2520, 2680); rr(x, 2518, G - 332, 164, 38, 8); x.fill(); rr(x, 2526, G - 744, 148, 34, 8); x.fill(); x.restore();
-      x.fillStyle = vg(x, G - 600, G, [[0, 'rgba(247,235,211,0)'], [1, 'rgba(247,235,211,0.35)']]); x.fillRect(0, G - 600, W, 600);
-    },
-    solid(x) {
-      noiseBand(x, 0, W, G, H, [[0, '#B6AC9C'], [0.15, '#8E8474'], [1, '#5E564B']], 3); blocks(x, 0, W, G + 26, H, 'rgba(50,42,34,0.35)');
-      marble(x, 0, G, W, G + 26, 2);
-      both(x, () => { x.fillStyle = vg(x, G - 300, G, [[0, '#7A9A52'], [0.08, '#6E5A3E'], [1, '#5A4A36']]); x.fillRect(0, G - 310, 480, 310); });
-      kirdBlock(x, 520, 1180, 3, 120, { room: labRoomE });
-      kirdBlock(x, mx(1180), mx(520), 3, 120, { room: labRoomE, louvre: [mx(1180) + 470, mx(520) - 20, G - 370] });
-      mascotBanner(x, (mx(1180) + 470 + mx(520) - 20) / 2, G - 330, 110, '연구윤리 지킴이');
-      [[1460, 40], [1760, 80], [2130, 125]].forEach(([a, hgt], i) => marble(x, a, G - hgt, mx(a), G - hgt + 46, 20 + i));
-      x.fillStyle = vg(x, G - 290, G - 125, [[0, '#4C5560'], [1, '#2B3138']]); x.fillRect(2370, G - 290, 460, 165);
-      x.fillStyle = '#5F6974'; x.fillRect(2350, G - 300, 500, 18);
-      x.fillStyle = bronze(x, G - 250, G - 170); rr(x, 2440, G - 252, 320, 84, 6); x.fill();
-      text(x, '연구윤리', CX, G - 226, 34, { color: '#3A2810', weight: 900, ls: 6 });
-      text(x, 'RESEARCH INTEGRITY', CX, G - 188, 18, { color: '#3A2810', weight: 700, ls: 4 });
-      x.fillStyle = bronze(x, G - 776, G - 746); x.fillRect(1850, G - 790, 1500, 44);
-      for (const ex of [1880, 3320]) { x.fillStyle = '#5E4018'; x.beginPath(); x.arc(ex, G - 759, 8, 0, 7); x.fill(); }
-      x.fillStyle = bronze(x, G - 900, G - 772); x.fillRect(CX - 50, G - 900, 100, 130);
-      x.fillStyle = 'rgba(255,250,220,0.8)'; x.beginPath(); x.arc(CX - 9, G - 878, 9, 0, 7); x.fill();
-      for (const pc of [1880, 3320]) {
-        const py = G - 390; x.fillStyle = bronze(x, py - 10, py + 70); x.fillRect(pc - 240, py - 4, 480, 84);
-        x.fillStyle = 'rgba(255,240,190,0.7)'; x.fillRect(pc - 228, py, 456, 4);
-        x.strokeStyle = 'rgba(70,45,15,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(pc - 190, py + 22); x.quadraticCurveTo(pc, py + 40, pc + 190, py + 22); x.stroke();
-      }
-    },
-    front(x, surface) {
-      for (const pc of [1880, 3320]) {
-        const top = [pc, G - 740], py = G - 390;
-        for (const dx of [-215, 0, 215]) {
-          x.strokeStyle = '#7A5A26'; x.lineWidth = 5; x.setLineDash([12, 6]); x.beginPath(); x.moveTo(top[0], top[1]); x.lineTo(pc + dx, py); x.stroke();
-          x.strokeStyle = '#E7C77A'; x.lineWidth = 2; x.beginPath(); x.moveTo(top[0], top[1]); x.lineTo(pc + dx, py); x.stroke(); x.setLineDash([]);
-        }
-      }
-      logoPlate(x, 850, G - 404, 40);
-      const r = rng(31);
-      both(x, () => { for (const tx of [90, 210, 330]) tree(x, tx, surface(tx, 600) + 4, 110 + r() * 40, r, tx === 210 ? 'pine' : 'dark'); tree(x, 1330, G + 2, 130, r, 'light'); });
-      both(x, () => { for (const lx of [1270, 1420]) { x.strokeStyle = '#4A535B'; x.lineWidth = 4; x.beginPath(); x.moveTo(lx, G); x.lineTo(lx, G - 100); x.stroke(); x.fillStyle = '#F7F3D8'; x.beginPath(); x.arc(lx, G - 104, 8, 0, 7); x.fill(); } });
-      both(x, () => grassTop(x, [[0, G - 300], [120, G - 290], [260, G - 230], [360, G - 150], [430, G - 60]], '#6FA34E'));
-    },
-  };
-
-  // ---------------------------------------------------------------- 연구윤리 맵 시안 A·B·C (draft)
+  // ---------------------------------------------------------------- 진실의 전당 (연구윤리): 연구윤리 실험실 — 위조·변조·표절 예방
   function ethBoards(x, y) {
     board(x, 150, y, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
     board(x, mx(1330), y, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
@@ -383,8 +318,7 @@ const TMAP_ART = (() => {
   }
   const FFP = [['위조', '원본 데이터 보관', '없는 결과를 만들지 않는다', '#C0392B'], ['변조', '기록하고 서명하기', '데이터를 임의로 바꾸지 않는다', '#D9822B'], ['표절', '출처를 밝히기', '남의 것을 내 것처럼 쓰지 않는다', '#2E86D6']];
 
-  // A 연구윤리 실험실 ------------------------------------------------
-  S.ethA = {
+  S.scale = {
     veil: 'rgba(236,240,244,0.26)', ceil: '#DDE3E8',
     back(x) {
       x.fillStyle = vg(x, 0, G, [[0, '#E9EEF1'], [1, '#D3DADF']]); x.fillRect(0, 0, W, H);
@@ -427,6 +361,13 @@ const TMAP_ART = (() => {
       // magnifier stand (left) / backup drive (right)
       x.fillStyle = vg(x, G - 44, G, [[0, '#8A6240'], [1, '#4A3018']]); x.fillRect(1960, G - 44, 120, 44);
       x.fillStyle = vg(x, G - 44, G, [[0, '#4A5A6C'], [1, '#1C2530']]); x.fillRect(mx(2080), G - 44, 120, 44); x.fillStyle = '#3FD07A'; x.fillRect(mx(2080) + 12, G - 30, 10, 6);
+      // rolled manuscripts lying on the floor (low cover), one on each side
+      both(x, () => {
+        x.fillStyle = vg(x, G - 64, G, [[0, '#FFFDF4'], [0.45, '#F1E8D2'], [1, '#C9BB98']]); x.fillRect(1640, G - 70, 290, 70);
+        x.strokeStyle = 'rgba(120,100,70,0.35)'; x.lineWidth = 2; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(1700, G - 46 + k * 9); x.lineTo(1870, G - 46 + k * 9); x.stroke(); }
+        x.fillStyle = '#C0392B'; x.fillRect(1782, G - 64, 14, 64);
+        for (const ex of [1682, 1888]) { x.strokeStyle = 'rgba(140,115,80,0.6)'; x.lineWidth = 2.5; for (let r = 6; r < 26; r += 6) { x.beginPath(); x.arc(ex, G - 32, r, 0, 7); x.stroke(); } }
+      });
       // signing desk (middle)
       x.fillStyle = vg(x, G - 190, G - 166, [[0, '#C9925A'], [1, '#8C6640']]); x.fillRect(2360, G - 190, 480, 24); x.fillStyle = '#6B4A2C'; x.fillRect(2380, G - 166, 40, 166); x.fillRect(2780, G - 166, 40, 166);
     },
@@ -436,6 +377,8 @@ const TMAP_ART = (() => {
       x.fillStyle = '#FFFFFF'; poly(x, [[2440, G - 192], [2600, G - 204], [2760, G - 192], [2760, G - 190], [2440, G - 190]]); x.fill();
       x.strokeStyle = '#1F3A93'; x.lineWidth = 2; for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(2460, G - 197 + k * 0); x.stroke(); }
       text(x, '연구노트 서명대', CX, G - 178, 17, { color: '#FFF7E8', weight: 900 });
+      for (const cx of [1742, mx(1742)]) text(x, '논문 원고', cx, G - 22, 15, { color: '#5A4630', weight: 900 });
+      for (const cx of [1834, mx(1834)]) text(x, '[1] [2]', cx, G - 22, 13, { color: '#8A6240', weight: 800 });
       text(x, '연구노트', 810, G - 36, 15, { color: '#1E2A36', weight: 900 });
       text(x, 'IRB 승인', mx(810), G - 33, 17, { color: '#1E2A36', weight: 900 });
       // the peer-review magnifier on its stand
@@ -444,77 +387,6 @@ const TMAP_ART = (() => {
       text(x, '동료 검증', 2020, G - 22, 16, { color: '#FFF7E8', weight: 900 });
       text(x, '데이터 백업', mx(2020) + 8, G - 14, 14, { color: '#DFF7EF', weight: 900 });
       logoPlate(x, CX, G - 90, 34);
-    },
-  };
-
-  // B 진실의 광장 ------------------------------------------------
-  function gateArt(x, cx, h, word, how, col) {
-    const top = G - h;
-    x.fillStyle = vg(x, top - 44, G, [[0, '#F6F2E8'], [1, '#CFC7B6']]);
-    x.fillRect(cx - 210, top, 60, h); x.fillRect(cx + 150, top, 60, h); x.fillRect(cx - 240, top - 44, 480, 44);
-    x.fillStyle = 'rgba(120,110,95,0.35)'; x.fillRect(cx - 240, top - 4, 480, 4); x.fillRect(cx - 186, top, 6, h); x.fillRect(cx + 174, top, 6, h);
-    x.fillStyle = col; x.fillRect(cx - 232, top - 38, 464, 6);
-    text(x, how, cx, top - 20, 22, { color: '#3A2810', weight: 900 });
-  }
-  S.ethB = {
-    veil: 'rgba(232,238,246,0.28)',
-    back(x) {
-      x.fillStyle = vg(x, 0, G, [[0, '#7FB6E2'], [0.6, '#BFDDF0'], [1, '#EEF4EC']]); x.fillRect(0, 0, W, H);
-      clouds(x, [[900, 520, 90], [2100, 470, 110], [3300, 520, 80], [4400, 480, 100]], 0.9);
-      x.fillStyle = '#A9C9B4'; x.beginPath(); x.moveTo(0, G - 150); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 190 - Math.sin(px / 520) * 50 - Math.sin(px / 170) * 10); x.lineTo(W, G); x.lineTo(0, G); x.fill();
-      x.save(); x.globalAlpha = 0.75; kirdBlock(x, 1700, 3500, 2, 120); x.restore();
-      ethBoards(x, 110);
-      // the long wall of the five values behind the gates
-      x.fillStyle = vg(x, G - 540, G - 460, [[0, '#F6F2E8'], [1, '#D8D1C2']]); x.fillRect(1300, G - 540, W - 2600, 74); x.fillStyle = 'rgba(80,70,60,0.2)'; x.fillRect(1300, G - 470, W - 2600, 4);
-      x.fillStyle = '#CFC7B6'; x.fillRect(1340, G - 466, 40, 466 - 240); x.fillRect(W - 1380, G - 466, 40, 466 - 240);
-      values5(x, G - 503, 34);
-    },
-    solid(x) {
-      x.fillStyle = vg(x, G, H, [[0, '#D9D2C4'], [0.04, '#B6AC9C'], [1, '#5E564B']]); x.fillRect(0, G, W, H - G);
-      x.strokeStyle = 'rgba(90,80,70,0.25)'; x.lineWidth = 2; for (let px = 0; px < W; px += 120) { x.beginPath(); x.moveTo(px, G); x.lineTo(px - 30, G + 30); x.stroke(); }
-      x.fillStyle = 'rgba(255,255,255,0.55)'; x.fillRect(0, G, W, 3);
-      both(x, () => { x.fillStyle = vg(x, G - 110, G, [[0, '#6FA34E'], [0.15, '#6E5A3E'], [1, '#5A4A36']]); x.fillRect(0, G - 110, 520, 110); });
-      gateArt(x, 1450, 200, '위조', '원본 데이터 보관', FFP[0][3]); gateArt(x, CX, 230, '변조', '기록하고 서명하기', FFP[1][3]); gateArt(x, mx(1450), 200, '표절', '출처를 밝히기', FFP[2][3]);
-    },
-    front(x, surface) {
-      [[1450, 200, 0], [CX, 230, 1], [mx(1450), 200, 2]].forEach(([cx, h, i]) => { banSign(x, cx, G - h - 110, 50, FFP[i][0]); text(x, FFP[i][0] + ' 예방', cx, G - h - 178, 26, { color: FFP[i][3], weight: 900, stroke: '#FFFFFF', sw: 6 }); });
-      const r = rng(9);
-      both(x, () => { for (const tx of [120, 300]) tree(x, tx, surface(tx, 600) + 4, 120 + r() * 30, r, tx === 300 ? 'pine' : 'dark'); grassTop(x, [[0, G - 110], [260, G - 100], [420, G - 40], [500, G]], '#6FA34E'); });
-      logoPlate(x, CX, G - 60, 30); mascotBanner(x, 820, G - 300, 110, '연구윤리 지킴이');
-    },
-  };
-
-  // C 학술대회장 ------------------------------------------------
-  S.ethC = {
-    veil: 'rgba(14,22,40,0.22)', ceil: '#1A2440',
-    back(x) {
-      x.fillStyle = vg(x, 0, G, [[0, '#1A2440'], [1, '#2C3A5E']]); x.fillRect(0, 0, W, H);
-      for (const sx of [700, 1500, 3700, 4500]) { x.fillStyle = vg(x, 0, G, [[0, 'rgba(255,240,200,0.22)'], [1, 'rgba(255,240,200,0)']]); poly(x, [[sx - 30, 0], [sx + 30, 0], [CX + (sx - CX) * 0.3 + 160, G], [CX + (sx - CX) * 0.3 - 160, G]]); x.fill(); }
-      // curtains
-      both(x, () => { x.fillStyle = hg(x, 0, 700, [[0, '#6A1020'], [0.5, '#9A1C30'], [1, '#5A0C18']]); x.fillRect(0, 0, 700, G); x.strokeStyle = 'rgba(0,0,0,0.25)'; x.lineWidth = 6; for (let px = 40; px < 700; px += 70) { x.beginPath(); x.moveTo(px, 0); x.lineTo(px + 10, G); x.stroke(); } });
-      // big screen: the slide
-      const a = CX - 1050, b = CX + 1050, t = 230, bt = 820;
-      x.fillStyle = '#0B1016'; rr(x, a - 16, t - 16, b - a + 32, bt - t + 32, 10); x.fill(); x.fillStyle = '#FDFDFB'; x.fillRect(a, t, b - a, bt - t);
-      x.fillStyle = '#2E86D6'; x.fillRect(a, t, b - a, 80); text(x, '연구진실성 — 3대 부정행위, 이렇게 막아요', CX, t + 40, 36, { color: '#FFF', weight: 900 });
-      FFP.forEach(([w, how, sub, c], i) => { const cx = a + (b - a) * (i + 0.5) / 3; banSign(x, cx, t + 210, 90, w); text(x, how, cx, t + 360, 34, { color: c, weight: 900 }); text(x, sub, cx, t + 410, 22, { color: '#34404E', weight: 700 }); });
-      values5(x, bt - 50, 28, '#8A5A1C'); logoOnly(x, b - 120, t + 40, 30);
-      ethBoards(x, 900 - 760);
-    },
-    solid(x) {
-      x.fillStyle = vg(x, G, H, [[0, '#8A5A34'], [0.05, '#6E4526'], [1, '#3E2614']]); x.fillRect(0, G, W, H - G);
-      x.strokeStyle = 'rgba(30,15,5,0.3)'; x.lineWidth = 2; for (let px = 0; px < W; px += 140) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, G + 26); x.stroke(); }
-      x.fillStyle = 'rgba(255,220,180,0.5)'; x.fillRect(0, G, W, 3);
-      both(x, () => {
-        [[0, 260, 150], [260, 480, 100], [480, 700, 50]].forEach(([a, b, h]) => { x.fillStyle = vg(x, G - h, G, [[0, '#3A4A72'], [1, '#22304E']]); x.fillRect(a, G - h, b - a, h); for (let px = a + 20; px < b - 30; px += 56) { x.fillStyle = '#C0392B'; rr(x, px, G - h - 34, 40, 34, [10, 10, 0, 0]); x.fill(); } });
-        // journal stack
-        ['#2E86D6', '#E9EDF0', '#8CC63F', '#E9EDF0', '#C98A50', '#3B4A5A', '#E9EDF0'].forEach((c, i) => { x.fillStyle = c; x.fillRect(1480, G - 20 - i * 20, 300, 20); x.fillStyle = 'rgba(0,0,0,0.12)'; x.fillRect(1480, G - 2 - i * 20, 300, 2); });
-      });
-      x.fillStyle = vg(x, G - 170, G, [[0, '#8A6240'], [1, '#4A3018']]); x.fillRect(2480, G - 30, 240, 30); rr(x, 2545, G - 170, 110, 140, [14, 14, 0, 0]); x.fill();
-    },
-    front(x) {
-      text(x, '학술지', 1630, G - 160, 22, { color: '#FFF', weight: 900 }); text(x, '학술지', mx(1630), G - 160, 22, { color: '#FFF', weight: 900 });
-      logoOnly(x, CX, G - 110, 26);
-      x.strokeStyle = '#222'; x.lineWidth = 4; x.beginPath(); x.moveTo(CX + 30, G - 170); x.lineTo(CX + 60, G - 215); x.stroke(); x.fillStyle = '#333'; x.beginPath(); x.arc(CX + 62, G - 220, 8, 0, 7); x.fill();
     },
   };
 

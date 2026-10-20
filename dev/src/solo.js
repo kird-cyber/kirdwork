@@ -4,7 +4,7 @@
 // The bots draw their random numbers from (seed, turn), so a run is fully reproducible from my inputs alone:
 // the leaderboard stores them and a record can be replayed to check it (soloReplay).
 const SOLO = {
-  mapId: 'notebook',              // 연구노트 (연구윤리) — open rolling pages; 정의의 저울's towers made 1 vs 3 a slog
+  mapId: 'scale',                 // 진실의 전당 (연구윤리 실험실): flat floor, low cover — the 연구윤리 map itself (was 연구노트 until 2026-10-20)
   botLevel: 'normal',             // foes hit me about 30% of their shots: I take hits but rarely go down
   meHp: 4, foeHp: 0.5,            // with the 10-min clock, stand-in players (24 runs each): easy clear 33% / out 8% · normal 67% / 0% · hard 83% / 0%
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)

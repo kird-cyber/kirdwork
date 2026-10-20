@@ -24,7 +24,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL 
   await p.fill('#soPin', '1234'); await p.click('#soStart');
   await p.waitForFunction(() => window.__pg.screen === 'game' && window.__pg.match && window.__pg.match.tanks.length === 4, null, { timeout: 15000 });
   ok(await p.evaluate(() => __pg.match.tanks.map(t => t.nick).join()) === '시험왕,위조탱,변조탱,표절탱', 'match: me vs 위조탱·변조탱·표절탱 (names over the tanks)');
-  ok(await p.evaluate(() => __pg.match.mapId) === 'notebook', 'map is 연구노트');
+  ok(await p.evaluate(() => __pg.match.mapId) === 'scale', 'map is 진실의 전당 (연구윤리)');
   // drive my turns with a hard bot through the controller (so the inputs are recorded like a person's)
   await p.evaluate(() => {
     const mem = {};
@@ -97,7 +97,7 @@ let pass = 0, fail = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL 
   console.log('   result:', t2, '·', tm2, '·', await p.textContent('#sooSub'), '·', await p.textContent('#sooRank'));
   ok(tu.winner === 'timeup' && t2 === '시간 종료' && /남은 적 체력 \d+/.test(tm2), 'clock ran out mid-turn → 시간 종료 with foe HP left');
   const dump = await (await fetch('http://127.0.0.1:8790/exec?action=dump')).json(), last = dump[dump.length - 1];
-  ok(last[4] === '시간종료' && last[5] === 600 && last[12] > 0 && /^v3\/ok/.test(String(last[10])), `sheet row: ${last[4]} · ${last[5]}s · 남은 적 체력 ${last[12]} · ${last[10]}`);
+  ok(last[4] === '시간종료' && last[5] === 600 && last[12] > 0 && /^v4\/ok/.test(String(last[10])), `sheet row: ${last[4]} · ${last[5]}s · 남은 적 체력 ${last[12]} · ${last[10]}`);
   await p.screenshot({ path: SP + 'so_timeup.png' });
   ok(errs.length === 0, 'no page errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close();

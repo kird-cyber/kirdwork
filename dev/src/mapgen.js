@@ -265,20 +265,6 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   return TG;
 }
 const TMAPGEN = {
-  scale(W, H, m) { // 정의의 저울: two KIRD labs, a marble podium, a bronze balance whose pans and beam are the high ground
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmPoly(m, W, H, [[0, TG], [0, TG - 300], [120, TG - 290], [260, TG - 230], [360, TG - 150], [430, TG - 60], [470, TG]], X);
-      tmRect(m, W, H, 512, TG - 370, 1188, TG, X);                                      // lab A / B (3 floors, filled)
-      tmRect(m, W, H, 1460, TG - 40, TCX, TG, X); tmRect(m, W, H, 1760, TG - 80, TCX, TG, X); tmRect(m, W, H, 2130, TG - 125, TCX, TG, X); // podium tiers
-      // the pan: a shallow bowl, flat rim on top
-      fillBand(m, W, H, X(1880) - 230, X(1880) + 230, () => TG - 390, x => { const u = (x - X(1880)) / 230; return TG - 384 + 68 * (1 - u * u); });
-    });
-    rectF(m, W, H, 2370, TG - 290, 2830, TG - 125, 1); rectF(m, W, H, 2350, TG - 300, 2850, TG - 282, 1); // plinth
-    // the column is background only (shells pass it): the beam, its pans and the finial float as the balance's solid parts
-    rectF(m, W, H, 1880, TG - 770, 3320, TG - 750, 1); tmDisc(m, W, H, 1880, TG - 759, 22); tmDisc(m, W, H, 3320, TG - 759, 22); // beam
-    fillPoly(m, W, H, [[TCX - 46, TG - 772], [TCX - 40, TG - 830], [TCX, TG - 842], [TCX + 40, TG - 830], [TCX + 46, TG - 772]]); tmDisc(m, W, H, TCX, TG - 868, 30); // finial
-  },
   notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
     rectF(m, W, H, 0, TG, W, H - 4, 1);
     tmMirror((X, r) => {
@@ -316,8 +302,7 @@ const TMAPGEN = {
     });
     rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
   },
-  // ---- 연구윤리 맵 시안 3종 (draft): flat floor, low symmetric structures
-  ethA(W, H, m) { // A 연구윤리 실험실: lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
+  scale(W, H, m) { // 진실의 전당 (연구윤리 실험실): flat lab floor; lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
     rectF(m, W, H, 0, TG, W, H - 4, 1);
     tmMirror(X => {
       tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
@@ -325,23 +310,10 @@ const TMAPGEN = {
       tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
       tmRect(m, W, H, 740, TG - 62, 880, TG, X);                                       // lab-notebook stack (L) / IRB file box (R)
       tmRect(m, W, H, 1960, TG - 44, 2080, TG, X);                                     // peer-review magnifier stand (L) / data backup drive (R)
+      tmCapsule(m, W, H, Math.min(X(1650), X(1920)), Math.max(X(1650), X(1920)), TG - 64, TG, 32); // rolled manuscript (low cover)
     });
     rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
     rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
-  },
-  ethB(W, H, m) { // B 진실의 광장: an open plaza with three gates (위조·변조·표절 예방); tanks drive under the lintels
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    const gate = (cx, h) => { rectF(m, W, H, cx - 210, TG - h, cx - 150, TG, 1); rectF(m, W, H, cx + 150, TG - h, cx + 210, TG, 1); rectF(m, W, H, cx - 240, TG - h - 44, cx + 240, TG - h, 1); };
-    tmMirror(X => { tmPoly(m, W, H, [[0, TG], [0, TG - 110], [260, TG - 100], [420, TG - 40], [500, TG]], X); });
-    gate(1450, 200); gate(TCX, 230); gate(2 * TCX - 1450, 200);
-  },
-  ethC(W, H, m) { // C 학술대회장: a conference stage; seating tiers at the ends, journal stacks, a lectern in the middle
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmRect(m, W, H, 0, TG - 150, 260, TG, X); tmRect(m, W, H, 260, TG - 100, 480, TG, X); tmRect(m, W, H, 480, TG - 50, 700, TG, X); // seating tiers
-      tmCapsule(m, W, H, Math.min(X(1480), X(1780)), Math.max(X(1480), X(1780)), TG - 140, TG, 40); // journal stack
-    });
-    rectF(m, W, H, 2480, TG - 30, 2720, TG, 1); tmCapsule(m, W, H, 2545, 2655, TG - 170, TG - 30, 14); // lectern
   },
 };
 for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
