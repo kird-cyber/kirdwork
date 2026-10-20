@@ -323,6 +323,8 @@ const TMAPGEN = {
       tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
       tmRect(m, W, H, 1250, TG - 190, 1530, TG, X);                                    // data cabinet (L) / citation shelf (R)
       tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
+      tmRect(m, W, H, 740, TG - 62, 880, TG, X);                                       // lab-notebook stack (L) / IRB file box (R)
+      tmRect(m, W, H, 1960, TG - 44, 2080, TG, X);                                     // peer-review magnifier stand (L) / data backup drive (R)
     });
     rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
     rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs

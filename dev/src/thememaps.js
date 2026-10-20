@@ -369,6 +369,18 @@ const TMAP_ART = (() => {
     text(x, how, cx, top + h - 92, 30, { color: '#1E2A36', weight: 900 });
     text(x, sub, cx, top + h - 48, 21, { color: '#56657A', weight: 700 });
   }
+  // a mascot cut-out on the wall with a speech bubble (dir: which side the bubble's tail points from)
+  function mascotWall(x, cx, base, h, say, dir) {
+    const M = IMG.mascot, w = h * 360 / 340, top = base - h;
+    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, cx - w / 2 - 6, top - 4, w + 24, h + 58, 24); x.fill();
+    x.fillStyle = '#FFFFFF'; rr(x, cx - w / 2 - 12, top - 12, w + 24, h + 58, 24); x.fill();
+    x.save(); rr(x, cx - w / 2, top, w, h, 16); x.clip(); x.drawImage(M, 20, 0, 360, 340, cx - w / 2, top, w, h); x.restore();
+    text(x, '연구윤리 지킴이', cx, base + 22, 22, { color: '#1E3A5A', weight: 900 });
+    const bw = say.length * 26 + 50, bx = cx - bw / 2, by = base - h - 96;
+    x.fillStyle = '#FFFFFF'; rr(x, bx, by, bw, 64, 30); x.fill(); x.strokeStyle = '#2E86D6'; x.lineWidth = 4; x.stroke();
+    x.fillStyle = '#FFFFFF'; poly(x, [[cx - 14, by + 62], [cx + 14, by + 62], [cx + dir * 4, by + 92]]); x.fill();
+    text(x, say, cx, by + 33, 26, { color: '#1E3A5A', weight: 900 });
+  }
   const FFP = [['위조', '원본 데이터 보관', '없는 결과를 만들지 않는다', '#C0392B'], ['변조', '기록하고 서명하기', '데이터를 임의로 바꾸지 않는다', '#D9822B'], ['표절', '출처를 밝히기', '남의 것을 내 것처럼 쓰지 않는다', '#2E86D6']];
 
   // A 연구윤리 실험실 ------------------------------------------------
@@ -382,7 +394,16 @@ const TMAP_ART = (() => {
       x.fillStyle = '#FFFFFF'; rr(x, CX - 760, 120, 1520, 90, 14); x.fill(); x.strokeStyle = '#C9A55A'; x.lineWidth = 4; x.stroke();
       text(x, '연구진실성', CX - 560, 165, 34, { color: '#8A5A1C', weight: 900 }); values5(x, 165, 30); 
       FFP.forEach(([w, how, sub, c], i) => ffpPoster(x, [1390, CX, mx(1390)][i], 330, 340, w, how, sub, c));
-      mascotBanner(x, 820, 380, 120, '연구윤리 지킴이'); mascotBanner(x, mx(820), 380, 120, '연구윤리 지킴이');
+      // the KIRD mascots on the back wall, each with a reminder
+      mascotWall(x, 1990, G - 300, 250, '원본 데이터는 있는 그대로!', -1);
+      mascotWall(x, mx(1990), G - 300, 250, '출처 표기, 잊지 마세요!', 1);
+      // wall bits: clock, IRB whiteboard, a shelf of lab notebooks
+      x.fillStyle = '#FFFFFF'; rr(x, 520, 560, 380, 220, 10); x.fill(); x.strokeStyle = '#9AA3AB'; x.lineWidth = 8; x.stroke();
+      text(x, 'IRB 심의', 710, 600, 26, { color: '#1E3A5A', weight: 900 });
+      ['☑ 연구계획 승인', '☑ 동의서 확보', '☐ 결과 보고'].forEach((t, i) => text(x, t, 560, 646 + i * 40, 22, { color: '#2E86D6', weight: 700, align: 'left' }));
+      x.fillStyle = '#6B4A2C'; x.fillRect(mx(900), 760, 380, 14);
+      ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(900) + 14 + i * 50, 640 + (i % 2) * 12, 40, 120 - (i % 2) * 12); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(900) + 20 + i * 50, 670, 28, 20); });
+      text(x, '연구노트 2024 · 2025 · 2026', mx(900) + 190, 610, 20, { color: '#34404E', weight: 800 });
     },
     solid(x) {
       x.fillStyle = vg(x, G, H, [[0, '#9AA6AE'], [0.05, '#7D8991'], [1, '#4E585F']]); x.fillRect(0, G, W, H - G);
@@ -400,16 +421,28 @@ const TMAP_ART = (() => {
       ['#2E86D6', '#C0392B', '#8CC63F', '#F2C230', '#3B4A5A', '#9B6BC9', '#2E86D6', '#D9822B'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 172, 26, 74); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(1530) + 12 + i * 33, G - 150, 18, 10); });
       x.fillStyle = '#4A3018'; x.fillRect(mx(1530), G - 96, 280, 8);
       ['#3B4A5A', '#8CC63F', '#C0392B', '#2E86D6', '#F2C230', '#8CC63F', '#3B4A5A', '#9B6BC9'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 82, 26, 74); });
+      // lab-notebook stack (left) / IRB file box (right)
+      ['#2E86D6', '#8CC63F', '#E9EDF0', '#2E86D6', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(740 + (i % 2) * 6, G - 12 - i * 12, 134, 12); });
+      x.fillStyle = vg(x, G - 62, G, [[0, '#D8DDE1'], [1, '#9AA3AB']]); x.fillRect(mx(880), G - 62, 140, 62); x.fillStyle = '#FFF'; x.fillRect(mx(880) + 24, G - 46, 92, 26);
+      // magnifier stand (left) / backup drive (right)
+      x.fillStyle = vg(x, G - 44, G, [[0, '#8A6240'], [1, '#4A3018']]); x.fillRect(1960, G - 44, 120, 44);
+      x.fillStyle = vg(x, G - 44, G, [[0, '#4A5A6C'], [1, '#1C2530']]); x.fillRect(mx(2080), G - 44, 120, 44); x.fillStyle = '#3FD07A'; x.fillRect(mx(2080) + 12, G - 30, 10, 6);
       // signing desk (middle)
       x.fillStyle = vg(x, G - 190, G - 166, [[0, '#C9925A'], [1, '#8C6640']]); x.fillRect(2360, G - 190, 480, 24); x.fillStyle = '#6B4A2C'; x.fillRect(2380, G - 166, 40, 166); x.fillRect(2780, G - 166, 40, 166);
     },
     front(x) {
-      text(x, '원본 데이터 보관함', 1390, G - 214, 22, { color: '#1E2A36', weight: 900 });
-      text(x, '출처 표기 서가', mx(1390), G - 214, 22, { color: '#1E2A36', weight: 900 });
+      for (const [cx, t] of [[1390, '원본 데이터 보관함'], [mx(1390), '출처 표기 서가']]) { x.fillStyle = '#FFFDF7'; rr(x, cx - 112, G - 34, 224, 28, 6); x.fill(); text(x, t, cx, G - 20, 18, { color: '#1E2A36', weight: 900 }); }
       // open lab notebook + pen on the desk
       x.fillStyle = '#FFFFFF'; poly(x, [[2440, G - 192], [2600, G - 204], [2760, G - 192], [2760, G - 190], [2440, G - 190]]); x.fill();
       x.strokeStyle = '#1F3A93'; x.lineWidth = 2; for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(2460, G - 197 + k * 0); x.stroke(); }
-      text(x, '연구노트 서명대', CX, G - 232, 24, { color: '#1E2A36', weight: 900 });
+      text(x, '연구노트 서명대', CX, G - 178, 17, { color: '#FFF7E8', weight: 900 });
+      text(x, '연구노트', 810, G - 36, 15, { color: '#1E2A36', weight: 900 });
+      text(x, 'IRB 승인', mx(810), G - 33, 17, { color: '#1E2A36', weight: 900 });
+      // the peer-review magnifier on its stand
+      x.strokeStyle = '#6B4A2C'; x.lineWidth = 8; x.beginPath(); x.moveTo(2020, G - 44); x.lineTo(2020, G - 110); x.stroke();
+      x.strokeStyle = '#3B4A5A'; x.lineWidth = 10; x.beginPath(); x.arc(2020, G - 150, 42, 0, 7); x.stroke(); x.fillStyle = 'rgba(170,220,245,0.45)'; x.fill();
+      text(x, '동료 검증', 2020, G - 22, 16, { color: '#FFF7E8', weight: 900 });
+      text(x, '데이터 백업', mx(2020) + 8, G - 14, 14, { color: '#DFF7EF', weight: 900 });
       logoPlate(x, CX, G - 90, 34);
     },
   };
