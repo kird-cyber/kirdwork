@@ -83,7 +83,7 @@
 - **오늘의 도전**: 한국 날짜로 시드(`soloDay`/`soloSeed`) → 하루 동안 모두 같은 맵·적·배치·바람. 적 봇 난수는 (시드, 턴)으로 고정(`soloBotRnd`) → 내 입력만으로 판 전체가 똑같이 재현(`soloReplay`).
 - 기록 = 내 차례에 쓴 시간 합(`used`, 실제 시간) + 발사 1번당 3초. 적 차례·포탄 비행 시간은 제외. 같은 기록이면 남은 체력 많은 쪽. 실패는 순위 없음(시트엔 저장).
 - 코드: `src/solo.js`(결정적 규칙·점수·재현, sim 계층), `src/soloui.js`(도전 화면·명예의 전당·결과·기록 서버 연결, main.js 뒤), 템플릿 `#solo` `#fame` `#soloOver` `#soloHud`. 상태바 순서는 `soloUpcoming`.
-- **기록 서버 = 구글 시트 + Apps Script**: `leaderboard/Code.gs`, 설치 안내 `leaderboard/SETUP.md`. 웹 앱 URL을 `SOLO.boardUrl`에 넣으면 연결(시험: 주소 뒤 `?board=URL`). URL이 없으면 이 기기(localStorage)에만 저장하고 화면에 "이 기기 기록"이라고 표시.
+- **기록 서버 = 구글 시트 + Apps Script**: `leaderboard/Code.gs`, 설치 안내 `leaderboard/SETUP.md`. 웹 앱 URL을 `SOLO.boardUrl`에 넣으면 연결(2026-10-20 연결 완료: 사용자 시트)(시험: 주소 뒤 `?board=URL`). URL이 없으면 이 기기(localStorage)에만 저장하고 화면에 "이 기기 기록"이라고 표시.
   - 아이디 = 닉네임 + PIN 4자리 → SHA-256 키만 전송·저장(PIN 자체는 저장 안 함). 처음 쓴 PIN이 그 닉네임의 주인.
   - 기록과 함께 입력 기록(log)을 보냄. 게임이 끝나면 스스로 재현해 `v1/ok` 또는 `v1/mismatch`를 `버전` 칸에 남김. 관리자 검증: `node tests/verify_solo.js 기록.csv`.
   - 명예의 전당 점수: 날마다 1~10위에 10~1점 누적.

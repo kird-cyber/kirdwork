@@ -9,7 +9,7 @@ const SOLO = {
   meHp: 2, foeHp: 0.7,            // 1 vs 3: tuned so stand-in players clear easy 50% · normal 62% · hard 92% (72 runs each)
   botUsed: 240,                   // a bot's turn counts as 2 s of thinking (delay only; not part of my score)
   shotSec: 3,                     // every shot of mine adds 3 s to the record (accuracy matters, not just speed)
-  boardUrl: '',                   // Google Apps Script web app URL (dev/leaderboard/SETUP.md). Empty = this device only
+  boardUrl: 'https://script.google.com/macros/s/AKfycbzWnAeQJ357XRtcj-zDrepRXFCKaH_dHRVpwfIB4IEoUDpjj1Fb-oejDx6dbcDBZF7H/exec', // Google Apps Script web app (dev/leaderboard/SETUP.md). Empty = this device only
   // the three most serious forms of research misconduct (위조·변조·표절, "FFP")
   foes: [
     { id: 'f0', nick: '위조탱', word: '위조', line: '존재하지 않는 데이터나 연구 결과를 만들어 내는 것' },
