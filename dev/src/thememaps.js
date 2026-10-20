@@ -285,7 +285,6 @@ const TMAP_ART = (() => {
     board(x, 150, y, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
     board(x, mx(1330), y, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
   }
-  function values5(x, cy, size, col) { text(x, '객관성 · 정직성 · 개방성 · 책무성 · 공정성', CX, cy, size, { color: col || '#7A6440', weight: 900, ls: 6 }); }
   // a "no" sign: white disc, red ring and slash over a word
   function banSign(x, cx, cy, r, word) {
     x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
@@ -325,8 +324,6 @@ const TMAP_ART = (() => {
       x.fillStyle = vg(x, G - 240, G, [[0, '#C9D2D8'], [1, '#B3BDC4']]); x.fillRect(0, G - 240, W, 240); x.fillStyle = '#9FAAB2'; x.fillRect(0, G - 246, W, 8);
       for (let px = 100; px < W; px += 400) { x.fillStyle = 'rgba(255,255,230,0.55)'; x.fillRect(px, 40, 240, 14); x.fillStyle = vg(x, 54, 520, [[0, 'rgba(255,255,230,0.22)'], [1, 'rgba(255,255,230,0)']]); poly(x, [[px, 54], [px + 240, 54], [px + 330, 520], [px - 90, 520]]); x.fill(); }
       ethBoards(x, 110);
-      x.fillStyle = '#FFFFFF'; rr(x, CX - 760, 120, 1520, 90, 14); x.fill(); x.strokeStyle = '#C9A55A'; x.lineWidth = 4; x.stroke();
-      text(x, '연구진실성', CX - 560, 165, 34, { color: '#8A5A1C', weight: 900 }); values5(x, 165, 30); 
       FFP.forEach(([w, how, sub, c], i) => ffpPoster(x, [1390, CX, mx(1390)][i], 330, 340, w, how, sub, c));
       // the KIRD mascots on the back wall, each with a reminder
       mascotWall(x, 1990, G - 300, 250, '원본 데이터는 있는 그대로!', -1);
