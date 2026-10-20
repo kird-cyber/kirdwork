@@ -98,6 +98,10 @@ function scenario(name, mk) {
   ok(M.call('bid', { itemId: i2, amount: 9000 }, b).code === 'auth', name + ': 재발급하면 옛 로그인 끊김');
   const b2 = lg(re.code); ok(!!b2 && M.call('items', {}, b2).items.find(x => x.id === i2).mine.amount === 6000, name + ': 새 코드로 기존 입찰 그대로');
   ok(!M.call('login', { code: made[1].code }).ok, name + ': 옛 코드 로그인 거절');
+  // 코드 지우기: 입찰 없는 코드만
+  { const extra = M.call('admin.createCodes', { count: 2 }, A).codes; const r = M.call('admin.deleteCodes', { ids: [extra[0].id, extra[1].id, codes[0].id] }, A);
+    ok(r.ok && r.deleted.length === 2 && r.kept.length === 1 && r.kept[0] === codes[0].id, name + ': 코드 삭제 — 입찰 없는 2개 지움, 입찰 있는 1개 남김');
+    ok(!M.call('login', { code: extra[0].code }).ok && M.call('admin.codes', {}, A).codes.length === 3, name + ': 지운 코드는 로그인 안 됨'); }
   // 연장
   M.call('admin.saveSettings', { settings: { extend_min: 5 } }, A);
   const relogin = () => M.call('adminLogin', { password: 'pw-123' }).token;

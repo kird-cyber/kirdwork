@@ -439,6 +439,17 @@
         if ('active' in p && !!c.active !== !!p.active) log('관리자', p.active ? '코드 사용 재개' : '코드 사용 중지', '#' + c.id);
         return { ok: true };
       },
+      // 코드 지우기: 한 번도 입찰하지 않은 코드만 (입찰 기록이 있으면 「사용 중지」로 막아야 결과가 남는다)
+      'admin.deleteCodes'(p, tok) {
+        needAdmin(tok);
+        const ids = (Array.isArray(p.ids) ? p.ids : []).map(Number).filter(Boolean);
+        if (!ids.length) throw err('지울 코드를 골라 주세요.');
+        const used = {}; store.list('bids').forEach(b => used[b.code_id] = 1);
+        const deleted = [], kept = [];
+        ids.forEach(id => { const c = store.get('codes', id); if (!c) return; if (used[id]) kept.push(id); else { store.remove('codes', id); deleted.push(id); } });
+        if (deleted.length) log('관리자', '코드 삭제', deleted.length + '개 (' + deleted.map(i => '#' + i).join(', ').slice(0, 300) + ')');
+        return { deleted: deleted, kept: kept };
+      },
       'admin.reissueCode'(p, tok) {
         needAdmin(tok); const c = store.get('codes', Number(p.id)); if (!c) throw err('코드를 찾을 수 없어요.');
         const used = {}; store.list('codes').forEach(x => used[x.hash] = 1);

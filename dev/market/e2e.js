@@ -119,6 +119,9 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   const dl = A.waitForEvent('download'); await A.click('#cdCsv'); const d = await dl; ok(/^kird-market_codes_.*\.csv$/.test(d.suggestedFilename()), 'CSV 내려받기 ' + d.suggestedFilename());
   await A.click('#cdClose'); await until(async () => !(await A.isVisible('#codesDlg')));
   ok(await until(() => A.evaluate(c => [...document.querySelectorAll('#content .codev')].some(e => e.textContent === c), newCode)), '코드 목록에서 전체 코드 보임');
+  { const before = await A.evaluate(() => document.querySelectorAll('[data-pick]').length);
+    await A.check('[data-pick="9"]'); ok(!(await A.isDisabled('#codeDel')), '코드 고르면 「선택 삭제」 켜짐');
+    await A.click('#codeDel'); ok(await until(() => A.evaluate(n => document.querySelectorAll('[data-pick]').length === n - 1, before)), '입찰 없는 코드 삭제'); }
   await shot(A, '14_admin_codes', { fullPage: true });
   // 새 코드로 입찰
   const R = await ctx.newPage(); R.on('pageerror', e => errs.push('bidder3: ' + e.message));
