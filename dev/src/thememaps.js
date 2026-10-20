@@ -261,6 +261,24 @@ const TMAP_ART = (() => {
   }
   function dust(x, px, py) { x.save(); x.filter = 'blur(3px)'; for (let i = 0; i < 9; i++) { const a = -Math.PI * (0.1 + i * 0.1); x.fillStyle = 'rgba(210,190,160,0.55)'; x.beginPath(); x.arc(px + Math.cos(a) * 70, py + Math.sin(a) * 40, 22 + (i % 3) * 8, 0, 7); x.fill(); } x.restore(); }
 
+  // an information board: header band + left-aligned lines (all text verified against the law; see HANDOFF)
+  function board(x, a, y, w, title, lines, o = {}) {
+    const fs = o.size || 24, lh = fs * 1.55, h = 78 + lines.length * lh + 18, col = o.color || '#2E86D6';
+    if (o.legs) { x.fillStyle = '#5E6870'; for (const lx of [a + w * 0.18, a + w * 0.82]) x.fillRect(lx - 7, y + h, 14, o.legs); }
+    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, a + 6, y + 8, w, h, 14); x.fill();
+    x.fillStyle = o.bg || '#FFFDF7'; rr(x, a, y, w, h, 14); x.fill();
+    x.fillStyle = col; rr(x, a, y, w, 60, [14, 14, 0, 0]); x.fill();
+    text(x, title, a + 24, y + 31, fs + 6, { color: '#FFF', weight: 900, align: 'left' });
+    if (o.badge) text(x, o.badge, a + w - 22, y + 31, fs * 0.62, { color: 'rgba(255,255,255,0.85)', weight: 700, align: 'right' });
+    lines.forEach((l, i) => {
+      const ly = y + 60 + 30 + i * lh, hl = Array.isArray(l);
+      x.fillStyle = col; x.beginPath(); x.arc(a + 32, ly, 5, 0, 7); x.fill();
+      text(x, hl ? l[0] : l, a + 48, ly, fs, { color: '#1E2A36', weight: 800, align: 'left' });
+      if (hl) text(x, l[1], a + w - 24, ly, fs, { color: col, weight: 900, align: 'right' });
+    });
+    return h;
+  }
+
   const S = {};
   // ---------------------------------------------------------------- 정의의 저울 (연구윤리)
   function labRoomE(x, a, top, b, bot, floor) { return labRoom(x, a, top, b, bot, floor); }
@@ -276,9 +294,11 @@ const TMAP_ART = (() => {
       x.fillStyle = vg(x, top - 30, top + 40, [[0, '#F6F2E8'], [1, '#D8D1C2']]); x.fillRect(1420, top - 30, 2360, 70);
       x.fillStyle = '#E4DED1'; poly(x, [[1400, top - 30], [CX, top - 250], [3800, top - 30]]); x.fill();
       x.strokeStyle = '#CFC7B6'; x.lineWidth = 8; poly(x, [[1440, top - 34], [CX, top - 236], [3760, top - 34]]); x.stroke();
-      text(x, '정직 · 책임', CX - 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 }); text(x, '공정 · 관리', CX + 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 });
+      text(x, '객관성 · 정직성 · 개방성', CX - 400, top + 6, 36, { color: '#7A6440', weight: 900, ls: 3 }); text(x, '책무성 · 공정성', CX + 420, top + 6, 38, { color: '#7A6440', weight: 900, ls: 6 });
       kMark(x, CX, top - 110, 84);
       x.restore();
+      board(x, 150, 120, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
+      board(x, mx(1330), 120, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
       // the balance column: background (not solid), so shells fly past it
       x.save(); x.globalAlpha = 0.5;
       x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
@@ -346,9 +366,10 @@ const TMAP_ART = (() => {
       mascotBanner(x, 340, 340, 200, '연구노트 쓰는 날');
       x.fillStyle = '#FFFDF5'; x.fillRect(500, 350, 470, 360); x.fillStyle = '#E8402E'; x.beginPath(); x.arc(735, 356, 9, 0, 7); x.fill();
       text(x, '연구노트 작성 원칙', 735, 400, 30, { color: '#1E3A5A', weight: 900 });
-      ['① 날짜를 적고 쪽 번호를 이어 쓴다', '② 지우지 말고 줄 긋고 서명한다', '③ 원본 데이터 위치를 남긴다', '④ 작성자·확인자가 서명한다', '⑤ 정해진 기간 동안 보관한다'].forEach((t, i) => text(x, t, 530, 455 + i * 50, 23, { color: '#34404E', weight: 600, align: 'left' }));
+      ['① 기록자·확인자가 날짜와 서명', '② 수정액 금지, 줄 긋고 서명', '③ 빈 칸에는 사선을 긋는다', '④ 원본 데이터 위치를 남긴다', '⑤ 30년 보존 · 노트는 기관 소유'].forEach((t, i) => text(x, t, 530, 455 + i * 50, 23, { color: '#34404E', weight: 600, align: 'left' }));
       x.fillStyle = '#6B4A2C'; x.fillRect(4170, 560, 860, 18); x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(4170, 578, 860, 8);
       ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#E8EDF1', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(4200 + i * 64, 400 + (i % 3) * 10, 54, 160 - (i % 3) * 10); x.fillStyle = 'rgba(255,255,255,0.75)'; x.fillRect(4212 + i * 64, 440 + (i % 3) * 10, 30, 34); });
+      board(x, 4150, 610, 900, '전자연구노트도 인정', ['전자서명으로 기록자·확인자 확인', '입력 시각이 자동으로 기록', '위·변조 여부를 확인할 수 있어야'], { size: 22, color: '#1D5E9E', badge: '연구노트 지침' });
       x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(4600, 300, 70, 0, 7); x.fill(); x.strokeStyle = '#3B4A5A'; x.lineWidth = 8; x.stroke(); x.lineWidth = 6; x.beginPath(); x.moveTo(4600, 300); x.lineTo(4600, 254); x.moveTo(4600, 300); x.lineTo(4636, 314); x.stroke();
       x.fillStyle = 'rgba(255,240,215,0.2)'; x.fillRect(0, 0, W, G);
     },
@@ -416,6 +437,9 @@ const TMAP_ART = (() => {
   S.lab = {
     veil: 'rgba(222,236,246,0.30)',
     back(x) {
+      const roof = G - 362;
+      board(x, 610, roof - 410, 760, '연구실 안전점검', [['일상점검 · 연구 시작 전', '매일'], ['정기점검', '연 1회 이상'], ['정밀안전진단 · 유해물질 연구실', '2년마다']], { color: '#C62828', badge: '연구실안전법', legs: 120 });
+      board(x, mx(1370), roof - 410, 760, '안전교육 · 사고 보고', [['신규교육 (학생 2시간)', '8시간'], ['정기교육 (저위험 연 3시간)', '반기 6시간'], ['중대연구실사고 보고', '지체 없이']], { color: '#C62828', badge: '연구실안전법 시행규칙', legs: 120 });
       x.fillStyle = '#A9C7B2'; x.beginPath(); x.moveTo(0, G - 140); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 190 - Math.sin(px / 600) * 70 - Math.sin(px / 170) * 12); x.lineTo(W, G); x.lineTo(0, G); x.fill();
     },
     solid(x) {
@@ -483,6 +507,8 @@ const TMAP_ART = (() => {
       x.fillStyle = 'rgba(30,44,58,0.35)'; x.fillRect(0, 0, W, G);
       x.fillStyle = '#FAFBFC'; rr(x, CX - 300, 250, 600, 90, 10); x.fill(); logoOnly(x, CX - 140, 295, 50); text(x, '증빙 보관실', CX + 120, 296, 34, { color: '#1E2A36', weight: 900 });
       mascotBanner(x, 1260, 430, 130, '증빙은 꼼꼼히');
+      board(x, 140, 300, 960, '연구비, 어디서 하나요?', [['과제 공고 · 신청 · 협약', 'IRIS'], ['집행 · 정산 (gaia.go.kr)', '통합이지바로'], ['집행 · 정산 (산업부 계열 등)', '통합RCMS'], ['과제 · 성과 정보', 'NTIS']], { color: '#1D5E9E' });
+      board(x, mx(1100), 300, 960, '연구비 집행 원칙', [['연구비카드 · 계좌이체가 원칙', '현금 예외'], ['증빙자료 보관', '종료 후 5년'], ['정산', '종료 후 3개월 내'], ['용도 외 사용 → 제재 + 환수', '최대 10년·5배']], { color: '#2E7D4F', badge: '혁신법 · 연구개발비 사용 기준' });
     },
     solid(x) {
       noiseBand(x, 0, W, G, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); x.strokeStyle = 'rgba(0,0,0,0.18)'; x.lineWidth = 2; for (let px = 0; px < W; px += 200) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); }
@@ -503,7 +529,7 @@ const TMAP_ART = (() => {
       const a = 2240, b = 2960, t = G - 330;
       x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(a - 4, t - 4, b - a + 8, G - t + 4);
       x.fillStyle = '#B9E3C4'; rr(x, a + 40, t + 30, b - a - 80, 90, 10); x.fill(); x.fillStyle = 'rgba(0,0,0,0.08)'; x.fillRect(a + 40, t + 30, b - a - 80, 16);
-      text(x, '집행률  100.0 %', b - 70, t + 78, 46, { color: '#1E3A2A', weight: 900, align: 'right' });
+      text(x, '증빙 보관  5년', b - 70, t + 78, 46, { color: '#1E3A2A', weight: 900, align: 'right' });
       const keys = ['7', '8', '9', '÷', 'C', '4', '5', '6', '×', '%', '1', '2', '3', '−', '=', '0', '00', '.', '+', '='];
       keys.forEach((k, i) => { const c = i % 5, r2 = Math.floor(i / 5), kx = a + 40 + c * 130, ky = t + 140 + r2 * 46; if (ky + 40 > G - 4) return; x.fillStyle = k === '=' ? '#E8913C' : k === 'C' ? '#C9384A' : '#E9EDF0'; rr(x, kx, ky, 116, 38, 8); x.fill(); text(x, k, kx + 58, ky + 20, 22, { color: k === '=' || k === 'C' ? '#FFF' : '#2A3440', weight: 800 }); });
       logoOnly(x, a + 110, t + 14, 16);

@@ -525,6 +525,26 @@ function announceHappening() {
   setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + hp[0]); }, 1700 + d);
   setTimeout(() => { if (match && match.happening === h) banner(hp[1]); }, 3300 + d);
 }
+// 알고 계셨나요? — one verified fact about the map's theme (CONFIG.maps[..].tips): on the start card, then now and then during play
+const TIPS = { last: '', turn: -1, timer: 0 };
+function pickTip(meta) {
+  const l = meta.tips || []; if (!l.length) return '';
+  let t = l[Math.floor(Math.random() * l.length)]; if (t === TIPS.last && l.length > 1) t = l[(l.indexOf(t) + 1) % l.length];
+  return (TIPS.last = t);
+}
+function showTip(t) {
+  const el = $('tipToast'); if (!el || !t) return;
+  el.innerHTML = '<b>💡 알고 계셨나요?</b><span></span>'; el.querySelector('span').textContent = t;
+  el.hidden = false; void el.offsetWidth; el.classList.add('show');
+  clearTimeout(TIPS.timer); TIPS.timer = setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 400); }, 7000);
+}
+// during play: turn 6, then every 10 turns (only on maps with tips, only while the game screen is up)
+function tipTick() {
+  if (!match || screen !== 'game' || match.phase === 'over' || match.turnNo === TIPS.turn) return;
+  TIPS.turn = match.turnNo;
+  const meta = mapMetaOf(match);
+  if (meta.tips && match.turnNo >= 6 && (match.turnNo - 6) % 10 === 0 && $('mguide').hidden) showTip(pickTip(meta));
+}
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0;
 function showMapGuide() {
@@ -532,7 +552,7 @@ function showMapGuide() {
   if (!meta.guide) { el.hidden = true; return false; }
   const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
-  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
+  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${meta.tips ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc(pickTip(meta))}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
   clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
   return true;
@@ -580,7 +600,7 @@ function loop(now) {
     if (ON.active) onlineFrame(now); else tutorialFrame();
     // the angle guide and power ring are only for the player who is aiming
     R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
-    updateHud(); soloHud();
+    updateHud(); soloHud(); tipTick();
   }
   requestAnimationFrame(loop);
 }

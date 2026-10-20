@@ -372,6 +372,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* KIRD 주제 맵: start-of-match guide card */
 #mguide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; background: rgba(8,12,20,0.35); cursor: pointer; }
 #mguide[hidden] { display: none; }
+#mguide .mg-tip { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #EAF5FC; font-size: 13px; line-height: 1.55; color: #14324E; }
+#mguide .mg-tip b { color: #1D5E9E; margin-right: 4px; }
+#tipToast { position: absolute; left: 50%; bottom: calc(168px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); width: max-content; max-width: min(560px, 90vw); box-sizing: border-box; padding: 10px 16px; border-radius: 14px; background: rgba(255,253,248,0.96); color: #14202E; border-left: 6px solid #2E86D6; box-shadow: 0 8px 24px rgba(0,0,0,0.35); font-family: var(--font-body); font-size: 14px; line-height: 1.5; pointer-events: none; z-index: 4; opacity: 0; transition: opacity .35s, transform .35s; }
+#tipToast.show { opacity: 1; transform: translate(-50%, 0); }
+#tipToast b { display: block; font-size: 12px; color: #1D5E9E; margin-bottom: 1px; }
+@media (max-width: 600px) { #tipToast { bottom: calc(330px + env(safe-area-inset-bottom, 0px)); font-size: 13px; } }
 #mguide .mg-card { width: min(640px, 92vw); box-sizing: border-box; padding: 22px 26px 18px; border-radius: 18px; background: #FFFDF8; color: #1B2430; box-shadow: 0 18px 50px rgba(0,0,0,0.45); border-top: 8px solid #2E86D6; font-family: var(--font-body); animation: mgIn .3s cubic-bezier(.2,.9,.3,1.2); }
 #mguide .mg-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #5A6472; }
 #mguide .mg-kb { padding: 3px 10px; border-radius: 999px; background: #E6F1FB; color: #1D5E9E; }
@@ -519,6 +525,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="mguide" hidden></div>
+  <div id="tipToast" role="status" hidden></div>
   <div id="waitTag" hidden></div>
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
   <div id="coach" class="coach" hidden role="status"><div class="ch"><span id="coachStep"></span><button class="mini" id="coachSkip" type="button">건너뛰기</button></div><p id="coachText"></p></div>

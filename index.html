@@ -388,6 +388,12 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* KIRD 주제 맵: start-of-match guide card */
 #mguide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; background: rgba(8,12,20,0.35); cursor: pointer; }
 #mguide[hidden] { display: none; }
+#mguide .mg-tip { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #EAF5FC; font-size: 13px; line-height: 1.55; color: #14324E; }
+#mguide .mg-tip b { color: #1D5E9E; margin-right: 4px; }
+#tipToast { position: absolute; left: 50%; bottom: calc(168px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); width: max-content; max-width: min(560px, 90vw); box-sizing: border-box; padding: 10px 16px; border-radius: 14px; background: rgba(255,253,248,0.96); color: #14202E; border-left: 6px solid #2E86D6; box-shadow: 0 8px 24px rgba(0,0,0,0.35); font-family: var(--font-body); font-size: 14px; line-height: 1.5; pointer-events: none; z-index: 4; opacity: 0; transition: opacity .35s, transform .35s; }
+#tipToast.show { opacity: 1; transform: translate(-50%, 0); }
+#tipToast b { display: block; font-size: 12px; color: #1D5E9E; margin-bottom: 1px; }
+@media (max-width: 600px) { #tipToast { bottom: calc(330px + env(safe-area-inset-bottom, 0px)); font-size: 13px; } }
 #mguide .mg-card { width: min(640px, 92vw); box-sizing: border-box; padding: 22px 26px 18px; border-radius: 18px; background: #FFFDF8; color: #1B2430; box-shadow: 0 18px 50px rgba(0,0,0,0.45); border-top: 8px solid #2E86D6; font-family: var(--font-body); animation: mgIn .3s cubic-bezier(.2,.9,.3,1.2); }
 #mguide .mg-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: #5A6472; }
 #mguide .mg-kb { padding: 3px 10px; border-radius: 999px; background: #E6F1FB; color: #1D5E9E; }
@@ -538,6 +544,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="mguide" hidden></div>
+  <div id="tipToast" role="status" hidden></div>
   <div id="waitTag" hidden></div>
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
   <div id="coach" class="coach" hidden role="status"><div class="ch"><span id="coachStep"></span><button class="mini" id="coachSkip" type="button">건너뛰기</button></div><p id="coachText"></p></div>
@@ -1002,16 +1009,20 @@ const CONFIG = {
     campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird', special: 'KIRD 기관 전용' },
     songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake', special: 'KIRD 기관 전용' },
     scale: { name: '정의의 저울', tag: '연구윤리 · 저울 접시', desc: '대리석 단 위 청동 저울. 두 접시는 늘 같은 높이, 저울대 위가 맵의 꼭대기. 양쪽 끝은 KIRD 연구실.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
+      tips: ['연구진실성의 5가치: 객관성·정직성·개방성·책무성·공정성이에요.', '위조: 존재하지 않는 데이터나 연구 결과를 거짓으로 만들어 내는 것이에요.', '변조: 연구 재료·과정을 조작하거나 데이터를 임의로 바꾸고 빼는 것이에요.', '표절: 남의 아이디어·글·결과를 출처 없이 내 것처럼 쓰는 것이에요.', '부당한 저자 표시: 기여한 사람을 빼거나, 기여하지 않은 사람을 저자로 넣는 것이에요.', '부당한 중복게재: 내 이전 연구 결과를 출처 없이 다시 싣는 것도 부정행위예요.', '국가연구개발혁신법 제31조는 연구비 용도 외 사용도 부정행위로 금지해요.', '거짓이나 부정한 방법으로 과제를 신청·수행하는 것도 부정행위예요.', '부정행위 검증은 예비조사 → 본조사 → 판정 순서로, 6개월 안에 끝내요.', '부정행위를 제보한 사람은 신분상 불이익을 받지 않도록 보호돼요.', '판정에 이의가 있으면 통보를 받은 날부터 30일 안에 신청할 수 있어요.', '부정행위 참여제한은 최대 10년, 2027년 3월부터는 최대 20년으로 늘어나요.', '연구개발기관은 자체 연구윤리규정을 마련해 운영해야 해요.'],
       guide: { title: '연구윤리 심의장', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
     notebook: { name: '연구노트', tag: '연구윤리 · 펼친 노트', desc: '책상 위에 펼친 거대한 연구노트. 두 쪽은 언덕, 가운데 제본선은 골짜기, 만년필이 다리.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
+      tips: ['연구노트는 「국가연구개발사업 연구노트 지침」(과기정통부 고시)을 따라요.', '기록자와 확인자가 날짜와 함께 서명해요.', '틀린 곳은 수정액 대신 줄을 긋고 서명해요. 원래 내용이 보여야 해요.', '빈 칸에는 사선을 그어 나중에 덧쓰지 못하게 해요.', '연구노트는 30년 동안 보존해요.', '연구노트는 연구자 개인이 아니라 연구개발기관이 소유해요.', '전자연구노트도 인정돼요. 전자서명과 입력 시각 자동 기록이 필요해요.', '원본 데이터가 어디에 저장됐는지도 연구노트에 남겨요.', '연구노트 비용은 간접비(성과활용지원비)로 쓸 수 있어요.', '정부는 기관의 연구노트 관리 실태를 점검할 수 있어요.', '잘 쓴 연구노트는 특허·분쟁 때 내 연구를 증명해 주는 기록이에요.'],
       guide: { title: '연구노트', line: '쓰고, 서명하고, 남겨라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '위조' } },
     lab: { name: '화학 실험동', tag: '연구실 안전 · 화재 주의', desc: '실험동 두 채와 시약 창고 마당. 창고 위 소화기가 맵의 꼭대기. 3턴마다 연구실 화재로 불붙은 천장재가 떨어집니다.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구실 안전', happening: 'meteor',
+      tips: ['일상점검은 연구를 시작하기 전에 매일 해요.', '정기점검은 매년 1회 이상 해요.', '유해물질을 다루는 연구실은 2년마다 정밀안전진단을 받아요.', '신규 안전교육: 연구실 근로자 8시간, 학생 2시간 이상이에요.', '정기 안전교육: 반기마다 6시간 이상 (저위험 연구실은 연 3시간)이에요.', '연구를 시작하기 전에 연구실책임자가 사전유해인자위험분석을 해요.', '연구활동종사자를 위한 보험 가입은 법에 정한 의무예요.', '중대연구실사고는 지체 없이 과학기술정보통신부에 보고해요.', '3일 이상 치료가 필요한 사고는 1개월 안에 사고 조사표를 내요.', '연구실 안전 예산은 연구과제 인건비 총액의 1% 이상 잡아야 해요.', '연구실책임자는 보호구를 갖추고 연구원이 착용하게 해야 해요.', '소화기: 안전핀 뽑기 → 노즐 조준 → 손잡이 누르기 → 골고루 분사.'],
       guide: { title: '화학 실험동', line: '위험은 미리 보고, 보호구는 꼭 챙겨라.' },
       items: { shield: '보호구', heal: '응급키트', double: '2인 1조 실험', amplify: '안전교육 이수', calm: 'MSDS 확인', fuel: '통로 확보', tele: '비상대피로' },
       happen: { meteor: ['연구실 화재 발생', '3턴마다 불붙은 천장재가 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['시약장 흔들림', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['배기 역류', '역류에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['인화성 증기', '불기둥을 통과한 포탄은 위력 1.5배'], sudden: '대피 경보! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'debris' } },
     archive: { name: '증빙 보관실', tag: '연구비 관리 · 카드 경사로', desc: '증빙 상자가 가득한 문서고. 영수증 롤 언덕, 연구비 카드 경사로, 가운데 계산기 고지.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구비 관리',
+      tips: ['연구비 집행·정산은 통합이지바로 또는 통합RCMS에서 해요.', 'gaia.go.kr은 통합이지바로로 들어가는 통합 홈페이지예요.', '과제 공고·신청·협약은 범부처통합연구지원시스템 IRIS에서 해요.', '직접비는 연구비카드나 계좌이체로 쓰는 게 원칙이에요. 현금은 예외예요.', '증빙자료는 과제가 끝난 뒤 5년 동안 보관해요.', '연구개발비 정산은 과제가 끝난 날부터 3개월 안에 해요.', '회의비로 술·유흥비는 쓸 수 없어요.', '학생인건비를 걷어 공동관리하는 것은 금지예요.', '새 비목 「연구혁신비」: 재료비·출장비·회의비를 비목 구분 없이 써요 (2027년 전면 시행).', '간접비는 인력지원비·연구지원비·성과활용지원비로 나뉘어요.', '용도 외 사용: 참여제한 최대 10년·제재부가금 최대 5배 (2027년 3월부터 20년·30배).', '환수 통보를 받으면 1개월 안에 반납해요.'],
       guide: { title: '연구비 정산센터', line: '계획대로 쓰고, 증빙으로 버텨라.' },
-      items: { shield: '증빙서류', heal: '정산 완료', double: '매칭펀드', amplify: '성과 인센티브', calm: '연구비 카드', fuel: '집행계획', tele: '출장 승인' },
+      items: { shield: '증빙서류', heal: '정산 완료', double: '연구혁신비', amplify: '성과활용지원비', calm: '연구비 카드', fuel: '집행계획', tele: '출장 승인' },
       happen: { meteor: ['감사 지적', '3턴마다 빨간 「환수」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['예산 삭감', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['용도 외 사용', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['집중 투자', '금빛 기둥을 통과한 포탄은 위력 1.5배'], sudden: '정산 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '환수' } },
     temple: { name: '사막 신전', tag: '계단식 · 고지대 쟁탈', desc: '양끝이 높고 가운데가 파인 계단 지형. 높은 자리를 먼저 잡는 쪽이 유리합니다.', W: 5000, H: 1500, theme: 'desert' },
     valley: { name: '협곡 도시', tag: '얇은 지형 · 번지전', desc: '아주 얇은 골짜기 지형과 그 아래 한 겹 더. 발밑을 뚫어 떨어뜨리는 싸움이 핵심입니다.', W: 4800, H: 1500, theme: 'valley' },
@@ -2858,6 +2869,24 @@ const TMAP_ART = (() => {
   }
   function dust(x, px, py) { x.save(); x.filter = 'blur(3px)'; for (let i = 0; i < 9; i++) { const a = -Math.PI * (0.1 + i * 0.1); x.fillStyle = 'rgba(210,190,160,0.55)'; x.beginPath(); x.arc(px + Math.cos(a) * 70, py + Math.sin(a) * 40, 22 + (i % 3) * 8, 0, 7); x.fill(); } x.restore(); }
 
+  // an information board: header band + left-aligned lines (all text verified against the law; see HANDOFF)
+  function board(x, a, y, w, title, lines, o = {}) {
+    const fs = o.size || 24, lh = fs * 1.55, h = 78 + lines.length * lh + 18, col = o.color || '#2E86D6';
+    if (o.legs) { x.fillStyle = '#5E6870'; for (const lx of [a + w * 0.18, a + w * 0.82]) x.fillRect(lx - 7, y + h, 14, o.legs); }
+    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, a + 6, y + 8, w, h, 14); x.fill();
+    x.fillStyle = o.bg || '#FFFDF7'; rr(x, a, y, w, h, 14); x.fill();
+    x.fillStyle = col; rr(x, a, y, w, 60, [14, 14, 0, 0]); x.fill();
+    text(x, title, a + 24, y + 31, fs + 6, { color: '#FFF', weight: 900, align: 'left' });
+    if (o.badge) text(x, o.badge, a + w - 22, y + 31, fs * 0.62, { color: 'rgba(255,255,255,0.85)', weight: 700, align: 'right' });
+    lines.forEach((l, i) => {
+      const ly = y + 60 + 30 + i * lh, hl = Array.isArray(l);
+      x.fillStyle = col; x.beginPath(); x.arc(a + 32, ly, 5, 0, 7); x.fill();
+      text(x, hl ? l[0] : l, a + 48, ly, fs, { color: '#1E2A36', weight: 800, align: 'left' });
+      if (hl) text(x, l[1], a + w - 24, ly, fs, { color: col, weight: 900, align: 'right' });
+    });
+    return h;
+  }
+
   const S = {};
   // ---------------------------------------------------------------- 정의의 저울 (연구윤리)
   function labRoomE(x, a, top, b, bot, floor) { return labRoom(x, a, top, b, bot, floor); }
@@ -2873,9 +2902,11 @@ const TMAP_ART = (() => {
       x.fillStyle = vg(x, top - 30, top + 40, [[0, '#F6F2E8'], [1, '#D8D1C2']]); x.fillRect(1420, top - 30, 2360, 70);
       x.fillStyle = '#E4DED1'; poly(x, [[1400, top - 30], [CX, top - 250], [3800, top - 30]]); x.fill();
       x.strokeStyle = '#CFC7B6'; x.lineWidth = 8; poly(x, [[1440, top - 34], [CX, top - 236], [3760, top - 34]]); x.stroke();
-      text(x, '정직 · 책임', CX - 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 }); text(x, '공정 · 관리', CX + 420, top + 6, 44, { color: '#7A6440', weight: 900, ls: 10 });
+      text(x, '객관성 · 정직성 · 개방성', CX - 400, top + 6, 36, { color: '#7A6440', weight: 900, ls: 3 }); text(x, '책무성 · 공정성', CX + 420, top + 6, 38, { color: '#7A6440', weight: 900, ls: 6 });
       kMark(x, CX, top - 110, 84);
       x.restore();
+      board(x, 150, 120, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
+      board(x, mx(1330), 120, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
       // the balance column: background (not solid), so shells fly past it
       x.save(); x.globalAlpha = 0.5;
       x.fillStyle = bronzeH(x, 2550, 2650); x.fillRect(2550, G - 730, 100, 440);
@@ -2943,9 +2974,10 @@ const TMAP_ART = (() => {
       mascotBanner(x, 340, 340, 200, '연구노트 쓰는 날');
       x.fillStyle = '#FFFDF5'; x.fillRect(500, 350, 470, 360); x.fillStyle = '#E8402E'; x.beginPath(); x.arc(735, 356, 9, 0, 7); x.fill();
       text(x, '연구노트 작성 원칙', 735, 400, 30, { color: '#1E3A5A', weight: 900 });
-      ['① 날짜를 적고 쪽 번호를 이어 쓴다', '② 지우지 말고 줄 긋고 서명한다', '③ 원본 데이터 위치를 남긴다', '④ 작성자·확인자가 서명한다', '⑤ 정해진 기간 동안 보관한다'].forEach((t, i) => text(x, t, 530, 455 + i * 50, 23, { color: '#34404E', weight: 600, align: 'left' }));
+      ['① 기록자·확인자가 날짜와 서명', '② 수정액 금지, 줄 긋고 서명', '③ 빈 칸에는 사선을 긋는다', '④ 원본 데이터 위치를 남긴다', '⑤ 30년 보존 · 노트는 기관 소유'].forEach((t, i) => text(x, t, 530, 455 + i * 50, 23, { color: '#34404E', weight: 600, align: 'left' }));
       x.fillStyle = '#6B4A2C'; x.fillRect(4170, 560, 860, 18); x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(4170, 578, 860, 8);
       ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#E8EDF1', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(4200 + i * 64, 400 + (i % 3) * 10, 54, 160 - (i % 3) * 10); x.fillStyle = 'rgba(255,255,255,0.75)'; x.fillRect(4212 + i * 64, 440 + (i % 3) * 10, 30, 34); });
+      board(x, 4150, 610, 900, '전자연구노트도 인정', ['전자서명으로 기록자·확인자 확인', '입력 시각이 자동으로 기록', '위·변조 여부를 확인할 수 있어야'], { size: 22, color: '#1D5E9E', badge: '연구노트 지침' });
       x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(4600, 300, 70, 0, 7); x.fill(); x.strokeStyle = '#3B4A5A'; x.lineWidth = 8; x.stroke(); x.lineWidth = 6; x.beginPath(); x.moveTo(4600, 300); x.lineTo(4600, 254); x.moveTo(4600, 300); x.lineTo(4636, 314); x.stroke();
       x.fillStyle = 'rgba(255,240,215,0.2)'; x.fillRect(0, 0, W, G);
     },
@@ -3013,6 +3045,9 @@ const TMAP_ART = (() => {
   S.lab = {
     veil: 'rgba(222,236,246,0.30)',
     back(x) {
+      const roof = G - 362;
+      board(x, 610, roof - 410, 760, '연구실 안전점검', [['일상점검 · 연구 시작 전', '매일'], ['정기점검', '연 1회 이상'], ['정밀안전진단 · 유해물질 연구실', '2년마다']], { color: '#C62828', badge: '연구실안전법', legs: 120 });
+      board(x, mx(1370), roof - 410, 760, '안전교육 · 사고 보고', [['신규교육 (학생 2시간)', '8시간'], ['정기교육 (저위험 연 3시간)', '반기 6시간'], ['중대연구실사고 보고', '지체 없이']], { color: '#C62828', badge: '연구실안전법 시행규칙', legs: 120 });
       x.fillStyle = '#A9C7B2'; x.beginPath(); x.moveTo(0, G - 140); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 190 - Math.sin(px / 600) * 70 - Math.sin(px / 170) * 12); x.lineTo(W, G); x.lineTo(0, G); x.fill();
     },
     solid(x) {
@@ -3080,6 +3115,8 @@ const TMAP_ART = (() => {
       x.fillStyle = 'rgba(30,44,58,0.35)'; x.fillRect(0, 0, W, G);
       x.fillStyle = '#FAFBFC'; rr(x, CX - 300, 250, 600, 90, 10); x.fill(); logoOnly(x, CX - 140, 295, 50); text(x, '증빙 보관실', CX + 120, 296, 34, { color: '#1E2A36', weight: 900 });
       mascotBanner(x, 1260, 430, 130, '증빙은 꼼꼼히');
+      board(x, 140, 300, 960, '연구비, 어디서 하나요?', [['과제 공고 · 신청 · 협약', 'IRIS'], ['집행 · 정산 (gaia.go.kr)', '통합이지바로'], ['집행 · 정산 (산업부 계열 등)', '통합RCMS'], ['과제 · 성과 정보', 'NTIS']], { color: '#1D5E9E' });
+      board(x, mx(1100), 300, 960, '연구비 집행 원칙', [['연구비카드 · 계좌이체가 원칙', '현금 예외'], ['증빙자료 보관', '종료 후 5년'], ['정산', '종료 후 3개월 내'], ['용도 외 사용 → 제재 + 환수', '최대 10년·5배']], { color: '#2E7D4F', badge: '혁신법 · 연구개발비 사용 기준' });
     },
     solid(x) {
       noiseBand(x, 0, W, G, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); x.strokeStyle = 'rgba(0,0,0,0.18)'; x.lineWidth = 2; for (let px = 0; px < W; px += 200) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); }
@@ -3100,7 +3137,7 @@ const TMAP_ART = (() => {
       const a = 2240, b = 2960, t = G - 330;
       x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(a - 4, t - 4, b - a + 8, G - t + 4);
       x.fillStyle = '#B9E3C4'; rr(x, a + 40, t + 30, b - a - 80, 90, 10); x.fill(); x.fillStyle = 'rgba(0,0,0,0.08)'; x.fillRect(a + 40, t + 30, b - a - 80, 16);
-      text(x, '집행률  100.0 %', b - 70, t + 78, 46, { color: '#1E3A2A', weight: 900, align: 'right' });
+      text(x, '증빙 보관  5년', b - 70, t + 78, 46, { color: '#1E3A2A', weight: 900, align: 'right' });
       const keys = ['7', '8', '9', '÷', 'C', '4', '5', '6', '×', '%', '1', '2', '3', '−', '=', '0', '00', '.', '+', '='];
       keys.forEach((k, i) => { const c = i % 5, r2 = Math.floor(i / 5), kx = a + 40 + c * 130, ky = t + 140 + r2 * 46; if (ky + 40 > G - 4) return; x.fillStyle = k === '=' ? '#E8913C' : k === 'C' ? '#C9384A' : '#E9EDF0'; rr(x, kx, ky, 116, 38, 8); x.fill(); text(x, k, kx + 58, ky + 20, 22, { color: k === '=' || k === 'C' ? '#FFF' : '#2A3440', weight: 800 }); });
       logoOnly(x, a + 110, t + 14, 16);
@@ -6111,6 +6148,26 @@ function announceHappening() {
   setTimeout(() => { if (match && match.happening === h) banner('해프닝: ' + hp[0]); }, 1700 + d);
   setTimeout(() => { if (match && match.happening === h) banner(hp[1]); }, 3300 + d);
 }
+// 알고 계셨나요? — one verified fact about the map's theme (CONFIG.maps[..].tips): on the start card, then now and then during play
+const TIPS = { last: '', turn: -1, timer: 0 };
+function pickTip(meta) {
+  const l = meta.tips || []; if (!l.length) return '';
+  let t = l[Math.floor(Math.random() * l.length)]; if (t === TIPS.last && l.length > 1) t = l[(l.indexOf(t) + 1) % l.length];
+  return (TIPS.last = t);
+}
+function showTip(t) {
+  const el = $('tipToast'); if (!el || !t) return;
+  el.innerHTML = '<b>💡 알고 계셨나요?</b><span></span>'; el.querySelector('span').textContent = t;
+  el.hidden = false; void el.offsetWidth; el.classList.add('show');
+  clearTimeout(TIPS.timer); TIPS.timer = setTimeout(() => { el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 400); }, 7000);
+}
+// during play: turn 6, then every 10 turns (only on maps with tips, only while the game screen is up)
+function tipTick() {
+  if (!match || screen !== 'game' || match.phase === 'over' || match.turnNo === TIPS.turn) return;
+  TIPS.turn = match.turnNo;
+  const meta = mapMetaOf(match);
+  if (meta.tips && match.turnNo >= 6 && (match.turnNo - 6) % 10 === 0 && $('mguide').hidden) showTip(pickTip(meta));
+}
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0;
 function showMapGuide() {
@@ -6118,7 +6175,7 @@ function showMapGuide() {
   if (!meta.guide) { el.hidden = true; return false; }
   const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
-  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
+  el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${meta.tips ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc(pickTip(meta))}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
   clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
   return true;
@@ -6166,7 +6223,7 @@ function loop(now) {
     if (ON.active) onlineFrame(now); else tutorialFrame();
     // the angle guide and power ring are only for the player who is aiming
     R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
-    updateHud(); soloHud();
+    updateHud(); soloHud(); tipTick();
   }
   requestAnimationFrame(loop);
 }
