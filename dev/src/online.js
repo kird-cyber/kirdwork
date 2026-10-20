@@ -30,6 +30,8 @@ function showScreen(name) {
   $('home').hidden = name !== 'home';
   $('lobby').hidden = name !== 'lobby';
   $('setup').hidden = name !== 'setup';
+  $('solo').hidden = name !== 'solo'; $('fame').hidden = name !== 'fame';
+  if (name !== 'game') { $('soloOver').hidden = true; SOLOPLAY.active = false; }
   const g = name === 'game';
   $('gchat').hidden = !(g && ON.active); if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
   $('diag').hidden = !g; if (!g) $('diag').textContent = '';
@@ -37,7 +39,9 @@ function showScreen(name) {
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); TUT.on = false; showCoach(); }
   AU.music(g ? 'game' : 'lobby');
   if (name === 'setup') renderSetup();
-  if (name === 'home') { renderHome(); probeBrokers(); dirWatchStart(); } else dirWatchStop();
+  if (name === 'solo') renderSolo();
+  if (name === 'fame') renderFame();
+  if (name === 'home') { renderHome(); probeBrokers(); dirWatchStart(); soloHomeRefresh(); } else dirWatchStop();
 }
 
 // ---------------------------------------------------------------- home
@@ -548,6 +552,7 @@ function bindOnlineUi() {
   $('leaveGame').onclick = () => leaveOnline();
   $('exitBtn').onclick = () => {
     if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
+    else if (SOLOPLAY.active) { if (confirm('도전을 그만두고 나갈까요? 이번 기록은 남지 않아요.')) showScreen('solo'); }
     else if (confirm('연습을 끝내고 처음 화면으로 갈까요?')) showScreen('home');
   };
   window.addEventListener('hashchange', () => { if (screen === 'home') renderHome(); });

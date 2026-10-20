@@ -410,6 +410,70 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .enter { flex: 1; min-width: 96px; height: 54px; border: 0; border-radius: 14px; background: #4C8DF0; color: #fff; font: 900 17px var(--font-body); cursor: pointer; }
 .enter:disabled { background: #263452; color: #8FA6C8; cursor: default; }
 .enter.go { background: var(--gold); color: #2A1A00; }
+/* 연구부정 소탕전 (solo) */
+.way.solo { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 20px; border-color: #3FD0A8; background: linear-gradient(120deg, #10231F, #121828 60%); }
+.way.solo .sol { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.way.solo .wi { background: #0E3A30; color: #5BE3BC; }
+.way.solo .sotag { font-size: 12px; font-weight: 800; color: #5BE3BC; border: 1px solid #2E7F69; border-radius: 999px; padding: 2px 10px; }
+.sotop { font-size: 13px; color: #CFE9E1; font-weight: 700; }
+.sotop b { color: var(--gold); }
+.way.solo .sobtns { display: flex; flex-direction: column; gap: 8px; min-width: 160px; }
+.way.solo .sobtns .start { background: #3FD0A8; color: #06231B; white-space: nowrap; }
+@media (max-width: 760px) { .way.solo { flex-direction: column; align-items: stretch; } .way.solo .sobtns { flex-direction: row; } .way.solo .sobtns > * { flex: 1; } }
+.way.solo .wh { flex-wrap: wrap; }
+@media (max-width: 520px) { .codebox { flex-wrap: wrap; } .cells { flex: 1 1 100%; min-width: 0; } .cc { flex: 1; width: auto; min-width: 0; } .enter { flex: 1 1 100%; } .way { padding: 18px; } }
+.soloset, .fameset { max-width: 980px; }
+.sohead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.sobar { display: flex; gap: 8px; flex-wrap: wrap; }
+.foes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.foe { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 16px; background: #1A1420; border: 1px solid #5A2F3E; }
+.foe canvas { width: 92px; height: 68px; flex-shrink: 0; }
+.foe .fn { font-family: var(--font-display); font-size: 22px; color: #FFB4A4; }
+.foe .fw { font-size: 12.5px; color: #E8DCE2; line-height: 1.5; margin-top: 2px; }
+.foe .ft { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+.sorules h3 { margin: 0; font-size: 16px; }
+.sorules ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.55; color: #D5DCEA; }
+.soidrow { display: flex; gap: 14px; flex-wrap: wrap; }
+.soidrow label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 800; color: #B9C4D8; flex: 1; min-width: 160px; }
+.soidrow input { height: 46px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: #0B0F1C; color: var(--fg); font: 700 17px var(--font-body); -webkit-user-select: text; user-select: text; }
+.soidrow input:focus-visible { outline: 2px solid var(--gold); }
+#soStart { background: #3FD0A8; color: #06231B; }
+@media (max-width: 760px) { .foes { grid-template-columns: 1fr; } }
+.ftops { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.ftop1 { background: linear-gradient(135deg, #3A2E0A, #1B1F2E 70%); border-color: #8A6A12; }
+.ftop1 .k, .fme .k { font-size: 12px; font-weight: 900; color: var(--gold); letter-spacing: 0.05em; }
+.ftop1 .nm { font-family: var(--font-display); font-size: 34px; line-height: 1.1; }
+.ftop1 .tm, .fme .tm { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.ftop1 .sm, .fme .sm { font-size: 13px; color: #CDD5E3; }
+.fme .k { color: #7FB0FF; }
+.ftabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ftabs button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: #141A2B; color: var(--muted); font: 800 14px var(--font-body); cursor: pointer; }
+.ftabs button.on { background: var(--gold); color: #2A1A00; border-color: var(--gold); }
+.ftable { gap: 4px; padding: 10px; }
+.frow { display: grid; grid-template-columns: 52px 1.4fr 1fr 0.8fr 1fr 0.9fr; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; font-size: 14px; }
+.frow.h { color: var(--muted); font-size: 12px; font-weight: 800; }
+.frow:not(.h):nth-child(even) { background: #161C2C; }
+.frow .r { font-family: var(--font-display); font-size: 20px; text-align: center; }
+.frow.r1 .r { color: #FFD24A; } .frow.r2 .r { color: #D9E2EE; } .frow.r3 .r { color: #E3A06A; }
+.frow.me { outline: 2px solid #4C8DF0; }
+.frow b { font-weight: 900; } .frow .t { font-variant-numeric: tabular-nums; font-weight: 900; }
+@media (max-width: 760px) { .ftops { grid-template-columns: 1fr; } .frow { grid-template-columns: 40px 1.4fr 1fr 0.8fr; } .frow .x { display: none; } }
+#soloHud { position: absolute; left: 50%; transform: translateX(-50%); top: calc(max(12px, env(safe-area-inset-top, 0px)) + 62px); padding: 7px 16px; border-radius: 999px; background: rgba(8, 34, 28, 0.88); border: 1px solid #3FD0A8; color: #DFF7EF; font-size: 13px; font-weight: 800; white-space: nowrap; pointer-events: none; z-index: 3; }
+#soloHud b { color: #FFD24A; font-variant-numeric: tabular-nums; font-size: 16px; }
+@media (max-width: 600px) { #soloHud { top: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); font-size: 12px; } }
+.soover { text-align: center; }
+.sokick { font-size: 13px; font-weight: 900; color: #5BE3BC; letter-spacing: 0.06em; }
+.soover h2 { margin: 4px 0 0; font-family: var(--font-display); font-weight: 400; font-size: 40px; }
+.soover h2.fail { color: #FFB4A4; }
+.sotime { font-family: var(--font-display); font-size: 64px; color: var(--gold); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.sorank { min-height: 34px; font-size: 18px; font-weight: 900; }
+.sorank .nr { display: inline-block; padding: 6px 16px; border-radius: 999px; background: #FFD24A; color: #2A1A00; animation: nrpop .6s cubic-bezier(.2,1.6,.4,1); }
+.sorank .jump { color: var(--muted); text-decoration: line-through; margin-right: 6px; }
+@keyframes nrpop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.sofoes { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0 4px; }
+.sofoes span { padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 800; background: #1A2236; color: var(--muted); }
+.sofoes span.done { background: #0E3A30; color: #7DF0CB; }
+@media (prefers-reduced-motion: reduce) { .sorank .nr { animation: none; } }
 #homeMsg:empty { display: none; }
 .rooms { gap: 10px; }
 .rooms .rh { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
@@ -425,7 +489,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .rempty { padding: 14px; border-radius: 12px; background: #121828; font-size: 13px; color: var(--muted); }
 .pubtog { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; font-weight: 700; cursor: pointer; }
 .pubtog input { width: 18px; height: 18px; accent-color: var(--gold); }
-@media (max-width: 760px) { .ways { grid-template-columns: 1fr; } .rrow { grid-template-columns: 1fr auto; } .rrow .mp, .rrow .pn { display: none; } }
+@media (max-width: 760px) { .ways { grid-template-columns: minmax(0, 1fr); } .rrow { grid-template-columns: 1fr auto; } .rrow .mp, .rrow .pn { display: none; } }
 </style>
 
 <div id="app">
@@ -461,6 +525,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
   <div id="gameMsgs" class="gmsgs" aria-live="polite"></div>
   <div id="netState" role="status" hidden></div>
+  <div id="soloHud" hidden></div>
   <div id="hint" hidden>← → 이동 · ↑ ↓ 각도 · 스페이스를 누르고 있다가 떼면 발사 · P 턴 넘기기 · 드래그나 A/D로 맵 둘러보기</div>
 
   <div class="touch" id="touch" hidden>
@@ -530,6 +595,14 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
             </div>
             <div class="note" id="codeNote">다섯 글자를 다 넣으면 입장 버튼이 켜져요 · 초대 링크로 오면 자동 입력</div>
           </section>
+          <section class="way solo" aria-labelledby="wSolo">
+            <div class="sol">
+              <div class="wh"><i class="wi" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4zM7 6H4a3 3 0 003 3M17 6h3a3 3 0 01-3 3"/></svg></i><h3 id="wSolo">연구부정 소탕전</h3><span class="sotag">혼자 도전 · 오늘의 순위</span></div>
+              <p><b>위조탱·변조탱·표절탱</b> 3대를 혼자서 가장 빨리 소탕하세요. 하루 동안 모두 같은 맵·바람·적 배치로 겨루고, 기록은 명예의 전당에 남아요.</p>
+              <div class="sotop" id="soTopHome">오늘 1위를 불러오는 중…</div>
+            </div>
+            <div class="sobtns"><button class="start" id="soloBtn" type="button">도전하기</button><button class="ghost" id="fameBtn" type="button">명예의 전당</button></div>
+          </section>
         </div>
         <div class="note" id="homeMsg" role="status" aria-live="polite"></div>
       </div>
@@ -538,6 +611,70 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div class="rlist" id="roomList"></div>
       </div>
       <div class="cta"><button class="ghost" id="tutorialBtn" type="button">튜토리얼 (1분)</button><button class="ghost" id="practiceBtn" type="button">혼자 연습 · 봇 대전</button><span style="flex:1"></span><div class="probe" id="probe" data-s="idle"></div></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="solo" hidden>
+    <div class="setup soloset">
+      <div class="sohead">
+        <div>
+          <div class="lbrand"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
+          <h2 class="lt">연구부정 소탕전</h2>
+          <div class="note" id="soDay"></div>
+        </div>
+        <div class="sobar"><button class="ghost" id="soFameBtn" type="button">명예의 전당</button><button class="ghost" id="soHomeBtn" type="button">처음 화면</button></div>
+      </div>
+      <div class="sec">
+        <h2>오늘의 적 <span class="note" style="letter-spacing:0">연구부정행위 중 가장 무거운 세 가지 · 위조·변조·표절</span></h2>
+        <div class="foes" id="soFoes"></div>
+      </div>
+      <div class="card sorules">
+        <h3>규칙</h3>
+        <ul>
+          <li><b>차례:</b> 나 → 위조탱 → 나 → 변조탱 → 나 → 표절탱 … 적은 <b>돌아가며 한 대씩</b>만 쏴요.</li>
+          <li><b>기록 = 내 차례에 쓴 시간 + 발사 1번당 3초.</b> 적 차례와 포탄이 날아가는 시간은 빼요. 빨리, 적게 쏴서 이기세요.</li>
+          <li>오늘은 모두 <b>같은 맵·바람·적 배치</b>로 겨뤄요. 자정(한국 시간)에 새 도전으로 바뀌어요.</li>
+          <li>1 대 3이라 내 체력은 2배, 적 체력은 0.7배예요. 같은 기록이면 남은 체력이 많은 사람이 위.</li>
+          <li>도전은 몇 번이든 가능, <b>최고 기록만</b> 순위에 남아요.</li>
+        </ul>
+      </div>
+      <div class="sec">
+        <h2>내 탱크</h2>
+        <div class="picks" id="soPicks"></div>
+        <div class="tankcard" id="soTankInfo" aria-live="polite"></div>
+      </div>
+      <div class="card soid">
+        <div class="soidrow">
+          <label>닉네임<input id="soNick" maxlength="8" placeholder="최대 8글자" autocomplete="nickname"></label>
+          <label>PIN 4자리<input id="soPin" maxlength="4" inputmode="numeric" pattern="[0-9]*" type="password" placeholder="••••" autocomplete="off"></label>
+        </div>
+        <div class="note">처음 쓰는 닉네임이면 이 PIN으로 등록돼요. 다른 사람이 내 닉네임으로 기록을 올릴 수 없어요. 실명·사번은 넣지 마세요.</div>
+      </div>
+      <div class="cta"><button class="start" id="soStart" type="button">소탕 시작</button><span class="note bad" id="soMsg" role="status"></span><span style="flex:1"></span><span class="note" id="soServer"></span></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="fame" hidden>
+    <div class="setup fameset">
+      <div class="sohead">
+        <div>
+          <div class="lbrand"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
+          <h2 class="lt">명예의 전당</h2>
+          <div class="note" id="fDay"></div>
+        </div>
+        <div class="sobar"><button class="start sm" id="fPlayBtn" type="button">도전하기</button><button class="ghost" id="fHomeBtn" type="button">처음 화면</button></div>
+      </div>
+      <div class="ftops">
+        <div class="card ftop1" id="fTop1"></div>
+        <div class="card fme" id="fMe"></div>
+      </div>
+      <div class="ftabs" role="tablist">
+        <button type="button" role="tab" data-tab="today" class="on" aria-selected="true">오늘의 순위</button>
+        <button type="button" role="tab" data-tab="all" aria-selected="false">역대 최고 기록</button>
+        <button type="button" role="tab" data-tab="fame" aria-selected="false">명예의 전당 (누적 점수)</button>
+      </div>
+      <div class="card ftable" id="fTable"></div>
+      <div class="note" id="fNote"></div>
     </div>
   </div>
 
@@ -633,6 +770,21 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     </div>
   </div>
 
+  <div class="overlay over" id="soloOver" hidden>
+    <div class="overbox soover">
+      <div class="sokick" id="sooKick">연구부정 소탕전</div>
+      <h2 id="sooTitle">소탕 완료!</h2>
+      <div class="sotime" id="sooTime"></div>
+      <div class="note" id="sooSub"></div>
+      <div class="sorank" id="sooRank" aria-live="polite"></div>
+      <div class="sofoes" id="sooFoes"></div>
+      <div class="cta" style="justify-content:center">
+        <button class="start" id="sooAgain" type="button">다시 도전</button>
+        <button class="ghost" id="sooFame" type="button">명예의 전당</button>
+        <button class="ghost" id="sooHome" type="button">처음 화면</button>
+      </div>
+    </div>
+  </div>
   <div class="overlay over" id="over" hidden>
     <div class="overbox">
       <h2 id="overTitle">레드 팀 승리</h2>

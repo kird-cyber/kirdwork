@@ -668,9 +668,9 @@ function createRenderer(cv, mini) {
           for (let i = 0; i < 18; i++) R.fx.push({ kind: 'smoke', x: e.x + (vrnd() - 0.5) * 40, y: v.y - 10 - vrnd() * 20, vy: -40 - vrnd() * 50, t: -vrnd() * 1.2, life: 2.4, r: 18 + vrnd() * 20, dark: true });
           text(e.x, v.y - 140, '격파!', '#FFD24A', true); R.texts[R.texts.length - 1].size = 44;
           R.onHitstop(140);
-          R.onBanner(`${t.nick} 격파!`, t.team); R.onSfx('death'); break;
+          R.onBanner(`${t.nick} 격파!`, t.team); R.onSfx('death'); if (R.onDeath) R.onDeath(t); break;
         }
-        case 'fallout': burst(e.x, m.H - 30, '#FFFFFF', 18); R.onBanner(`${t.nick} 낙사!`, t.team); R.onSfx('fall'); break;
+        case 'fallout': burst(e.x, m.H - 30, '#FFFFFF', 18); R.onBanner(`${t.nick} 낙사!`, t.team); R.onSfx('fall'); if (R.onDeath) R.onDeath(t); break;
         case 'text': text(e.x, e.y, e.text, e.color); break;
         case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소 · 바람 강화'); R.onSfx('death'); shake(6); break;
         case 'pickup': { const nm = itemName(m, e.item), base = CONFIG.items[e.item].name; text(e.x, e.y - 70, nm === base ? nm + ' 획득' : `${nm} 획득 — ${base}`, CONFIG.items[e.item].color); R.onSfx('pickup'); break; }

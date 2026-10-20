@@ -132,6 +132,7 @@ function matchAwards(m) {
   return { mvp, out };
 }
 R.onOver = (winner, forfeit) => {
+  if (SOLOPLAY.active) { soloOver(winner); return; }
   const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
   let title, cls;
@@ -210,7 +211,7 @@ function updateHud() {
   $('passBtn').disabled = !myTurnNow;
   if (myTurnNow) {
     const used = CONFIG.turn.timeLimitTicks - ctrl.timeLeft;
-    setTxt('passSub', passGetsTurnBack(m, t, used) ? `P · 넘겨도 바로 다시 내 차례` : `P · 딜레이 +${Math.round(passCost(m, t, used))}`);
+    setTxt('passSub', m.solo ? 'P · 쏘지 않고 넘김' : passGetsTurnBack(m, t, used) ? `P · 넘겨도 바로 다시 내 차례` : `P · 딜레이 +${Math.round(passCost(m, t, used))}`);
   } else setTxt('passSub', 'P · 딜레이 조금만');
   const secs = Math.max(0, Math.ceil(ctrl.timeLeft / CONFIG.physics.tickRate));
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
@@ -266,7 +267,7 @@ function updateStatus(m, cur) {
       box.append(row);
     }
   }
-  const order = [cur, ...m.tanks.filter(x => x.alive && x !== cur).sort((a, b) => a.delay - b.delay || a.idx - b.idx)];
+  const order = m.solo ? soloUpcoming(m) : [cur, ...m.tanks.filter(x => x.alive && x !== cur).sort((a, b) => a.delay - b.delay || a.idx - b.idx)];
   const L = ON.active ? ON.link : null;
   for (const c of box.querySelectorAll('.sc')) {
     const x = m.tanks[+c.dataset.idx], pos = order.indexOf(x), off = L && !L.online(x.id) && x.id !== ON.myId;
@@ -579,11 +580,11 @@ function loop(now) {
     if (ON.active) onlineFrame(now); else tutorialFrame();
     // the angle guide and power ring are only for the player who is aiming
     R.frame(frozen ? dt * 0.08 : dt, !ON.active || ctrl.activeLocal() ? ctrl : null);
-    updateHud();
+    updateHud(); soloHud();
   }
   requestAnimationFrame(loop);
 }
-window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, get screen() { return screen; } };
+window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, botPlan, cmdFire, cmdPass, soloReplay, get screen() { return screen; } };
 (async () => {
   R.resize();
   await loadSprites();

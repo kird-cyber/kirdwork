@@ -13,6 +13,7 @@ function createMatch(opts) {
     tick: 0, turnNo: 0, wind: 0, cur: -1, phase: 'settle', settle: 40, winner: null,
     tanks: [], proj: [], mines: [], crates: [], sched: [], schedSeq: 0,
     turn: null, hashes: {}, events: [], spawns: map.spawns,
+    solo: !!opts.solo, soloLast: -1, // 혼자 하기(연구부정 소탕전): 내 차례와 적 차례가 번갈아, 적은 돌아가며 한 대씩
   };
   // start positions: pick random spawns, then interleave the teams from left to right so neither team
   // starts bunched on one side (smaller team spread evenly between the bigger one)
@@ -500,7 +501,16 @@ function beginTurn(m) {
   const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
   if (!red || !blue) { m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw'; m.events.push({ type: 'over', winner: m.winner }); return; }
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
-  const t = alive[0], base = t.delay;
+  let t = alive[0];
+  const base = t.delay;
+  if (m.solo) { // solo: me (tank 0) -> next foe in rotation -> me -> ... ; delays are only kept for the status bar
+    const me = m.tanks[0], prev = m.cur >= 0 ? m.tanks[m.cur] : null;
+    if (me.alive && (!prev || prev.team !== me.team)) t = me;
+    else {
+      const n = m.tanks.length;
+      for (let s2 = 1; s2 <= n; s2++) { const c = m.tanks[(Math.max(0, m.soloLast) + s2) % n]; if (c.alive && c.team !== me.team) { t = c; m.soloLast = c.idx; break; } }
+    }
+  }
   const again = m.cur === t.idx; // the same tank twice in a row (its turns were cheaper than everyone else's)
   for (const o of alive) o.delay -= base;
   m.turnNo++;
