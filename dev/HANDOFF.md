@@ -118,3 +118,11 @@
   - 맵 이름·부제·팁·아이템/사건 이름은 그대로. 설명(desc)만 새 지형에 맞춤.
 - 연구부정 소탕전 무대 `SOLO.mapId` notebook → scale. 기록 버전 v4. 대역 봇(각 24판): easy 클리어 46%·탈락 0% / normal 75%·0% / hard 100%·0%.
 - 시안 B(진실의 광장, 문 3개)·C(학술대회장) 코드는 브랜치 `draft/ethics-map` 이력에 남아 있음(배포 안 함).
+
+## 2026-10-21 「알고 계셨나요?」 중요도 가중 문장 풀 (위 10-20 항목의 `tips` 배열을 대체)
+- 원본: `dev/tips/pools.json`(522문장, 과목별 번호·근거) + `dev/tips/grades.json`(A=3/B=2/C=1). `python3 dev/tips/build_tips.py`가 `dev/src/tips.js`(`TIP_POOLS`)를 만들고, build.py가 main.js 앞에 넣음. 문장·등급을 고치면 build_tips → build 순서로.
+- 맵은 `CONFIG.maps[id].tipPool`(scale=ethics, notebook, lab=safety, archive=budget). 4번에 1번은 `common`(국가R&D 공통) 풀.
+- 노출: `TIP_RULE`(main.js) — 대전은 2턴째부터 3턴마다, 최소 45초 간격, 8초 표시. 혼자 하기는 20초 후 첫 문장, 이후 45초마다. 한 판 안에서 중복 없음, 가중 랜덤.
+- 결과 화면(`#overTips`, `#sooTips`)에 그 판에 본 문장 중 가중치 상위 3개 복습.
+- UI 전용 Math.random이라 lockstep 시뮬과 무관. 테스트: `tests/tips_e2e.js`(window.__tips).
+- 원칙: 지적·감사 **사례는 넣지 않음**(사용자 지시). 사실만, 출처는 2026.7 혁신법 매뉴얼·2027.3 시행 개정법 기준.
