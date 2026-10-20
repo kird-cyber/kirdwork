@@ -13,3 +13,11 @@
 - 플레이: https://kird-cyber.github.io/kirdwork/rope/
 - 닌자 로프 손맛 확인용 · 손맛 조절 패널 · 기록 유령 · 시범 보기
 - 개발 소스: `dev/rope/`
+
+## KIRD 나눔마켓 (직원 온라인 나눔 경매)
+
+- 입찰 화면: https://kird-cyber.github.io/kirdwork/market/
+- 관리자 화면: https://kird-cyber.github.io/kirdwork/market/admin.html
+- 서버 연결 전에는 데모 모드 (체험 코드 TEST-AAAA, 관리자 비밀번호 demo)
+- 경쟁입찰(최고가 공개)·일반입찰(비공개), 재입찰·단위·연장 등은 관리자가 설정
+- 저장소: 구글 시트 + Apps Script — 설치는 `market/apps-script/설치안내.md`
