@@ -316,6 +316,31 @@ const TMAPGEN = {
     });
     rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
   },
+  // ---- 연구윤리 맵 시안 3종 (draft): flat floor, low symmetric structures
+  ethA(W, H, m) { // A 연구윤리 실험실: lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror(X => {
+      tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
+      tmRect(m, W, H, 1250, TG - 190, 1530, TG, X);                                    // data cabinet (L) / citation shelf (R)
+      tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
+    });
+    rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
+    rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
+  },
+  ethB(W, H, m) { // B 진실의 광장: an open plaza with three gates (위조·변조·표절 예방); tanks drive under the lintels
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    const gate = (cx, h) => { rectF(m, W, H, cx - 210, TG - h, cx - 150, TG, 1); rectF(m, W, H, cx + 150, TG - h, cx + 210, TG, 1); rectF(m, W, H, cx - 240, TG - h - 44, cx + 240, TG - h, 1); };
+    tmMirror(X => { tmPoly(m, W, H, [[0, TG], [0, TG - 110], [260, TG - 100], [420, TG - 40], [500, TG]], X); });
+    gate(1450, 200); gate(TCX, 230); gate(2 * TCX - 1450, 200);
+  },
+  ethC(W, H, m) { // C 학술대회장: a conference stage; seating tiers at the ends, journal stacks, a lectern in the middle
+    rectF(m, W, H, 0, TG, W, H - 4, 1);
+    tmMirror(X => {
+      tmRect(m, W, H, 0, TG - 150, 260, TG, X); tmRect(m, W, H, 260, TG - 100, 480, TG, X); tmRect(m, W, H, 480, TG - 50, 700, TG, X); // seating tiers
+      tmCapsule(m, W, H, Math.min(X(1480), X(1780)), Math.max(X(1480), X(1780)), TG - 140, TG, 40); // journal stack
+    });
+    rectF(m, W, H, 2480, TG - 30, 2720, TG, 1); tmCapsule(m, W, H, 2545, 2655, TG - 170, TG - 30, 14); // lectern
+  },
 };
 for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
 

@@ -187,3 +187,7 @@ const CONFIG = {
     moon: { name: '달 기지', tag: '저중력 · 장거리', desc: '중력이 약해 포탄이 멀리, 오래 날아갑니다. 분화구와 평평한 고원.', W: 5600, H: 1600, theme: 'moon', gravity: 0.62 },
   },
 };
+// ---- 연구윤리 맵 시안 (draft only, not for deploy)
+CONFIG.maps.ethA = Object.assign({}, CONFIG.maps.scale, { name: '시안 A · 연구윤리 실험실', desc: '시안' });
+CONFIG.maps.ethB = Object.assign({}, CONFIG.maps.scale, { name: '시안 B · 진실의 광장', desc: '시안' });
+CONFIG.maps.ethC = Object.assign({}, CONFIG.maps.scale, { name: '시안 C · 학술대회장', desc: '시안' });
