@@ -3,6 +3,6 @@
  * poll: 목록을 새로 불러오는 간격(밀리초). 사람이 많으면 15000~20000 으로 늘리세요.
  */
 window.MARKET_CONFIG = {
-  api: '',
+  api: 'https://script.google.com/macros/s/AKfycbz1T3M1ls99_s2oRKw5kPy8gvnTiCYpJhkkTyfb3RD21j4YY8w5nvw-xw1bx7uixW17/exec',
   poll: 12000
 };
