@@ -579,6 +579,7 @@ function tipRecap(id) {
   el.innerHTML = '<div class="trh">💡 이번 판에서 본 문장</div><ul></ul>';
   const ul = el.querySelector('ul'); for (const t of top) { const li = document.createElement('li'); li.textContent = t[0]; ul.append(li); }
 }
+window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0;
 function showMapGuide() {
