@@ -198,6 +198,7 @@ function updateHud() {
   $('pw').style.width = (pw * 100) + '%';
   setTxt('pwTxt', (pw * 4).toFixed(1) + ' / 4');
   const lp = $('pwLast'); lp.hidden = t.lastPower < 0; if (t.lastPower >= 0) lp.style.left = `calc(${t.lastPower / 10}% - 1px)`;
+  const mk = $('pwMark'), mv = pwMarks[t.idx]; mk.hidden = mv == null; if (mv != null) { mk.style.left = (mv / 10) + '%'; setTxt('pwMarkTxt', String(mv)); }
   for (let i = 0; i < 2; i++) {
     const b = $('w' + i), w = d.weapons[i];
     const label = `${i + 1}  ${w.name}` + (i === 1 && t.cd > 0 ? ` (${t.cd}턴 후)` : '');
@@ -330,6 +331,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.moved) { R.cam.x = drag.cx - dx / R.cam.zoom; R.cam.y = drag.cy - dy / R.cam.zoom; }
 });
 cv.addEventListener('pointerup', () => { drag = null; cv.classList.remove('dragging'); });
+$('gauge').addEventListener('pointerdown', setPowerMark);
 mini.addEventListener('pointerdown', e => { const r = mini.getBoundingClientRect(); R.cam.x = (e.clientX - r.left) / r.width * match.W; R.cam.y = (e.clientY - r.top) / r.height * match.H; R.free = true; });
 function syncSettings() {
   const sb = $('sndBtn'), kb = $('shakeBtn');
@@ -489,7 +491,18 @@ function practiceOpts(bots) {
   };
 }
 // one match on screen: local practice or online (opts carry the online hooks)
+// power target marks (like the original): click the gauge to drop a line where you mean to stop; per tank, on this device only
+let pwMarks = {};
+function setPowerMark(e) {
+  if (!match) return;
+  const t = hudTank(match); if (!t) return;
+  const r = $('gauge').getBoundingClientRect(), v = Math.round(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * 100) * 10;
+  const old = pwMarks[t.idx];
+  if (old != null && Math.abs(old - v) <= 20) delete pwMarks[t.idx]; else pwMarks[t.idx] = v; // near the old mark = take it away
+  e.preventDefault(); e.stopPropagation();
+}
 function installMatch(m, opts) {
+  pwMarks = {};
   match = m;
   ctrl = createController(match, opts || {});
   for (const k in hudCache) delete hudCache[k];

@@ -107,6 +107,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .gauge { position: relative; height: 22px; border-radius: 11px; background: #1E2638; border: 2px solid #3A4660; overflow: hidden; }
 #pw { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #3EC86A, #FFD24A 70%, #F0583E); }
 #pwLast { position: absolute; top: -2px; bottom: -2px; width: 3px; background: #FFFFFF; left: 0; }
+#pwMark { position: absolute; top: -2px; bottom: -2px; width: 3px; margin-left: -1px; background: #5BD7FF; box-shadow: 0 0 0 1px rgba(10,30,50,0.6), 0 0 8px rgba(91,215,255,0.8); pointer-events: none; }
+#pwMark b { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, -3px); font-size: 10px; font-weight: 800; color: #5BD7FF; white-space: nowrap; }
+.gauge { cursor: crosshair; overflow: visible; }
+.mkkey { font-style: normal; color: #5BD7FF; }
 .gauge .tick { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,0.25); }
 .turnbox { display: flex; flex-direction: column; gap: 6px; margin-left: auto; }
 .passbtn { min-height: 56px; }
@@ -447,8 +451,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="angle"><canvas id="angDial" width="176" height="96" aria-hidden="true"></canvas><div class="angnum"><span class="v" id="angTxt">45°</span><span class="r" id="angReal">-</span></div></div>
     <div class="power">
       <div class="row"><span>파워</span><span id="pwTxt">0</span></div>
-      <div class="gauge" id="gauge"><div id="pw"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div><div id="pwLast"></div></div>
-      <div class="row" style="font-weight:500"><span>흰 선 = 이 탱크의 이전 발사 파워</span></div>
+      <div class="gauge" id="gauge"><div id="pw"></div><div class="tick" style="left:25%"></div><div class="tick" style="left:50%"></div><div class="tick" style="left:75%"></div><div id="pwLast"></div><div id="pwMark" hidden><b id="pwMarkTxt"></b></div></div>
+      <div class="row" style="font-weight:500"><span>흰 선 = 이전 발사 · <i class="mkkey">하늘색 선</i> = 게이지를 눌러 찍은 목표 (다시 누르면 지움)</span></div>
     </div>
     <div class="items" id="items"></div>
     <div class="turnbox">
