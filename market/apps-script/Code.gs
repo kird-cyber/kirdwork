@@ -116,10 +116,14 @@
     comp_step: 100,         // 경쟁입찰: 현재 최고가보다 최소 얼마 더
     sealed_rebid: 'replace',// 일반입찰 재입찰: replace = 새 금액으로 교체(낮춰도 됨) / raise = 올리기만 / none = 한 번만
     allow_cancel: false,    // 일반입찰 입찰 취소 허용
-    show_count: 'all',      // 입찰자 수 표시: none / comp(경쟁만) / all — 기본: 모두 (입찰 수를 보고 판단하게)
+    show_count: 'comp',     // 입찰자 수 표시: none / comp(경쟁만) / all — 담당자 정의: 경쟁만 표시
     show_leading: true,     // 경쟁입찰에서 「내가 최고가」 표시
     extend_min: 0,          // 경쟁입찰: 마감 N분 전 입찰이 들어오면 N분 연장 (0 = 끔)
     results_public: false,  // 마감 후 각자 낙찰 여부 확인
+    steps: '',              // 직원 화면 「참여 방법」 (한 줄에 한 단계, 비우면 기본 4단계)
+    rules_common: '',       // 직원 화면 규칙 안내 문장 — 비우면 설정에 맞춰 자동으로 만든 문장
+    rules_comp: '',
+    rules_sealed: '',
     max_bidders_note: ''
   };
   const OPTION_ENUMS = { comp_rebid: ['raise', 'none'], sealed_rebid: ['replace', 'raise', 'none'], show_count: ['none', 'comp', 'all'] };
@@ -226,7 +230,8 @@
       return {
         title: s.title, notice: s.notice, open_at: s.open_at, close_at: s.close_at, phase: ph, now: t,
         unit: s.unit, competitive_min: s.competitive_min, comp_rebid: s.comp_rebid, comp_step: s.comp_step, sealed_rebid: s.sealed_rebid,
-        allow_cancel: s.allow_cancel, show_count: s.show_count, show_leading: s.show_leading, extend_min: s.extend_min, results_public: s.results_public
+        allow_cancel: s.allow_cancel, show_count: s.show_count, show_leading: s.show_leading, extend_min: s.extend_min, results_public: s.results_public,
+        steps: s.steps, rules_common: s.rules_common, rules_comp: s.rules_comp, rules_sealed: s.rules_sealed
       };
     }
     function bidderView(row, s, codeId) {
@@ -410,7 +415,7 @@
       'admin.codes'(p, tok) {
         needAdmin(tok); const bids = store.list('bids');
         const cnt = {}; bids.forEach(b => { if (b.active) cnt[b.code_id] = (cnt[b.code_id] || 0) + 1; });
-        return { codes: store.list('codes').sort((a, b) => a.id - b.id).map(c => ({ id: c.id, label: c.label, active: !!c.active, created_at: c.created_at, last_at: c.last_at, bids: cnt[c.id] || 0, hint: c.hint })) };
+        return { codes: store.list('codes').sort((a, b) => a.id - b.id).map(c => ({ id: c.id, label: c.label, active: !!c.active, created_at: c.created_at, last_at: c.last_at, bids: cnt[c.id] || 0, hint: c.hint, code: c.code ? fmtCode(normCode(c.code)) : '' })) };
       },
       'admin.createCodes'(p, tok) {
         needAdmin(tok);
@@ -423,7 +428,7 @@
           do { code = rand(8); h = codeHash(code); } while (used[h] && ++guard < 50);
           used[h] = 1;
           const label = (labels[i] || '').slice(0, 60);
-          const id = store.insert('codes', { hash: h, label: label, active: 1, created_at: now(), last_at: 0, hint: code.slice(-2) });
+          const id = store.insert('codes', { hash: h, label: label, active: 1, created_at: now(), last_at: 0, hint: code.slice(-2), code: code }); // 관리자가 언제든 다시 볼 수 있게 원래 코드도 저장
           out.push({ id: id, label: label, code: fmtCode(code) });
         }
         log('관리자', '참가 코드 발급', n + '개');
@@ -442,7 +447,7 @@
         needAdmin(tok); const c = store.get('codes', Number(p.id)); if (!c) throw err('코드를 찾을 수 없어요.');
         const used = {}; store.list('codes').forEach(x => used[x.hash] = 1);
         let code, h; do { code = rand(8); h = codeHash(code); } while (used[h]);
-        store.update('codes', c.id, { hash: h, hint: code.slice(-2), active: 1 });
+        store.update('codes', c.id, { hash: h, hint: code.slice(-2), code: code, active: 1 });
         log('관리자', '코드 재발급', '#' + c.id + (c.label ? ' ' + c.label : ''));
         return { id: c.id, label: c.label, code: fmtCode(code) }; // 기존 입찰은 그대로 이 참가자 것으로 남는다
       },
@@ -457,7 +462,7 @@
       'admin.dump'(p, tok) {
         needAdmin(tok); log('관리자', '전체 백업 내려받기', '');
         const st = Object.assign({}, store.getSettings()); delete st._secret; delete st._pepper;
-        return { at: now(), settings: st, items: store.list('items'), codes: store.list('codes').map(c => ({ id: c.id, label: c.label, active: c.active, created_at: c.created_at })), bids: store.list('bids') };
+        return { at: now(), settings: st, items: store.list('items'), codes: store.list('codes').map(c => ({ id: c.id, label: c.label, code: c.code ? fmtCode(normCode(c.code)) : '', active: c.active, created_at: c.created_at })), bids: store.list('bids') };
       }
     };
 
@@ -509,12 +514,12 @@
 var SHEET_NAMES = { settings: '설정', items: '상품', codes: '참가코드', bids: '입찰', logs: '기록' };
 var COLS = {
   items: ['id', 'no', 'name', 'descr', 'photos', 'min_price', 'mode', 'hidden', 'close_at', 'created_at', 'updated_at'],
-  codes: ['id', 'hash', 'label', 'active', 'created_at', 'last_at', 'hint'],
+  codes: ['id', 'hash', 'label', 'active', 'created_at', 'last_at', 'hint', 'code'],
   bids: ['id', 'item_id', 'code_id', 'amount', 'created_at', 'active'],
   logs: ['id', 'at', 'actor', 'action', 'detail']
 };
 var JSON_COLS = { photos: 1 };
-var STR_COLS = { name: 1, descr: 1, mode: 1, hash: 1, label: 1, hint: 1, actor: 1, action: 1, detail: 1 };
+var STR_COLS = { name: 1, descr: 1, mode: 1, hash: 1, label: 1, hint: 1, code: 1, actor: 1, action: 1, detail: 1 };
 var PHOTO_FOLDER = 'KIRD 나눔마켓 사진';
 var CACHE_KEY = 'mk_snap_v1', CACHE_TTL = 120; // 초. 시트를 손으로 고쳐도 2분 안에 반영된다
 
@@ -547,6 +552,9 @@ function SheetStore() {
   function readTable(t) {
     var sh = ss_().getSheetByName(SHEET_NAMES[t]);
     var vals = sh.getDataRange().getValues(), cols = COLS[t], rows = [], seq = 0;
+    if (vals[0] && vals[0].filter(function (x) { return x !== ''; }).length < cols.length) { // 새로 생긴 열 제목 채우기 (예: 참가코드.code)
+      sh.getRange(1, 1, 1, cols.length).setValues([cols]); sh.getRange(1, cols.length, sh.getMaxRows(), 1).setNumberFormat('@');
+    }
     for (var i = 1; i < vals.length; i++) {
       if (vals[i][0] === '' || vals[i][0] === null) continue;
       var o = {}; for (var c = 0; c < cols.length; c++) o[cols[c]] = parseCell(cols[c], vals[i][c]);

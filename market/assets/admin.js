@@ -53,6 +53,7 @@
     S.st = rs[0]; MK.setServerNow(rs[0].info.now);
     rs.slice(1).forEach(r => { if (r.ok && r.codes) S.codes = r.codes; if (r.ok && r.logs) S.logs = r.logs; });
     if (p === S.page) render();
+    if (S.scrollTo && p === S.page) { const el = document.getElementById(S.scrollTo); S.scrollTo = ''; if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.style.transition = 'background .6s'; el.style.background = 'var(--kird-50)'; setTimeout(() => { el.style.background = ''; }, 1400); } }
     if (loud) toast('새로 불러왔어요.');
   }
   function head() {
@@ -105,10 +106,10 @@
       tile('heart', ['var(--seal-50)', 'var(--seal)'], '예상 모금액', won(sum), '상품별 현재 1위 금액 합계') + '</div>' +
       '<div class="two"><div class="panel"><div class="ph"><h2>입찰이 많은 상품</h2><div class="x"><button class="btn sm" data-go="results">전체 보기' + ic('chev', 14, 2.4) + '</button></div></div><div class="scroll">' +
       (hot.length ? '<table class="tbl"><thead><tr><th></th><th>상품</th><th>방식</th><th class="r">입찰</th><th class="r">현재 1위</th></tr></thead><tbody>' + hot.map(x => '<tr class="click" data-bids="' + x.id + '"><td style="width:64px">' + thumb(x) + '</td><td><div class="nm">' + esc(x.name) + '<small>No.' + x.no + ' · 최소 ' + won(x.min_price) + '</small></div></td><td>' + modeBadge(x.mode_resolved) + '</td><td class="r num">' + x.count + '</td><td class="r num lead-c">' + (x.top ? won(x.top.amount) : '-') + '</td></tr>').join('') + '</tbody></table>' : '<div class="empty">' + ic('box', 40, 1.5) + '<div>아직 상품이 없어요. <a href="#items" data-go="items">상품을 등록</a>해 보세요.</div></div>') +
-      '</div></div><div style="display:flex;flex-direction:column;gap:20px"><div class="panel"><div class="ph"><h2>지금 적용 중인 규칙</h2><div class="x"><button class="btn sm" data-go="settings">바꾸기</button></div></div><div class="pb"><div class="preview" style="border-style:solid;background:#fff"><p><b>경쟁입찰</b> (최소가 ' + won(i.competitive_min) + ' 이상) — ' + esc(r.c) + '</p><p><b>일반입찰</b> — ' + esc(r.s) + '</p><p><b>공통</b> — ' + esc(r.p) + '</p></div>' +
+      '</div></div><div style="display:flex;flex-direction:column;gap:20px"><div class="panel"><div class="ph"><h2>지금 적용 중인 규칙</h2><div class="x"><button class="btn sm" data-go="settings" data-scroll="guideSet">문구·규칙 고치기</button></div></div><div class="pb"><div class="preview" style="border-style:solid;background:#fff"><p><b>공통</b> — ' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (최소가 ' + won(i.competitive_min) + ' 이상) — ' + esc(r.c).replace(/\n/g, '<br>') + '</p><p><b>일반입찰</b> — ' + esc(r.s).replace(/\n/g, '<br>') + '</p></div>' +
       '<div style="display:flex;gap:16px;margin-top:12px;font-size:13px;color:var(--mute);flex-wrap:wrap"><span>' + ic('clock', 14, 2) + ' 시작 ' + (i.open_at ? esc(fmtDate(i.open_at)) : '바로') + '</span><span>마감 ' + (i.close_at ? esc(fmtDate(i.close_at)) : '미정') + '</span></div></div></div>' +
       '<div class="panel"><div class="ph"><h2>최근 기록</h2><div class="x"><button class="btn sm" data-go="logs">전체</button></div></div><div class="pb" style="padding:8px 20px 14px">' + ((S.logs || []).slice(0, 7).map(l => '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13.5px"><span style="color:var(--mute);width:62px;flex:none">' + esc(ago(l.at)) + '</span><span><b>' + esc(l.action) + '</b> <span class="log-d">' + esc(logDetail(l)) + '</span></span></div>').join('') || '<div class="empty" style="padding:20px">기록이 없어요.</div>') + '</div></div></div></div>';
-    $$('[data-go]', c).forEach(b => b.onclick = e => { e.preventDefault(); go(b.dataset.go); });
+    $$('[data-go]', c).forEach(b => b.onclick = e => { e.preventDefault(); S.scrollTo = b.dataset.scroll || ''; go(b.dataset.go); });
     $$('[data-bids]', c).forEach(b => b.onclick = () => openBids(Number(b.dataset.bids)));
   }
   function logDetail(l) {
@@ -217,10 +218,10 @@
       (S.codeTab === 'count'
         ? '<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap"><div class="field" style="width:160px"><label for="cN">몇 개 만들까요?</label><input class="inp num" id="cN" type="number" min="1" max="1000" value="' + esc(S.codeN || 10) + '"></div><button class="btn primary" id="mkCodes">' + ic('ticket', 16, 2) + '코드 만들기</button><span class="help" style="color:var(--mute);font-size:13px;padding-bottom:12px">이름 없이 번호로만 관리돼요. 나눠 줄 때 이름을 적어 두면 편해요.</span></div>'
         : '<div class="field"><label for="cNames">한 줄에 한 명씩 (이름, 사번, 부서 등 관리자만 보는 메모)</label><textarea class="inp" id="cNames" rows="5" placeholder="인재개발팀 홍길동\n연구윤리팀 김연구\n…">' + esc(S.codeNames || '') + '</textarea></div><div style="display:flex;gap:10px;align-items:center;margin-top:10px"><button class="btn primary" id="mkCodes">' + ic('ticket', 16, 2) + '줄 수만큼 코드 만들기</button><span style="font-size:13px;color:var(--mute)" id="cCount">0명</span></div>') +
-      '<div style="margin-top:14px;display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--kird-50);color:var(--kird-dd);font-size:13px;line-height:1.55">' + ic('shield', 17, 2) + '<span>코드는 <b>만든 직후 한 번만</b> 보여요 (저장할 땐 알아볼 수 없게 바꿔 저장해요). 바로 CSV로 받거나 인쇄해 두세요. 잃어버리면 「재발급」하면 돼요 — 그 사람의 기존 입찰은 그대로 남아요.</span></div></div></div>' +
-      '<div class="panel"><div class="ph"><h2>발급한 코드 ' + list.length + '개</h2><span class="badge ok">사용 중 ' + list.filter(x => x.active).length + '</span><div class="x"><input class="inp" id="codeQ" placeholder="이름·번호로 찾기" value="' + esc(S.codeQ) + '" style="height:38px;width:200px"><button class="btn sm" id="codeCsv">' + ic('download', 15) + '목록 CSV</button></div></div><div class="scroll">' +
+      '<div style="margin-top:14px;display:flex;gap:10px;padding:12px 14px;border-radius:12px;background:var(--kird-50);color:var(--kird-dd);font-size:13px;line-height:1.55">' + ic('shield', 17, 2) + '<span>만든 코드는 아래 목록에서 <b>언제든 다시 볼 수 있어요</b> (관리자만). 「목록 CSV」나 「카드 인쇄」로 나눠 주세요. 코드가 새어 나갔다면 「재발급」하면 옛 코드는 바로 막히고, 그 사람의 기존 입찰은 그대로 남아요.</span></div></div></div>' +
+      '<div class="panel"><div class="ph"><h2>발급한 코드 ' + list.length + '개</h2><span class="badge ok">사용 중 ' + list.filter(x => x.active).length + '</span><div class="x"><input class="inp" id="codeQ" placeholder="이름·번호로 찾기" value="' + esc(S.codeQ) + '" style="height:38px;width:200px"><button class="btn sm" id="codeCsv">' + ic('download', 15) + '목록 CSV</button><button class="btn sm" id="codePrint">' + ic('print', 15) + '카드 인쇄</button></div></div><div class="scroll">' +
       (shown.length ? '<table class="tbl"><thead><tr><th>번호</th><th>이름 · 메모 <span style="font-weight:500">(눌러서 고치기)</span></th><th>코드</th><th>발급</th><th>마지막 접속</th><th class="r">입찰 중</th><th>사용</th><th></th></tr></thead><tbody>' +
-        shown.map(x => '<tr' + (x.active ? '' : ' class="hid"') + '><td class="num">#' + x.id + '</td><td><input class="inl" data-label="' + x.id + '" value="' + esc(x.label) + '" placeholder="메모 없음" maxlength="60"></td><td class="num" style="color:var(--mute);font-family:ui-monospace,monospace">••••-••' + esc(x.hint || '') + '</td><td>' + esc(fmtDate(x.created_at)) + '</td><td>' + (x.last_at ? esc(ago(x.last_at)) : '<span style="color:var(--faint)">아직</span>') + '</td><td class="r num">' + x.bids + '</td><td><label class="sw"><input type="checkbox" data-act="' + x.id + '"' + (x.active ? ' checked' : '') + '><span class="tr"></span><span class="sr">사용</span></label></td><td><button class="btn sm" data-re="' + x.id + '">' + ic('refresh', 14) + '재발급</button></td></tr>').join('') + '</tbody></table>'
+        shown.map(x => '<tr' + (x.active ? '' : ' class="hid"') + '><td class="num">#' + x.id + '</td><td><input class="inl" data-label="' + x.id + '" value="' + esc(x.label) + '" placeholder="메모 없음" maxlength="60"></td><td style="white-space:nowrap">' + (x.code ? '<span class="codev">' + esc(x.code) + '</span> <button class="btn sm ghost" data-copy="' + esc(x.code) + '" title="복사">' + ic('copy', 14) + '<span class="sr">복사</span></button>' : '<span style="color:var(--faint);font-size:12.5px" title="이 기능 전에 만든 코드라 원래 코드가 저장돼 있지 않아요">확인 불가 · 재발급 필요</span>') + '</td><td>' + esc(fmtDate(x.created_at)) + '</td><td>' + (x.last_at ? esc(ago(x.last_at)) : '<span style="color:var(--faint)">아직</span>') + '</td><td class="r num">' + x.bids + '</td><td><label class="sw"><input type="checkbox" data-act="' + x.id + '"' + (x.active ? ' checked' : '') + '><span class="tr"></span><span class="sr">사용</span></label></td><td><button class="btn sm" data-re="' + x.id + '">' + ic('refresh', 14) + '재발급</button></td></tr>').join('') + '</tbody></table>'
         : '<div class="empty">' + ic('ticket', 44, 1.4) + '<div>' + (q ? '찾는 코드가 없어요.' : '아직 발급한 코드가 없어요.') + '</div></div>') + '</div></div>';
     $$('[data-ct]', c).forEach(b => b.onclick = () => { S.codeTab = b.dataset.ct; rCodes(c); fill(c); });
     const names = $('#cNames'), cnt = () => { $('#cCount').textContent = names.value.split('\n').filter(s => s.trim()).length + '명'; };
@@ -236,7 +237,10 @@
       S.codeNames = ''; showNewCodes(r.codes, '새 코드 ' + r.codes.length + '개'); load('codes');
     };
     $('#codeQ').oninput = e => { S.codeQ = e.target.value; const p = e.target.selectionStart; rCodes(c); fill(c); const n = $('#codeQ'); n.focus(); n.setSelectionRange(p, p); };
-    $('#codeCsv').onclick = () => MK.downloadCSV('kird-market_codes_list.csv', [['번호', '이름·메모', '코드 끝 2자리', '사용', '발급', '마지막 접속', '입찰 중']].concat(list.map(x => ['#' + x.id, x.label, x.hint, x.active ? '사용' : '중지', fmtDate(x.created_at), x.last_at ? fmtDate(x.last_at) : '', x.bids])));
+    const url = location.href.replace(/admin\.html.*$/, '').replace(/#.*$/, '');
+    $('#codeCsv').onclick = () => MK.downloadCSV('kird-market_codes_list.csv', [['번호', '이름·메모', '참가 코드', '사용', '발급', '마지막 접속', '입찰 중', '입찰 주소']].concat(list.map(x => ['#' + x.id, x.label, x.code || '(재발급 필요)', x.active ? '사용' : '중지', fmtDate(x.created_at), x.last_at ? fmtDate(x.last_at) : '', x.bids, url])));
+    $('#codePrint').onclick = () => { const a = shown.filter(x => x.active && x.code); if (!a.length) { toast('인쇄할 코드가 없어요.', 'bad'); return; } printCards(a, url); };
+    $$('[data-copy]', c).forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); toast(b.dataset.copy + ' 복사했어요.', 'ok'); } catch (e) { toast('복사하지 못했어요.', 'bad'); } });
     $$('[data-label]', c).forEach(inp => {
       inp.onchange = async () => { const r = await call('admin.updateCode', { id: Number(inp.dataset.label), label: inp.value }); if (r.ok) { toast('메모를 고쳤어요.', 'ok'); const x = list.find(y => y.id === Number(inp.dataset.label)); if (x) x.label = inp.value; } else toast(r.error, 'bad'); };
       inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
@@ -256,15 +260,15 @@
   const codesDlg = $('#codesDlg');
   function showNewCodes(codes, title) {
     const url = location.href.replace(/admin\.html.*$/, '').replace(/#.*$/, '');
-    codesDlg.innerHTML = '<div class="cd"><h2 id="cdT">' + esc(title) + '</h2><div class="warn">' + ic('alert', 18, 2.2) + '<span>이 창을 닫으면 코드를 다시 볼 수 없어요. 지금 <b>CSV로 받거나 인쇄</b>해 두세요.</span></div>' +
+    codesDlg.innerHTML = '<div class="cd"><h2 id="cdT">' + esc(title) + '</h2><div class="warn">' + ic('alert', 18, 2.2) + '<span>코드는 「참가 코드」 목록에서 언제든 다시 볼 수 있어요. 바로 나눠 줄 거라면 지금 <b>CSV로 받거나 인쇄</b>하세요.</span></div>' +
       '<div class="list"><table class="tbl"><thead><tr><th>번호</th><th>이름 · 메모</th><th>참가 코드</th></tr></thead><tbody>' + codes.map(x => '<tr><td class="num">#' + x.id + '</td><td>' + esc(x.label || '-') + '</td><td class="codev">' + esc(x.code) + '</td></tr>').join('') + '</tbody></table></div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="cdCsv">' + ic('download', 16) + 'CSV 내려받기</button><button class="btn" id="cdPrint">' + ic('print', 16) + '나눠 줄 카드 인쇄</button><button class="btn" id="cdCopy">' + ic('copy', 16) + '모두 복사</button><button class="btn ghost" id="cdClose" style="margin-left:auto">저장했어요, 닫기</button></div></div>';
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="cdCsv">' + ic('download', 16) + 'CSV 내려받기</button><button class="btn" id="cdPrint">' + ic('print', 16) + '나눠 줄 카드 인쇄</button><button class="btn" id="cdCopy">' + ic('copy', 16) + '모두 복사</button><button class="btn ghost" id="cdClose" style="margin-left:auto">닫기</button></div></div>';
     $('#cdCsv').onclick = () => { MK.downloadCSV('kird-market_codes_' + new Date().toISOString().slice(0, 10) + '.csv', [['번호', '이름·메모', '참가 코드', '입찰 주소']].concat(codes.map(x => ['#' + x.id, x.label, x.code, url]))); codesDlg.dataset.saved = 1; };
     $('#cdCopy').onclick = async () => { try { await navigator.clipboard.writeText(codes.map(x => (x.label ? x.label + '\t' : '') + x.code).join('\n')); toast('복사했어요.', 'ok'); codesDlg.dataset.saved = 1; } catch (e) { toast('복사하지 못했어요. CSV를 써 주세요.', 'bad'); } };
     $('#cdPrint').onclick = () => { printCards(codes, url); codesDlg.dataset.saved = 1; };
-    $('#cdClose').onclick = () => { if (!codesDlg.dataset.saved && !confirm('아직 CSV·인쇄·복사를 안 했어요. 그래도 닫을까요?')) return; codesDlg.close(); };
+    $('#cdClose').onclick = () => codesDlg.close();
     codesDlg.dataset.saved = ''; codesDlg.showModal();
-    codesDlg.oncancel = e => { if (!codesDlg.dataset.saved && !confirm('아직 CSV·인쇄·복사를 안 했어요. 그래도 닫을까요?')) e.preventDefault(); };
+    codesDlg.oncancel = null;
   }
   function printCards(codes, url) {
     const title = S.st ? S.st.settings.title : 'KIRD 나눔마켓';
@@ -316,6 +320,15 @@
   }
 
   /* ── 설정 ── */
+  function guideSection(s) {
+    const box = (k, id, label, rows) => '<div class="field"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="' + id + '" class="lbl">' + label + '</label><span data-tag="' + k + '" style="display:inline-flex;gap:6px;align-items:center"></span></div><textarea class="inp" id="' + id + '" data-k="' + k + '" data-guide="' + k + '" rows="' + rows + '" maxlength="2000">' + esc(s[k] || '') + '</textarea></div>';
+    return '<div class="set" id="guideSet"><div class="t"><h3>직원 화면 안내 문구</h3><p>직원 첫 화면의 「참여 방법」과 규칙 설명을 직접 고칠 수 있어요. 줄을 바꾸면 화면에서도 줄이 바뀌어요.<br><br>손대지 않은 칸은 위 설정(단위·재입찰 등)에 맞춰 <b>자동으로</b> 만들어져요. 고친 칸은 쓴 그대로 보여요.</p></div><div class="f">' +
+      box('steps', 'gSteps', '참여 방법 <span style="font-weight:500;color:var(--mute)">(한 줄에 한 단계)</span>', 4) +
+      box('rules_common', 'gCommon', '공통 규칙', 3) +
+      box('rules_comp', 'gComp', '경쟁입찰 설명 <span style="font-weight:500;color:var(--mute)">(최소가 ' + won(s.competitive_min) + ' 이상)</span>', 3) +
+      box('rules_sealed', 'gSealed', '일반입찰 설명 <span style="font-weight:500;color:var(--mute)">(최소가 ' + won(s.competitive_min) + ' 미만)</span>', 3) +
+      '<div class="preview" id="prev"></div></div></div>';
+  }
   function rSettings(c) {
     const s = Object.assign({}, S.st.settings, S.dirty);
     const radio = (k, opts) => '<div class="opts">' + opts.map(([v, b, d]) => '<label class="opt"><input type="radio" name="' + k + '" value="' + v + '"' + (String(s[k]) === String(v) ? ' checked' : '') + '><b>' + b + '</b><span>' + d + '</span></label>').join('') + '</div>';
@@ -331,20 +344,35 @@
       sw('show_leading', '「내가 최고가」 표시', '입찰한 사람에게 지금 1위인지 알려 줘요 (누가 1위인지는 안 보여요)') + '</div></div>' +
       '<div class="set"><div class="t"><h3>일반입찰 규칙</h3><p>다른 사람 금액이 보이지 않는 상품이에요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">재입찰</div>' + radio('sealed_rebid', [['replace', '금액 바꾸기 (낮춰도 됨)', '마감 전까지 새 금액으로 교체 — 담당자 설명 기준'], ['raise', '올리기만', '다시 낼 땐 내 이전 금액보다 높게만'], ['none', '한 번만', '한 번 내면 못 바꿔요']]) + '</div>' +
       sw('allow_cancel', '입찰 취소 허용', '마감 전에 자기 입찰을 취소할 수 있어요') + '</div></div>' +
-      '<div class="set"><div class="t"><h3>직원 화면 표시</h3><p>누가 입찰했는지는 어떤 설정에서도 공개되지 않아요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">입찰 인원 표시</div>' + radio('show_count', [['none', '안 보여 줌', '몇 명이 입찰했는지 숨겨요'], ['comp', '경쟁입찰만', '경쟁입찰 상품에만 「n명 입찰」'], ['all', '모두 (권장)', '일반입찰도 입찰 수는 보여요 — 금액은 비공개']]) + '</div>' +
+      '<div class="set"><div class="t"><h3>직원 화면 표시</h3><p>누가 입찰했는지는 어떤 설정에서도 공개되지 않아요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">입찰 인원 표시</div>' + radio('show_count', [['none', '안 보여 줌', '몇 명이 입찰했는지 숨겨요'], ['comp', '경쟁입찰만', '경쟁입찰 상품에만 「n명 입찰」'], ['all', '모두', '일반입찰도 입찰 수는 보여요 — 금액은 비공개']]) + '</div>' +
       sw('results_public', '마감 후 낙찰 여부 보여 주기', '각자 자기 결과(낙찰/미낙찰)만 봐요') + '</div></div>' +
-      '<div class="set"><div class="t"><h3>직원 화면 미리보기</h3><p>지금 설정이 이렇게 안내돼요.</p></div><div class="f"><div class="preview" id="prev"></div></div></div>' +
-      '<div class="set"><div class="t"><h3>백업</h3><p>상품·코드(번호와 메모만)·입찰 전부를 파일로 받아요. 행사 끝나면 꼭 받아 두세요.</p></div><div class="f"><div class="danger-zone"><button class="btn" id="dump">' + ic('download', 16) + '전체 백업 (JSON)</button>' + (DEMO ? '<button class="btn danger" id="demoReset">' + ic('refresh', 16) + '데모 초기화</button>' : '') + '</div></div></div>' +
+      guideSection(s) +
+      '<div class="set"><div class="t"><h3>백업</h3><p>상품·참가 코드·입찰 전부를 파일로 받아요 (참가 코드가 들어 있으니 잘 보관하세요). 행사 끝나면 꼭 받아 두세요.</p></div><div class="f"><div class="danger-zone"><button class="btn" id="dump">' + ic('download', 16) + '전체 백업 (JSON)</button>' + (DEMO ? '<button class="btn danger" id="demoReset">' + ic('refresh', 16) + '데모 초기화</button>' : '') + '</div></div></div>' +
       '</div>' + (n ? '<div class="savebar"><span>' + ic('edit', 16) + ' 바꾼 설정 ' + n + '개</span><button class="btn ghost" id="undo" style="color:#fff;margin-left:auto">되돌리기</button><button class="btn primary" id="save" style="margin-left:0">' + ic('check', 16, 2.4) + '저장</button></div>' : '');
     const prev = () => {
-      const x = Object.assign({}, S.st.info, S.st.settings, S.dirty), r = MK.rulesText(x);
-      $('#prev').innerHTML = '<span class="h">직원 화면 · 규칙 안내</span><p><b>경쟁입찰</b> (최소가 ' + won(x.competitive_min) + ' 이상) — ' + esc(r.c) + '</p><p><b>일반입찰</b> — ' + esc(r.s) + '</p><p><b>공통</b> — ' + esc(r.p) + '</p>';
+      const x = Object.assign({}, S.st.info, S.st.settings, S.dirty), r = MK.rulesText(x), auto = MK.rulesText(x, true);
+      $('#prev').innerHTML = '<span class="h">직원 화면에 이렇게 보여요</span><p><b>참여 방법</b> — ' + MK.stepsOf(x).map((t, k) => (k + 1) + ' ' + esc(t)).join(' · ') + '</p><p><b>공통 규칙</b><br>' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (최소가 ' + won(x.competitive_min) + ' 이상)<br>' + esc(r.c).replace(/\n/g, '<br>') + '</p><p><b>일반입찰</b> (최소가 ' + won(x.competitive_min) + ' 미만)<br>' + esc(r.s).replace(/\n/g, '<br>') + '</p>';
+      // 비어 있는 칸은 지금 설정으로 만든 자동 문장을 보여 준다
+      [['rules_common', auto.p], ['rules_comp', auto.c], ['rules_sealed', auto.s], ['steps', MK.STEPS.join('\n')]].forEach(([k, a]) => {
+        const el = document.querySelector('[data-guide="' + k + '"]'); if (!el) return;
+        const own = String(x[k] || '').trim(); if (!own && document.activeElement !== el) el.value = a;
+        el.dataset.auto = a;
+        const tag = document.querySelector('[data-tag="' + k + '"]'); if (tag) tag.innerHTML = own ? '<span class="badge comp">직접 쓴 문장</span> <button type="button" class="btn sm ghost" data-reset="' + k + '">' + ic('refresh', 13) + '자동 문장으로</button>' : '<span class="badge mute">자동 — 위 설정을 바꾸면 따라 바뀜</span>';
+      });
+      $$('[data-reset]', c).forEach(b => b.onclick = () => { const el = document.querySelector('[data-guide="' + b.dataset.reset + '"]'); el.value = ''; mark(b.dataset.reset, ''); });
     };
     prev();
-    const mark = (k, v) => { if (String(S.st.settings[k]) === String(v)) delete S.dirty[k]; else S.dirty[k] = v; const had = !!$('.savebar'); if (had !== !!Object.keys(S.dirty).length) { rSettings(c); fill(c); return; } const bar = $('.savebar span'); if (bar) bar.innerHTML = ic('edit', 16) + ' 바꾼 설정 ' + Object.keys(S.dirty).length + '개'; prev(); };
+    const mark = (k, v) => {
+      if (String(S.st.settings[k]) === String(v)) delete S.dirty[k]; else S.dirty[k] = v; const had = !!$('.savebar');
+      if (had !== !!Object.keys(S.dirty).length) { // 저장 막대가 생기거나 사라질 때 다시 그리되, 쓰던 칸의 커서는 그대로
+        const ae = document.activeElement, fid = ae && ae.id; let sel = null; try { sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
+        const y = window.scrollY; rSettings(c); fill(c); window.scrollTo(0, y);
+        if (fid) { const el = document.getElementById(fid); if (el) { el.focus({ preventScroll: true }); try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { } } }
+        return;
+      } const bar = $('.savebar span'); if (bar) bar.innerHTML = ic('edit', 16) + ' 바꾼 설정 ' + Object.keys(S.dirty).length + '개'; prev(); };
     $$('[data-k]', c).forEach(el => {
       const k = el.dataset.k;
-      const val = () => el.type === 'checkbox' ? el.checked : el.hasAttribute('data-dt') ? fromDT(el.value) : el.hasAttribute('data-num') ? Number(String(el.value).replace(/[^\d]/g, '')) || 0 : el.value;
+      const val = () => el.hasAttribute('data-guide') ? (el.value.trim() === String(el.dataset.auto || '').trim() ? '' : el.value) : el.type === 'checkbox' ? el.checked : el.hasAttribute('data-dt') ? fromDT(el.value) : el.hasAttribute('data-num') ? Number(String(el.value).replace(/[^\d]/g, '')) || 0 : el.value;
       el.addEventListener(el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'datetime-local' ? 'change' : 'input', () => { if (el.hasAttribute('data-num') && el.tagName === 'INPUT') { const v = String(el.value).replace(/[^\d]/g, ''); el.value = v ? num(v) : ''; } mark(k, val()); });
     });
     $$('input[type=radio]', c).forEach(el => el.onchange = () => mark(el.name, el.value));

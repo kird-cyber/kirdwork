@@ -5,12 +5,12 @@
 var SHEET_NAMES = { settings: '설정', items: '상품', codes: '참가코드', bids: '입찰', logs: '기록' };
 var COLS = {
   items: ['id', 'no', 'name', 'descr', 'photos', 'min_price', 'mode', 'hidden', 'close_at', 'created_at', 'updated_at'],
-  codes: ['id', 'hash', 'label', 'active', 'created_at', 'last_at', 'hint'],
+  codes: ['id', 'hash', 'label', 'active', 'created_at', 'last_at', 'hint', 'code'],
   bids: ['id', 'item_id', 'code_id', 'amount', 'created_at', 'active'],
   logs: ['id', 'at', 'actor', 'action', 'detail']
 };
 var JSON_COLS = { photos: 1 };
-var STR_COLS = { name: 1, descr: 1, mode: 1, hash: 1, label: 1, hint: 1, actor: 1, action: 1, detail: 1 };
+var STR_COLS = { name: 1, descr: 1, mode: 1, hash: 1, label: 1, hint: 1, code: 1, actor: 1, action: 1, detail: 1 };
 var PHOTO_FOLDER = 'KIRD 나눔마켓 사진';
 var CACHE_KEY = 'mk_snap_v1', CACHE_TTL = 120; // 초. 시트를 손으로 고쳐도 2분 안에 반영된다
 
@@ -43,6 +43,9 @@ function SheetStore() {
   function readTable(t) {
     var sh = ss_().getSheetByName(SHEET_NAMES[t]);
     var vals = sh.getDataRange().getValues(), cols = COLS[t], rows = [], seq = 0;
+    if (vals[0] && vals[0].filter(function (x) { return x !== ''; }).length < cols.length) { // 새로 생긴 열 제목 채우기 (예: 참가코드.code)
+      sh.getRange(1, 1, 1, cols.length).setValues([cols]); sh.getRange(1, cols.length, sh.getMaxRows(), 1).setNumberFormat('@');
+    }
     for (var i = 1; i < vals.length; i++) {
       if (vals[i][0] === '' || vals[i][0] === null) continue;
       var o = {}; for (var c = 0; c < cols.length; c++) o[cols[c]] = parseCell(cols[c], vals[i][c]);

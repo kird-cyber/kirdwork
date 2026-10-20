@@ -8,7 +8,7 @@
 <meta property="og:title" content="KIRD 나눔마켓">
 <meta property="og:description" content="안 쓰는 물건에 새 주인을 — KIRD 직원 온라인 나눔 경매">
 <link rel="icon" href="assets/k.png">
-<link rel="stylesheet" href="assets/app.css?v=1">
+<link rel="stylesheet" href="assets/app.css?v=2">
 <style>
   .wrap { max-width: 1240px; margin: 0 auto; padding: 0 20px; }
   /* 상단 */
@@ -40,7 +40,7 @@
   .rule.c .i { background: var(--comp-50); color: var(--comp); } .rule.s .i { background: var(--seal-50); color: var(--seal); } .rule.p .i { background: var(--leaf-50); color: var(--leaf-d); }
   .rule h3 { margin: 0 0 3px; font-size: 15.5px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .rule h3 small { font-size: 12.5px; font-weight: 600; color: var(--mute); }
-  .rule p { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+  .rule p { margin: 0; font-size: 13.5px; color: var(--ink-2); line-height: 1.55; white-space: pre-line; }
   /* 도구줄 */
   .bar { position: sticky; top: 64px; z-index: 15; background: rgba(244,246,249,.92); backdrop-filter: blur(8px); }
   .bar .wrap { display: flex; align-items: center; gap: 12px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
@@ -108,6 +108,7 @@
   .how { display: flex; gap: 10px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.55; }
   .how.c { background: var(--comp-50); color: #7A3306; } .how.s { background: var(--seal-50); color: #2A3188; }
   .how svg { flex: none; margin-top: 2px; }
+  .how div { white-space: pre-line; }
   .bidbox { border-top: 1px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
   .amt { position: relative; }
   .amt input { height: 60px; font-size: 26px; font-weight: 800; padding: 0 52px 0 18px; text-align: right; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; border-radius: 14px; }
@@ -183,10 +184,11 @@
       <span class="eyebrow" id="eyebrow">직원 온라인 나눔 경매</span>
       <h1 id="title">KIRD <em>나눔마켓</em></h1>
       <p class="lead" id="notice"></p>
-      <div class="steps" aria-label="참여 방법">
+      <div class="steps" id="steps" aria-label="참여 방법">
         <div class="step"><b>1</b>참가 코드 입력</div>
-        <div class="step"><b>2</b>상품 고르고 금액 적기</div>
-        <div class="step"><b>3</b>마감 후 담당자 안내</div>
+        <div class="step"><b>2</b>상품 고르기 (일반·경쟁)</div>
+        <div class="step"><b>3</b>금액 입력 후 입찰 확정</div>
+        <div class="step"><b>4</b>행사 종료 후 최종 입찰자 안내</div>
       </div>
       <div id="closedNote"></div>
     </div>
@@ -245,9 +247,9 @@
   </form>
 </dialog>
 
-<script src="config.js?v=2"></script>
-<script src="assets/core.js?v=1"></script>
-<script src="assets/client.js?v=1"></script>
-<script src="assets/bidder.js?v=1"></script>
+<script src="config.js?v=3"></script>
+<script src="assets/core.js?v=2"></script>
+<script src="assets/client.js?v=2"></script>
+<script src="assets/bidder.js?v=2"></script>
 </body>
 </html>

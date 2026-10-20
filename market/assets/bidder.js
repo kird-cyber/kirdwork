@@ -29,11 +29,12 @@
     const t = String(i.title || 'KIRD 나눔마켓'), sp = t.lastIndexOf(' ');
     $('#title').innerHTML = sp > 0 ? esc(t.slice(0, sp)) + ' <em>' + esc(t.slice(sp + 1)) + '</em>' : '<em>' + esc(t) + '</em>';
     $('#notice').textContent = i.notice || '';
+    $('#steps').innerHTML = MK.stepsOf(i).map((t, k) => '<div class="step"><b>' + (k + 1) + '</b>' + esc(t) + '</div>').join('');
     const r = rulesText(i);
     $('#rules').innerHTML =
+      '<div class="rule p"><div class="i">' + ic('shield', 22, 2) + '</div><div><h3>공통 규칙</h3><p>' + esc(r.p) + '</p></div></div>' +
       '<div class="rule c"><div class="i">' + ic('trend', 22, 2) + '</div><div><h3>경쟁입찰 <small>최소가 ' + won(i.competitive_min) + ' 이상</small></h3><p>' + esc(r.c) + '</p></div></div>' +
-      '<div class="rule s"><div class="i">' + ic('lock', 22, 2) + '</div><div><h3>일반입찰 <small>최소가 ' + won(i.competitive_min) + ' 미만</small></h3><p>' + esc(r.s) + '</p></div></div>' +
-      '<div class="rule p"><div class="i">' + ic('shield', 22, 2) + '</div><div><h3>공통 규칙</h3><p>' + esc(r.p) + '</p></div></div>';
+      '<div class="rule s"><div class="i">' + ic('lock', 22, 2) + '</div><div><h3>일반입찰 <small>최소가 ' + won(i.competitive_min) + ' 미만</small></h3><p>' + esc(r.s) + '</p></div></div>';
     $('#eyebrow').innerHTML = i.close_at ? ic('clock', 15, 2.2) + ' 마감 ' + esc(fmtDate(i.close_at)) : '직원 온라인 나눔 경매';
     const cn = $('#closedNote');
     if (i.phase === 'closed') cn.innerHTML = '<div class="notice-closed">' + ic('trophy', 20) + '<span>입찰이 모두 마감됐어요. ' + (i.results_public ? '「내 입찰」에서 낙찰 결과를 확인하세요.' : '낙찰 결과는 담당자가 따로 안내해 드려요.') + '</span></div>';

@@ -14,8 +14,11 @@ function scenario(name, mk) {
   M.setNow(T0);
   const A = M.call('adminLogin', { password: 'pw-123' }).token;
   ok(!!A, name + ': 관리자 로그인');
-  const inf = M.call('info'); ok(inf.unit === 100 && inf.show_count === 'all' && inf.sealed_rebid === 'replace' && inf.comp_rebid === 'raise', name + ': 기본값 — 100원 단위, 입찰 수 모두 표시, 일반 교체, 경쟁 올리기');
+  const inf = M.call('info'); ok(inf.unit === 100 && inf.show_count === 'comp' && inf.sealed_rebid === 'replace' && inf.comp_rebid === 'raise', name + ': 기본값 — 100원 단위, 입찰 수는 경쟁만 표시, 일반 교체, 경쟁 올리기');
   M.call('admin.saveSettings', { settings: { unit: 1000, comp_step: 1000, show_count: 'comp' } }, A);
+  M.call('admin.saveSettings', { settings: { rules_comp: '최고가 공개\n재입찰 가능', steps: 'a\nb' } }, A);
+  ok(M.call('info').rules_comp === '최고가 공개\n재입찰 가능' && M.call('info').steps === 'a\nb', name + ': 안내 문구 직접 저장');
+  M.call('admin.saveSettings', { settings: { rules_comp: '', steps: '' } }, A);
   ok(!M.call('adminLogin', { password: 'nope' }).ok, name + ': 틀린 비밀번호 거절');
   ok(!M.call('admin.state', {}, 'garbage').ok, name + ': 토큰 없이 관리자 요청 거절');
   // 상품
@@ -33,6 +36,8 @@ function scenario(name, mk) {
   ok(a && b && c, name + ': 소문자·띄어쓰기 섞어도 로그인');
   ok(!M.call('login', { code: 'ZZZZ-ZZZZ' }).ok, name + ': 없는 코드 거절');
   ok(M.call('admin.codes', {}, A).codes.every(x => !('hash' in x)), name + ': 관리자 목록에도 해시 안 나감');
+  ok(M.call('admin.codes', {}, A).codes.map(x => x.code).join() === made.map(x => x.code).join(), name + ': 관리자 목록에서 코드 전체 다시 보기');
+  ok(!JSON.stringify(M.call('items', {}, a)).includes(made[0].code), name + ': 직원 화면 응답엔 코드 없음');
   // 진행 전/후
   M.call('admin.saveSettings', { settings: { open_at: T0 + 3600e3, close_at: T0 + 48 * 3600e3 } }, A);
   ok(M.call('bid', { itemId: i2, amount: 6000 }, a).code === 'rule', name + ': 시작 전 입찰 거절');
@@ -89,6 +94,7 @@ function scenario(name, mk) {
   M.call('admin.updateCode', { id: codes[2].id, active: false }, A);
   ok(M.call('bid', { itemId: i2, amount: 9000 }, c).code === 'auth', name + ': 중지된 코드 입찰 거절');
   const re = M.call('admin.reissueCode', { id: codes[1].id }, A);
+  ok(M.call('admin.codes', {}, A).codes.find(x => x.id === codes[1].id).code === re.code, name + ': 재발급하면 목록에도 새 코드');
   ok(M.call('bid', { itemId: i2, amount: 9000 }, b).code === 'auth', name + ': 재발급하면 옛 로그인 끊김');
   const b2 = lg(re.code); ok(!!b2 && M.call('items', {}, b2).items.find(x => x.id === i2).mine.amount === 6000, name + ': 새 코드로 기존 입찰 그대로');
   ok(!M.call('login', { code: made[1].code }).ok, name + ': 옛 코드 로그인 거절');
@@ -143,7 +149,7 @@ function scenario(name, mk) {
   M.call('bid', { itemId: seal, amount: 3500 }, cs[1]);
   r = M.call('bid', { itemId: seal, amount: 3900 }, cs[0]); ok(r.ok, '기본: 일반 금액 낮춰 수정');
   const v = M.call('items', {}, cs[1]).items.find(x => x.id === seal);
-  ok(v.count === 2 && v.top === undefined && v.mine.leading === undefined, '기본: 일반 — 입찰 수 2만 보이고 최고가·순위는 비공개');
+  ok(v.count === undefined && v.top === undefined && v.mine.leading === undefined, '기본: 일반 — 최고가·입찰 수·순위 모두 비공개');
   const w = M.call('items', {}, cs[1]).items.find(x => x.id === comp); ok(w.count === 1 && w.top === 50100, '기본: 경쟁 — 최고가·입찰 수 공개');
 }
 // 2) Apps Script (Code.gs 그대로)
@@ -158,6 +164,9 @@ function scenario(name, mk) {
   const M = scenario('GAS', () => ({ call: (a, p, t) => g.post(a, p, t), setNow: t => now = t }));
   const items = g.sheets.get('상품')._d;
   ok(items.some(r => r[2] === '=수식 공격'), 'GAS: = 로 시작하는 이름이 수식이 아닌 글자로 저장');
+  ok(g.sheets.get('참가코드')._d[0].length === 8 && g.sheets.get('참가코드')._d[0][7] === 'code', 'GAS: 참가코드 탭에 code 열');
+  // 옛 시트(코드 열 없음)도 자동으로 열 제목 채움
+  { const sh = g.sheets.get('참가코드'); sh._d[0].splice(7, 1); g.cache.clear(); const A0 = g.post('adminLogin', { password: 'pw-123' }).token; g.post('admin.updateCode', { id: 1, label: '홍길동(수정)' }, A0); ok(sh._d[0][7] === 'code', 'GAS: 옛 시트에 code 열 제목 자동 추가'); }
   // 시트를 손으로 고치면 캐시 만료 후 반영
   const row = items.findIndex(r => r[2] === '텀블러'); items[row][2] = '텀블러(수정)';
   ok(g.post('items', {}).items.some(x => x.name === '텀블러'), 'GAS: 캐시 유효하면 이전 값');

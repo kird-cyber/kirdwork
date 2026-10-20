@@ -9,6 +9,9 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
   const ctx = await b.newContext({ viewport: { width: 1360, height: 900 }, deviceScaleFactor: 1 });
   await ctx.route(/cdn\.jsdelivr\.net/, r => r.abort());
+  // 테스트는 항상 데모 모드 (실제 서버에 쓰지 않게)
+  const demoCfg = r => r.fulfill({ contentType: 'application/javascript', body: "window.MARKET_CONFIG = { api: '', poll: 12000 };" });
+  await ctx.route(/market\/config\.js/, demoCfg);
   const errs = []; const shot = async (p, n, o) => { if (SHOT) await p.screenshot(Object.assign({ path: SHOT + n + '.png' }, o || {})); };
   const P = await ctx.newPage(); P.on('pageerror', e => errs.push('bidder: ' + e.message)); P.on('dialog', d => d.accept());
   await P.goto(BASE + 'index.html');
@@ -16,7 +19,9 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   ok(await P.isVisible('#demoBar'), '데모 띠');
   ok((await P.textContent('#rules')).includes('경쟁입찰') && (await P.textContent('#rules')).includes('5만'.replace('5만', '50,000원')), '규칙 안내: 경쟁입찰 기준 50,000원');
   ok(await P.evaluate(() => document.querySelector('.card[data-id="1"] [data-top]').textContent === '92,000원'), '로봇청소기 현재 최고가 92,000원');
-  ok(await P.evaluate(() => !document.querySelector('.card[data-id="4"] [data-top]') && document.querySelector('.card[data-id="4"]').textContent.includes('금액 비공개') && document.querySelector('.card[data-id="4"] .count')), '키보드(3만) 일반입찰 — 금액 비공개, 입찰 수는 보임');
+  ok(await P.evaluate(() => !document.querySelector('.card[data-id="4"] [data-top]') && document.querySelector('.card[data-id="4"]').textContent.includes('금액 비공개') && !document.querySelector('.card[data-id="4"] .count') && !!document.querySelector('.card[data-id="1"] .count')), '키보드(3만) 일반입찰 — 금액·입찰 수 비공개, 경쟁입찰은 입찰 수 보임');
+  ok(await P.evaluate(() => document.querySelectorAll('#steps .step').length === 4 && document.querySelector('#steps').textContent.includes('금액 입력 후 입찰 확정')), '참여 방법 4단계');
+  ok(await P.evaluate(() => document.querySelector('#rules .rule').textContent.includes('공통 규칙')), '공통 규칙이 맨 앞');
   await shot(P, '01_home', { fullPage: false });
   await P.screenshot({ path: '/dev/null' }).catch(() => { });
   // 코드 없이 상세
@@ -113,6 +118,7 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await shot(A, '13_admin_codes_new');
   const dl = A.waitForEvent('download'); await A.click('#cdCsv'); const d = await dl; ok(/^kird-market_codes_.*\.csv$/.test(d.suggestedFilename()), 'CSV 내려받기 ' + d.suggestedFilename());
   await A.click('#cdClose'); await until(async () => !(await A.isVisible('#codesDlg')));
+  ok(await until(() => A.evaluate(c => [...document.querySelectorAll('#content .codev')].some(e => e.textContent === c), newCode)), '코드 목록에서 전체 코드 보임');
   await shot(A, '14_admin_codes', { fullPage: true });
   // 새 코드로 입찰
   const R = await ctx.newPage(); R.on('pageerror', e => errs.push('bidder3: ' + e.message));
@@ -129,9 +135,14 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   ok((await A.textContent('#prev')).includes('한 번만'), '미리보기 문장 바뀜');
   await A.selectOption('#sExt', '5');
   await shot(A, '15_admin_settings', { fullPage: true });
+  ok((await A.inputValue('#gComp')).includes('최고가'), '안내 문구 칸에 자동 문장이 미리 들어 있음');
+  await A.fill('#gComp', '최고가 공개, 입찰자 수 표시, 재입찰 가능'); await A.fill('#gSteps', '참가 코드 입력\n상품 고르기\n금액 입력 후 입찰 확정\n행사 종료 후 최종 입찰자 안내');
+  ok((await A.textContent('#prev')).includes('입찰자 수 표시, 재입찰 가능'), '안내 문구 고치면 미리보기 바뀜');
+  ok(await A.evaluate(() => document.activeElement && document.activeElement.id === 'gSteps'), '쓰는 중 커서 유지');
   await A.click('#save'); ok(await until(async () => !(await A.isVisible('.savebar'))), '설정 저장');
   await P.reload(); await until(() => P.evaluate(() => document.querySelectorAll('.card').length > 0));
   ok((await P.textContent('#rules')).includes('한 사람당 한 번만'), '직원 화면 규칙 문구 반영');
+  ok((await P.textContent('#rules')).includes('최고가 공개, 입찰자 수 표시, 재입찰 가능') && (await P.textContent('#steps')).includes('상품 고르기'), '관리자가 쓴 안내 문구가 직원 화면에');
   await P.click('.card[data-id="5"]'); ok(await until(async () => (await P.textContent('#bidbox')).includes('한 번만 입찰')), '일반입찰 한 번만 → 재입찰 막힘');
   await P.keyboard.press('Escape');
   // 결과
@@ -155,7 +166,7 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await shot(P, '07_closed', { fullPage: false });
   await A.click('[data-p="logs"]'); ok(await until(() => A.evaluate(() => document.querySelectorAll('#content tbody tr').length > 10)), '기록 화면');
   // 휴대폰 폭
-  const M = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }); M.on('pageerror', e => errs.push('mobile: ' + e.message));
+  const M = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }); await M.route(/market\/config\.js/, demoCfg); M.on('pageerror', e => errs.push('mobile: ' + e.message));
   await M.goto(BASE + 'index.html'); await until(() => M.evaluate(() => document.querySelectorAll('.card').length > 0));
   ok(await M.evaluate(() => document.documentElement.scrollWidth <= 391), '휴대폰 폭: 가로 스크롤 없음');
   await shot(M, '08_mobile');
