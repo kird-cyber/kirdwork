@@ -37,7 +37,7 @@ function showScreen(name) {
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); TUT.on = false; showCoach(); }
   AU.music(g ? 'game' : 'lobby');
   if (name === 'setup') renderSetup();
-  if (name === 'home') { renderHome(); probeBrokers(); }
+  if (name === 'home') { renderHome(); probeBrokers(); dirWatchStart(); } else dirWatchStop();
 }
 
 // ---------------------------------------------------------------- home
@@ -55,9 +55,11 @@ function renderHome() {
   if (n) el.innerHTML = `내 전적 <b>${rec.w}</b>승 <b>${rec.l}</b>패` + (rec.d ? ` <b>${rec.d}</b>무` : '') + ` · 승률 ${Math.round(100 * rec.w / Math.max(1, rec.w + rec.l))}%`;
   const pr = $('parade'); if (!pr.children.length && thumbs.rookie) for (const k of TANK_KEYS) pr.append(cloneCanvas(thumbs[k]));
   $('nickIn').value = ON.nick || savedNick();
-  $('inviteBox').hidden = !inv; $('joinBtn').hidden = !inv;
-  if (inv) $('inviteCode').textContent = inv.code;
+  $('inviteBox').hidden = !inv; $('joinBtn').hidden = !inv; $('codeBtn').hidden = !!inv;
+  if (inv) { $('inviteCode').textContent = inv.code; setCode(inv.code); }
+  $('joinLead').innerHTML = inv ? '초대받은 방이에요. <b>참여하기</b>를 누르세요.' : '받은 5글자 코드를 넣고 <b>입장</b>을 누르세요.';
   $('createBtn').className = inv ? 'ghost big' : 'start';
+  renderRooms();
 }
 function readNick() {
   const n = $('nickIn').value.trim().slice(0, 8);
@@ -136,6 +138,7 @@ function openLink(code, idx, create) {
   });
 }
 function leaveOnline() {
+  dirClearIfLast();
   if (ON.link) ON.link.leave();
   ON.link = null; ON.game = null; ON.active = false; setTurnTitle(false);
   try { history.replaceState(null, '', location.pathname + location.search); sessionStorage.removeItem('pg.room'); } catch (e) {}
@@ -145,6 +148,7 @@ function leaveOnline() {
 // ---------------------------------------------------------------- lobby
 function onRoomChange(room) {
   if (!room || !ON.link) return;
+  dirSync();
   if (room.state === 'lobby') {
     if (screen !== 'lobby') { ON.game = null; ON.active = false; showScreen('lobby'); }
     renderLobby();
@@ -218,6 +222,8 @@ function renderLobby() {
     maps.append(b);
   }
   $('mapNote').textContent = isHost ? '(방장이 고릅니다 · 눌러서 변경)' : '(방장이 고릅니다)';
+  $('pubTog').hidden = !isHost; $('pubChk').checked = !!room.pub;
+  $('pubNote').hidden = isHost || !room.pub; $('pubNote').textContent = '열린 방 목록에 공개된 방';
   const st = $('lobbyStart');
   st.hidden = !isHost;
   st.disabled = !L.canStart();
@@ -427,16 +433,99 @@ function onlineOver() {
   $('rematchBtn').hidden = !isHost; $('rematchBtn').disabled = !(L && L.canRematch());
   $('overWait').hidden = isHost;
 }
+// ---------------------------------------------------------------- code cells (5 boxes, one letter each)
+const cells = () => [...document.querySelectorAll('#codeCells .cc')];
+const CODE_OK = new RegExp('[^' + CODE_ABC + ']', 'g');
+function getCode() { return cells().map(c => c.value).join(''); }
+function setCode(code) { const cs = cells(); code = (code || '').toUpperCase().replace(CODE_OK, '').slice(0, 5); cs.forEach((c, i) => { c.value = code[i] || ''; }); syncCode(); }
+function syncCode() { const cs = cells(), code = getCode(); cs.forEach(c => c.classList.toggle('on', !!c.value)); $('codeBtn').disabled = code.length !== 5; }
+function bindCodeCells() {
+  const cs = cells();
+  cs.forEach((c, i) => {
+    c.addEventListener('input', () => {
+      const v = c.value.toUpperCase().replace(CODE_OK, '');
+      if (v.length > 1) { setCode(getCode().slice(0, i) + v); const n = Math.min(4, i + v.length); cs[n].focus(); return; } // pasted
+      c.value = v; syncCode(); if (v && i < 4) cs[i + 1].focus();
+    });
+    c.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !c.value && i > 0) { cs[i - 1].value = ''; cs[i - 1].focus(); syncCode(); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft' && i > 0) cs[i - 1].focus(); else if (e.key === 'ArrowRight' && i < 4) cs[i + 1].focus();
+      else if (e.key === 'Enter') ($('joinBtn').hidden ? $('codeBtn') : $('joinBtn')).click();
+    });
+    c.addEventListener('paste', e => { const t = (e.clipboardData || window.clipboardData).getData('text'); if (t) { e.preventDefault(); setCode(t); cells()[Math.min(4, getCode().length)].focus(); } });
+  });
+}
+
+// ---------------------------------------------------------------- open rooms (방장이 공개를 켠 방만)
+// The host keeps a retained card at kwpg/v1/_dir/<CODE> on its relay server (refreshed every 30 s, cleared when made private
+// or when the last player leaves). The home screen listens on every relay server and lists fresh cards (< 2 min old).
+const DIR_PREFIX = NET_PREFIX + '_dir/', DIR_FRESH = 120000, DIR_BEAT = 30000;
+const DIR = { conns: [], rooms: {}, timer: 0, pubOn: false };
+function dirWatchStart() {
+  if (DIR.conns.length) return;
+  const order = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
+  for (const i of order) {
+    const c = createMqtt(brokerUrl(i), { clientId: 'pgd' + genCode(8).toLowerCase(), keepalive: 60, timeoutMs: 6000 });
+    DIR.conns.push(c);
+    c.onMessage = (topic, payload) => {
+      if (!topic.startsWith(DIR_PREFIX)) return;
+      const code = topic.slice(DIR_PREFIX.length), key = i + ':' + code; if (!/^[A-Z0-9]{5}$/.test(code)) return;
+      let e = null; if (payload) { try { e = JSON.parse(payload); } catch (err) { e = null; } }
+      if (!e || e.code !== code) delete DIR.rooms[key]; else DIR.rooms[key] = Object.assign(e, { b: i });
+      renderRooms();
+    };
+    c.ready.then(() => c.subscribe(DIR_PREFIX + '+')).catch(() => {});
+  }
+  clearInterval(DIR.timer); DIR.timer = setInterval(renderRooms, 5000);
+}
+function dirWatchStop() { for (const c of DIR.conns) { try { c.close(); } catch (e) {} } DIR.conns = []; DIR.rooms = {}; clearInterval(DIR.timer); DIR.timer = 0; }
+function openRooms() { const now = Date.now(); return Object.values(DIR.rooms).filter(e => now - (e.t || 0) < DIR_FRESH).sort((a, b) => (a.state === 'lobby' ? 0 : 1) - (b.state === 'lobby' ? 0 : 1) || b.t - a.t); }
+function renderRooms() {
+  const box = $('roomList'); if (!box) return;
+  const list = openRooms(), wait = list.filter(e => e.state === 'lobby').length;
+  const cnt = $('roomCount'); cnt.hidden = !list.length; cnt.textContent = `대기 중 ${wait}`;
+  box.innerHTML = '';
+  if (!list.length) { const e = document.createElement('div'); e.className = 'rempty'; e.textContent = '지금 공개된 방이 없어요. 방장이 대기방에서 「열린 방 목록에 공개」를 켜면 여기 보여요.'; box.append(e); return; }
+  for (const e of list.slice(0, 12)) {
+    const n = Math.max(0, Math.floor(+e.n || 0)), mx = Math.max(1, Math.floor(+e.max || 8)), lobby = e.state === 'lobby', full = n >= mx, row = document.createElement('div');
+    row.className = 'rrow' + (lobby && !full ? '' : ' busy');
+    const mp = CONFIG.maps[e.map] ? CONFIG.maps[e.map].name : '';
+    row.innerHTML = `<div class="nm"><b>${esc(e.name || '방')}</b><span>코드 ${esc(e.code)}</span></div><span class="mp">${esc(mp)}</span><span class="pn">${n} / ${mx}명</span><span class="st">${lobby ? (full ? '가득 참' : '대기 중') : '게임 중'}</span>`;
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = lobby ? (full ? '가득 참' : '입장') : '게임 중'; b.disabled = !lobby || full;
+    b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b); };
+    row.append(b); box.append(row);
+  }
+}
+function dirTopic() { return DIR_PREFIX + ON.code; }
+function dirSync(force) { // host only: put this room's card up (public) or take it down (private)
+  const L = ON.link; if (!L || !L.room || !L.mq || !L.mq.connected || !L.isHost()) return;
+  const room = L.room;
+  if (room.pub && room.players.length) {
+    const h = room.players.find(p => p.id === room.host);
+    L.mq.publish(dirTopic(), JSON.stringify({ code: ON.code, name: (h ? h.nick : '방장') + '의 방', map: room.map, n: room.players.length, max: CONFIG.turn.maxPlayers, state: room.state, t: Date.now() }), true, 1);
+    DIR.pubOn = true;
+  } else if (DIR.pubOn || force) { L.mq.publish(dirTopic(), '', true, 1); DIR.pubOn = false; }
+}
+setInterval(() => { if (ON.link && ON.link.room && ON.link.room.pub) dirSync(); }, DIR_BEAT);
+function dirClearIfLast() { // leaving as the last one in the room: take the card down
+  const L = ON.link; if (!L || !L.room || !L.mq || !L.mq.connected || !L.isHost()) return;
+  const others = L.room.players.filter(p => p.id !== L.myId && L.online(p.id));
+  if (!others.length && (L.room.pub || DIR.pubOn)) { L.mq.publish(dirTopic(), '', true, 1); DIR.pubOn = false; }
+}
+
 function bindOnlineUi() {
   $('createBtn').onclick = () => { AU.unlock(); createRoom(); };
   $('joinBtn').onclick = () => { AU.unlock(); const inv = parseInvite(); if (inv) joinRoom(inv.code, inv.b); };
+  bindCodeCells();
   $('codeBtn').onclick = () => {
     AU.unlock();
-    const c = $('codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const c = getCode();
     if (c.length !== 5) { homeMsg('방 코드는 5글자입니다', true); return; }
-    joinRoom(c, 0);
+    const known = Object.values(DIR.rooms).find(e => e.code === c); // an open room: we know its relay server
+    joinRoom(c, known ? known.b : 0);
   };
-  $('codeIn').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeBtn').click(); });
+  $('pubChk').onchange = () => { const L = ON.link; if (!L || !L.isHost() || !L.room) return; L.room.pub = $('pubChk').checked; L.publishRoom(); dirSync(true); };
   $('nickIn').addEventListener('keydown', e => { if (e.key === 'Enter') (parseInvite() ? $('joinBtn') : $('createBtn')).click(); });
   $('practiceBtn').onclick = () => { AU.unlock(); showScreen('setup'); };
   $('tutorialBtn').onclick = () => { AU.unlock(); const n = $('nickIn').value.trim().slice(0, 8); if (n) { ON.nick = n; saveNick(n); } startTutorial(); };

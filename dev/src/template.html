@@ -386,6 +386,46 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 @keyframes mgIn { from { transform: scale(.92); opacity: 0; } }
 @keyframes mgBar { from { width: 100%; } to { width: 0; } }
 @media (max-width: 560px) { #mguide ul { grid-template-columns: 1fr; } }
+
+/* home (A안): nickname, two equal ways in (make / join by code), the public room list */
+.home { max-width: 900px; }
+.nickrow { display: flex; align-items: center; gap: 14px; }
+.nickrow label { font-size: 14px; font-weight: 700; color: #B9C4D8; white-space: nowrap; }
+.nickrow input { flex: 1; min-width: 0; box-sizing: border-box; height: 46px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: #0B0F1C; color: var(--fg); font: 700 17px var(--font-body); -webkit-user-select: text; user-select: text; }
+.nickrow input:focus-visible { outline: 2px solid var(--gold); }
+.ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.way { display: flex; flex-direction: column; gap: 12px; padding: 22px; border-radius: 18px; background: #121828; border: 2px solid var(--gold); }
+.way.join { border-color: #4C8DF0; }
+.way .wh { display: flex; align-items: center; gap: 12px; }
+.way .wi { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: #3A2E0A; color: var(--gold); font-style: normal; }
+.way.join .wi { background: #12264A; color: #7FB0FF; }
+.way h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 26px; }
+.way p { margin: 0; font-size: 14px; line-height: 1.6; color: #B9C4D8; flex: 1; }
+.way p b { color: var(--fg); }
+.way.make .start { width: 100%; }
+.codebox { display: flex; gap: 8px; }
+.cells { display: flex; gap: 6px; }
+.cc { width: 46px; height: 54px; box-sizing: border-box; text-align: center; padding: 0; border-radius: 12px; border: 2px solid #2A3550; background: #0B0F1C; color: #fff; font: 900 22px var(--font-body); text-transform: uppercase; -webkit-user-select: text; user-select: text; }
+.cc.on { border-color: #4C8DF0; } .cc:focus-visible { outline: none; border-color: #fff; }
+.enter { flex: 1; min-width: 96px; height: 54px; border: 0; border-radius: 14px; background: #4C8DF0; color: #fff; font: 900 17px var(--font-body); cursor: pointer; }
+.enter:disabled { background: #263452; color: #8FA6C8; cursor: default; }
+.enter.go { background: var(--gold); color: #2A1A00; }
+#homeMsg:empty { display: none; }
+.rooms { gap: 10px; }
+.rooms .rh { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rooms h3 { margin: 0; font-size: 17px; font-weight: 900; }
+.rooms .rn { margin-left: auto; font-size: 12px; font-weight: 800; color: #6FE0A0; }
+.rlist { display: flex; flex-direction: column; gap: 8px; }
+.rrow { display: grid; grid-template-columns: 1.6fr 1fr 0.7fr 0.8fr 104px; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: #1A2236; }
+.rrow .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .rrow .nm b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rrow .nm span { font-size: 12px; color: var(--muted); }
+.rrow .st { width: fit-content; padding: 3px 10px; border-radius: 999px; background: #123A26; color: #6FE0A0; font-size: 12px; font-weight: 800; }
+.rrow.busy { background: #161C2C; color: var(--muted); } .rrow.busy .st { background: #2A2F3C; color: #B0B8C8; }
+.rrow button { height: 44px; border: 0; border-radius: 10px; background: #4C8DF0; color: #fff; font: 800 15px var(--font-body); cursor: pointer; }
+.rrow button:disabled { background: transparent; border: 1px solid var(--line); color: #6F7D96; cursor: default; }
+.rempty { padding: 14px; border-radius: 12px; background: #121828; font-size: 13px; color: var(--muted); }
+.pubtog { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; font-weight: 700; cursor: pointer; }
+.pubtog input { width: 18px; height: 18px; accent-color: var(--gold); }
+@media (max-width: 760px) { .ways { grid-template-columns: 1fr; } .rrow { grid-template-columns: 1fr auto; } .rrow .mp, .rrow .pn { display: none; } }
 </style>
 
 <div id="app">
@@ -472,18 +512,32 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       </div>
       <div class="parade" id="parade" aria-hidden="true"></div>
       <div class="card">
-        <label class="fld"><span>닉네임 (탱크 위에 표시됩니다)</span><input id="nickIn" maxlength="8" placeholder="최대 8글자" autocomplete="nickname" enterkeyhint="go"></label>
-        <div class="invite" id="inviteBox" hidden>초대받은 방<b id="inviteCode"></b></div>
-        <div class="cta">
-          <button class="start" id="joinBtn" type="button" hidden>참여하기</button>
-          <button class="start" id="createBtn" type="button">방 만들기</button>
+        <div class="nickrow"><label for="nickIn">내 닉네임</label><input id="nickIn" maxlength="8" placeholder="최대 8글자" autocomplete="nickname" enterkeyhint="go"><span class="note">탱크 위에 표시돼요</span></div>
+        <div class="ways">
+          <section class="way make" aria-labelledby="wMake">
+            <div class="wh"><i class="wi" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></i><h3 id="wMake">방 만들기</h3></div>
+            <p>내가 방장이 되어 대기방을 엽니다. 초대 링크와 5글자 코드가 생겨요.</p>
+            <button class="start" id="createBtn" type="button">새 방 열기</button>
+          </section>
+          <section class="way join" aria-labelledby="wJoin">
+            <div class="wh"><i class="wi" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7l5 5-5 5M15 12H3M14 4h5a1 1 0 011 1v14a1 1 0 01-1 1h-5"/></svg></i><h3 id="wJoin">코드로 참여</h3></div>
+            <p id="joinLead">받은 5글자 코드를 넣고 <b>입장</b>을 누르세요.</p>
+            <div class="invite" id="inviteBox" hidden>초대받은 방<b id="inviteCode"></b></div>
+            <div class="codebox">
+              <div class="cells" id="codeCells" role="group" aria-label="방 코드 5글자"><input class="cc" maxlength="1" autocomplete="off" aria-label="방 코드 1번째 글자"><input class="cc" maxlength="1" autocomplete="off" aria-label="2번째 글자"><input class="cc" maxlength="1" autocomplete="off" aria-label="3번째 글자"><input class="cc" maxlength="1" autocomplete="off" aria-label="4번째 글자"><input class="cc" maxlength="1" autocomplete="off" aria-label="5번째 글자"></div>
+              <button class="enter" id="codeBtn" type="button" disabled>입장 →</button>
+              <button class="enter go" id="joinBtn" type="button" hidden>참여하기 →</button>
+            </div>
+            <div class="note" id="codeNote">다섯 글자를 다 넣으면 입장 버튼이 켜져요 · 초대 링크로 오면 자동 입력</div>
+          </section>
         </div>
-        <div class="joinrow"><input id="codeIn" maxlength="5" placeholder="방 코드 5글자" autocomplete="off" aria-label="방 코드"><button class="ghost" id="codeBtn" type="button">코드로 참여</button></div>
         <div class="note" id="homeMsg" role="status" aria-live="polite"></div>
-        <div class="probe" id="probe" data-s="idle"></div>
       </div>
-      <div class="note">방을 만들면 초대 링크가 생깁니다. 친구가 링크를 열고 닉네임만 넣으면 같은 대기방에 들어옵니다. 로그인은 없습니다.</div>
-      <div class="cta"><button class="ghost" id="tutorialBtn" type="button">튜토리얼 (1분)</button><button class="ghost" id="practiceBtn" type="button">혼자 연습 · 봇 대전</button></div>
+      <div class="card rooms">
+        <div class="rh"><h3>지금 열린 방</h3><span class="note">코드 없이 눌러서 들어가기 · 방장이 「목록에 공개」를 켠 방만 보여요</span><span class="rn" id="roomCount" hidden></span></div>
+        <div class="rlist" id="roomList"></div>
+      </div>
+      <div class="cta"><button class="ghost" id="tutorialBtn" type="button">튜토리얼 (1분)</button><button class="ghost" id="practiceBtn" type="button">혼자 연습 · 봇 대전</button><span style="flex:1"></span><div class="probe" id="probe" data-s="idle"></div></div>
     </div>
   </div>
 
@@ -519,6 +573,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <button class="start" id="lobbyStart" type="button">게임 시작</button>
         <button class="start" id="readyBtn" type="button" hidden>준비 완료</button>
         <span class="note" id="startNote"></span>
+        <label class="pubtog" id="pubTog" hidden><input type="checkbox" id="pubChk"><span>열린 방 목록에 공개</span></label><span class="note" id="pubNote" hidden></span>
         <span style="flex:1"></span>
         <button class="ghost" id="musicBtn2" type="button" aria-pressed="true">음악 켜짐</button>
         <button class="ghost" id="leaveBtn" type="button">방 나가기</button>
