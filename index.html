@@ -388,6 +388,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* KIRD 주제 맵: start-of-match guide card */
 #mguide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; background: rgba(8,12,20,0.35); cursor: pointer; }
 #mguide[hidden] { display: none; }
+#introPill { position: absolute; top: 86px; left: 50%; transform: translateX(-50%); z-index: 29; padding: 8px 18px; border-radius: 999px; background: rgba(12,26,44,0.88); color: #FFE48A; font-size: 15px; font-weight: 800; pointer-events: none; }
+#introPill[hidden] { display: none; }
 #mguide .mg-tip { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #EAF5FC; font-size: 13px; line-height: 1.55; color: #14324E; }
 #mguide .mg-tip b { color: #1D5E9E; margin-right: 4px; }
 #tipToast { position: absolute; left: 50%; bottom: calc(168px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); width: max-content; max-width: min(560px, 90vw); box-sizing: border-box; padding: 10px 16px; border-radius: 14px; background: rgba(255,253,248,0.96); color: #14202E; border-left: 6px solid #2E86D6; box-shadow: 0 8px 24px rgba(0,0,0,0.35); font-family: var(--font-body); font-size: 14px; line-height: 1.5; pointer-events: none; z-index: 4; opacity: 0; transition: opacity .35s, transform .35s; }
@@ -547,6 +549,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="mguide" hidden></div>
+  <div id="introPill" hidden></div>
   <div id="tipToast" role="status" hidden></div>
   <div id="waitTag" hidden></div>
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
@@ -2133,6 +2136,7 @@ function createController(match, opts) {
     aimF: null, powerF: 0, charging: false, weapon: 0, timeLeft: CONFIG.turn.timeLimitTicks,
     lastTurnSeen: 0, maxStepsPerFrame: 40, limit: null,
     clock: opts.clock || (() => (typeof performance !== 'undefined' ? performance.now() : Date.now())),
+    holdUntil: 0,                            // map guide card: no one moves and the first turn's clock waits until then (clock ms)
     turnT0: 0, tickUsed: 0,                  // the turn clock: real time since the turn began, or ticks run if more
     onInput: opts.onInput || null,
     preTick: opts.preTick || null,          // (match, ctrl) before each aim tick; true = skip this tick's input (solo clock)          // called with every TurnInput the local side produces
@@ -2151,6 +2155,7 @@ function createController(match, opts) {
     const m = c.match;
     if (m.phase === 'aim') {
       if (m.turnNo !== c.lastTurnSeen) c.onTurnStart();
+      if (c.held()) { c.turnT0 = c.clock(); c.tickUsed = 0; c.timeLeft = CONFIG.turn.timeLimitTicks; c.charging = false; c.powerF = 0; return; }
       if (c.preTick && c.preTick(m, c)) { step(m); return; }
       const t = curTank(m);
       if (c.replay) {
@@ -2177,8 +2182,9 @@ function createController(match, opts) {
     c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
   };
   // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  c.held = function () { return c.holdUntil > 0 && c.clock() < c.holdUntil; };
   c.checkTime = function () {
-    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen) return;
+    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen || c.held()) return;
     c.syncTime();
     if (c.timeLeft <= 0) { c.charging = false; c.emit(cmdTimeout(c.match)); }
   };
@@ -2208,9 +2214,9 @@ function createController(match, opts) {
     c.syncTime(); c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   // 턴 넘기기 (only for the local active tank, never mid-charge)
-  c.pass = function () { if (!c.activeLocal() || c.charging) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
+  c.pass = function () { if (!c.activeLocal() || c.charging || c.held()) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
-  c.useItem = function (slot, tx, ty) { if (c.charging) return false; return cmdItem(c.match, slot, tx, ty); };
+  c.useItem = function (slot, tx, ty) { if (c.charging || c.held()) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
   return c;
 }
@@ -6461,7 +6467,8 @@ function tipRecap(id) {
 }
 window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
-let guideTimer = 0;
+let guideTimer = 0, introTimer = 0;
+const GUIDE_MS = 9500;
 function showMapGuide() {
   const meta = mapMetaOf(match), el = $('mguide'); if (!el) return false;
   if (!meta.guide) { el.hidden = true; return false; }
@@ -6469,7 +6476,16 @@ function showMapGuide() {
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
   el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${tipPoolOf(meta) ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc((pickTip(meta) || [''])[0])}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
-  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
+  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, GUIDE_MS);
+  // the match waits for the card: nobody moves and the first turn's clock starts only when it is over (closing it early = look around the map)
+  if (ctrl) ctrl.holdUntil = ctrl.clock() + GUIDE_MS;
+  clearInterval(introTimer); const pill = $('introPill');
+  introTimer = setInterval(() => {
+    const left = ctrl && ctrl.held() ? Math.ceil((ctrl.holdUntil - ctrl.clock()) / 1000) : 0;
+    if (pill) { pill.hidden = !left || !el.hidden; pill.textContent = `맵을 둘러보세요 · ${left}초 뒤 시작`; }
+    const x = el.querySelector('.mg-x'); if (x) x.textContent = left ? `클릭하면 닫힘 · ${left}초 뒤 시작` : '클릭하면 닫힘';
+    if (!left) { clearInterval(introTimer); if (pill) pill.hidden = true; if (match && match.phase !== 'over') banner('시작!'); }
+  }, 200);
   return true;
 }
 function startGame() {

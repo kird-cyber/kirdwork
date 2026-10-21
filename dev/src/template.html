@@ -372,6 +372,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* KIRD 주제 맵: start-of-match guide card */
 #mguide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 30; background: rgba(8,12,20,0.35); cursor: pointer; }
 #mguide[hidden] { display: none; }
+#introPill { position: absolute; top: 86px; left: 50%; transform: translateX(-50%); z-index: 29; padding: 8px 18px; border-radius: 999px; background: rgba(12,26,44,0.88); color: #FFE48A; font-size: 15px; font-weight: 800; pointer-events: none; }
+#introPill[hidden] { display: none; }
 #mguide .mg-tip { margin-top: 10px; padding: 9px 12px; border-radius: 10px; background: #EAF5FC; font-size: 13px; line-height: 1.55; color: #14324E; }
 #mguide .mg-tip b { color: #1D5E9E; margin-right: 4px; }
 #tipToast { position: absolute; left: 50%; bottom: calc(168px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); width: max-content; max-width: min(560px, 90vw); box-sizing: border-box; padding: 10px 16px; border-radius: 14px; background: rgba(255,253,248,0.96); color: #14202E; border-left: 6px solid #2E86D6; box-shadow: 0 8px 24px rgba(0,0,0,0.35); font-family: var(--font-body); font-size: 14px; line-height: 1.5; pointer-events: none; z-index: 4; opacity: 0; transition: opacity .35s, transform .35s; }
@@ -528,6 +530,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div id="banner" role="status"></div>
   <div id="mguide" hidden></div>
+  <div id="introPill" hidden></div>
   <div id="tipToast" role="status" hidden></div>
   <div id="waitTag" hidden></div>
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>

@@ -583,7 +583,8 @@ function tipRecap(id) {
 }
 window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
-let guideTimer = 0;
+let guideTimer = 0, introTimer = 0;
+const GUIDE_MS = 9500;
 function showMapGuide() {
   const meta = mapMetaOf(match), el = $('mguide'); if (!el) return false;
   if (!meta.guide) { el.hidden = true; return false; }
@@ -591,7 +592,16 @@ function showMapGuide() {
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
   el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${tipPoolOf(meta) ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc((pickTip(meta) || [''])[0])}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };
-  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, 9500);
+  clearTimeout(guideTimer); guideTimer = setTimeout(() => { el.hidden = true; }, GUIDE_MS);
+  // the match waits for the card: nobody moves and the first turn's clock starts only when it is over (closing it early = look around the map)
+  if (ctrl) ctrl.holdUntil = ctrl.clock() + GUIDE_MS;
+  clearInterval(introTimer); const pill = $('introPill');
+  introTimer = setInterval(() => {
+    const left = ctrl && ctrl.held() ? Math.ceil((ctrl.holdUntil - ctrl.clock()) / 1000) : 0;
+    if (pill) { pill.hidden = !left || !el.hidden; pill.textContent = `맵을 둘러보세요 · ${left}초 뒤 시작`; }
+    const x = el.querySelector('.mg-x'); if (x) x.textContent = left ? `클릭하면 닫힘 · ${left}초 뒤 시작` : '클릭하면 닫힘';
+    if (!left) { clearInterval(introTimer); if (pill) pill.hidden = true; if (match && match.phase !== 'over') banner('시작!'); }
+  }, 200);
   return true;
 }
 function startGame() {
