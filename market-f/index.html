@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>KIRD 나눔마켓</title>
+<meta name="description" content="KIRD 직원 나눔 경매 — 참가 코드로 들어와 입찰하세요.">
+<meta property="og:title" content="KIRD 나눔마켓">
+<meta property="og:description" content="안 쓰는 물건에 새 주인을 — KIRD 직원 온라인 나눔 경매">
+<link rel="icon" href="assets/k.png">
+
+<link rel="stylesheet" href="assets/app.css?v=5">
+<link rel="stylesheet" href="assets/base.css?v=5">
+<link rel="stylesheet" href="assets/theme.css?v=5">
+</head>
+<body class="v-f">
+<div id="demoBar" class="demo-bar" hidden></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./"><img src="assets/kmark.png" alt=""><b>KIRD</b> <span>나눔마켓</span></a>
+    <nav class="gnav" aria-label="메뉴"><a href="#" data-view="list" aria-current="page">상품</a><a href="#board" data-view="board">현황판</a></nav>
+    
+    <div id="phase" class="phase" role="status"><span class="dot live"></span><span class="lbl">불러오는 중</span></div>
+    <div class="me" id="me"></div>
+  </div>
+</header>
+
+<div id="listView">
+<section class="fhero">
+  <div class="wrap">
+    <div class="l">
+      <span class="eyebrow" id="eyebrow">직원 온라인 나눔 경매</span>
+      <h1 data-hero-title>지금 입찰 중</h1>
+      <p class="lead"><span id="title" class="ttl">KIRD 나눔마켓</span> · <span id="notice"></span></p>
+    </div>
+    <div class="r"><span data-clock-lab>전체 마감까지</span><b class="num" data-clock>--:--:--</b></div>
+  </div>
+</section>
+<section class="wrap fintro">
+  <div id="closedNote"></div>
+  <div class="frank" id="rank"></div>
+  <details class="fhow" open>
+    <summary>참여 방법과 규칙</summary>
+    <div class="steps" id="steps"></div>
+    <div class="rules" id="rules"></div>
+  </details>
+</section>
+<div class="bar">
+  <div class="wrap">
+    <div class="tabs" role="tablist" id="tabs">
+      <button class="tab" role="tab" data-f="all" aria-selected="true">전체 <span class="c" data-c="all"></span></button>
+      <button class="tab" role="tab" data-f="comp">경쟁입찰 <span class="c" data-c="comp"></span></button>
+      <button class="tab" role="tab" data-f="sealed">일반입찰 <span class="c" data-c="sealed"></span></button>
+      <button class="tab" role="tab" data-f="mine">내 입찰 <span class="c" data-c="mine"></span></button>
+    </div>
+    <label class="search"><span class="sr">상품 검색</span><span data-ic="search"></span><input class="inp" id="q" type="search" placeholder="상품 이름으로 찾기"></label>
+    <label><span class="sr">정렬</span>
+      <select class="inp sort" id="sort">
+        <option value="no">번호순</option>
+        <option value="low">최소가 낮은 순</option>
+        <option value="high">최소가 높은 순</option>
+        <option value="hot">입찰 많은 순</option>
+      </select>
+    </label>
+  </div>
+</div>
+<main class="wrap mainw">
+  
+  <div class="grid" id="grid" aria-live="polite">
+    <div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div><div class="skel skel-card"></div>
+  </div>
+</main>
+</div>
+
+<section id="boardView" hidden><div class="wrap" id="board"></div></section>
+
+<footer>
+  <div class="wrap">
+    <span>KIRD 나눔마켓 · 문의는 행사 담당자에게 해 주세요.</span>
+    <span>입찰자 정보는 다른 직원에게 공개되지 않으며, 행사 종료 후 정리됩니다.</span>
+  </div>
+</footer>
+
+<nav class="mnav" aria-label="휴대폰 메뉴">
+  <button data-mnav="home" aria-current="page"><span data-ic="home" data-s="22"></span>홈</button>
+  <button data-mnav="mine"><span data-ic="list" data-s="22"></span>내 입찰<span data-mine-n></span></button>
+  <button data-mnav="board"><span data-ic="bars" data-s="22"></span>현황판</button>
+  <button data-mnav="code"><span data-ic="qr" data-s="22"></span>코드</button>
+</nav>
+
+<dialog id="detail" class="dlg" aria-labelledby="dName"></dialog>
+<dialog id="login" class="dlg" aria-labelledby="lgT">
+  <button class="dlg-x" data-close aria-label="닫기"></button>
+  <form class="lg" id="lgForm" novalidate>
+    <div class="ic" data-ic="key" data-s="28"></div>
+    <h2 id="lgT">참가 코드를 입력해 주세요</h2>
+    <p>담당자에게 받은 <b>8자리 코드</b>예요. 입찰할 때만 필요해요.</p>
+    <div class="cells" id="cells">
+      <input aria-label="1번째" maxlength="1" autocomplete="off" autocapitalize="characters" spellcheck="false"><input aria-label="2번째" maxlength="1" autocomplete="off" autocapitalize="characters"><input aria-label="3번째" maxlength="1" autocomplete="off" autocapitalize="characters"><input aria-label="4번째" maxlength="1" autocomplete="off" autocapitalize="characters">
+      <span class="dash" aria-hidden="true"></span>
+      <input aria-label="5번째" maxlength="1" autocomplete="off" autocapitalize="characters"><input aria-label="6번째" maxlength="1" autocomplete="off" autocapitalize="characters"><input aria-label="7번째" maxlength="1" autocomplete="off" autocapitalize="characters"><input aria-label="8번째" maxlength="1" autocomplete="off" autocapitalize="characters">
+    </div>
+    <div class="err" id="lgErr" role="alert"></div>
+    <button class="btn primary lg block" id="lgBtn" type="submit" disabled>들어가기</button>
+    <div class="qrtip"><span data-ic="qr"></span><span>받은 카드에 <b>QR</b>이 있으면 휴대폰 카메라로 찍어도 바로 들어와요.</span></div>
+    <div class="priv"><span data-ic="shield"></span><span>코드는 본인 확인용이에요. 누가 얼마를 냈는지는 <b>다른 직원에게 보이지 않아요.</b> 코드를 남에게 알려 주지 마세요.</span></div>
+  </form>
+</dialog>
+
+<script src="config.js?v=5"></script>
+<script src="assets/core.js?v=5"></script>
+<script src="assets/client.js?v=5"></script>
+<script src="assets/theme.js?v=5"></script>
+<script src="assets/bidder.js?v=5"></script>
+</body>
+</html>
