@@ -1017,6 +1017,11 @@ const CONFIG = {
   maps: {
     campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird', special: 'KIRD 기관 전용' },
     songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake', special: 'KIRD 기관 전용' },
+    ridge: { name: '혁신의 능선', tag: '평가는 관문, 수행은 골짜기', desc: '국가연구개발과제의 일생을 걷는 능선. 선정평가관 · 단계평가 게이트 · 최종평가 단상 세 봉우리와 1·2단계 수행 골짜기, 끝에는 성과 공개·활용.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 국가연구개발혁신법',
+      tipPool: 'common', tipMix: ['ethics', 'notebook', 'safety', 'budget'],
+      guide: { title: '혁신의 능선', line: '절차를 지키면 연구가 자유로워진다.' },
+      items: { shield: '협약서', heal: '이의신청', double: '공동연구개발기관', amplify: '우수 평가', calm: 'IRIS 통합관리', fuel: '협약 변경', tele: '단계 전환' },
+      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
     scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '연구윤리 실험실. 벽엔 위조·변조·표절 예방 포스터, 바닥엔 원본 데이터 보관함·출처 표기 서가·논문 원고 두루마리, 가운데는 밑으로 지나다니는 연구노트 서명대.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
       tipPool: 'ethics',
       guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
@@ -1354,6 +1359,12 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
   return TG;
 }
+// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys, mirror-symmetric; slopes kept under the climb limit
+const RIDGE_K = [[0, 1000], [300, 1000], [950, 780], [1750, 1150], [2600, 720], [3450, 1150], [4250, 780], [4900, 1000], [5200, 1000]];
+function ridgeTop(px) {
+  for (let i = 1; i < RIDGE_K.length; i++) { const [x0, y0] = RIDGE_K[i - 1], [x1, y1] = RIDGE_K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
+  return RIDGE_K[RIDGE_K.length - 1][1];
+}
 const TMAPGEN = {
   notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
     rectF(m, W, H, 0, TG, W, H - 4, 1);
@@ -1407,6 +1418,7 @@ const TMAPGEN = {
   },
 };
 for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
+MAPGEN.ridge = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, ridgeTop, () => H - 4); // 혁신의 능선: three crests, two valleys
 
 function maskSurface(mask, W, H, x, from) {
   x = Math.floor(x); if (x < 0 || x >= W) return -1;
@@ -3228,6 +3240,156 @@ const TMAP_ART = (() => {
       });
     },
   };
+  // ---------------------------------------------------------------- 혁신의 능선 (국가연구개발혁신법): 공모 → 선정평가 → 협약 → 1단계 수행 → 단계평가 → 2단계 수행 → 최종평가 → 성과활용
+  function ridgeLine(x, off, step) { x.beginPath(); x.moveTo(0, ridgeTop(0) + off); for (let px = 0; px <= W; px += step || 20) x.lineTo(px, ridgeTop(px) + off); }
+  function wave(x, base, a1, f1, a2, f2, col) { x.fillStyle = col; x.beginPath(); x.moveTo(0, H); for (let px = 0; px <= W; px += 40) x.lineTo(px, base + a1 * Math.sin(px / f1) + a2 * Math.sin(px / f2 + 1)); x.lineTo(W, H); x.closePath(); x.fill(); }
+
+  // 낮의 야외 + 평가 시설 3곳(선정평가관 · 단계평가 게이트 · 최종평가 단상) + KIRD 캐릭터 조형물
+  const MED = { blue: [108, 122, 96], green: [298, 178, 86] }; // head crops in the mascot picture: cx, cy, r
+  function medallion(x, cx, cy, r, who) {
+    const [ix, iy, ir] = MED[who];
+    x.fillStyle = 'rgba(0,0,0,0.22)'; x.beginPath(); x.arc(cx + 6, cy + 8, r + 18, 0, 7); x.fill();
+    x.fillStyle = bronzeH(x, cx - r - 18, cx + r + 18); x.beginPath(); x.arc(cx, cy, r + 18, 0, 7); x.fill();
+    x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, cy, r + 5, 0, 7); x.fill();
+    x.save(); x.beginPath(); x.arc(cx, cy, r, 0, 7); x.clip(); x.drawImage(IMG.mascot, ix - ir, iy - ir, ir * 2, ir * 2, cx - r, cy - r, r * 2, r * 2); x.restore();
+  }
+  function statuePillar(x, cx, cy, r, base, who, say) {
+    x.fillStyle = hg(x, cx - 50, cx + 50, [[0, '#9AA3AB'], [0.45, '#F1F3F5'], [1, '#8A939B']]); x.fillRect(cx - 42, cy + r, 84, base - cy - r);
+    x.fillStyle = '#7A848C'; x.fillRect(cx - 60, cy + r + 8, 120, 16); x.fillRect(cx - 70, base - 40, 140, 40);
+    medallion(x, cx, cy, r, who);
+    x.fillStyle = '#1E3A5A'; rr(x, cx - 84, cy + r + 40, 168, 44, 8); x.fill(); text(x, say, cx, cy + r + 63, 22, { color: '#FFF', weight: 900 });
+  }
+  function selectionHall(x, cx, cy) { // 선정평가관: 계획서 발표 화면과 평가위원석이 유리 너머로 보이는 심사 건물
+    const a = cx - 330, b = cx + 330, top = cy - 400, bot = cy + 240, gt = top + 70, gb = cy + 60;
+    panel(x, a, top, b, bot, [236, 240, 243]);
+    interior(x, a + 36, gt, b - 36, gb, null, (xx, A, T, B) => {
+      xx.fillStyle = '#1E2A36'; rr(xx, A + 26, T + 40, 300, 176, 8); xx.fill();
+      xx.fillStyle = '#FFFFFF'; rr(xx, A + 38, T + 52, 276, 152, 4); xx.fill();
+      text(xx, '연구개발계획서', A + 176, T + 86, 24, { color: '#1E3A5A', weight: 900 });
+      xx.fillStyle = '#D5DCE3'; for (let k = 0; k < 3; k++) xx.fillRect(A + 66, T + 116 + k * 22, 220 - k * 40, 10);
+      xx.fillStyle = '#5E6870'; xx.fillRect(A + 172, T + 216, 8, 40);
+      const ta = A + 360; xx.fillStyle = '#6B4A2A'; xx.fillRect(ta, T + 178, B - ta - 20, 18); xx.fillStyle = '#4A3420'; xx.fillRect(ta + 10, T + 196, 12, 70); xx.fillRect(B - 44, T + 196, 12, 70);
+      for (let k = 0; k < 3; k++) { const px = ta + 14 + k * 60; xx.fillStyle = '#2C3E50'; rr(xx, px + 6, T + 120, 40, 58, [16, 16, 4, 4]); xx.fill(); xx.fillStyle = '#FFFFFF'; xx.fillRect(px, T + 160, 52, 20); text(xx, '평가위원', px + 26, T + 170, 11, { color: '#1E3A5A', weight: 900 }); }
+    });
+    x.fillStyle = 'rgba(46,120,126,0.14)'; x.fillRect(a + 36, gt, b - a - 72, gb - gt);
+    x.fillStyle = '#5E6870'; for (let px = a + 36; px <= b - 36; px += 118) x.fillRect(px, gt, 4, gb - gt);
+    x.fillStyle = 'rgba(255,255,255,0.16)'; x.beginPath(); for (let px = a; px < b; px += 230) { x.moveTo(px, gb); x.lineTo(px + 70, gt); x.lineTo(px + 110, gt); x.lineTo(px + 40, gb); } x.fill();
+    louvre(x, b - 34, top, b - 4, bot);
+    x.fillStyle = vg(x, top - 16, top, [[0, '#FFFFFF'], [1, '#AEB6BD']]); x.fillRect(a - 14, top - 16, b - a + 28, 16);
+    x.fillStyle = 'rgba(0,0,0,0.2)'; rr(x, cx - 262 + 6, top - 140 + 8, 524, 112, 14); x.fill();
+    x.fillStyle = '#1D5E9E'; rr(x, cx - 262, top - 140, 524, 112, 14); x.fill();
+    x.fillStyle = '#FFFFFF'; rr(x, cx - 246, top - 124, 116, 80, 10); x.fill(); kMark(x, cx - 188, top - 84, 60);
+    text(x, '선정평가', cx + 62, top - 100, 50, { color: '#FFF', weight: 900 });
+    text(x, '연구개발과제 선정 심사', cx + 62, top - 50, 22, { color: '#CFE4F7', weight: 700 });
+    x.fillStyle = '#5E6870'; x.fillRect(cx - 200, top - 28, 10, 12); x.fillRect(cx + 190, top - 28, 10, 12);
+  }
+  function stageGate(x, cx, cy) { // 단계평가 게이트: 1단계에서 2단계로 넘어가는 관문
+    const L = cx - 340, R = cx + 340, top = cy - 400;
+    for (const px of [L, R]) {
+      x.fillStyle = hg(x, px - 60, px + 60, [[0, '#5E6870'], [0.35, '#C9D1D8'], [0.6, '#F4F6F8'], [1, '#6E7880']]);
+      poly(x, [[px - 34, top], [px + 34, top], [px + 58, cy + 140], [px - 58, cy + 140]]); x.fill();
+      x.fillStyle = 'rgba(127,209,199,0.35)'; x.fillRect(px - 9, top + 20, 18, cy + 120 - top); x.fillStyle = '#BFF5EE'; x.fillRect(px - 4, top + 20, 8, cy + 120 - top);
+    }
+    x.fillStyle = 'rgba(0,0,0,0.22)'; rr(x, L - 90 + 8, top - 140 + 10, R - L + 180, 160, 18); x.fill();
+    x.fillStyle = vg(x, top - 140, top + 20, [[0, '#21405F'], [1, '#12263A']]); rr(x, L - 90, top - 140, R - L + 180, 160, 18); x.fill();
+    x.strokeStyle = '#7FD1C7'; x.lineWidth = 5; x.stroke();
+    text(x, '단계평가', cx, top - 78, 64, { color: '#FFF', weight: 900 });
+    text(x, 'STAGE GATE · 다음 단계로 갈지 정하는 관문', cx, top - 24, 23, { color: '#9FE3DA', weight: 700 });
+    x.fillStyle = '#FFFFFF'; rr(x, cx - 66, top - 262, 132, 110, 22); x.fill(); x.strokeStyle = '#2E86D6'; x.lineWidth = 5; x.stroke(); kMark(x, cx, top - 207, 84);
+    const ty = top + 78;
+    x.fillStyle = 'rgba(255,255,255,0.88)'; rr(x, L + 20, ty - 34, R - L - 40, 110, 16); x.fill();
+    x.lineCap = 'round'; x.strokeStyle = '#C9D1D8'; x.lineWidth = 10; x.beginPath(); x.moveTo(L + 80, ty); x.lineTo(R - 80, ty); x.stroke();
+    x.strokeStyle = KG; x.beginPath(); x.moveTo(L + 80, ty); x.lineTo(cx, ty); x.stroke(); x.lineCap = 'butt';
+    [[L + 80, '1단계', KG, 18], [cx, '단계평가', '#F2C94C', 26], [R - 80, '2단계', '#FFFFFF', 18]].forEach(([px, s, c, r]) => {
+      x.fillStyle = c; x.beginPath(); x.arc(px, ty, r, 0, 7); x.fill(); x.strokeStyle = '#1E2A36'; x.lineWidth = 4; x.stroke();
+      text(x, s, px, ty + 50, 26, { color: '#1E2A36', weight: 900 });
+    });
+    const sx = R - 40, sy = top - 196;
+    x.fillStyle = '#5E6870'; x.fillRect(sx - 6, sy + 60, 12, 60);
+    x.fillStyle = '#2A333B'; rr(x, sx - 92, sy, 184, 62, 14); x.fill();
+    [['#E8402E', 0.25], ['#F2C94C', 0.25], ['#5EE07A', 1]].forEach(([c, al], k) => { x.globalAlpha = al; x.fillStyle = c; x.beginPath(); x.arc(sx - 56 + k * 56, sy + 31, 21, 0, 7); x.fill(); x.globalAlpha = 1; });
+  }
+  function finalStage(x, cx, cy) { // 최종평가 단상: 최종보고서 조형물과 리본 현판
+    for (let k = 0; k < 3; k++) { const w = 620 - k * 110, y = cy - 40 - k * 44; x.fillStyle = vg(x, y, y + 44, [[0, '#F7F5EF'], [1, '#CFC8B8']]); x.fillRect(cx - w / 2, y, w, 44 + (k ? 0 : 200)); x.fillStyle = '#B9B2A2'; x.fillRect(cx - w / 2, y, w, 4); }
+    const a = cx - 150, b = cx + 150, t = cy - 520, bt = cy - 128;
+    x.fillStyle = '#F4EBD6'; poly(x, [[b, t + 14], [b + 34, t + 34], [b + 34, bt + 8], [b, bt]]); x.fill();
+    x.strokeStyle = 'rgba(150,130,90,0.5)'; x.lineWidth = 2; for (let y = t + 30; y < bt; y += 9) { x.beginPath(); x.moveTo(b + 2, y); x.lineTo(b + 32, y + 18); x.stroke(); }
+    x.fillStyle = vg(x, t, bt, [[0, '#24466E'], [1, '#14284A']]); rr(x, a, t, b - a, bt - t, [8, 14, 14, 8]); x.fill();
+    x.fillStyle = '#0E1E36'; x.fillRect(a, t, 26, bt - t);
+    x.strokeStyle = '#E9C46A'; x.lineWidth = 4; x.strokeRect(a + 46, t + 26, b - a - 72, bt - t - 52);
+    text(x, '최종보고서', cx + 12, t + 120, 36, { color: '#F2D27A', weight: 900 });
+    x.fillStyle = '#E9C46A'; x.fillRect(cx - 80, t + 158, 184, 3);
+    text(x, '연구개발 성과', cx + 12, t + 196, 24, { color: '#E8DDBE', weight: 700 });
+    x.fillStyle = '#FFFFFF'; rr(x, cx - 38, bt - 112, 100, 70, 12); x.fill(); kMark(x, cx + 12, bt - 77, 50);
+    const ry = t - 120; x.fillStyle = '#9E2A3A'; poly(x, [[cx - 330, ry + 20], [cx - 250, ry + 20], [cx - 250, ry + 84], [cx - 330, ry + 84], [cx - 300, ry + 52]]); x.fill(); poly(x, [[cx + 330, ry + 20], [cx + 250, ry + 20], [cx + 250, ry + 84], [cx + 330, ry + 84], [cx + 300, ry + 52]]); x.fill();
+    x.fillStyle = vg(x, ry, ry + 80, [[0, '#E0475A'], [1, '#B8303F']]); rr(x, cx - 270, ry, 540, 84, 10); x.fill();
+    text(x, '최종평가', cx, ry + 42, 50, { color: '#FFF', weight: 900 });
+    const r = rng(77); for (let i = 0; i < 14; i++) { const px = cx - 320 + r() * 640, py = ry - 60 + r() * 520; if (Math.abs(px - cx) < 190 && py > t - 10) continue; x.fillStyle = r() < 0.5 ? '#F2C94C' : '#FFFFFF'; x.save(); x.translate(px, py); x.rotate(r()); x.fillRect(-7, -7, 14, 14); x.restore(); }
+  }
+  function photoFrame(x, cx, top, w, base, say) { // KIRD 캐릭터 포토존
+    const h = w * 360 / 400;
+    x.fillStyle = '#5E6870'; x.fillRect(cx - w * 0.3, top + h, 12, base - top - h); x.fillRect(cx + w * 0.3 - 12, top + h, 12, base - top - h);
+    x.fillStyle = 'rgba(0,0,0,0.2)'; rr(x, cx - w / 2 - 16 + 6, top - 16 + 8, w + 32, h + 80, 20); x.fill();
+    x.fillStyle = '#FFFFFF'; rr(x, cx - w / 2 - 16, top - 16, w + 32, h + 80, 20); x.fill(); x.strokeStyle = KB; x.lineWidth = 6; x.stroke();
+    x.save(); rr(x, cx - w / 2, top, w, h, 12); x.clip(); x.drawImage(IMG.mascot, cx - w / 2, top, w, h); x.restore();
+    text(x, say, cx, top + h + 32, 26, { color: '#1E3A5A', weight: 900 });
+  }
+  function labProps(x, vx, step, flip) { // 수행 골짜기: 실험 후드와 연구노트 서가 (flip: 후드를 왼쪽에, 서가 대신 캐릭터 포토존)
+    const a = flip ? vx - 250 : vx + 30, b = a + 220, t = 720;
+    x.fillStyle = hg(x, a, b, [[0, '#B7BEC4'], [0.5, '#E6EAED'], [1, '#A9B0B6']]); x.fillRect(a, t, b - a, 460);
+    x.fillStyle = '#5E6870'; x.fillRect(a - 6, t - 14, b - a + 12, 18);
+    x.fillStyle = vg(x, t + 40, t + 230, [[0, '#BFE3E8'], [1, '#6FAAB2']]); x.fillRect(a + 22, t + 40, b - a - 44, 190);
+    x.fillStyle = 'rgba(255,255,255,0.75)'; x.beginPath(); x.moveTo(a + 80, t + 228); x.lineTo(a + 96, t + 150); x.lineTo(a + 96, t + 110); x.lineTo(a + 116, t + 110); x.lineTo(a + 116, t + 150); x.lineTo(a + 132, t + 228); x.closePath(); x.fill();
+    x.fillStyle = 'rgba(140,198,63,0.85)'; x.fillRect(a + 150, t + 150, 26, 78); x.fillStyle = 'rgba(46,134,214,0.85)'; x.fillRect(a + 190, t + 170, 26, 58);
+    text(x, '실험', (a + b) / 2, t + 22, 22, { color: '#1E2A36', weight: 900 });
+    x.fillStyle = '#5E6870'; x.fillRect(a + 30, t - 70, 8, 56); x.fillRect(b - 38, t - 70, 8, 56);
+    x.fillStyle = KB; rr(x, a, t - 150, b - a, 86, 12); x.fill();
+    text(x, step + ' 수행', (a + b) / 2, t - 107, 34, { color: '#FFF', weight: 900 });
+    if (flip) photoFrame(x, vx + 200, 560, 220, 1000, '함께 해낸 연구');
+    const sa = vx - 330, sb = vx - 80, st = 800;
+    if (!flip) {
+    x.fillStyle = '#7A5A3A'; x.fillRect(sa, st, sb - sa, 380); x.fillStyle = '#5A3F26'; x.fillRect(sa, st + 120, sb - sa, 10);
+    const cols = [KB, KG, '#E8913C', '#2C5E8F', '#C9384A']; for (let k = 0; k < 9; k++) { x.fillStyle = cols[k % 5]; x.fillRect(sa + 12 + k * 26, st + 22, 22, 98); x.fillStyle = 'rgba(255,255,255,0.7)'; x.fillRect(sa + 16 + k * 26, st + 40, 14, 6); }
+    text(x, '연구노트', (sa + sb) / 2, st - 20, 24, { color: '#1E2A36', weight: 900, stroke: 'rgba(255,255,255,0.9)', sw: 6 });
+    }
+  }
+  S.ridge = {
+    veil: 'rgba(236,244,250,0.12)',
+    back(x) {
+      skyDay(x);
+      clouds(x, [[420, 170, 80], [1700, 120, 70], [3500, 140, 90], [4800, 200, 70]]);
+      wave(x, 820, 60, 430, 40, 170, '#B4CEDD');
+      wave(x, 930, 50, 300, 30, 120, '#9DBFA8');
+      board(x, 60, 300, 560, '과제의 길', [['공모', '선정평가'], ['협약', '1단계 수행'], ['단계평가', '2단계 수행'], ['최종평가', '성과활용']], { color: '#1D5E9E', legs: 460 });
+      selectionHall(x, 950, 780);
+      const hx = 1360, hy = ridgeTop(hx); x.fillStyle = '#5E6870'; x.fillRect(hx - 5, hy - 230, 10, 240);
+      x.fillStyle = '#FFFFFF'; rr(x, hx - 90, hy - 300, 180, 92, 12); x.fill(); x.strokeStyle = KB; x.lineWidth = 5; x.stroke();
+      text(x, '협약', hx, hy - 268, 34, { color: '#1D5E9E', weight: 900 }); text(x, '협약서 서명', hx, hy - 230, 18, { color: '#5A646C', weight: 700 });
+      labProps(x, 1750, '1단계'); labProps(x, 3450, '2단계', true);
+      statuePillar(x, 2130, 600, 82, 1010, 'blue', '도전하는 연구');
+      statuePillar(x, 3070, 600, 82, 1010, 'green', '함께하는 연구');
+      stageGate(x, 2600, 720);
+      finalStage(x, 4250, 780);
+      const px = 4760; x.fillStyle = vg(x, 760, 1000, [[0, '#F4F2EC'], [1, '#C9C4B8']]); x.fillRect(px - 130, 760, 260, 260);
+      text(x, '성과', px, 820, 44, { color: '#4A3E2C', weight: 900 }); text(x, '공개 · 활용', px, 875, 34, { color: '#4A3E2C', weight: 900 });
+      x.fillStyle = gold(x, 560, 760); x.beginPath(); x.moveTo(px - 90, 590); x.lineTo(px + 90, 590); x.quadraticCurveTo(px + 80, 700, px + 22, 712); x.lineTo(px + 22, 740); x.lineTo(px + 60, 760); x.lineTo(px - 60, 760); x.lineTo(px - 22, 740); x.lineTo(px - 22, 712); x.quadraticCurveTo(px - 80, 700, px - 90, 590); x.closePath(); x.fill();
+      x.strokeStyle = '#C9972B'; x.lineWidth = 12; x.beginPath(); x.arc(px - 92, 640, 40, Math.PI * 0.5, Math.PI * 1.5); x.stroke(); x.beginPath(); x.arc(px + 92, 640, 40, -Math.PI * 0.5, Math.PI * 0.5); x.stroke();
+    },
+    solid(x) {
+      noiseBand(x, 0, W, 600, H, [[0, '#8A6A44'], [0.3, '#6E5236'], [1, '#3E2E1E']], 51);
+      strata(x, 0, W, 760, H, 'rgba(40,26,14,0.22)', 5);
+      x.lineJoin = 'round';
+      ridgeLine(x, 22); x.lineWidth = 64; x.strokeStyle = '#4F8A3E'; x.stroke();
+      ridgeLine(x, 4); x.lineWidth = 22; x.strokeStyle = '#7DB85A'; x.stroke();
+      const r = rng(17); x.fillStyle = 'rgba(160,150,135,0.55)';
+      for (let i = 0; i < 40; i++) { const px = r() * W, py = ridgeTop(px) + 90 + r() * 260; x.beginPath(); x.ellipse(px, py, 22 + r() * 30, 12 + r() * 14, 0, 0, 7); x.fill(); }
+    },
+    front(x, surface) {
+      for (const px of [120, 230, W - 70]) tree(x, px, surface(px) + 6, px % 2 ? 190 : 150, 0, 'pine');
+      const r = rng(23); for (let i = 0; i < 70; i++) { const px = 300 + r() * (W - 600), y = surface(px); x.fillStyle = ['#FFFFFF', '#FFD24A', '#F59AB8'][i % 3]; x.beginPath(); x.arc(px, y + 4, 5, 0, 7); x.fill(); }
+    },
+  };
+
   // the card art laid along a ramp: (ox, oy) is the card's top-left corner, the face hangs below the edge (the mask clips it)
   function cardAlong(x, ox, oy, ang) {
     const w = 640, h = 404; x.save(); x.translate(ox, oy); x.rotate(ang); x.translate(w / 2 - 10, h / 2 - 6); fundCard(x, 0, 0, w, 0); x.restore();
@@ -6246,7 +6408,7 @@ function announceHappening() {
 // The map's own pool (CONFIG.maps[..].tipPool) mixed 3:1 with the 국가R&D 공통 pool; weighted draw without repeats in a match.
 // Multiplayer: from turn 2, at most once every 3 turns and never within 45 s of the last one. Solo: every 45 s.
 // UI only (Math.random): never touches the lockstep sim.
-const TIP_RULE = { firstTurn: 2, everyTurns: 3, minGapMs: 45000, showMs: 8000, soloFirstMs: 20000, soloGapMs: 45000, commonEvery: 4, recap: 3 };
+const TIP_RULE = { firstTurn: 2, everyTurns: 3, minGapMs: 45000, showMs: 8000, soloFirstMs: 20000, soloGapMs: 45000, commonEvery: 4, mixEvery: 3, recap: 3 };
 const TIPS = { turn: -1, lastTurn: -1, lastAt: 0, n: 0, timer: 0, seen: new Set(), shown: [] };
 const tipPoolOf = meta => (meta && meta.tipPool && typeof TIP_POOLS !== 'undefined' && TIP_POOLS[meta.tipPool]) || null;
 function resetTips() { Object.assign(TIPS, { turn: -1, lastTurn: -1, lastAt: 0, n: 0, seen: new Set(), shown: [] }); }
@@ -6259,9 +6421,11 @@ function drawTip(pool) {
 }
 function pickTip(meta) {
   const own = tipPoolOf(meta); if (!own) return null;
-  const common = TIP_POOLS.common, useCommon = common && TIPS.n % TIP_RULE.commonEvery === TIP_RULE.commonEvery - 1;
+  let pool = own; const mix = (meta.tipMix || []).map(k => TIP_POOLS[k]).filter(Boolean);
+  if (mix.length) { if (TIPS.n % TIP_RULE.mixEvery === TIP_RULE.mixEvery - 1) pool = mix[Math.floor(TIPS.n / TIP_RULE.mixEvery) % mix.length]; } // 혁신의 능선: every 3rd tip from the four subject pools in turn
+  else if (TIP_POOLS.common && TIPS.n % TIP_RULE.commonEvery === TIP_RULE.commonEvery - 1) pool = TIP_POOLS.common;
   TIPS.n++;
-  const t = drawTip(useCommon ? common : own);
+  const t = drawTip(pool);
   TIPS.shown.push(t); return t;
 }
 function showTip(t) {

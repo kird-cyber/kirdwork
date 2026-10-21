@@ -164,6 +164,11 @@ const CONFIG = {
   maps: {
     campus: { name: 'KIRD 캠퍼스', tag: '두 건물 · 구름다리', desc: '본관과 5층 생활관이 마주 선 캠퍼스. 두 건물을 잇는 유리 구름다리와 가운데 잔디 마당.', W: 5600, H: 1500, theme: 'kird', special: 'KIRD 기관 전용' },
     songdae: { name: '송대제', tag: '호숫가 · 낙수 주의', desc: '본관 앞 송대제 호수. 왼쪽 언덕엔 본관, 가운데 호수엔 나무 데크와 작은 섬, 오른쪽은 숲 산책로.', W: 5400, H: 1500, theme: 'lake', special: 'KIRD 기관 전용' },
+    ridge: { name: '혁신의 능선', tag: '평가는 관문, 수행은 골짜기', desc: '국가연구개발과제의 일생을 걷는 능선. 선정평가관 · 단계평가 게이트 · 최종평가 단상 세 봉우리와 1·2단계 수행 골짜기, 끝에는 성과 공개·활용.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 국가연구개발혁신법',
+      tipPool: 'common', tipMix: ['ethics', 'notebook', 'safety', 'budget'],
+      guide: { title: '혁신의 능선', line: '절차를 지키면 연구가 자유로워진다.' },
+      items: { shield: '협약서', heal: '이의신청', double: '공동연구개발기관', amplify: '우수 평가', calm: 'IRIS 통합관리', fuel: '협약 변경', tele: '단계 전환' },
+      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
     scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '연구윤리 실험실. 벽엔 위조·변조·표절 예방 포스터, 바닥엔 원본 데이터 보관함·출처 표기 서가·논문 원고 두루마리, 가운데는 밑으로 지나다니는 연구노트 서명대.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
       tipPool: 'ethics',
       guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },

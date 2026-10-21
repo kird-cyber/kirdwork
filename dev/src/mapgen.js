@@ -264,6 +264,12 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
   return TG;
 }
+// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys, mirror-symmetric; slopes kept under the climb limit
+const RIDGE_K = [[0, 1000], [300, 1000], [950, 780], [1750, 1150], [2600, 720], [3450, 1150], [4250, 780], [4900, 1000], [5200, 1000]];
+function ridgeTop(px) {
+  for (let i = 1; i < RIDGE_K.length; i++) { const [x0, y0] = RIDGE_K[i - 1], [x1, y1] = RIDGE_K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
+  return RIDGE_K[RIDGE_K.length - 1][1];
+}
 const TMAPGEN = {
   notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
     rectF(m, W, H, 0, TG, W, H - 4, 1);
@@ -317,6 +323,7 @@ const TMAPGEN = {
   },
 };
 for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
+MAPGEN.ridge = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, ridgeTop, () => H - 4); // 혁신의 능선: three crests, two valleys
 
 function maskSurface(mask, W, H, x, from) {
   x = Math.floor(x); if (x < 0 || x >= W) return -1;

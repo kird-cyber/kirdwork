@@ -530,7 +530,7 @@ function announceHappening() {
 // The map's own pool (CONFIG.maps[..].tipPool) mixed 3:1 with the 국가R&D 공통 pool; weighted draw without repeats in a match.
 // Multiplayer: from turn 2, at most once every 3 turns and never within 45 s of the last one. Solo: every 45 s.
 // UI only (Math.random): never touches the lockstep sim.
-const TIP_RULE = { firstTurn: 2, everyTurns: 3, minGapMs: 45000, showMs: 8000, soloFirstMs: 20000, soloGapMs: 45000, commonEvery: 4, recap: 3 };
+const TIP_RULE = { firstTurn: 2, everyTurns: 3, minGapMs: 45000, showMs: 8000, soloFirstMs: 20000, soloGapMs: 45000, commonEvery: 4, mixEvery: 3, recap: 3 };
 const TIPS = { turn: -1, lastTurn: -1, lastAt: 0, n: 0, timer: 0, seen: new Set(), shown: [] };
 const tipPoolOf = meta => (meta && meta.tipPool && typeof TIP_POOLS !== 'undefined' && TIP_POOLS[meta.tipPool]) || null;
 function resetTips() { Object.assign(TIPS, { turn: -1, lastTurn: -1, lastAt: 0, n: 0, seen: new Set(), shown: [] }); }
@@ -543,9 +543,11 @@ function drawTip(pool) {
 }
 function pickTip(meta) {
   const own = tipPoolOf(meta); if (!own) return null;
-  const common = TIP_POOLS.common, useCommon = common && TIPS.n % TIP_RULE.commonEvery === TIP_RULE.commonEvery - 1;
+  let pool = own; const mix = (meta.tipMix || []).map(k => TIP_POOLS[k]).filter(Boolean);
+  if (mix.length) { if (TIPS.n % TIP_RULE.mixEvery === TIP_RULE.mixEvery - 1) pool = mix[Math.floor(TIPS.n / TIP_RULE.mixEvery) % mix.length]; } // 혁신의 능선: every 3rd tip from the four subject pools in turn
+  else if (TIP_POOLS.common && TIPS.n % TIP_RULE.commonEvery === TIP_RULE.commonEvery - 1) pool = TIP_POOLS.common;
   TIPS.n++;
-  const t = drawTip(useCommon ? common : own);
+  const t = drawTip(pool);
   TIPS.shown.push(t); return t;
 }
 function showTip(t) {
