@@ -111,7 +111,7 @@ function createRoomLink(o) {
   }
   function maybeJoin() {
     if (!r.room || r.kicked || r.me() || r.meW()) return;
-    if (r.room.state !== 'lobby' && !r.watch) return; // spectators may come in while a game is running
+    if (r.room.state !== 'lobby') return; // nobody new comes in while a game is running (players or spectators)
     if (Date.now() - r.joinSent < 2500) return;
     r.joinSent = Date.now();
     pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank, watch: r.watch });
@@ -175,7 +175,7 @@ function createRoomLink(o) {
     const room = r.room; if (!room) return;
     const p = room.players.find(x => x.id === q.id), w = watchersOf(room).find(x => x.id === q.id);
     if (q.type === 'join' && q.watch) {
-      if (p || r.banned[q.id]) return;
+      if (p || r.banned[q.id] || room.state !== 'lobby') return;
       if (w) { if (w.nick !== q.nick) { w.nick = String(q.nick || '').slice(0, 8) || '관전자'; publishRoom(); } return; }
       if (watchersOf(room).length >= CONFIG.turn.maxWatchers) { pub('cmd', { type: 'wfull', id: q.id }); return; }
       room.watchers = watchersOf(room).concat([{ id: q.id, nick: String(q.nick || '').slice(0, 8) || '관전자' }]);

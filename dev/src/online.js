@@ -133,7 +133,7 @@ function openLink(code, idx, create) {
         updateNetStatus();
       },
       onChange: room => onRoomChange(room),
-      onGame: (game, late) => startOnlineMatch(game, late),
+      onGame: (game, late) => { if (mayWatchGame(game)) startOnlineMatch(game, late); else waitForLobby(); },
       onInput: inp => onNetInput(inp),
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
@@ -171,10 +171,18 @@ function onRoomChange(room) {
     if (screen !== 'lobby') { ON.game = null; ON.active = false; showScreen('lobby'); }
     renderLobby();
   } else if (room.state === 'game' && screen === 'home') {
-    // arrived while a game is running and it was not started for us yet (spectate)
-    if (!ON.game) startOnlineMatch(room.game);
+    // arrived while a game is running: only its own players (reload) and spectators who joined in the lobby may see it
+    if (!ON.game) { if (mayWatchGame(room.game)) startOnlineMatch(room.game); else waitForLobby(); }
   }
   updateNetStatus();
+}
+// a running game is shown only to its players and to the spectators who were already in the room (no outsiders mid-game)
+function mayWatchGame(game) {
+  const L = ON.link;
+  return !!game && (game.players.some(p => p.id === ON.myId) || !!(L && L.meW()));
+}
+function waitForLobby() {
+  homeMsg(`방 ${ON.code}은(는) 지금 게임 중이에요. 진행 중인 게임은 볼 수 없고, 판이 끝나 대기방으로 돌아오면 자동으로 들어갑니다.`);
 }
 function updateNetStatus() {
   const L = ON.link; if (!L) return;
@@ -530,7 +538,7 @@ function renderRooms() {
     const b = document.createElement('button'); b.type = 'button';
     b.textContent = lobby ? (full ? '가득 참' : '입장') : '게임 중'; b.disabled = !lobby || full;
     b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, false); };
-    const w = document.createElement('button'); w.type = 'button'; w.className = 'watch'; w.textContent = '관전';
+    const w = document.createElement('button'); w.type = 'button'; w.className = 'watch'; w.textContent = '관전'; w.disabled = !lobby;
     w.title = '게임에 참여하지 않고 보기 · 채팅'; w.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, true); };
     row.append(w, b); box.append(row);
   }

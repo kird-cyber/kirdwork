@@ -71,13 +71,22 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
   // 관전 채팅
   await B.evaluate(() => { document.getElementById('gameChatIn').value = '중계석 인사'; document.getElementById('gameChatForm').requestSubmit(); });
   ok(await until(async () => (await A.evaluate(() => document.getElementById('gameMsgs').textContent)).includes('중계석 인사'), 5000), '관전자 채팅이 참가자 화면에 표시');
-  // D: 게임 중에 처음부터 관전으로 입장 (열린 방 목록 없이 코드)
+  // D: 게임 중에 관전자로 들어오려 하면 → 진행 중인 게임은 볼 수 없음 (제3자 차단)
   const D = await open(BASE, '늦은관전');
   await D.check('#watchChk');
   for (let i = 0; i < 5; i++) await D.locator('#codeCells .cc').nth(i).fill(code[i]);
   await D.click('#codeBtn');
-  ok(await until(async () => (await R(D) || {}).screen === 'game', 10000), '게임 중에도 관전자로 입장 → 바로 경기 화면');
-  ok(await until(async () => (await R(A)).watchers.includes('늦은관전'), 6000), '게임 중 입장한 관전자도 관전자 목록에 추가');
+  await sleep(4000);
+  ok((await D.evaluate(() => __pg.screen)) === 'home' && !(await D.evaluate(() => !!__pg.match && __pg.ON.active)), '게임 중에는 관전자로도 들어갈 수 없음 (처음 화면에 머묾)');
+  ok((await D.evaluate(() => document.getElementById('homeMsg').textContent)).includes('게임 중'), '안내: 「지금 게임 중 · 대기방으로 돌아오면 자동 입장」');
+  ok(!(await R(A)).watchers.includes('늦은관전'), '게임 중 시도한 사람은 관전자 목록에 추가되지 않음');
+  // 판이 끝나 대기방으로 → 자동으로 관전자로 입장
+  await A.evaluate(() => __pg.ON.link.backToLobby());
+  ok(await until(async () => (await R(A)).watchers.includes('늦은관전') && (await R(D) || {}).screen === 'lobby', 8000), '대기방으로 돌아오면 기다리던 사람이 관전자로 자동 입장');
+  // 관전자가 게임 중 새로고침해도(이미 방의 관전자) 다시 볼 수 있음
+  await A.evaluate(() => { const L = __pg.ON.link; if (L.room.players.every(p => p.team === 'red')) L.moveOther(L.room.players.find(p => p.id !== L.myId).id, 'blue'); });
+  await sleep(500); await A.click('#lobbyStart');
+  ok(await until(async () => (await R(D) || {}).screen === 'game', 8000), '대기방부터 있던 관전자는 다음 판을 봄');
   await sleep(2500);
   await B.screenshot({ path: SP + 'spec_game_watch.png' });
   console.log(`\n${pass} passed, ${fail} failed`); if (errors.length) console.log('errors:', errors.slice(0, 6));
