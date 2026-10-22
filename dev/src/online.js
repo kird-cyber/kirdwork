@@ -91,6 +91,7 @@ function showProbe() {
 }
 async function createRoom() {
   const nick = readNick(); if (!nick) return;
+  ON.wantWatch = false;
   setHomeBusy(true); homeMsg('중계 서버에 연결하는 중…');
   const code = genCode(5), all = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
   const order = PROBE.idx >= 0 ? [PROBE.idx, ...all.filter(i => i !== PROBE.idx)] : all;
@@ -102,9 +103,11 @@ async function createRoom() {
   setHomeBusy(false);
   homeMsg('중계 서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하세요.', true);
 }
-async function joinRoom(code, idx) {
+function wantWatch() { const c = $('watchChk'); return !!(c && c.checked); }
+async function joinRoom(code, idx, watch) {
   const nick = readNick(); if (!nick) return;
-  setHomeBusy(true); homeMsg(`방 ${code}에 들어가는 중…`);
+  ON.wantWatch = watch === undefined ? wantWatch() : !!watch;
+  setHomeBusy(true); homeMsg(ON.wantWatch ? `방 ${code}에 관전자로 들어가는 중…` : `방 ${code}에 들어가는 중…`);
   const ok = await openLink(code, idx, false);
   setHomeBusy(false);
   if (!ok) homeMsg('중계 서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요.', true);
@@ -116,7 +119,7 @@ function openLink(code, idx, create) {
     let done = false;
     ON.code = code; ON.brokerIdx = idx; ON.myId = ON.myId || onlineId();
     const link = createRoomLink({
-      code, url: brokerUrl(idx), myId: ON.myId, nick: ON.nick, tank: savedTank(), create,
+      code, url: brokerUrl(idx), myId: ON.myId, nick: ON.nick, tank: savedTank(), create, watch: !create && !!ON.wantWatch,
       onStatus: s => {
         if (ON.link !== link) return;
         if (s === 'online' && !done) {
@@ -134,7 +137,7 @@ function openLink(code, idx, create) {
       onInput: inp => onNetInput(inp),
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
-      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
+      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명). 「관전자로 입장」으로는 들어갈 수 있어요.', true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
       onChat: c => onChat(c),
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
     });
@@ -146,7 +149,7 @@ function goHomeAnywhere() {
   if (screen === 'home') { const h = $('home'); if (h) h.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const playing = screen === 'game' && match && match.phase !== 'over';
   if (ON.link || ON.active) {
-    if (confirm(playing ? '게임에서 나가 처음 화면으로 갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.' : '방에서 나가 처음 화면으로 갈까요?')) leaveOnline();
+    if (confirm(playing && !ON.spectator ? '게임에서 나가 처음 화면으로 갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.' : playing ? '관전을 그만두고 처음 화면으로 갈까요?' : '방에서 나가 처음 화면으로 갈까요?')) leaveOnline();
     return;
   }
   if (playing && !confirm(SOLOPLAY.active ? '도전을 그만두고 처음 화면으로 갈까요? 이번 기록은 남지 않아요.' : TUT.on ? '튜토리얼을 끝내고 처음 화면으로 갈까요?' : '연습을 끝내고 처음 화면으로 갈까요?')) return;
@@ -219,6 +222,22 @@ function renderLobby() {
     for (let i = ps.length; i < CONFIG.turn.teamMax; i++) { const e = document.createElement('div'); e.className = 'pc empty'; e.textContent = '빈 자리'; list.append(e); }
     $(team + 'N').textContent = `${ps.length} / ${CONFIG.turn.teamMax}`;
   }
+  // spectators
+  const ws = watchersOf(room), meW = L.meW(), wl = $('watchList');
+  $('watchN').textContent = `${ws.length} / ${CONFIG.turn.maxWatchers}`;
+  wl.innerHTML = '';
+  if (!ws.length) { const e = document.createElement('span'); e.className = 'wempty'; e.textContent = '아직 없어요 · 중계·진행자는 「관전으로 이동」'; wl.append(e); }
+  for (const w of ws) {
+    const c = document.createElement('span'); c.className = 'wchip' + (w.id === ON.myId ? ' me' : '') + (L.online(w.id) || w.id === ON.myId ? '' : ' off');
+    c.textContent = w.nick + (room.host === w.id ? ' · 방장' : '') + (w.id === ON.myId ? ' · 나' : '');
+    if (isHost && w.id !== ON.myId) { const k = document.createElement('button'); k.type = 'button'; k.className = 'wx'; k.textContent = '×'; k.title = '내보내기'; k.setAttribute('aria-label', `${w.nick} 내보내기`); k.onclick = () => { if (confirm(`${w.nick}을(를) 방에서 내보낼까요?`)) L.kick(w.id); }; c.append(k); }
+    wl.append(c);
+  }
+  const rl = $('roleBtn');
+  rl.hidden = !me && !meW;
+  rl.textContent = meW ? '참가자로 이동' : '관전으로 이동';
+  rl.disabled = meW ? room.players.length >= CONFIG.turn.maxPlayers : ws.length >= CONFIG.turn.maxWatchers;
+  $('myTankSec').hidden = !!meW;
   // my tank
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
@@ -248,7 +267,8 @@ function renderLobby() {
   const others = room.players.filter(p => p.id !== room.host), readyN = others.filter(p => p.ready).length;
   $('startNote').textContent = isHost
     ? (L.canStart() ? `${red} 대 ${blue} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
-    : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : '방에 들어가는 중…');
+    : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : meW ? '관전 중 — 방장이 시작하면 경기 화면을 함께 봅니다 (채팅 가능)' : '방에 들어가는 중…');
+  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${red} 대 ${blue} · 준비 ${readyN}/${others.length}`;
   updateNetStatus();
 }
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
@@ -263,7 +283,8 @@ function startOnlineMatch(game, late) {
   ON.syncing = !!late; ON.needAt = 0; ON.liveAt = 0;
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
-  banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
+  const watching = ON.link && ON.link.meW();
+  banner(!ON.spectator ? CONFIG.maps[game.mapId].name : watching ? '관전 모드 — 차례마다 그 탱크로 화면이 이동 · 끌어서 자유 시점' : '관전 중 — 다음 판부터 참여합니다');
   if (!late) announceHappening();
   if (ON.syncing) {
     banner('진행 중인 게임에 맞추는 중…');
@@ -508,8 +529,10 @@ function renderRooms() {
     row.innerHTML = `<div class="nm"><b>${esc(e.name || '방')}</b><span>코드 ${esc(e.code)}</span></div><span class="mp">${esc(mp)}</span><span class="pn">${n} / ${mx}명</span><span class="st">${lobby ? (full ? '가득 참' : '대기 중') : '게임 중'}</span>`;
     const b = document.createElement('button'); b.type = 'button';
     b.textContent = lobby ? (full ? '가득 참' : '입장') : '게임 중'; b.disabled = !lobby || full;
-    b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b); };
-    row.append(b); box.append(row);
+    b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, false); };
+    const w = document.createElement('button'); w.type = 'button'; w.className = 'watch'; w.textContent = '관전';
+    w.title = '게임에 참여하지 않고 보기 · 채팅'; w.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, true); };
+    row.append(w, b); box.append(row);
   }
 }
 function dirTopic() { return DIR_PREFIX + ON.code; }
@@ -532,6 +555,7 @@ function dirClearIfLast() { // leaving as the last one in the room: take the car
 function bindOnlineUi() {
   $('createBtn').onclick = () => { AU.unlock(); createRoom(); };
   $('joinBtn').onclick = () => { AU.unlock(); const inv = parseInvite(); if (inv) joinRoom(inv.code, inv.b); };
+  $('roleBtn').onclick = () => { AU.play('ui'); const L = ON.link; if (!L || !L.room) return; L.requestRole(L.meW() ? 'play' : 'watch'); };
   bindCodeCells();
   $('codeBtn').onclick = () => {
     AU.unlock();
@@ -565,7 +589,7 @@ function bindOnlineUi() {
   document.addEventListener('click', e => { const h = e.target.closest && e.target.closest('.homelink'); if (h) { e.preventDefault(); goHomeAnywhere(); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('homelink') && e.target.tagName !== 'BUTTON') { e.preventDefault(); goHomeAnywhere(); } });
   $('exitBtn').onclick = () => {
-    if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
+    if (ON.active) { if (confirm(ON.spectator ? '관전을 그만두고 나갈까요?' : '게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
     else if (SOLOPLAY.active) { if (confirm('도전을 그만두고 나갈까요? 이번 기록은 남지 않아요.')) showScreen('solo'); }
     else if (confirm('연습을 끝내고 처음 화면으로 갈까요?')) showScreen('home');
   };

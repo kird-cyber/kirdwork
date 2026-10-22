@@ -42,7 +42,9 @@ const CONFIG = {
     crateMax: 8,            // most crates lying around at once (no new drop past this)
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
+    windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
     maxPlayers: 8,
+    maxWatchers: 20,       // 관전자 (게임에 참여하지 않고 보기·채팅)
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
@@ -165,7 +167,7 @@ const CONFIG = {
     double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
     heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
     tele: { name: '텔레포트', label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
-    shield: { name: '실드', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '다음 내 턴까지 받는 피해 절반' },
+    shield: { name: '실드', label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
     amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
     fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
     calm: { name: '무풍탄', label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },

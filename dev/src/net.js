@@ -14,6 +14,7 @@ function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_A
 function genId() { return genCode(10).toLowerCase(); }
 function pickable(t) { return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden); }
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
+function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 
 // o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
 function createRoomLink(o) {
@@ -25,6 +26,8 @@ function createRoomLink(o) {
   const cb = (name, ...a) => { if (o[name]) { try { o[name](...a); } catch (e) { console.error(e); } } };
   r.isHost = () => !!(r.room && r.room.host === r.myId);
   r.me = () => r.room && r.room.players.find(p => p.id === r.myId);
+  r.meW = () => r.room && watchersOf(r.room).find(p => p.id === r.myId); // I am a spectator in this room
+  r.watch = !!o.watch; // join as a spectator
   r.online = id => !!(r.presence[id] && r.presence[id].on);
 
   // QoS 1 (confirmed by the broker) for everything except the high-rate cosmetic feed
@@ -107,10 +110,11 @@ function createRoomLink(o) {
     watchHost();
   }
   function maybeJoin() {
-    if (!r.room || r.kicked || r.room.state !== 'lobby' || r.me()) return;
+    if (!r.room || r.kicked || r.me() || r.meW()) return;
+    if (r.room.state !== 'lobby' && !r.watch) return; // spectators may come in while a game is running
     if (Date.now() - r.joinSent < 2500) return;
     r.joinSent = Date.now();
-    pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank });
+    pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank, watch: r.watch });
     setTimeout(maybeJoin, 2600);
   }
 
@@ -121,6 +125,15 @@ function createRoomLink(o) {
     watchHost();
     if (!r.isHost()) return;
     // host: a lobby player who stays offline for 12 s leaves the room (a page reload comes back well inside that)
+    // host: a spectator who stays offline for 12 s leaves the spectator list (in any state)
+    if (watchersOf(r.room).some(p => p.id === id) && id !== r.myId && !r.online(id)) {
+      clearTimeout(r.dropTimers['w' + id]);
+      r.dropTimers['w' + id] = setTimeout(() => {
+        if (r.isHost() && !r.online(id) && watchersOf(r.room).some(p => p.id === id)) {
+          r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom();
+        }
+      }, 12000);
+    }
     const inRoom = r.room.players.some(p => p.id === id);
     if (inRoom && id !== r.myId && !r.online(id) && r.room.state === 'lobby') {
       clearTimeout(r.dropTimers[id]);
@@ -140,13 +153,14 @@ function createRoomLink(o) {
     r.hostWatch = setTimeout(() => {
       r.hostWatch = 0;
       if (!r.room || r.online(r.room.host) || r.closed) return;
-      const next = r.room.players.find(p => p.id !== r.room.host && (r.online(p.id) || p.id === r.myId));
+      const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.room.host && (r.online(p.id) || p.id === r.myId));
       if (next && next.id === r.myId) {
         r.room.host = r.myId;
         if (r.room.state === 'lobby') r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+        r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
         publishRoom();
         cb('onStatus', 'host');
-      } else if (!next && !r.me()) {
+      } else if (!next && !r.me() && !r.meW()) {
         // an old link: everybody is gone. Reopen the room with just me.
         r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'temple', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
         r.gid = null;
@@ -159,8 +173,18 @@ function createRoomLink(o) {
   // ---- host: lobby requests
   function onReq(q) {
     const room = r.room; if (!room) return;
-    const p = room.players.find(x => x.id === q.id);
+    const p = room.players.find(x => x.id === q.id), w = watchersOf(room).find(x => x.id === q.id);
+    if (q.type === 'join' && q.watch) {
+      if (p || r.banned[q.id]) return;
+      if (w) { if (w.nick !== q.nick) { w.nick = String(q.nick || '').slice(0, 8) || '관전자'; publishRoom(); } return; }
+      if (watchersOf(room).length >= CONFIG.turn.maxWatchers) { pub('cmd', { type: 'wfull', id: q.id }); return; }
+      room.watchers = watchersOf(room).concat([{ id: q.id, nick: String(q.nick || '').slice(0, 8) || '관전자' }]);
+      publishRoom(); return;
+    }
+    if (q.type === 'leave' && w) { room.watchers = watchersOf(room).filter(x => x.id !== q.id); publishRoom(); return; }
+    if (q.type === 'play' && w) { if (r.setRole(q.id, 'play', q.tank, true)) publishRoom(); return; }
     if (q.type === 'join') {
+      if (w) return; // already watching: switching to a player goes through 'play'
       if (p) { if (p.nick !== q.nick) { p.nick = q.nick; publishRoom(); } return; }
       if (room.state !== 'lobby' || r.banned[q.id]) return;
       if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
@@ -172,7 +196,25 @@ function createRoomLink(o) {
     else if (q.type === 'tank') { if (pickable(q.tank)) { p.tank = q.tank; publishRoom(); } }
     else if (q.type === 'leave') { room.players = room.players.filter(x => x.id !== q.id); publishRoom(); }
     else if (q.type === 'ready') { p.ready = !!q.ready; publishRoom(); }
+    else if (q.type === 'watch') { if (r.setRole(q.id, 'watch', null, true)) publishRoom(); }
   }
+  // lobby only: move someone between the players and the spectators (host applies)
+  r.setRole = function (id, role, tank, noPublish) {
+    const room = r.room; if (!room || room.state !== 'lobby') return false;
+    const p = room.players.find(x => x.id === id), w = watchersOf(room).find(x => x.id === id);
+    if (role === 'watch' && p) {
+      if (watchersOf(room).length >= CONFIG.turn.maxWatchers) return false;
+      room.players = room.players.filter(x => x.id !== id);
+      room.watchers = watchersOf(room).concat([{ id, nick: p.nick }]);
+    } else if (role === 'play' && w) {
+      if (room.players.length >= CONFIG.turn.maxPlayers) return false;
+      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      room.watchers = watchersOf(room).filter(x => x.id !== id);
+      room.players.push({ id, nick: w.nick, team, tank: pickable(tank) ? tank : 'rookie' });
+    } else return false;
+    if (!noPublish) publishRoom();
+    return true;
+  };
   r.setTeam = function (id, team, noPublish) {
     const p = r.room.players.find(x => x.id === id);
     if (!p || (team !== 'red' && team !== 'blue') || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
@@ -180,12 +222,13 @@ function createRoomLink(o) {
   };
 
   // ---- player actions (host applies directly, others ask)
+  r.requestRole = role => { r.watch = role === 'watch'; if (r.isHost()) return r.setRole(r.myId, role, o.tank); pub('req', { type: role, id: r.myId, tank: o.tank }); };
   r.requestTeam = team => { if (r.isHost()) return r.setTeam(r.myId, team); pub('req', { type: 'team', id: r.myId, team }); };
   r.requestTank = tank => { o.tank = tank; if (r.isHost()) { const p = r.me(); if (p) { p.tank = tank; publishRoom(); } return; } pub('req', { type: 'tank', id: r.myId, tank }); };
   r.setMap = map => { if (r.isHost() && CONFIG.maps[map]) { r.room.map = map; publishRoom(); } };
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
-  r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); publishRoom(); };
+  r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
   r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamCount(r.room, 'red') > 0 && teamCount(r.room, 'blue') > 0;
   r.start = function () {
     if (!r.canStart()) return false;
@@ -205,6 +248,7 @@ function createRoomLink(o) {
     if (!r.isHost() || r.room.state !== 'game') return;
     r.room.state = 'lobby';
     r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+    r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
     for (const p of r.room.players) p.ready = false;
     publishRoom();
   };
@@ -227,10 +271,17 @@ function createRoomLink(o) {
   r.setReady = v => { if (r.isHost()) { const p = r.me(); if (p) { p.ready = !!v; publishRoom(); } return; } pub('req', { type: 'ready', id: r.myId, ready: !!v }); };
   r.leave = function () {
     if (r.mq && r.mq.connected) {
-      if (r.room && r.room.state === 'lobby' && r.me()) {
+      if (r.room && r.meW()) { // a spectator leaving (any state)
+        if (r.isHost()) {
+          const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.myId && r.online(p.id));
+          r.room.watchers = watchersOf(r.room).filter(p => p.id !== r.myId);
+          if (next) { r.room.host = next.id; publishRoom(); }
+          else pub('room', null, true);
+        } else pub('req', { type: 'leave', id: r.myId });
+      } else if (r.room && r.room.state === 'lobby' && r.me()) {
         if (r.isHost()) {
           // hand the room to the next player right away
-          const next = r.room.players.find(p => p.id !== r.myId && r.online(p.id));
+          const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.myId && r.online(p.id));
           r.room.players = r.room.players.filter(p => p.id !== r.myId);
           if (next) { r.room.host = next.id; publishRoom(); }
           else pub('room', null, true); // last one out: remove the room from the broker

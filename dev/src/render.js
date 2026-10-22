@@ -706,7 +706,9 @@ function createRenderer(cv, mini) {
         case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
         case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;
         case 'pillarHit': burst(e.x, e.y, '#FFB040', 14); text(e.x, e.y - 30, '불꽃 강화!', '#FFB040'); break;
-        case 'turn': R.follow = t; R.free = false; R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
+        case 'turn': R.follow = t; R.free = false;
+          if (R.isLocalTurn && R.isLocalTurn(t) && R.onMyTurn) { R.onMyTurn(t, e.again); R.onSfx('turn', { team: t.team }); break; }
+          R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
         case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
@@ -839,6 +841,7 @@ function createRenderer(cv, mini) {
       ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(b.x - 4, top - 50, 8, sy2 - top + 50);
     }
     for (const mi of m.mines) {
+      if (R.mineSeen && !R.mineSeen(mi)) continue; // the other team's mines stay hidden on this screen
       ctx.fillStyle = '#2B2E36'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.ellipse(mi.x, mi.y - 4, 9, 5, 0, 0, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = (performance.now() / 300 | 0) % 2 ? '#FF4A3A' : '#7A1A12'; ctx.beginPath(); ctx.arc(mi.x, mi.y - 9, 2.4, 0, 7); ctx.fill();

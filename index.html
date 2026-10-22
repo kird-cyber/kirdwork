@@ -91,6 +91,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 #banner { position: absolute; left: 50%; top: 22%; transform: translate(-50%, -50%); padding: 12px 26px; border-radius: 14px; background: var(--panel); font-family: var(--font-display); font-size: 28px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .25s; }
 #banner.show { opacity: 1; }
+#myTurn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; pointer-events: none; text-align: center; padding: 18px 44px 16px; border-radius: 20px; background: rgba(14, 20, 38, .88); border: 3px solid #FFD24A; box-shadow: 0 0 0 6px rgba(255, 210, 74, .25), 0 18px 40px rgba(0, 0, 0, .45); white-space: nowrap; }
+#myTurn[data-team="red"] { border-color: #FF8A73; box-shadow: 0 0 0 6px rgba(255, 138, 115, .25), 0 18px 40px rgba(0, 0, 0, .45); }
+#myTurn[data-team="blue"] { border-color: #7FB8FF; box-shadow: 0 0 0 6px rgba(127, 184, 255, .25), 0 18px 40px rgba(0, 0, 0, .45); }
+#myTurn b { display: block; font-family: var(--font-display); font-size: 56px; line-height: 1.1; color: #FFE07A; text-shadow: 0 3px 0 #6A4A00; }
+#myTurn small { display: block; margin-top: 6px; font-size: 15px; font-weight: 800; color: #DCE6F2; }
+#myTurn.on { animation: myTurnIn 2s ease forwards; }
+@keyframes myTurnIn { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 20% { transform: translate(-50%, -50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+@media (max-width: 600px) { #myTurn { padding: 12px 24px 10px; } #myTurn b { font-size: 38px; } #myTurn small { font-size: 12px; } }
+@media (prefers-reduced-motion: reduce) { #myTurn.on { animation: none; } }
 #hint { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(132px + env(safe-area-inset-bottom, 0px)); padding: 6px 14px; border-radius: 999px; background: var(--panel); font-size: 13px; color: var(--muted); pointer-events: none; white-space: nowrap; }
 
 .hud-bottom { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 12px 16px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); }
@@ -512,16 +521,27 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .rooms h3 { margin: 0; font-size: 17px; font-weight: 900; }
 .rooms .rn { margin-left: auto; font-size: 12px; font-weight: 800; color: #6FE0A0; }
 .rlist { display: flex; flex-direction: column; gap: 8px; }
-.rrow { display: grid; grid-template-columns: 1.6fr 1fr 0.7fr 0.8fr 104px; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: #1A2236; }
+.rrow { display: grid; grid-template-columns: 1.6fr 1fr 0.7fr 0.8fr 72px 104px; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 12px; background: #1A2236; }
 .rrow .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .rrow .nm b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rrow .nm span { font-size: 12px; color: var(--muted); }
 .rrow .st { width: fit-content; padding: 3px 10px; border-radius: 999px; background: #123A26; color: #6FE0A0; font-size: 12px; font-weight: 800; }
 .rrow.busy { background: #161C2C; color: var(--muted); } .rrow.busy .st { background: #2A2F3C; color: #B0B8C8; }
 .rrow button { height: 44px; border: 0; border-radius: 10px; background: #4C8DF0; color: #fff; font: 800 15px var(--font-body); cursor: pointer; }
 .rrow button:disabled { background: transparent; border: 1px solid var(--line); color: #6F7D96; cursor: default; }
 .rempty { padding: 14px; border-radius: 12px; background: #121828; font-size: 13px; color: var(--muted); }
+.rrow button.watch { background: transparent; border: 1px solid #5B7AA6; color: #CFE0F7; padding: 0 10px; }
+.watchtog { display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: var(--muted); cursor: pointer; }
+.watchtog input { width: 18px; height: 18px; flex: none; margin-top: 1px; accent-color: var(--gold); }
+.watchtog b { color: var(--ink, #E8EEF8); }
+.watchrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 12px 0 4px; padding: 10px 14px; border-radius: 12px; background: #141B2C; border: 1px dashed #34415C; }
+.watchrow > b { font-size: 14px; white-space: nowrap; } .watchrow > b span { font-size: 12px; color: var(--muted); font-weight: 700; }
+.watchrow .wlist { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+.watchrow .wchip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; background: #22304A; font-size: 13px; font-weight: 700; }
+.watchrow .wchip.me { background: #3A3214; color: #FFE08A; } .watchrow .wchip.off { opacity: .5; }
+.watchrow .wx { border: 0; background: transparent; color: #FF9A86; font: 900 14px var(--font-body); cursor: pointer; padding: 0 2px; }
+.watchrow .wempty { font-size: 12.5px; color: var(--muted); }
 .pubtog { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; font-weight: 700; cursor: pointer; }
 .pubtog input { width: 18px; height: 18px; accent-color: var(--gold); }
-@media (max-width: 760px) { .ways { grid-template-columns: minmax(0, 1fr); } .rrow { grid-template-columns: 1fr auto; } .rrow .mp, .rrow .pn { display: none; } }
+@media (max-width: 760px) { .ways { grid-template-columns: minmax(0, 1fr); } .rrow { grid-template-columns: 1fr auto auto; } .rrow .mp, .rrow .pn { display: none; } }
 .homelink { cursor: pointer; width: fit-content; border-radius: 10px; transition: opacity .15s, transform .15s; }
 .homelink:hover { opacity: 0.82; }
 .homelink:active { transform: scale(0.98); }
@@ -585,6 +605,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
 
   <div id="banner" role="status"></div>
+  <div id="myTurn" role="status" aria-live="assertive" hidden><b></b><small></small></div>
   <div id="mguide" hidden></div>
   <div id="introPill" hidden></div>
   <div id="tipToast" role="status" hidden></div>
@@ -671,6 +692,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
               <button class="enter go" id="joinBtn" type="button" hidden>참여하기 →</button>
             </div>
             <div class="note" id="codeNote">다섯 글자를 다 넣으면 입장 버튼이 켜져요 · 초대 링크로 오면 자동 입력</div>
+            <label class="watchtog"><input type="checkbox" id="watchChk"><span><b>관전자로 입장</b> · 게임에 참여하지 않고 보기 · 채팅 (중계·진행용, 게임 중에도 입장)</span></label>
           </section>
           <section class="way solo" aria-labelledby="wSolo">
             <div class="sol">
@@ -774,12 +796,13 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div class="teamcol red"><h3>레드 팀 <span id="redN"></span></h3><div class="slots" id="redList"></div></div>
         <div class="teamcol blue"><h3>블루 팀 <span id="blueN"></span></h3><div class="slots" id="blueList"></div></div>
       </div>
+      <div class="watchrow" aria-label="관전자"><b>관전자 <span id="watchN"></span></b><div class="wlist" id="watchList"></div><button class="mini" id="roleBtn" type="button">관전으로 이동</button></div>
       <div class="chatbox" id="lobbyChat">
         <div class="msgs" id="lobbyMsgs" aria-live="polite"></div>
         <div class="emotes" data-emotes></div>
         <form class="chatin" id="lobbyChatForm"><input id="lobbyChatIn" maxlength="80" placeholder="대기방 채팅" autocomplete="off" enterkeyhint="send" aria-label="채팅 입력"><button class="mini" type="submit">보내기</button></form>
       </div>
-      <div class="sec">
+      <div class="sec" id="myTankSec">
         <h2>내 탱크</h2>
         <div class="picks" id="myPicks"></div>
         <div class="tankcard" id="tankInfo" aria-live="polite"></div>
@@ -941,7 +964,9 @@ const CONFIG = {
     crateMax: 8,            // most crates lying around at once (no new drop past this)
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
+    windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
     maxPlayers: 8,
+    maxWatchers: 20,       // 관전자 (게임에 참여하지 않고 보기·채팅)
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
@@ -1064,7 +1089,7 @@ const CONFIG = {
     double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
     heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
     tele: { name: '텔레포트', label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
-    shield: { name: '실드', label: '실드', effect: 'shield', mul: 0.5, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '다음 내 턴까지 받는 피해 절반' },
+    shield: { name: '실드', label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
     amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
     fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
     calm: { name: '무풍탄', label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },
@@ -1569,7 +1594,7 @@ function createMatch(opts) {
       idx: i, id: p.id, nick: p.nick, team: p.team, tankId: p.tankId,
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
-      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
+      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: 0, cd: 0, items: [],
       fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
       // match stats for the results screen (computed by the simulation, so every device agrees)
       st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
@@ -1643,6 +1668,12 @@ function aimVector(t, aimDeg, extra10) {
 // by = the tank that caused it (null for terrain / sudden death / meteors)
 function hurt(m, t, dmg, kind, by) {
   if (!t.alive || dmg <= 0) return;
+  // shield: the first damage of any size is blocked completely and breaks the shield (sudden death goes through)
+  if (t.shield && kind !== 'sudden') {
+    t.shield = 0;
+    m.events.push({ type: 'text', x: t.x, y: t.y - 96, text: '실드 파괴!', color: CONFIG.items.shield.color, size: 22 });
+    return;
+  }
   const real = Math.min(t.hp, dmg);
   t.hp = Math.max(0, t.hp - dmg);
   t.st.taken += real;
@@ -1674,9 +1705,9 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
     let v = dmg * (1 - (1 - P.edgeDmg) * Math.min(1, d / reach));
     if (crit && d < crit.within) { v *= crit.mul; m.events.push({ type: 'text', x: t.x, y: t.y - 90, text: '정타!', color: '#FFD24A' }); }
     v *= CONFIG.tanks[t.tankId].dmgTaken;
-    if (t.shield) v *= CONFIG.items.shield.mul;
+    const blocked = !!t.shield && Math.round(v) > 0; // the shield takes this hit (and the poison that came with it)
     hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
-    if (poison && t.alive) {
+    if (poison && t.alive && !blocked) {
       let pd = poison.dmg;
       if (amp && owner && CONFIG.tanks[owner.tankId].traits.ampPoison) pd = Math.round(pd * CONFIG.items.amplify.mul);
       t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1, by: owner ? owner.idx : -1 };
@@ -1804,7 +1835,9 @@ function cmdItem(m, slot, tx, ty) {
     const cut = t.poison ? t.poison.healCut : 1;
     const v = Math.min(Math.round(it.amount * cut), t.maxhp - t.hp);
     t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v });
-  } else if (it.effect === 'shield') { t.shield = true; }
+  } else if (it.effect === 'shield') { // lasts until the enemies have had (rounds x living enemies) turns, or until the first hit
+    t.shield = Math.max(1, it.rounds * m.tanks.filter(o => o.alive && o.team !== t.team).length);
+  }
   else if (it.effect === 'doubleShot') { m.turn.double = true; }
   else if (it.effect === 'amplify') { m.turn.amp = true; }
   else if (it.effect === 'fuel') { t.fuel += CONFIG.tanks[t.tankId].movePx; }
@@ -2068,21 +2101,31 @@ function beginTurn(m) {
   const again = m.cur === t.idx; // the same tank twice in a row (its turns were cheaper than everyone else's)
   for (const o of alive) o.delay -= base;
   m.turnNo++;
+  // the turn that just ended counts down the shields of that tank's enemies
+  const prevT = m.cur >= 0 ? m.tanks[m.cur] : null;
+  if (prevT) for (const o of m.tanks) if (o.alive && o.shield && o.team !== prevT.team) {
+    o.shield--;
+    if (!o.shield) m.events.push({ type: 'text', x: o.x, y: o.y - 96, text: '실드 소멸', color: '#B0B8C8' });
+  }
   m.cur = t.idx;
   const d = CONFIG.tanks[t.tankId];
-  t.fuel = d.movePx; t.shield = false;
+  t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
   const T = CONFIG.turn, sudden = !!m.suddenOn && m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
-  m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
+  // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)
+  const WD = T.windDrift, wmul = sudden ? T.suddenWindMul : 1;
+  if (m.turnNo === 1 || rngNext(m) < WD.gust) m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * wmul), -W, W);
+  else m.wind = clampN(m.wind + Math.round((rngNext(m) * 2 - 1) * WD.step * wmul), -W, W);
   for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
   m.crates = m.crates.filter(c => !c.dead);
   { const [k, per] = CONFIG.turn.crateRate; if (Math.floor(m.turnNo * k / per) !== Math.floor((m.turnNo - 1) * k / per)) dropCrate(m); }
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
-  if (t.poison) {
-    hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
+  if (t.poison) { // poison never finishes a tank: it stops at 1 hp, the last blow has to be a real hit
+    const pd = Math.min(t.poison.dmg, t.hp - 1);
+    if (pd > 0) hurt(m, t, pd, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
   }
@@ -2186,7 +2229,7 @@ function stateHash(m) {
   h >>>= 0;
   for (const t of m.tanks) {
     h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
-    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-');
+    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-'); h = fnvU32(h, t.shield | 0);
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }
@@ -4225,7 +4268,9 @@ function createRenderer(cv, mini) {
         case 'bounce': burst(e.x, e.y, '#8CC8FF', 10); debris(e.x, e.y, 6); text(e.x, e.y - 30, '통!', '#8CC8FF'); R.onSfx('hit'); break;
         case 'split': burst(e.x, e.y, '#8CC63F', 16); burst(e.x, e.y, '#2E86D6', 10); R.onSfx('fire', { shape: 'ball' }); break;
         case 'pillarHit': burst(e.x, e.y, '#FFB040', 14); text(e.x, e.y - 30, '불꽃 강화!', '#FFB040'); break;
-        case 'turn': R.follow = t; R.free = false; R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
+        case 'turn': R.follow = t; R.free = false;
+          if (R.isLocalTurn && R.isLocalTurn(t) && R.onMyTurn) { R.onMyTurn(t, e.again); R.onSfx('turn', { team: t.team }); break; }
+          R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
         case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
@@ -4358,6 +4403,7 @@ function createRenderer(cv, mini) {
       ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fillRect(b.x - 4, top - 50, 8, sy2 - top + 50);
     }
     for (const mi of m.mines) {
+      if (R.mineSeen && !R.mineSeen(mi)) continue; // the other team's mines stay hidden on this screen
       ctx.fillStyle = '#2B2E36'; ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.ellipse(mi.x, mi.y - 4, 9, 5, 0, 0, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = (performance.now() / 300 | 0) % 2 ? '#FF4A3A' : '#7A1A12'; ctx.beginPath(); ctx.arc(mi.x, mi.y - 9, 2.4, 0, 7); ctx.fill();
@@ -5099,6 +5145,7 @@ function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_A
 function genId() { return genCode(10).toLowerCase(); }
 function pickable(t) { return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden); }
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
+function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 
 // o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
 function createRoomLink(o) {
@@ -5110,6 +5157,8 @@ function createRoomLink(o) {
   const cb = (name, ...a) => { if (o[name]) { try { o[name](...a); } catch (e) { console.error(e); } } };
   r.isHost = () => !!(r.room && r.room.host === r.myId);
   r.me = () => r.room && r.room.players.find(p => p.id === r.myId);
+  r.meW = () => r.room && watchersOf(r.room).find(p => p.id === r.myId); // I am a spectator in this room
+  r.watch = !!o.watch; // join as a spectator
   r.online = id => !!(r.presence[id] && r.presence[id].on);
 
   // QoS 1 (confirmed by the broker) for everything except the high-rate cosmetic feed
@@ -5192,10 +5241,11 @@ function createRoomLink(o) {
     watchHost();
   }
   function maybeJoin() {
-    if (!r.room || r.kicked || r.room.state !== 'lobby' || r.me()) return;
+    if (!r.room || r.kicked || r.me() || r.meW()) return;
+    if (r.room.state !== 'lobby' && !r.watch) return; // spectators may come in while a game is running
     if (Date.now() - r.joinSent < 2500) return;
     r.joinSent = Date.now();
-    pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank });
+    pub('req', { type: 'join', id: r.myId, nick: r.nick, tank: o.tank, watch: r.watch });
     setTimeout(maybeJoin, 2600);
   }
 
@@ -5206,6 +5256,15 @@ function createRoomLink(o) {
     watchHost();
     if (!r.isHost()) return;
     // host: a lobby player who stays offline for 12 s leaves the room (a page reload comes back well inside that)
+    // host: a spectator who stays offline for 12 s leaves the spectator list (in any state)
+    if (watchersOf(r.room).some(p => p.id === id) && id !== r.myId && !r.online(id)) {
+      clearTimeout(r.dropTimers['w' + id]);
+      r.dropTimers['w' + id] = setTimeout(() => {
+        if (r.isHost() && !r.online(id) && watchersOf(r.room).some(p => p.id === id)) {
+          r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom();
+        }
+      }, 12000);
+    }
     const inRoom = r.room.players.some(p => p.id === id);
     if (inRoom && id !== r.myId && !r.online(id) && r.room.state === 'lobby') {
       clearTimeout(r.dropTimers[id]);
@@ -5225,13 +5284,14 @@ function createRoomLink(o) {
     r.hostWatch = setTimeout(() => {
       r.hostWatch = 0;
       if (!r.room || r.online(r.room.host) || r.closed) return;
-      const next = r.room.players.find(p => p.id !== r.room.host && (r.online(p.id) || p.id === r.myId));
+      const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.room.host && (r.online(p.id) || p.id === r.myId));
       if (next && next.id === r.myId) {
         r.room.host = r.myId;
         if (r.room.state === 'lobby') r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+        r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
         publishRoom();
         cb('onStatus', 'host');
-      } else if (!next && !r.me()) {
+      } else if (!next && !r.me() && !r.meW()) {
         // an old link: everybody is gone. Reopen the room with just me.
         r.room = { ver: r.room.ver, host: r.myId, map: r.room.map || 'temple', state: 'lobby', game: null, players: [{ id: r.myId, nick: r.nick, team: 'red', tank: o.tank }] };
         r.gid = null;
@@ -5244,8 +5304,18 @@ function createRoomLink(o) {
   // ---- host: lobby requests
   function onReq(q) {
     const room = r.room; if (!room) return;
-    const p = room.players.find(x => x.id === q.id);
+    const p = room.players.find(x => x.id === q.id), w = watchersOf(room).find(x => x.id === q.id);
+    if (q.type === 'join' && q.watch) {
+      if (p || r.banned[q.id]) return;
+      if (w) { if (w.nick !== q.nick) { w.nick = String(q.nick || '').slice(0, 8) || '관전자'; publishRoom(); } return; }
+      if (watchersOf(room).length >= CONFIG.turn.maxWatchers) { pub('cmd', { type: 'wfull', id: q.id }); return; }
+      room.watchers = watchersOf(room).concat([{ id: q.id, nick: String(q.nick || '').slice(0, 8) || '관전자' }]);
+      publishRoom(); return;
+    }
+    if (q.type === 'leave' && w) { room.watchers = watchersOf(room).filter(x => x.id !== q.id); publishRoom(); return; }
+    if (q.type === 'play' && w) { if (r.setRole(q.id, 'play', q.tank, true)) publishRoom(); return; }
     if (q.type === 'join') {
+      if (w) return; // already watching: switching to a player goes through 'play'
       if (p) { if (p.nick !== q.nick) { p.nick = q.nick; publishRoom(); } return; }
       if (room.state !== 'lobby' || r.banned[q.id]) return;
       if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
@@ -5257,7 +5327,25 @@ function createRoomLink(o) {
     else if (q.type === 'tank') { if (pickable(q.tank)) { p.tank = q.tank; publishRoom(); } }
     else if (q.type === 'leave') { room.players = room.players.filter(x => x.id !== q.id); publishRoom(); }
     else if (q.type === 'ready') { p.ready = !!q.ready; publishRoom(); }
+    else if (q.type === 'watch') { if (r.setRole(q.id, 'watch', null, true)) publishRoom(); }
   }
+  // lobby only: move someone between the players and the spectators (host applies)
+  r.setRole = function (id, role, tank, noPublish) {
+    const room = r.room; if (!room || room.state !== 'lobby') return false;
+    const p = room.players.find(x => x.id === id), w = watchersOf(room).find(x => x.id === id);
+    if (role === 'watch' && p) {
+      if (watchersOf(room).length >= CONFIG.turn.maxWatchers) return false;
+      room.players = room.players.filter(x => x.id !== id);
+      room.watchers = watchersOf(room).concat([{ id, nick: p.nick }]);
+    } else if (role === 'play' && w) {
+      if (room.players.length >= CONFIG.turn.maxPlayers) return false;
+      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      room.watchers = watchersOf(room).filter(x => x.id !== id);
+      room.players.push({ id, nick: w.nick, team, tank: pickable(tank) ? tank : 'rookie' });
+    } else return false;
+    if (!noPublish) publishRoom();
+    return true;
+  };
   r.setTeam = function (id, team, noPublish) {
     const p = r.room.players.find(x => x.id === id);
     if (!p || (team !== 'red' && team !== 'blue') || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
@@ -5265,12 +5353,13 @@ function createRoomLink(o) {
   };
 
   // ---- player actions (host applies directly, others ask)
+  r.requestRole = role => { r.watch = role === 'watch'; if (r.isHost()) return r.setRole(r.myId, role, o.tank); pub('req', { type: role, id: r.myId, tank: o.tank }); };
   r.requestTeam = team => { if (r.isHost()) return r.setTeam(r.myId, team); pub('req', { type: 'team', id: r.myId, team }); };
   r.requestTank = tank => { o.tank = tank; if (r.isHost()) { const p = r.me(); if (p) { p.tank = tank; publishRoom(); } return; } pub('req', { type: 'tank', id: r.myId, tank }); };
   r.setMap = map => { if (r.isHost() && CONFIG.maps[map]) { r.room.map = map; publishRoom(); } };
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
-  r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); publishRoom(); };
+  r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
   r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamCount(r.room, 'red') > 0 && teamCount(r.room, 'blue') > 0;
   r.start = function () {
     if (!r.canStart()) return false;
@@ -5290,6 +5379,7 @@ function createRoomLink(o) {
     if (!r.isHost() || r.room.state !== 'game') return;
     r.room.state = 'lobby';
     r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
+    r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
     for (const p of r.room.players) p.ready = false;
     publishRoom();
   };
@@ -5312,10 +5402,17 @@ function createRoomLink(o) {
   r.setReady = v => { if (r.isHost()) { const p = r.me(); if (p) { p.ready = !!v; publishRoom(); } return; } pub('req', { type: 'ready', id: r.myId, ready: !!v }); };
   r.leave = function () {
     if (r.mq && r.mq.connected) {
-      if (r.room && r.room.state === 'lobby' && r.me()) {
+      if (r.room && r.meW()) { // a spectator leaving (any state)
+        if (r.isHost()) {
+          const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.myId && r.online(p.id));
+          r.room.watchers = watchersOf(r.room).filter(p => p.id !== r.myId);
+          if (next) { r.room.host = next.id; publishRoom(); }
+          else pub('room', null, true);
+        } else pub('req', { type: 'leave', id: r.myId });
+      } else if (r.room && r.room.state === 'lobby' && r.me()) {
         if (r.isHost()) {
           // hand the room to the next player right away
-          const next = r.room.players.find(p => p.id !== r.myId && r.online(p.id));
+          const next = r.room.players.concat(watchersOf(r.room)).find(p => p.id !== r.myId && r.online(p.id));
           r.room.players = r.room.players.filter(p => p.id !== r.myId);
           if (next) { r.room.host = next.id; publishRoom(); }
           else pub('room', null, true); // last one out: remove the room from the broker
@@ -5481,6 +5578,7 @@ function showProbe() {
 }
 async function createRoom() {
   const nick = readNick(); if (!nick) return;
+  ON.wantWatch = false;
   setHomeBusy(true); homeMsg('중계 서버에 연결하는 중…');
   const code = genCode(5), all = brokerOverride() ? [0] : BROKERS.map((_, i) => i);
   const order = PROBE.idx >= 0 ? [PROBE.idx, ...all.filter(i => i !== PROBE.idx)] : all;
@@ -5492,9 +5590,11 @@ async function createRoom() {
   setHomeBusy(false);
   homeMsg('중계 서버에 연결하지 못했습니다. 인터넷 연결을 확인하고 다시 시도하세요.', true);
 }
-async function joinRoom(code, idx) {
+function wantWatch() { const c = $('watchChk'); return !!(c && c.checked); }
+async function joinRoom(code, idx, watch) {
   const nick = readNick(); if (!nick) return;
-  setHomeBusy(true); homeMsg(`방 ${code}에 들어가는 중…`);
+  ON.wantWatch = watch === undefined ? wantWatch() : !!watch;
+  setHomeBusy(true); homeMsg(ON.wantWatch ? `방 ${code}에 관전자로 들어가는 중…` : `방 ${code}에 들어가는 중…`);
   const ok = await openLink(code, idx, false);
   setHomeBusy(false);
   if (!ok) homeMsg('중계 서버에 연결하지 못했습니다. 잠시 뒤 다시 시도하세요.', true);
@@ -5506,7 +5606,7 @@ function openLink(code, idx, create) {
     let done = false;
     ON.code = code; ON.brokerIdx = idx; ON.myId = ON.myId || onlineId();
     const link = createRoomLink({
-      code, url: brokerUrl(idx), myId: ON.myId, nick: ON.nick, tank: savedTank(), create,
+      code, url: brokerUrl(idx), myId: ON.myId, nick: ON.nick, tank: savedTank(), create, watch: !create && !!ON.wantWatch,
       onStatus: s => {
         if (ON.link !== link) return;
         if (s === 'online' && !done) {
@@ -5524,7 +5624,7 @@ function openLink(code, idx, create) {
       onInput: inp => onNetInput(inp),
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
-      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명).', true); } },
+      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명). 「관전자로 입장」으로는 들어갈 수 있어요.', true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
       onChat: c => onChat(c),
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
     });
@@ -5536,7 +5636,7 @@ function goHomeAnywhere() {
   if (screen === 'home') { const h = $('home'); if (h) h.scrollTo({ top: 0, behavior: 'smooth' }); return; }
   const playing = screen === 'game' && match && match.phase !== 'over';
   if (ON.link || ON.active) {
-    if (confirm(playing ? '게임에서 나가 처음 화면으로 갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.' : '방에서 나가 처음 화면으로 갈까요?')) leaveOnline();
+    if (confirm(playing && !ON.spectator ? '게임에서 나가 처음 화면으로 갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.' : playing ? '관전을 그만두고 처음 화면으로 갈까요?' : '방에서 나가 처음 화면으로 갈까요?')) leaveOnline();
     return;
   }
   if (playing && !confirm(SOLOPLAY.active ? '도전을 그만두고 처음 화면으로 갈까요? 이번 기록은 남지 않아요.' : TUT.on ? '튜토리얼을 끝내고 처음 화면으로 갈까요?' : '연습을 끝내고 처음 화면으로 갈까요?')) return;
@@ -5609,6 +5709,22 @@ function renderLobby() {
     for (let i = ps.length; i < CONFIG.turn.teamMax; i++) { const e = document.createElement('div'); e.className = 'pc empty'; e.textContent = '빈 자리'; list.append(e); }
     $(team + 'N').textContent = `${ps.length} / ${CONFIG.turn.teamMax}`;
   }
+  // spectators
+  const ws = watchersOf(room), meW = L.meW(), wl = $('watchList');
+  $('watchN').textContent = `${ws.length} / ${CONFIG.turn.maxWatchers}`;
+  wl.innerHTML = '';
+  if (!ws.length) { const e = document.createElement('span'); e.className = 'wempty'; e.textContent = '아직 없어요 · 중계·진행자는 「관전으로 이동」'; wl.append(e); }
+  for (const w of ws) {
+    const c = document.createElement('span'); c.className = 'wchip' + (w.id === ON.myId ? ' me' : '') + (L.online(w.id) || w.id === ON.myId ? '' : ' off');
+    c.textContent = w.nick + (room.host === w.id ? ' · 방장' : '') + (w.id === ON.myId ? ' · 나' : '');
+    if (isHost && w.id !== ON.myId) { const k = document.createElement('button'); k.type = 'button'; k.className = 'wx'; k.textContent = '×'; k.title = '내보내기'; k.setAttribute('aria-label', `${w.nick} 내보내기`); k.onclick = () => { if (confirm(`${w.nick}을(를) 방에서 내보낼까요?`)) L.kick(w.id); }; c.append(k); }
+    wl.append(c);
+  }
+  const rl = $('roleBtn');
+  rl.hidden = !me && !meW;
+  rl.textContent = meW ? '참가자로 이동' : '관전으로 이동';
+  rl.disabled = meW ? room.players.length >= CONFIG.turn.maxPlayers : ws.length >= CONFIG.turn.maxWatchers;
+  $('myTankSec').hidden = !!meW;
   // my tank
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
@@ -5638,7 +5754,8 @@ function renderLobby() {
   const others = room.players.filter(p => p.id !== room.host), readyN = others.filter(p => p.ready).length;
   $('startNote').textContent = isHost
     ? (L.canStart() ? `${red} 대 ${blue} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
-    : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : '방에 들어가는 중…');
+    : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : meW ? '관전 중 — 방장이 시작하면 경기 화면을 함께 봅니다 (채팅 가능)' : '방에 들어가는 중…');
+  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${red} 대 ${blue} · 준비 ${readyN}/${others.length}`;
   updateNetStatus();
 }
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
@@ -5653,7 +5770,8 @@ function startOnlineMatch(game, late) {
   ON.syncing = !!late; ON.needAt = 0; ON.liveAt = 0;
   beginMatch({ seed: game.seed, mapId: game.mapId, players: game.players }, onlineCtrlOpts());
   showScreen('game');
-  banner(ON.spectator ? '관전 중 — 다음 판부터 참여합니다' : CONFIG.maps[game.mapId].name);
+  const watching = ON.link && ON.link.meW();
+  banner(!ON.spectator ? CONFIG.maps[game.mapId].name : watching ? '관전 모드 — 차례마다 그 탱크로 화면이 이동 · 끌어서 자유 시점' : '관전 중 — 다음 판부터 참여합니다');
   if (!late) announceHappening();
   if (ON.syncing) {
     banner('진행 중인 게임에 맞추는 중…');
@@ -5898,8 +6016,10 @@ function renderRooms() {
     row.innerHTML = `<div class="nm"><b>${esc(e.name || '방')}</b><span>코드 ${esc(e.code)}</span></div><span class="mp">${esc(mp)}</span><span class="pn">${n} / ${mx}명</span><span class="st">${lobby ? (full ? '가득 참' : '대기 중') : '게임 중'}</span>`;
     const b = document.createElement('button'); b.type = 'button';
     b.textContent = lobby ? (full ? '가득 참' : '입장') : '게임 중'; b.disabled = !lobby || full;
-    b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b); };
-    row.append(b); box.append(row);
+    b.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, false); };
+    const w = document.createElement('button'); w.type = 'button'; w.className = 'watch'; w.textContent = '관전';
+    w.title = '게임에 참여하지 않고 보기 · 채팅'; w.onclick = () => { AU.unlock(); joinRoom(e.code, e.b, true); };
+    row.append(w, b); box.append(row);
   }
 }
 function dirTopic() { return DIR_PREFIX + ON.code; }
@@ -5922,6 +6042,7 @@ function dirClearIfLast() { // leaving as the last one in the room: take the car
 function bindOnlineUi() {
   $('createBtn').onclick = () => { AU.unlock(); createRoom(); };
   $('joinBtn').onclick = () => { AU.unlock(); const inv = parseInvite(); if (inv) joinRoom(inv.code, inv.b); };
+  $('roleBtn').onclick = () => { AU.play('ui'); const L = ON.link; if (!L || !L.room) return; L.requestRole(L.meW() ? 'play' : 'watch'); };
   bindCodeCells();
   $('codeBtn').onclick = () => {
     AU.unlock();
@@ -5955,7 +6076,7 @@ function bindOnlineUi() {
   document.addEventListener('click', e => { const h = e.target.closest && e.target.closest('.homelink'); if (h) { e.preventDefault(); goHomeAnywhere(); } });
   document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('homelink') && e.target.tagName !== 'BUTTON') { e.preventDefault(); goHomeAnywhere(); } });
   $('exitBtn').onclick = () => {
-    if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
+    if (ON.active) { if (confirm(ON.spectator ? '관전을 그만두고 나갈까요?' : '게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
     else if (SOLOPLAY.active) { if (confirm('도전을 그만두고 나갈까요? 이번 기록은 남지 않아요.')) showScreen('solo'); }
     else if (confirm('연습을 끝내고 처음 화면으로 갈까요?')) showScreen('home');
   };
@@ -6141,6 +6262,18 @@ function renderTankCard(el, k) { if (el) { el.innerHTML = tankCardHTML(k); el.da
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
+// my turn: a big notice in the middle of the screen for 2 s (the camera already jumps to my tank)
+let myTurnTimer = 0;
+function myTurnFlash(t, again) {
+  const el = $('myTurn'); if (!el) return;
+  const mine = ON.active || SOLOPLAY.active || !match || match.tanks.filter(x => !PRACTICE.bots[x.id]).length <= 1;
+  el.querySelector('b').textContent = again ? (mine ? '또 내 차례!' : `${t.nick} 연속 턴!`) : mine ? '내 차례!' : `${t.nick} 차례!`;
+  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${t.team === 'red' ? '레드 팀' : '블루 팀'}`;
+  el.dataset.team = t.team;
+  el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(myTurnTimer); myTurnTimer = setTimeout(() => { el.classList.remove('on'); el.hidden = true; }, 2000);
+}
+R.onMyTurn = myTurnFlash;
 // results: MVP + titles from the simulation's stats (identical on every device)
 function matchAwards(m) {
   const T = m.tanks, out = {}, add = (t, label, cls) => (out[t.idx] = out[t.idx] || []).push({ label, cls });
@@ -6537,6 +6670,16 @@ function installMatch(m, opts) {
   for (const k in hudCache) delete hudCache[k];
   R.setMatch(match); R.resize(); buildWindBar();
   R.isMine = t => ON.active && t.id === ON.myId;
+  // whose turn counts as "mine" on this device: online = my tank, solo = me, practice/tutorial = any person (not a bot)
+  R.isLocalTurn = t => ON.active ? (!ON.spectator && t.id === ON.myId) : SOLOPLAY.active ? t.idx === 0 : !PRACTICE.bots[t.id];
+  // mines: shown only to the team that laid them (spectators and same-device multi-team practice see all)
+  R.mineSeen = mi => {
+    const o = mi.owner; if (!o || !match) return true;
+    if (ON.active) { if (ON.spectator) return true; const me = match.tanks.find(x => x.id === ON.myId); return !me || me.team === o.team; }
+    if (SOLOPLAY.active) return o.team === match.tanks[0].team;
+    const teams = new Set(match.tanks.filter(x => !PRACTICE.bots[x.id]).map(x => x.team));
+    return teams.size !== 1 || teams.has(o.team);
+  };
   window.__pg.match = match; window.__pg.ctrl = ctrl;
 }
 function beginMatch(cfg, opts) {

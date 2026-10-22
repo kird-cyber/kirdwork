@@ -119,6 +119,18 @@ function renderTankCard(el, k) { if (el) { el.innerHTML = tankCardHTML(k); el.da
 let bannerTimer = 0;
 function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
 R.onBanner = banner;
+// my turn: a big notice in the middle of the screen for 2 s (the camera already jumps to my tank)
+let myTurnTimer = 0;
+function myTurnFlash(t, again) {
+  const el = $('myTurn'); if (!el) return;
+  const mine = ON.active || SOLOPLAY.active || !match || match.tanks.filter(x => !PRACTICE.bots[x.id]).length <= 1;
+  el.querySelector('b').textContent = again ? (mine ? '또 내 차례!' : `${t.nick} 연속 턴!`) : mine ? '내 차례!' : `${t.nick} 차례!`;
+  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${t.team === 'red' ? '레드 팀' : '블루 팀'}`;
+  el.dataset.team = t.team;
+  el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  clearTimeout(myTurnTimer); myTurnTimer = setTimeout(() => { el.classList.remove('on'); el.hidden = true; }, 2000);
+}
+R.onMyTurn = myTurnFlash;
 // results: MVP + titles from the simulation's stats (identical on every device)
 function matchAwards(m) {
   const T = m.tanks, out = {}, add = (t, label, cls) => (out[t.idx] = out[t.idx] || []).push({ label, cls });
@@ -515,6 +527,16 @@ function installMatch(m, opts) {
   for (const k in hudCache) delete hudCache[k];
   R.setMatch(match); R.resize(); buildWindBar();
   R.isMine = t => ON.active && t.id === ON.myId;
+  // whose turn counts as "mine" on this device: online = my tank, solo = me, practice/tutorial = any person (not a bot)
+  R.isLocalTurn = t => ON.active ? (!ON.spectator && t.id === ON.myId) : SOLOPLAY.active ? t.idx === 0 : !PRACTICE.bots[t.id];
+  // mines: shown only to the team that laid them (spectators and same-device multi-team practice see all)
+  R.mineSeen = mi => {
+    const o = mi.owner; if (!o || !match) return true;
+    if (ON.active) { if (ON.spectator) return true; const me = match.tanks.find(x => x.id === ON.myId); return !me || me.team === o.team; }
+    if (SOLOPLAY.active) return o.team === match.tanks[0].team;
+    const teams = new Set(match.tanks.filter(x => !PRACTICE.bots[x.id]).map(x => x.team));
+    return teams.size !== 1 || teams.has(o.team);
+  };
   window.__pg.match = match; window.__pg.ctrl = ctrl;
 }
 function beginMatch(cfg, opts) {

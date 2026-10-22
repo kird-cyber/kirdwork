@@ -60,7 +60,7 @@ function createMatch(opts) {
       idx: i, id: p.id, nick: p.nick, team: p.team, tankId: p.tankId,
       x, y: maskSurface(m.mask, m.W, m.H, x, 0), vy: 0, fallAcc: 0, falling: false, fallFrom: 0,
       hp: d.hp, maxhp: d.hp, facing: x < m.W / 2 ? 1 : -1, aim: Math.round((d.angleMin + d.angleMax) / 2),
-      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: false, cd: 0, items: [],
+      delay: Math.floor(rngNext(m) * 120), alive: true, poison: null, shield: 0, cd: 0, items: [],
       fuel: d.movePx, tc: 1, ts: 0, lastPower: -1, lastAim: -1, deathCause: '', lastBy: -1,
       // match stats for the results screen (computed by the simulation, so every device agrees)
       st: { dealt: 0, taken: 0, friendly: 0, kills: 0, falls: 0, shots: 0, hitTurns: 0, lastHit: 0 },
@@ -134,6 +134,12 @@ function aimVector(t, aimDeg, extra10) {
 // by = the tank that caused it (null for terrain / sudden death / meteors)
 function hurt(m, t, dmg, kind, by) {
   if (!t.alive || dmg <= 0) return;
+  // shield: the first damage of any size is blocked completely and breaks the shield (sudden death goes through)
+  if (t.shield && kind !== 'sudden') {
+    t.shield = 0;
+    m.events.push({ type: 'text', x: t.x, y: t.y - 96, text: '실드 파괴!', color: CONFIG.items.shield.color, size: 22 });
+    return;
+  }
   const real = Math.min(t.hp, dmg);
   t.hp = Math.max(0, t.hp - dmg);
   t.st.taken += real;
@@ -165,9 +171,9 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
     let v = dmg * (1 - (1 - P.edgeDmg) * Math.min(1, d / reach));
     if (crit && d < crit.within) { v *= crit.mul; m.events.push({ type: 'text', x: t.x, y: t.y - 90, text: '정타!', color: '#FFD24A' }); }
     v *= CONFIG.tanks[t.tankId].dmgTaken;
-    if (t.shield) v *= CONFIG.items.shield.mul;
+    const blocked = !!t.shield && Math.round(v) > 0; // the shield takes this hit (and the poison that came with it)
     hurt(m, t, Math.round(v), owner && owner.team === t.team ? 'friendly' : 'hit', owner);
-    if (poison && t.alive) {
+    if (poison && t.alive && !blocked) {
       let pd = poison.dmg;
       if (amp && owner && CONFIG.tanks[owner.tankId].traits.ampPoison) pd = Math.round(pd * CONFIG.items.amplify.mul);
       t.poison = { dmg: pd, turns: poison.turns, healCut: poison.healCut || 1, by: owner ? owner.idx : -1 };
@@ -295,7 +301,9 @@ function cmdItem(m, slot, tx, ty) {
     const cut = t.poison ? t.poison.healCut : 1;
     const v = Math.min(Math.round(it.amount * cut), t.maxhp - t.hp);
     t.hp += v; m.events.push({ type: 'heal', idx: t.idx, x: t.x, y: t.y, amount: v });
-  } else if (it.effect === 'shield') { t.shield = true; }
+  } else if (it.effect === 'shield') { // lasts until the enemies have had (rounds x living enemies) turns, or until the first hit
+    t.shield = Math.max(1, it.rounds * m.tanks.filter(o => o.alive && o.team !== t.team).length);
+  }
   else if (it.effect === 'doubleShot') { m.turn.double = true; }
   else if (it.effect === 'amplify') { m.turn.amp = true; }
   else if (it.effect === 'fuel') { t.fuel += CONFIG.tanks[t.tankId].movePx; }
@@ -559,21 +567,31 @@ function beginTurn(m) {
   const again = m.cur === t.idx; // the same tank twice in a row (its turns were cheaper than everyone else's)
   for (const o of alive) o.delay -= base;
   m.turnNo++;
+  // the turn that just ended counts down the shields of that tank's enemies
+  const prevT = m.cur >= 0 ? m.tanks[m.cur] : null;
+  if (prevT) for (const o of m.tanks) if (o.alive && o.shield && o.team !== prevT.team) {
+    o.shield--;
+    if (!o.shield) m.events.push({ type: 'text', x: o.x, y: o.y - 96, text: '실드 소멸', color: '#B0B8C8' });
+  }
   m.cur = t.idx;
   const d = CONFIG.tanks[t.tankId];
-  t.fuel = d.movePx; t.shield = false;
+  t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
   const T = CONFIG.turn, sudden = !!m.suddenOn && m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
-  m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * (sudden ? T.suddenWindMul : 1)), -W, W);
+  // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)
+  const WD = T.windDrift, wmul = sudden ? T.suddenWindMul : 1;
+  if (m.turnNo === 1 || rngNext(m) < WD.gust) m.wind = clampN(Math.round((rngNext(m) + rngNext(m) + rngNext(m) - 1.5) * 9 * wmul), -W, W);
+  else m.wind = clampN(m.wind + Math.round((rngNext(m) * 2 - 1) * WD.step * wmul), -W, W);
   for (const c of m.crates) if (!c.dead && m.turnNo - (c.born || 0) >= crateLife(m)) { c.dead = true; m.events.push({ type: 'crategone', x: c.x, y: c.y }); }
   m.crates = m.crates.filter(c => !c.dead);
   { const [k, per] = CONFIG.turn.crateRate; if (Math.floor(m.turnNo * k / per) !== Math.floor((m.turnNo - 1) * k / per)) dropCrate(m); }
   m.hashes[m.turnNo] = stateHash(m);
   m.events.push({ type: 'turn', idx: t.idx, turnNo: m.turnNo, again });
-  if (t.poison) {
-    hurt(m, t, t.poison.dmg, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
+  if (t.poison) { // poison never finishes a tank: it stops at 1 hp, the last blow has to be a real hit
+    const pd = Math.min(t.poison.dmg, t.hp - 1);
+    if (pd > 0) hurt(m, t, pd, 'poison', t.poison.by >= 0 ? m.tanks[t.poison.by] : null);
     t.poison.turns--; if (t.poison.turns <= 0) t.poison = null;
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
   }
@@ -677,7 +695,7 @@ function stateHash(m) {
   h >>>= 0;
   for (const t of m.tanks) {
     h = fnvF64(h, t.x); h = fnvF64(h, t.y); h = fnvU32(h, t.hp); h = fnvF64(h, t.delay); h = fnvU32(h, t.alive ? 1 : 0);
-    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-');
+    h = fnvU32(h, t.cd); h = fnvF64(h, t.facing); h = fnvStr(h, t.items.join(',')); h = fnvStr(h, t.poison ? t.poison.dmg + ':' + t.poison.turns : '-'); h = fnvU32(h, t.shield | 0);
   }
   for (const o of m.mines) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); }
   for (const o of m.crates) { h = fnvF64(h, o.x); h = fnvF64(h, o.y); h = fnvStr(h, o.item); }

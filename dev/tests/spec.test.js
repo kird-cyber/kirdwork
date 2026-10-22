@@ -215,7 +215,54 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   check('아이템', '텔레포트: 맵 밖으로 나가면 실패(제자리)', 'x 1000', `x ${m5.tanks[0].x}`, m5.tanks[0].x === 1000 && ro.evs.some(e => e.type === 'out' && e.tele));
   const m4 = field([{ tank: 'trapper', x: 1000 }, { tank: 'rookie', x: 2500 }]); const v = m4.tanks[1]; v.shield = true; const h = v.hp; const c = A.tankCenter(v);
   A.explode(m4, c.x, c.y, 40, 300, m4.tanks[0], null, false);
-  check('아이템', '실드: 피해 절반', Math.round(300 * 0.9 * 0.5), h - v.hp, h - v.hp === Math.round(300 * 0.9 * 0.5));
+  check('아이템', '실드: 첫 피해 완전 차단 · 실드 깨짐', '피해 0 · 실드 없음', `피해 ${h - v.hp} · 실드 ${v.shield}`, h - v.hp === 0 && !v.shield);
+  A.explode(m4, c.x, c.y, 40, 300, m4.tanks[0], null, false);
+  check('아이템', '실드: 깨진 뒤에는 피해 그대로', Math.round(300 * 0.9), h - v.hp, h - v.hp === Math.round(300 * 0.9));
+  { // a tiny hit also breaks it
+    const mt = field([{ tank: 'trapper', x: 1000 }, { tank: 'rookie', x: 2500 }]); const vt = mt.tanks[1]; vt.shield = 2; const ht = vt.hp; const ct = A.tankCenter(vt);
+    A.explode(mt, ct.x + 60, ct.y, 40, 3, mt.tanks[0], null, false);
+    check('아이템', '실드: 피해 1이라도 들어오면 깨짐(체력 그대로)', '체력 그대로 · 실드 0', `체력 -${ht - vt.hp} · 실드 ${vt.shield}`, ht === vt.hp && vt.shield === 0);
+  }
+  { // poison that comes with a blocked hit is blocked too
+    const mp2 = field([{ tank: 'viper', x: 1000 }, { tank: 'rookie', x: 2500 }]); const vp = mp2.tanks[1]; vp.shield = 2; const cp = A.tankCenter(vp);
+    A.explode(mp2, cp.x, cp.y, 30, 200, mp2.tanks[0], { onHit: { poison: { dmg: 55, turns: 3 } } }, false);
+    check('아이템', '실드: 막은 공격의 독도 막음', '중독 없음', vp.poison ? '중독' : '중독 없음', !vp.poison);
+  }
+  { // lasts 2 rounds of enemy turns: 1v1 = 2 enemy turns, 2v2 = 4
+    const run = specs => {
+      const ms = field(specs); ms.suddenOn = false; ms.tanks[0].items = ['shield']; A.cmdItem(ms, 0);
+      const start = ms.tanks[0].shield, seen = [];
+      for (let k = 0; k < 12 && ms.tanks[0].shield; k++) { A.cmdPass(ms, 0); runFlight(ms); if (ms.tanks[ms.cur].team !== 'red') seen.push(ms.cur); }
+      let enemyTurns = 0; return { start, gone: !ms.tanks[0].shield, ms };
+    };
+    const one = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); one.suddenOn = false; one.tanks[0].items = ['shield']; A.cmdItem(one, 0);
+    const log1 = [one.tanks[0].shield]; let enemy1 = 0;
+    for (let k = 0; k < 10 && one.tanks[0].shield; k++) { const was = one.tanks[one.cur]; A.cmdPass(one, 0); runFlight(one); if (was.team !== 'red') enemy1++; log1.push(one.tanks[0].shield); }
+    check('아이템', '실드: 1대1이면 상대 2턴 뒤 사라짐', '시작 2 · 적 2턴 후 0', `시작 ${log1[0]} · 적 ${enemy1}턴 후 ${one.tanks[0].shield}`, log1[0] === 2 && enemy1 === 2 && one.tanks[0].shield === 0);
+    const two = field([{ tank: 'rookie', x: 800 }, { tank: 'trapper', x: 3000 }, { tank: 'rookie', x: 1400, team: 'red' }, { tank: 'boulder', x: 3600, team: 'blue' }]); two.suddenOn = false; two.tanks[0].items = ['shield']; A.cmdItem(two, 0);
+    const s2 = two.tanks[0].shield; let enemy2 = 0;
+    for (let k = 0; k < 20 && two.tanks[0].shield; k++) { const was = two.tanks[two.cur]; A.cmdPass(two, 0); runFlight(two); if (was.team !== 'red') enemy2++; }
+    check('아이템', '실드: 2대2면 적 공격 4턴(2바퀴) 뒤 사라짐', '시작 4 · 적 4턴 후 0', `시작 ${s2} · 적 ${enemy2}턴 후 ${two.tanks[0].shield}`, s2 === 4 && enemy2 === 4 && two.tanks[0].shield === 0);
+  }
+  { // sudden death goes through the shield
+    const md = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); md.suddenOn = true; md.turnNo = 500; md.tanks[1].shield = 4; const hb = md.tanks[1].hp;
+    A.cmdPass(md, 0); runFlight(md);
+    check('아이템', '실드: 서든데스 피해는 막지 않음(실드 유지)', '체력 감소 · 실드 남음', `체력 -${hb - md.tanks[1].hp} · 실드 ${md.tanks[1].shield}`, md.tanks[1].hp < hb && md.tanks[1].shield > 0);
+  }
+  { // poison stops at 1 hp
+    const mq = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); mq.suddenOn = false; const vq = mq.tanks[1]; vq.hp = 40; vq.poison = { dmg: 55, turns: 3, healCut: 1, by: 0 };
+    A.cmdPass(mq, 0); runFlight(mq);
+    let ticks = 0; for (let k = 0; k < 8 && vq.poison; k++) { if (mq.cur === 1) ticks++; A.cmdPass(mq, 0); runFlight(mq); }
+    check('독', '독 피해로는 격파되지 않음 — 체력 1에서 멈춤 (막타는 직접)', '체력 1 · 생존', `40→${vq.hp} · ${vq.alive ? '생존' : '격파'} · 독 ${ticks}회`, vq.hp === 1 && vq.alive && ticks >= 2);
+  }
+  { // wind drifts: small changes turn to turn, an occasional gust
+    const mw = A.createMatch({ seed: 11, mapId: 'temple', players: [{ id: 'a', nick: 'a', team: 'red', tankId: 'rookie' }, { id: 'b', nick: 'b', team: 'blue', tankId: 'rookie' }] });
+    mw.suddenOn = false; let n = 0; while (mw.phase !== 'aim' && n++ < 4000) A.step(mw);
+    const ws = [mw.wind];
+    for (let k = 0; k < 300; k++) { A.cmdPass(mw, 0); let g = 0; while (mw.phase !== 'aim' && mw.phase !== 'over' && g++ < 4000) A.step(mw); ws.push(mw.wind); }
+    let small = 0, big = 0, out = 0; for (let k = 1; k < ws.length; k++) { const d = Math.abs(ws[k] - ws[k - 1]); if (d <= CONFIG.turn.windDrift.step) small++; else big++; if (Math.abs(ws[k]) > CONFIG.turn.windMax) out++; }
+    check('바람', '바람: 대부분 턴마다 ±3 이내로 조금씩 변함', '±3 이내 85% 이상 · 범위 ±10', `±3 이내 ${Math.round(100 * small / (small + big))}% · 범위 밖 ${out}`, small / (small + big) >= 0.85 && out === 0 && big > 0);
+  }
   const shotDmg = amp => {
     for (let pw = 300; pw <= 900; pw += 5) {
       const mm = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 1700 }]);
