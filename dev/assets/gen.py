@@ -525,56 +525,74 @@ def rage():
 
 
 # ---------------------------------------------------------------- KIRD (random-only, company colours: blue + leaf green, K emblem)
-def kird():
-    s = S("kd")
-    ol = "#0E2238"
-    shadow(s, 128, 98)
-    # antenna + green leaf pennant
-    s.add(f'<path d="M144 62 L150 24" stroke="{ol}" stroke-width="3" stroke-linecap="round"/>')
-    s.add(f'<circle cx="150" cy="22" r="4.5" fill="#B6F25A" stroke="{ol}" stroke-width="2"/>')
+# ---------------------------------------------------------------- 히든 K 탱크 2종 (기관 로고 파랑 · 연두)
+OL = "#0E2238"
+BL = dict(hl="#A8DCFF", base="#2E86D6", mid="#1E66B0", deep="#123F73")
+LM = dict(hl="#E6F8B0", base="#8CC63F", mid="#6AA22E", deep="#3E6E14")
+TB = dict(hl="#9DB4CC", base="#5E7690", mid="#3E536B", deep="#24344A", wheel_hl="#E2F0FF", wheel="#7FA0C4", wheel_deep="#3A5574", hub="#22344A")
+TG = dict(hl="#B8C7A4", base="#6E7E5C", mid="#4A5A3C", deep="#2C3824", wheel_hl="#F4FFE0", wheel="#A6C48A", wheel_deep="#55703E", hub="#2C3824")
+def K(s, x, y, sc=1.0, plate=True, pl="#F4FAFF"):
+    """KIRD K mark: blue stem + lower arm, lime leaf upper arm"""
+    if plate: s.add(f'<rect x="{x-11*sc:.1f}" y="{y-11*sc:.1f}" width="{22*sc:.1f}" height="{22*sc:.1f}" rx="{6*sc:.1f}" fill="{pl}" stroke="{OL}" stroke-width="2"/>')
+    s.add(f'<path d="M{x-5*sc:.1f} {y-7*sc:.1f} Q{x-6*sc:.1f} {y:.1f} {x-5*sc:.1f} {y+7*sc:.1f} M{x-5*sc:.1f} {y+2*sc:.1f} Q{x+1*sc:.1f} {y-1*sc:.1f} {x+5*sc:.1f} {y+7*sc:.1f}" stroke="#2E86D6" stroke-width="{4*sc:.1f}" fill="none" stroke-linecap="round"/>')
+    s.add(f'<path d="M{x-2*sc:.1f} {y-1*sc:.1f} Q{x+1*sc:.1f} {y-8*sc:.1f} {x+8*sc:.1f} {y-8*sc:.1f} Q{x+5*sc:.1f} {y-3*sc:.1f} {x-2*sc:.1f} {y-1*sc:.1f} Z" fill="#8CC63F" stroke="#8CC63F" stroke-width="{1.5*sc:.1f}" stroke-linejoin="round"/>')
+
+def G(s, n, p, x1=0, y1=0, x2=0, y2=1): return s.lg(n, ramp(p["hl"], p["base"], p["mid"], p["deep"]), x1, y1, x2, y2)
+
+
+# K-블루: 중장갑 장포
+def kblue():
+    s = S("kb"); shadow(s, 128, 100)
     s.add("§WS")
-    # barrel with a forked (split) muzzle
-    bar = s.lg("bar", [(0, "#A8D6FF"), (0.5, "#2E86D6"), (1, "#16508C")])
-    s.add(f'<rect x="150" y="70" width="62" height="14" rx="6" fill="{bar}" stroke="{ol}" stroke-width="3.5"/>')
-    s.add('<path d="M156 73.5 L206 73.5" stroke="#E6F4FF" stroke-width="2" stroke-linecap="round"/>')
-    s.add(f'<rect x="170" y="67" width="10" height="20" rx="3" fill="#8CC63F" stroke="{ol}" stroke-width="3"/>')
-    grn = s.lg("grn", [(0, "#D8F59A"), (1, "#5E9A22")])
-    s.add(f'<path d="M210 70 L232 60 L236 68 L214 77 Z" fill="{grn}" stroke="{ol}" stroke-width="3" stroke-linejoin="round"/>')
-    s.add(f'<path d="M210 84 L232 94 L236 86 L214 77 Z" fill="{bar}" stroke="{ol}" stroke-width="3" stroke-linejoin="round"/>')
+    bar = s.lg("bar", [(0, "#C8E6FF"), (0.45, "#2E86D6"), (1, "#123F73")])
+    s.add(f'<path d="M148 66 L222 68 L222 84 L148 88 Z" fill="{bar}" stroke="{OL}" stroke-width="3.5" stroke-linejoin="round"/>')
+    s.add(f'<rect x="214" y="62" width="22" height="28" rx="4" fill="#123F73" stroke="{OL}" stroke-width="3.5"/>')
+    s.add(f'<rect x="218" y="66" width="4" height="20" fill="#8CC63F"/><rect x="226" y="66" width="4" height="20" fill="#8CC63F"/>')
+    s.add(f'<rect x="168" y="64" width="12" height="26" rx="3" fill="#8CC63F" stroke="{OL}" stroke-width="3"/>')
+    s.add('<path d="M154 71 L212 72" stroke="#fff" stroke-width="2" opacity="0.7" stroke-linecap="round"/>')
     s.add("§WE")
-    treads(s, 32, 136, 192, 38, 5, dict(hl="#9DB4CC", base="#5E7690", mid="#3E536B", deep="#24344A",
-                                        wheel_hl="#E2F0FF", wheel="#7FA0C4", wheel_deep="#3A5574", hub="#22344A"), ol, neon="#8CC63F")
-    # rear K-wing, shaped like the logo: a curved blue stem and a green leaf
-    stem = s.lg("stem", [(0, "#8CC8FF"), (0.5, "#2E86D6"), (1, "#16508C")], 0, 0, 1, 0)
-    s.add(f'<path d="M44 104 Q36 72 50 46 Q56 38 64 42 Q70 46 66 56 Q58 76 64 102 Z" fill="{stem}" stroke="{ol}" stroke-width="3.5" stroke-linejoin="round"/>')
-    s.add('<path d="M52 52 Q48 70 52 92" stroke="#DDF0FF" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.8"/>')
-    lf = s.lg("lf", [(0, "#E2F8A8"), (0.5, "#8CC63F"), (1, "#4E8A1C")], 0, 0, 1, 1)
-    s.add(f'<path d="M62 78 Q70 50 96 40 Q100 52 92 62 Q82 74 66 82 Z" fill="{lf}" stroke="{ol}" stroke-width="3.5" stroke-linejoin="round"/>')
-    # hull: sleek wedge
-    hull = s.lg("hull", ramp("#9ED2FF", "#2E86D6", "#1E66B0", "#123F73"))
-    s.add(f'<path d="M34 140 L44 112 Q50 98 66 96 L180 94 Q200 94 210 106 L224 140 Z" fill="{hull}" stroke="{ol}" stroke-width="4" stroke-linejoin="round"/>')
-    s.add('<path d="M58 101 L182 99" stroke="#E6F4FF" stroke-width="2.5" stroke-linecap="round" opacity="0.9"/>')
-    s.add('<path d="M42 126 L216 126" stroke="#16508C" stroke-width="2"/>')
-    for x in range(58, 210, 22):
-        bolt(s, x, 132, 2.3, "#7FB8EE", ol)
-    # K emblem badge (blue stem + lower arm, green upper arm like the logo)
-    s.add(f'<rect x="58" y="104" width="34" height="20" rx="6" fill="#F4FAFF" stroke="{ol}" stroke-width="2.2"/>')
-    s.add('<path d="M66 108 L66 120 M66 116 Q72 112 76 120" stroke="#2E86D6" stroke-width="4.2" fill="none" stroke-linecap="round"/>')
-    s.add('<path d="M70 113 Q76 106 84 107" stroke="#8CC63F" stroke-width="4.2" fill="none" stroke-linecap="round"/>')
-    # visor eye in leaf green
-    eye(s, 182, 104, 26, 10, ol, "#B6F25A")
-    # turret dome
-    tur = s.rg("tur", [(0, "#DDF0FF"), (0.35, "#5AA6EC"), (0.8, "#1E66B0"), (1, "#123F73")], cx=0.35, cy=0.25, r=0.85)
-    s.add(f'<path d="M82 98 Q82 54 124 52 Q166 54 168 98 Z" fill="{tur}" stroke="{ol}" stroke-width="4" stroke-linejoin="round"/>')
-    s.add('<path d="M94 76 Q100 62 118 58" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>')
-    # green band across the dome
-    s.add(f'<path d="M86 86 Q124 78 164 86 L165 92 Q124 84 85 92 Z" fill="{grn}" stroke="{ol}" stroke-width="2"/>')
-    s.add(f'<ellipse cx="124" cy="56" rx="15" ry="5.5" fill="#8CC8FF" stroke="{ol}" stroke-width="3"/>')
-    s.add(f'<rect x="136" y="60" width="11" height="8" rx="2" fill="#123F73" stroke="{ol}" stroke-width="2"/><rect x="138" y="62" width="6" height="3" fill="#B6F25A"/>')
+    treads(s, 26, 134, 204, 40, 6, TB, OL, neon="#8CC63F")
+    h = G(s, "hull", BL)
+    s.add(f'<path d="M28 136 L36 106 L60 94 L196 94 L222 108 L232 136 Z" fill="{h}" stroke="{OL}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add(f'<path d="M40 112 L224 112" stroke="#123F73" stroke-width="2"/><path d="M60 100 L194 100" stroke="#fff" stroke-width="2.5" opacity=".8" stroke-linecap="round"/>')
+    for x in (52, 80, 108, 136, 164, 192): s.add(f'<rect x="{x}" y="118" width="20" height="10" rx="2" fill="#1E66B0" stroke="{OL}" stroke-width="1.5"/>')
+    s.add(f'<path d="M30 132 L230 132" stroke="#8CC63F" stroke-width="4"/>')
+    t = G(s, "tur", BL)
+    s.add(f'<path d="M70 96 L78 62 Q82 52 96 52 L150 52 Q164 52 166 64 L170 96 Z" fill="{t}" stroke="{OL}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add('<path d="M84 60 L150 60" stroke="#fff" stroke-width="3" opacity=".6" stroke-linecap="round"/>')
+    K(s, 102, 78, 1.25)
+    eye(s, 132, 70, 28, 10, OL, "#B6F25A")
+    s.add(f'<rect x="88" y="42" width="30" height="12" rx="3" fill="#123F73" stroke="{OL}" stroke-width="2.5"/><rect x="92" y="45" width="8" height="5" fill="#B6F25A"/>')
     return s
 
 
-TANKS = dict(boulder=boulder, viper=viper, hammer=hammer, rookie=rookie, trapper=trapper, swarm=swarm, prism=prism, rage=rage, kird=kird)
+# K-그린: 위성 접시 + 신호포
+def kgreen():
+    s = S("kg"); shadow(s, 128, 96)
+    # dish on a mast, behind
+    s.add(f'<path d="M84 96 L76 50" stroke="{OL}" stroke-width="6" stroke-linecap="round"/><path d="M84 96 L76 50" stroke="#9AA8BA" stroke-width="3" stroke-linecap="round"/>')
+    d = s.rg("dish", [(0, "#FFFFFF"), (0.5, "#DCE6F2"), (1, "#7FA0C4")], cx=0.4, cy=0.3, r=0.8)
+    s.add(f'<g transform="rotate(-25 76 44)"><path d="M46 30 Q76 74 106 30 Z" fill="{d}" stroke="{OL}" stroke-width="3.5" stroke-linejoin="round"/><path d="M76 44 L76 16" stroke="{OL}" stroke-width="2.5"/><circle cx="76" cy="14" r="5" fill="#8CC63F" stroke="{OL}" stroke-width="2"/></g>')
+    s.add("§WS")
+    bar = s.lg("bar", [(0, "#E6F8B0"), (0.5, "#8CC63F"), (1, "#3E6E14")])
+    s.add(f'<rect x="150" y="70" width="58" height="14" rx="7" fill="{bar}" stroke="{OL}" stroke-width="3.5"/>')
+    for k, rr in enumerate((9, 13, 17)):
+        s.add(f'<path d="M{210+k*7} {77-rr} Q{218+k*9} 77 {210+k*7} {77+rr}" stroke="#2E86D6" stroke-width="3.5" fill="none" stroke-linecap="round"/>')
+    s.add("§WE")
+    treads(s, 34, 136, 188, 38, 5, TG, OL, neon="#2E86D6")
+    h = G(s, "hull", LM)
+    s.add(f'<path d="M32 138 L40 108 Q46 98 62 98 L188 98 Q206 98 214 110 L226 138 Z" fill="{h}" stroke="{OL}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add('<path d="M58 104 L186 104" stroke="#fff" stroke-width="2.5" opacity=".8" stroke-linecap="round"/>')
+    s.add(f'<rect x="40" y="118" width="180" height="8" fill="#2E86D6" stroke="{OL}" stroke-width="1.5"/>')
+    t = G(s, "tur", LM)
+    s.add(f'<path d="M104 100 L108 70 Q110 62 120 62 L156 62 Q166 62 168 72 L170 100 Z" fill="{t}" stroke="{OL}" stroke-width="4" stroke-linejoin="round"/>')
+    s.add(f'<rect x="116" y="70" width="40" height="18" rx="4" fill="#141C2E" stroke="{OL}" stroke-width="2"/>')
+    for k in range(3): s.add(f'<rect x="{120+k*12}" y="{80-k*4}" width="7" height="{5+k*4}" fill="#B6F25A"/>')
+    K(s, 186, 116, 1.0)
+    return s
+
+
+TANKS = dict(boulder=boulder, viper=viper, hammer=hammer, rookie=rookie, trapper=trapper, swarm=swarm, prism=prism, rage=rage, kblue=kblue, kgreen=kgreen)
 
 if __name__ == "__main__":
     for k, f in TANKS.items():

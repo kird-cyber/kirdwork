@@ -474,6 +474,7 @@ function columnHit(m, p) {
     m.events.push({ type: 'tornadoHit', x: p.x, y: p.y });
   } else { p.fire = true; m.events.push({ type: 'pillarHit', x: p.x, y: p.y }); }
 }
+function growOf(pat, age) { return pat.min + (pat.max - pat.min) * Math.min(1, age / pat.secs); }
 function impact(m, p, x, y) {
   if (p.tele) return teleLand(m, p, x, y);
   // for the renderer only (stuck arrows, rock shards...): never read back by the simulation
@@ -483,6 +484,11 @@ function impact(m, p, x, y) {
   if (p.fire) dmg *= CONFIG.happenings.pillar.mul;
   if (p.amp) dmg *= CONFIG.items.amplify.mul;
   if (p.berserk) { r *= d.traits.berserk.mul; dmg *= d.traits.berserk.mul; }
+  if (pat.kind === 'grow') { // 성장탄: flight time → size (deterministic: age is summed the same way on every device)
+    const g = growOf(pat, p.age);
+    dmg *= g; r *= Math.sqrt(g);
+    m.events.push({ type: 'text', x, y: y - 70, text: `성장 ×${g.toFixed(2)}`, color: g >= 1.2 ? '#B6F25A' : '#E6F8B0' });
+  }
   if (pat.kind === 'orbital') {
     m.events.push({ type: 'beam', x, ticks: pat.ticks });
     schedule(m, pat.ticks, { kind: 'orbitalHit', x, r, dmg, idx: p.idx, wIdx: p.wIdx, amp: p.amp });
@@ -499,6 +505,17 @@ function impact(m, p, x, y) {
     return;
   }
   explode(m, x, y, r, dmg, owner, w, p.amp);
+  if (pat.kind === 'root') { // 뿌리탄: roots run along the ground the way the shell flew, bursting up at each step
+    const dir = p.vx >= 0 ? 1 : -1, pts = [];
+    pat.steps.forEach((dist, i) => {
+      const tx = x + dir * dist; if (tx < 4 || tx > m.W - 4) return;
+      const ty = surfaceAt(m, Math.round(tx), Math.max(0, Math.round(y) - 90));
+      if (ty < 0) return;
+      pts.push({ x: tx, y: ty });
+      schedule(m, pat.ticks * (i + 1), { kind: 'rollHit', x: tx, y: ty - 4, r: pat.radius, dmg: pat.dmg * (p.amp ? CONFIG.items.amplify.mul : 1), idx: p.idx, wIdx: p.wIdx, amp: p.amp });
+    });
+    if (pts.length) m.events.push({ type: 'root', x0: x, y0: y, pts, ticks: pat.ticks });
+  }
   if (pat.kind === 'roll') {
     const sl = surfaceAt(m, x - 30, y - 60), sr = surfaceAt(m, x + 30, y - 60);
     const dir = (sr >= 0 ? sr : y) > (sl >= 0 ? sl : y) ? 1 : -1;

@@ -253,23 +253,32 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
   check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));
 }
-{ // random-only company tank: bounce + K split, and the 1/9 odds
-  const mb = field([{ tank: 'kird', x: 1000 }, { tank: 'rookie', x: 3500 }]);
+{ // random-only company tanks: K-블루 (bounce + K split) · K-그린 (성장탄 + 뿌리탄), and the shared 1/9 odds
+  const mb = field([{ tank: 'kblue', x: 1000 }, { tank: 'rookie', x: 3500 }]);
   const rb = fireAndTrace(mb, 35, 520, 0);
   const bn = rb.evs.filter(e => e.type === 'bounce').length, bm = rb.evs.filter(e => e.type === 'boom').length;
   const firstBounce = rb.evs.find(e => e.type === 'bounce'), boom = rb.evs.find(e => e.type === 'boom');
-  check('케이', 'K-바운스탄: 땅에 한 번 튕긴 뒤 폭발', '튕김 1, 폭발 1, 폭발은 튕긴 곳보다 멀리', `튕김 ${bn}, 폭발 ${bm}`, bn === 1 && bm === 1 && boom.x > firstBounce.x);
-  const ms = field([{ tank: 'kird', x: 1000 }, { tank: 'rookie', x: 3500 }]);
+  check('K-블루', 'K-바운스탄: 땅에 한 번 튕긴 뒤 폭발', '튕김 1, 폭발 1, 폭발은 튕긴 곳보다 멀리', `튕김 ${bn}, 폭발 ${bm}`, bn === 1 && bm === 1 && boom.x > firstBounce.x);
+  const ms = field([{ tank: 'kblue', x: 1000 }, { tank: 'rookie', x: 3500 }]);
   const rs = fireAndTrace(ms, 45, 700, 1);
   const sp = rs.evs.filter(e => e.type === 'split').length, booms = rs.evs.filter(e => e.type === 'boom');
-  check('케이', 'K-분열탄: 정점에서 두 갈래로 갈라져 2번 폭발', '분열 1, 폭발 2 (서로 떨어진 곳)', `분열 ${sp}, 폭발 ${booms.length}${booms.length === 2 ? `, 간격 ${Math.round(Math.abs(booms[0].x - booms[1].x))}px` : ''}`, sp === 1 && booms.length === 2 && Math.abs(booms[0].x - booms[1].x) > 80);
-  check('케이', '직접 고를 수 없음 (히든)', 'hidden', CONFIG.tanks.kird.hidden ? 'hidden' : '선택 가능', !!CONFIG.tanks.kird.hidden);
-  const PICK = Object.keys(CONFIG.tanks).filter(k => !CONFIG.tanks[k].hidden);
-  const roll = rnd => rnd() < CONFIG.randomTank.chance ? CONFIG.randomTank.id : PICK[Math.floor(rnd() * PICK.length)];
+  check('K-블루', 'K-분열탄: 정점에서 두 갈래로 갈라져 2번 폭발', '분열 1, 폭발 2 (서로 떨어진 곳)', `분열 ${sp}, 폭발 ${booms.length}${booms.length === 2 ? `, 간격 ${Math.round(Math.abs(booms[0].x - booms[1].x))}px` : ''}`, sp === 1 && booms.length === 2 && Math.abs(booms[0].x - booms[1].x) > 80);
+  // 성장탄: a short lob vs a long flight
+  const grow = (ang, pw) => { const mg = field([{ tank: 'kgreen', x: 1000 }, { tank: 'rookie', x: 4500 }]); const r = fireAndTrace(mg, ang, pw, 0); const bo = r.evs.find(e => e.type === 'boom'), tx = r.evs.find(e => e.type === 'text' && /성장/.test(e.text)); return { r: bo ? bo.r : 0, text: tx ? tx.text : '-' }; };
+  const gs = grow(30, 300), gl = grow(70, 900), W0 = CONFIG.tanks.kgreen.weapons[0];
+  check('K-그린', '성장탄: 오래 날수록 커짐 (가까이 ×0.75 ~ 멀리 최대 ×1.4)', `짧게 < ${W0.radius} < 길게`, `짧게 ${gs.text} 반경 ${gs.r.toFixed(1)} · 길게 ${gl.text} 반경 ${gl.r.toFixed(1)}`, gs.r < W0.radius && gl.r > W0.radius && gl.r <= W0.radius * Math.sqrt(1.4) + 0.01);
+  // 뿌리탄: main blast + two bursts further along the flight direction
+  const mr = field([{ tank: 'kgreen', x: 1000 }, { tank: 'rookie', x: 3500 }]);
+  const rr = fireAndTrace(mr, 45, 600, 1);
+  const rbs = rr.evs.filter(e => e.type === 'boom'), rootEv = rr.evs.find(e => e.type === 'root');
+  check('K-그린', '뿌리탄: 터진 뒤 날아간 방향으로 뿌리가 뻗어 2번 더 폭발', '폭발 3, 뒤의 둘은 앞으로', `폭발 ${rbs.length}${rbs.length === 3 ? `, 위치 ${rbs.map(e => Math.round(e.x)).join('→')}` : ''}`, !!rootEv && rbs.length === 3 && rbs[1].x > rbs[0].x && rbs[2].x > rbs[1].x);
+  check('히든', '직접 고를 수 없음', 'hidden 2종', ['kblue', 'kgreen'].map(k => CONFIG.tanks[k].hidden ? 'hidden' : '선택 가능').join(', '), !!CONFIG.tanks.kblue.hidden && !!CONFIG.tanks.kgreen.hidden && !CONFIG.tanks.kird);
+  const PICK = Object.keys(CONFIG.tanks).filter(k => !CONFIG.tanks[k].hidden), RT = CONFIG.randomTank;
+  const roll = rnd => rnd() < RT.chance ? RT.ids[Math.floor(rnd() * RT.ids.length)] : PICK[Math.floor(rnd() * PICK.length)];
   let seed = 99; const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
   const N = 90000, cnt = {}; for (let i = 0; i < N; i++) { const k = roll(rnd); cnt[k] = (cnt[k] || 0) + 1; }
-  const pk = cnt.kird / N;
-  check('케이', '랜덤 9만 번 → 케이 확률 1/9', '0.111', pk.toFixed(3), Math.abs(pk - 1 / 9) < 0.005 && PICK.every(k => Math.abs(cnt[k] / N - 1 / 9) < 0.006));
+  const pb = (cnt.kblue || 0) / N, pg = (cnt.kgreen || 0) / N;
+  check('히든', '랜덤 9만 번 → 히든 합계 1/9 (K-블루·K-그린 각 1/18)', '0.111 (0.056 + 0.056)', `${(pb + pg).toFixed(3)} (${pb.toFixed(3)} + ${pg.toFixed(3)})`, Math.abs(pb + pg - 1 / 9) < 0.005 && Math.abs(pb - 1 / 18) < 0.004 && Math.abs(pg - 1 / 18) < 0.004 && PICK.every(k => Math.abs(cnt[k] / N - 1 / 9) < 0.006));
 }
 { // happenings
   const H = CONFIG.happenings;

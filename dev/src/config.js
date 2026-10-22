@@ -125,18 +125,29 @@ const CONFIG = {
         { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
-    // random-only tank in company colours. Never pickable; "?" gives it with randomTank.chance.
-    kird: {
-      name: '케이', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+    // random-only tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Never pickable; "?" gives one of them with randomTank.chance.
+    kblue: {
+      name: 'K-블루', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
-      sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 84, behind: true },
+      sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
         { id: 'kbounce', name: 'K-바운스탄', dmg: 230, radius: 34, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
         { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
+    kgreen: {
+      name: 'K-그린', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      traits: {},
+      sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
+      weapons: [
+        // 성장탄: the longer it flies, the bigger it grows (x0.75 at the muzzle → x1.4 after 3.2 s; radius grows with the square root)
+        { id: 'kgrow', name: '성장탄', dmg: 205, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 0.75, max: 1.4, secs: 3.2 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
+        // 뿌리탄: a small blast, then roots run along the ground the way it flew and burst up twice
+        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 110, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
+      ],
+    },
   },
-  randomTank: { id: 'kird', chance: 1 / 9 },
+  randomTank: { ids: ['kblue', 'kgreen'], chance: 1 / 9 }, // the chance is shared: 1/9 a hidden tank, then either one
 
   // happenings (like the original): one is drawn per match before it starts
   happenings: {

@@ -11,8 +11,8 @@ R.onEngine = on => AU.setEngine(on);
 let match = null, ctrl = null;
 const TANK_KEYS = Object.keys(CONFIG.tanks), ITEM_KEYS = Object.keys(CONFIG.items);
 const PICK_KEYS = TANK_KEYS.filter(k => !CONFIG.tanks[k].hidden), HIDDEN_KEYS = TANK_KEYS.filter(k => CONFIG.tanks[k].hidden);
-// "?" = random: one of the pickable tanks, or with randomTank.chance the hidden company tank
-function rollRandomTank(rnd) { const RT = CONFIG.randomTank; return rnd() < RT.chance ? RT.id : PICK_KEYS[Math.floor(rnd() * PICK_KEYS.length)]; }
+// "?" = random: one of the pickable tanks, or with randomTank.chance one of the hidden company tanks (even odds between them)
+function rollRandomTank(rnd) { const RT = CONFIG.randomTank; return rnd() < RT.chance ? RT.ids[Math.floor(rnd() * RT.ids.length)] : PICK_KEYS[Math.floor(rnd() * PICK_KEYS.length)]; }
 function tankLabel(k) { return k === 'random' ? '랜덤' : CONFIG.tanks[k] ? CONFIG.tanks[k].name : ''; }
 function randomThumb(w, h) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
@@ -20,7 +20,7 @@ function randomThumb(w, h) {
   x.lineWidth = 6; x.strokeStyle = '#3A2A00'; x.strokeText('?', w / 2, h * 0.54); x.fillText('?', w / 2, h * 0.54);
   return c;
 }
-// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tank in full colour (shown, not pickable: only "?" can give it)
+// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tanks side by side in full colour (shown, not pickable: only "?" can give it)
 function buildPicks(box, current, onPick, label, onInfo) {
   for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
     const hidden = HIDDEN_KEYS.includes(k);
@@ -30,7 +30,7 @@ function buildPicks(box, current, onPick, label, onInfo) {
     const sp = document.createElement('span'); sp.textContent = tankLabel(k); b.append(sp);
     if (hidden) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = '? 랜덤 전용'; b.append(bd); }
     b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
-    if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/9 확률로 나옵니다`; b.onclick = () => onInfo && onInfo(k); }
+    if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/${Math.round(HIDDEN_KEYS.length / CONFIG.randomTank.chance)} 확률로 나옵니다 (히든 ${HIDDEN_KEYS.length}종 합쳐 1/${Math.round(1 / CONFIG.randomTank.chance)})`; b.onclick = () => onInfo && onInfo(k); }
     else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
     if (onInfo) b.onmouseenter = () => onInfo(k);
     box.append(b);
@@ -57,6 +57,8 @@ const WEAPON_DESC = {
   orbital: '떨어진 자리에 잠시 뒤 하늘에서 광선이 내리꽂힙니다. 엄폐물 뒤도 맨 윗면을 때립니다.',
   kbounce: '땅에 한 번 통 튕긴 뒤 터집니다. 엄폐물 너머를 노리기 좋아요.',
   ksplit: '가장 높이 올라간 지점에서 두 갈래로 갈라집니다.',
+  kgrow: '멀리 날아갈수록 커집니다. 가까이는 작고 약하게(×0.75), 3초 넘게 날면 최대 ×1.4 위력·범위.',
+  kroot: '터진 뒤 날아온 방향으로 뿌리가 땅을 따라 뻗어 두 번 더 솟아오릅니다. 언덕 너머·숨은 상대에 좋아요.',
 };
 const ERA_LABEL = { classic: '클래식', modern: '모던', present: '현대', future: '미래' };
 function tankTraitText(d) {
@@ -73,6 +75,8 @@ function weaponDmgText(w) {
   if (p.kind === 'spread') return `${w.dmg} × ${p.angles.length}발`;
   if (p.kind === 'mine') return `${w.dmg} + 지뢰 ${p.mineDmg}`;
   if (p.kind === 'roll') return `${w.dmg} + 굴러서 ${p.dmg}`;
+  if (p.kind === 'root') return `${w.dmg} + 뿌리 ${p.dmg} × ${p.steps.length}`;
+  if (p.kind === 'grow') return `${Math.round(w.dmg * p.min)}~${Math.round(w.dmg * p.max)} (기본 ${w.dmg})`;
   return String(w.dmg);
 }
 function weaponChips(w) {
@@ -88,10 +92,11 @@ function weaponChips(w) {
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 function tankCardHTML(k) {
   if (k === 'random' || !CONFIG.tanks[k]) {
-    const h = CONFIG.tanks[CONFIG.randomTank.id];
+    const hs = CONFIG.randomTank.ids.map(id => CONFIG.tanks[id]);
     return `<div class="tc-head"><b>? 랜덤</b><span class="tc-era">운에 맡기기</span></div>
-      <p class="tc-desc">전투가 시작될 때 ${PICK_KEYS.length}종 중 하나로 정해집니다. <b>1/${Math.round(1 / CONFIG.randomTank.chance)} 확률</b>로 히든 탱크 <b>${esc(h.name)}</b>가 나와요.</p>
-      <p class="tc-desc">${esc(h.name)} 무기: 1번 ${esc(h.weapons[0].name)} · 2번 ${esc(h.weapons[1].name)} (탱크를 눌러 자세히 보기)</p>`;
+      <p class="tc-desc">전투가 시작될 때 ${PICK_KEYS.length}종 중 하나로 정해집니다. <b>1/${Math.round(1 / CONFIG.randomTank.chance)} 확률</b>로 히든 탱크 <b>${hs.map(h => esc(h.name)).join('</b> · <b>')}</b> 중 하나가 나와요.</p>
+      ${hs.map(h => `<p class="tc-desc">${esc(h.name)} 무기: 1번 ${esc(h.weapons[0].name)} · 2번 ${esc(h.weapons[1].name)}</p>`).join('')}
+      <p class="tc-desc">(탱크를 눌러 자세히 보기)</p>`;
   }
   const d = CONFIG.tanks[k], all = PICK_KEYS.concat(HIDDEN_KEYS).map(x => CONFIG.tanks[x]);
   // bars are proportional to the best value among all tanks (0 → empty, best → full), so 850 vs 1050 hp reads as 81% vs 100%

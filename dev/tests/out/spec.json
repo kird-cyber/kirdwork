@@ -9,15 +9,15 @@
  {
   "tank": "볼더",
   "item": "이동거리(px)",
-  "expected": "182",
-  "actual": "182",
+  "expected": "146",
+  "actual": "146",
   "pass": true
  },
  {
   "tank": "볼더",
   "item": "발사각 범위",
-  "expected": "15~88",
-  "actual": "15~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -44,15 +44,15 @@
  {
   "tank": "바이퍼",
   "item": "이동거리(px)",
-  "expected": "247",
-  "actual": "247",
+  "expected": "198",
+  "actual": "198",
   "pass": true
  },
  {
   "tank": "바이퍼",
   "item": "발사각 범위",
-  "expected": "30~88",
-  "actual": "30~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -79,15 +79,15 @@
  {
   "tank": "해머",
   "item": "이동거리(px)",
-  "expected": "182",
-  "actual": "182",
+  "expected": "146",
+  "actual": "146",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "발사각 범위",
-  "expected": "25~88",
-  "actual": "25~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -114,15 +114,15 @@
  {
   "tank": "루키",
   "item": "이동거리(px)",
-  "expected": "247",
-  "actual": "247",
+  "expected": "198",
+  "actual": "198",
   "pass": true
  },
  {
   "tank": "루키",
   "item": "발사각 범위",
-  "expected": "5~88",
-  "actual": "5~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -149,15 +149,15 @@
  {
   "tank": "트래퍼",
   "item": "이동거리(px)",
-  "expected": "182",
-  "actual": "182",
+  "expected": "146",
+  "actual": "146",
   "pass": true
  },
  {
   "tank": "트래퍼",
   "item": "발사각 범위",
-  "expected": "10~88",
-  "actual": "10~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -184,15 +184,15 @@
  {
   "tank": "스웜",
   "item": "이동거리(px)",
-  "expected": "247",
-  "actual": "247",
+  "expected": "198",
+  "actual": "198",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "발사각 범위",
-  "expected": "30~88",
-  "actual": "30~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -219,22 +219,22 @@
  {
   "tank": "프리즘",
   "item": "이동거리(px)",
-  "expected": "429",
-  "actual": "429",
+  "expected": "343",
+  "actual": "344",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "발사각 범위",
-  "expected": "0~88",
-  "actual": "0~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "발사 딜레이",
-  "expected": "580",
-  "actual": "580",
+  "expected": "640",
+  "actual": "640",
   "pass": true
  },
  {
@@ -254,15 +254,15 @@
  {
   "tank": "레이지",
   "item": "이동거리(px)",
-  "expected": "325",
-  "actual": "325",
+  "expected": "260",
+  "actual": "260",
   "pass": true
  },
  {
   "tank": "레이지",
   "item": "발사각 범위",
-  "expected": "55~88",
-  "actual": "55~88",
+  "expected": "20~88",
+  "actual": "20~88",
   "pass": true
  },
  {
@@ -280,35 +280,70 @@
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "체력",
   "expected": "1050",
   "actual": "1050",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "이동거리(px)",
-  "expected": "234",
-  "actual": "234",
+  "expected": "187",
+  "actual": "187",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "발사각 범위",
   "expected": "20~88",
   "actual": "20~88",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "발사 딜레이",
   "expected": "740",
   "actual": "740",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
+  "item": "받는 피해",
+  "expected": "300×0.95=285",
+  "actual": "285",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "체력",
+  "expected": "1050",
+  "actual": "1050",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "이동거리(px)",
+  "expected": "187",
+  "actual": "187",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "발사각 범위",
+  "expected": "20~88",
+  "actual": "20~88",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "발사 딜레이",
+  "expected": "740",
+  "actual": "740",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
   "item": "받는 피해",
   "expected": "300×0.95=285",
   "actual": "285",
@@ -316,317 +351,352 @@
  },
  {
   "tank": "볼더",
-  "item": "바위탄 땅 파임 반경 (40×1.15)",
-  "expected": "46px",
-  "actual": "파인 면적 3449 (반원 3324)",
+  "item": "바위탄 땅 파임 (67×32 타원)",
+  "expected": "반타원 3374",
+  "actual": "파인 면적 3511",
   "pass": true
  },
  {
   "tank": "볼더",
   "item": "바위탄 피해(15px 거리, 루키)",
-  "expected": "208",
-  "actual": "208",
+  "expected": "279",
+  "actual": "279",
   "pass": true
  },
  {
   "tank": "볼더",
   "item": "바위탄 피해 거리 102px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 73, 밖 0",
+  "actual": "안 97, 밖 0",
   "pass": true
  },
  {
   "tank": "볼더",
-  "item": "불바위 땅 파임 반경 (58×1.15)",
-  "expected": "67px",
-  "actual": "파인 면적 7183 (반원 6988)",
+  "item": "불바위 땅 파임 (83×38 타원)",
+  "expected": "반타원 4882",
+  "actual": "파인 면적 5038",
   "pass": true
  },
  {
   "tank": "볼더",
   "item": "불바위 피해(15px 거리, 루키)",
-  "expected": "322",
-  "actual": "322",
+  "expected": "396",
+  "actual": "396",
   "pass": true
  },
  {
   "tank": "바이퍼",
-  "item": "독화살 땅 파임 반경 (30×1.15)",
-  "expected": "35px",
-  "actual": "파인 면적 1977 (반원 1870)",
+  "item": "독화살 땅 파임 (31×38 타원)",
+  "expected": "반타원 1851",
+  "actual": "파인 면적 1954",
   "pass": true
  },
  {
   "tank": "바이퍼",
   "item": "독화살 피해(15px 거리, 루키)",
-  "expected": "159",
-  "actual": "159",
+  "expected": "170",
+  "actual": "170",
   "pass": true
  },
  {
   "tank": "바이퍼",
   "item": "독화살 피해 거리 84px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 58, 밖 0",
+  "actual": "안 62, 밖 0",
   "pass": true
  },
  {
   "tank": "바이퍼",
-  "item": "맹독 볼트 땅 파임 반경 (34×1.15)",
-  "expected": "39px",
-  "actual": "파인 면적 2524 (반원 2401)",
+  "item": "맹독 볼트 땅 파임 (37×41 타원)",
+  "expected": "반타원 2395",
+  "actual": "파인 면적 2518",
   "pass": true
  },
  {
   "tank": "바이퍼",
   "item": "맹독 볼트 피해(15px 거리, 루키)",
-  "expected": "186",
-  "actual": "186",
+  "expected": "198",
+  "actual": "198",
   "pass": true
  },
  {
   "tank": "해머",
-  "item": "철갑 포탄 땅 파임 반경 (35×1.15)",
-  "expected": "40px",
-  "actual": "파인 면적 2667 (반원 2545)",
+  "item": "철갑 포탄 땅 파임 (34×50 타원)",
+  "expected": "반타원 2704",
+  "actual": "파인 면적 2839",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "철갑 포탄 피해(15px 거리, 루키)",
-  "expected": "212",
-  "actual": "212",
+  "expected": "350",
+  "actual": "350",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "철갑 포탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 75, 밖 0",
+  "actual": "안 124, 밖 0",
   "pass": true
  },
  {
   "tank": "해머",
-  "item": "홍염탄 땅 파임 반경 (24×1.15)",
-  "expected": "28px",
-  "actual": "파인 면적 1280 (반원 1197)",
+  "item": "홍염탄 땅 파임 (22×36 타원)",
+  "expected": "반타원 1244",
+  "actual": "파인 면적 1340",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "홍염탄 피해(15px 거리, 루키)",
-  "expected": "422",
-  "actual": "422",
+  "expected": "501",
+  "actual": "501",
   "pass": true
  },
  {
   "tank": "루키",
-  "item": "표준탄 땅 파임 반경 (35×1.15)",
-  "expected": "40px",
-  "actual": "파인 면적 2667 (반원 2545)",
+  "item": "표준탄 땅 파임 (52×31 타원)",
+  "expected": "반타원 2580",
+  "actual": "파인 면적 2700",
   "pass": true
  },
  {
   "tank": "루키",
   "item": "표준탄 피해(15px 거리, 루키)",
-  "expected": "143",
-  "actual": "143",
+  "expected": "211",
+  "actual": "211",
   "pass": true
  },
  {
   "tank": "루키",
   "item": "표준탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 51, 밖 0",
+  "actual": "안 75, 밖 0",
   "pass": true
  },
  {
   "tank": "루키",
-  "item": "2연발 땅 파임 반경 (32×1.15)",
-  "expected": "37px",
-  "actual": "파인 면적 2239 (반원 2127)",
+  "item": "2연발 땅 파임 (48×29 타원)",
+  "expected": "반타원 2157",
+  "actual": "파인 면적 2259",
   "pass": true
  },
  {
   "tank": "루키",
   "item": "2연발 피해(15px 거리, 루키)",
-  "expected": "110",
-  "actual": "110",
+  "expected": "163",
+  "actual": "163",
   "pass": true
  },
  {
   "tank": "트래퍼",
-  "item": "수류탄 땅 파임 반경 (35×1.15)",
-  "expected": "40px",
-  "actual": "파인 면적 2667 (반원 2545)",
+  "item": "수류탄 땅 파임 (44×36 타원)",
+  "expected": "반타원 2519",
+  "actual": "파인 면적 2643",
   "pass": true
  },
  {
   "tank": "트래퍼",
   "item": "수류탄 피해(15px 거리, 루키)",
-  "expected": "129",
-  "actual": "129",
+  "expected": "182",
+  "actual": "182",
   "pass": true
  },
  {
   "tank": "트래퍼",
   "item": "수류탄 피해 거리 93px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 46, 밖 0",
+  "actual": "안 65, 밖 0",
   "pass": true
  },
  {
   "tank": "트래퍼",
-  "item": "지뢰 사출 땅 파임 반경 (14×1.15)",
-  "expected": "16px",
-  "actual": "파인 면적 453 (반원 407)",
+  "item": "지뢰 사출 땅 파임 (21×13 타원)",
+  "expected": "반타원 413",
+  "actual": "파인 면적 461",
   "pass": true
  },
  {
   "tank": "트래퍼",
   "item": "지뢰 사출 피해(15px 거리, 루키)",
-  "expected": "30",
-  "actual": "30",
+  "expected": "42",
+  "actual": "42",
   "pass": true
  },
  {
   "tank": "스웜",
-  "item": "유도 미사일 땅 파임 반경 (38×1.15)",
-  "expected": "44px",
-  "actual": "파인 면적 3130 (반원 3000)",
+  "item": "유도 미사일 땅 파임 (59×33 타원)",
+  "expected": "반타원 3037",
+  "actual": "파인 면적 3159",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "유도 미사일 피해(15px 거리, 루키)",
-  "expected": "261",
-  "actual": "261",
+  "expected": "154",
+  "actual": "154",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "유도 미사일 피해 거리 98px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 92, 밖 0",
+  "actual": "안 54, 밖 0",
   "pass": true
  },
  {
   "tank": "스웜",
-  "item": "다연장 6연발 땅 파임 반경 (26×1.15)",
-  "expected": "30px",
-  "actual": "파인 면적 1490 (반원 1404)",
+  "item": "다연장 6연발 땅 파임 (42×21 타원)",
+  "expected": "반타원 1376",
+  "actual": "파인 면적 1455",
   "pass": true
  },
  {
   "tank": "스웜",
   "item": "다연장 6연발 피해(15px 거리, 루키)",
-  "expected": "95",
-  "actual": "95",
+  "expected": "56",
+  "actual": "56",
   "pass": true
  },
  {
   "tank": "프리즘",
-  "item": "광선 땅 파임 반경 (36×1.15)",
-  "expected": "41px",
-  "actual": "파인 면적 2818 (반원 2692)",
+  "item": "광선 땅 파임 (66×23 타원)",
+  "expected": "반타원 2369",
+  "actual": "파인 면적 2481",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "광선 피해(15px 거리, 루키)",
-  "expected": "303",
-  "actual": "303",
+  "expected": "242",
+  "actual": "242",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "광선 피해 거리 95px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 107, 밖 0",
+  "actual": "안 86, 밖 0",
   "pass": true
  },
  {
   "tank": "프리즘",
-  "item": "3분광 땅 파임 반경 (26×1.15)",
-  "expected": "30px",
-  "actual": "파인 면적 1490 (반원 1404)",
+  "item": "3분광 땅 파임 (45×18 타원)",
+  "expected": "반타원 1264",
+  "actual": "파인 면적 1342",
   "pass": true
  },
  {
   "tank": "프리즘",
   "item": "3분광 피해(15px 거리, 루키)",
-  "expected": "171",
-  "actual": "171",
+  "expected": "138",
+  "actual": "138",
   "pass": true
  },
  {
   "tank": "레이지",
-  "item": "광탄 땅 파임 반경 (40×1.15)",
-  "expected": "46px",
-  "actual": "파인 면적 3449 (반원 3324)",
+  "item": "광탄 땅 파임 (60×36 타원)",
+  "expected": "반타원 3370",
+  "actual": "파인 면적 3498",
   "pass": true
  },
  {
   "tank": "레이지",
   "item": "광탄 피해(15px 거리, 루키)",
-  "expected": "187",
-  "actual": "187",
+  "expected": "169",
+  "actual": "169",
   "pass": true
  },
  {
   "tank": "레이지",
   "item": "광탄 피해 거리 102px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 66, 밖 0",
+  "actual": "안 59, 밖 0",
   "pass": true
  },
  {
   "tank": "레이지",
-  "item": "궤도 낙하 땅 파임 반경 (48×1.15)",
-  "expected": "55px",
-  "actual": "파인 면적 4956 (반원 4786)",
+  "item": "궤도 낙하 땅 파임 (44×75 타원)",
+  "expected": "반타원 5169",
+  "actual": "파인 면적 5367",
   "pass": true
  },
  {
   "tank": "레이지",
   "item": "궤도 낙하 피해(15px 거리, 루키)",
-  "expected": "224",
-  "actual": "224",
+  "expected": "200",
+  "actual": "200",
   "pass": true
  },
  {
-  "tank": "케이",
-  "item": "K-바운스탄 땅 파임 반경 (34×1.15)",
-  "expected": "39px",
-  "actual": "파인 면적 2524 (반원 2401)",
+  "tank": "K-블루",
+  "item": "K-바운스탄 땅 파임 (47×33 타원)",
+  "expected": "반타원 2449",
+  "actual": "파인 면적 2564",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "K-바운스탄 피해(15px 거리, 루키)",
-  "expected": "246",
-  "actual": "246",
+  "expected": "183",
+  "actual": "183",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "K-바운스탄 피해 거리 91px (안: 피해, 밖: 없음)",
   "expected": "안 >0, 밖 0",
-  "actual": "안 88, 밖 0",
+  "actual": "안 65, 밖 0",
   "pass": true
  },
  {
-  "tank": "케이",
-  "item": "K-분열탄 땅 파임 반경 (30×1.15)",
-  "expected": "35px",
-  "actual": "파인 면적 1977 (반원 1870)",
+  "tank": "K-블루",
+  "item": "K-분열탄 땅 파임 (45×27 타원)",
+  "expected": "반타원 1896",
+  "actual": "파인 면적 1993",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "K-분열탄 피해(15px 거리, 루키)",
-  "expected": "180",
-  "actual": "180",
+  "expected": "137",
+  "actual": "137",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "성장탄 땅 파임 (48×29 타원)",
+  "expected": "반타원 2157",
+  "actual": "파인 면적 2259",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "성장탄 피해(15px 거리, 루키)",
+  "expected": "162",
+  "actual": "162",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "성장탄 피해 거리 88px (안: 피해, 밖: 없음)",
+  "expected": "안 >0, 밖 0",
+  "actual": "안 58, 밖 0",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "뿌리탄 땅 파임 (35×29 타원)",
+  "expected": "반타원 1612",
+  "actual": "파인 면적 1703",
+  "pass": true
+ },
+ {
+  "tank": "K-그린",
+  "item": "뿌리탄 피해(15px 거리, 루키)",
+  "expected": "117",
+  "actual": "117",
   "pass": true
  },
  {
@@ -640,7 +710,7 @@
   "tank": "볼더",
   "item": "불바위: 굴러서 2차 폭발",
   "expected": "66틱 뒤, ±80px",
-  "actual": "66틱 뒤, 80px",
+  "actual": "66틱 뒤, -80px",
   "pass": true
  },
  {
@@ -674,15 +744,15 @@
  {
   "tank": "해머",
   "item": "정타(10px 안) 피해 +20%",
-  "expected": "275",
-  "actual": "275",
+  "expected": "455",
+  "actual": "455",
   "pass": true
  },
  {
   "tank": "해머",
   "item": "10px 밖은 정타 아님",
-  "expected": "217",
-  "actual": "217",
+  "expected": "359",
+  "actual": "359",
   "pass": true
  },
  {
@@ -731,7 +801,7 @@
   "tank": "스웜",
   "item": "다연장: 6발 부채꼴",
   "expected": "6발",
-  "actual": "6발, 착탄 폭 274px",
+  "actual": "6발, 착탄 폭 270px",
   "pass": true
  },
  {
@@ -815,7 +885,7 @@
   "tank": "아이템",
   "item": "증폭: 같은 탄 피해 ×1.5",
   "expected": "1.50",
-  "actual": "50 → 76 (1.52)",
+  "actual": "74 → 111 (1.50)",
   "pass": true
  },
  {
@@ -842,8 +912,8 @@
  {
   "tank": "아이템",
   "item": "연료: 이번 턴 이동력 2배",
-  "expected": "494",
-  "actual": "494",
+  "expected": "396",
+  "actual": "396",
   "pass": true
  },
  {
@@ -855,51 +925,65 @@
  },
  {
   "tank": "공통",
-  "item": "서든데스: 18턴부터 모두 최대 체력의 4% 감소",
+  "item": "서든데스: 28턴부터 모두 최대 체력의 4% 감소",
   "expected": "42,42",
   "actual": "42,42",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "K-바운스탄: 땅에 한 번 튕긴 뒤 폭발",
   "expected": "튕김 1, 폭발 1, 폭발은 튕긴 곳보다 멀리",
   "actual": "튕김 1, 폭발 1",
   "pass": true
  },
  {
-  "tank": "케이",
+  "tank": "K-블루",
   "item": "K-분열탄: 정점에서 두 갈래로 갈라져 2번 폭발",
   "expected": "분열 1, 폭발 2 (서로 떨어진 곳)",
   "actual": "분열 1, 폭발 2, 간격 251px",
   "pass": true
  },
  {
-  "tank": "케이",
-  "item": "직접 고를 수 없음 (히든)",
-  "expected": "hidden",
-  "actual": "hidden",
+  "tank": "K-그린",
+  "item": "성장탄: 오래 날수록 커짐 (가까이 ×0.75 ~ 멀리 최대 ×1.4)",
+  "expected": "짧게 < 32 < 길게",
+  "actual": "짧게 성장 ×0.93 반경 30.8 · 길게 성장 ×1.40 반경 37.9",
   "pass": true
  },
  {
-  "tank": "케이",
-  "item": "랜덤 9만 번 → 케이 확률 1/9",
-  "expected": "0.111",
-  "actual": "0.112",
+  "tank": "K-그린",
+  "item": "뿌리탄: 터진 뒤 날아간 방향으로 뿌리가 뻗어 2번 더 폭발",
+  "expected": "폭발 3, 뒤의 둘은 앞으로",
+  "actual": "폭발 3, 위치 2162→2237→2312",
+  "pass": true
+ },
+ {
+  "tank": "히든",
+  "item": "직접 고를 수 없음",
+  "expected": "hidden 2종",
+  "actual": "hidden, hidden",
+  "pass": true
+ },
+ {
+  "tank": "히든",
+  "item": "랜덤 9만 번 → 히든 합계 1/9 (K-블루·K-그린 각 1/18)",
+  "expected": "0.111 (0.056 + 0.056)",
+  "actual": "0.112 (0.058 + 0.054)",
   "pass": true
  },
  {
   "tank": "해프닝",
   "item": "운석: 예고된 자리에 떨어져 피해",
   "expected": "예고 1~2개, 피해 >0",
-  "actual": "예고 1, 피해 138",
+  "actual": "예고 2, 피해 138",
   "pass": true
  },
  {
   "tank": "해프닝",
   "item": "지진: 다음 턴 전에 탱크가 밀려남",
   "expected": "이동 있음",
-  "actual": "5, 29",
+  "actual": "25, -27",
   "pass": true
  },
  {
@@ -912,22 +996,22 @@
  {
   "tank": "해프닝",
   "item": "불기둥: 통과한 포탄 위력 1.5배",
-  "expected": "137 → 206",
-  "actual": "137 → 205",
+  "expected": "202 → 303",
+  "actual": "202 → 303",
   "pass": true
  },
  {
   "tank": "해프닝",
   "item": "판 시작 해프닝: 운석/지진/없음 (없음 약 50%)",
   "expected": "none ≈ 100/200",
-  "actual": "{\"none\":88,\"quake\":55,\"meteor\":57}",
+  "actual": "{\"none\":101,\"meteor\":51,\"quake\":48}",
   "pass": true
  },
  {
   "tank": "해프닝",
   "item": "날씨(토네이도·불기둥): 중간에 생겼다 3~4턴 뒤 사라지고 다시 생김",
   "expected": "여러 번, 길이 3~4",
-  "actual": "9번 · 길이 3,3,4,3,4,4,3,3,3",
+  "actual": "9번 · 길이 4,4,4,4,4,3,3,4,3",
   "pass": true
  },
  {
@@ -953,9 +1037,107 @@
  },
  {
   "tank": "공통",
-  "item": "이동력 30% 증가 (루키 190→247px)",
-  "expected": "247",
-  "actual": "247",
+  "item": "이동력 = 설정값 (루키 198px)",
+  "expected": "198",
+  "actual": "198",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "턴 넘기기: 딜레이 = 기본 1/4 + 시간 (185+4)",
+  "expected": "189",
+  "actual": "189",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "넘긴 뒤 상대 딜레이가 더 크면 바로 다시 내 차례",
+  "expected": "rookie",
+  "actual": "rookie",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "넘기고 쏜 뒤엔 상대 차례",
+  "expected": "trapper",
+  "actual": "trapper",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "상대 턴이 비싸면 자동으로 연속 턴",
+  "expected": "rookie, rookie",
+  "actual": "rookie, rookie",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "이동력 0에서도 방향 전환 (위치는 그대로)",
+  "expected": "-1, 0",
+  "actual": "-1, 0",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "방향 전환이 다른 기기에서도 똑같이 재현",
+  "expected": "-1",
+  "actual": "-1",
+  "pass": true
+ },
+ {
+  "tank": "공통",
+  "item": "턴 넘기기가 다른 기기에서도 똑같이 재현",
+  "expected": "same",
+  "actual": "same",
+  "pass": true
+ },
+ {
+  "tank": "보급 상자",
+  "item": "4턴에 3개, 탱크 옆 60~131px (한 턴 이동 안)",
+  "expected": "12턴에 9번, 벗어남 0",
+  "actual": "9번, 벗어남 0",
+  "pass": true
+ },
+ {
+  "tank": "보급 상자",
+  "item": "가장 먼 자리에 떨어져도 이번 턴 이동으로 먹음",
+  "expected": "획득",
+  "actual": "획득",
+  "pass": true
+ },
+ {
+  "tank": "보급 상자",
+  "item": "내 포탄 폭발이 상자에 닿으면 아이템이 나에게",
+  "expected": "획득",
+  "actual": "획득",
+  "pass": true
+ },
+ {
+  "tank": "보급 상자",
+  "item": "가방이 꽉 차 있으면 상자만 부서짐",
+  "expected": "4개 그대로",
+  "actual": "4개",
+  "pass": true
+ },
+ {
+  "tank": "보급 상자",
+  "item": "아무도 안 먹으면 8턴 뒤 사라짐",
+  "expected": "사라짐",
+  "actual": "사라짐",
+  "pass": true
+ },
+ {
+  "tank": "시작 위치",
+  "item": "가장 가까운 적 600~1600px",
+  "expected": "95% 이상",
+  "actual": "98.1%",
+  "pass": true
+ },
+ {
+  "tank": "시작 위치",
+  "item": "1:1·2:2는 맵 양 끝에서 시작 안 함",
+  "expected": "0",
+  "actual": "0",
   "pass": true
  }
 ]

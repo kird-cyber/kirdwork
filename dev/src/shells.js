@@ -234,6 +234,35 @@ const SHELLS = (() => {
     c.beginPath(); c.moveTo(14, 0); c.lineTo(-6, -10); c.lineTo(-12, -6); c.lineTo(-4, 0); c.lineTo(-12, 6); c.lineTo(-6, 10); c.closePath(); c.fill(); c.stroke();
     c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.moveTo(10, 0); c.lineTo(-4, -6); c.lineTo(-2, 0); c.closePath(); c.fill();
   };
+  // K-그린 1번 성장탄: a seed that swells into a leafy ball the longer it flies (x0.75 → x1.4 over 3.2 s, same as the sim)
+  D.seed = (c, look, p, s) => {
+    const g = Math.min(1, (p.age || 0) / 3.2), k = (0.75 + 0.65 * g) * s, r = 11 * k;
+    if (g > 0.5) { c.fillStyle = `rgba(216,245,154,${0.25 + 0.35 * (g - 0.5)})`; c.beginPath(); c.arc(0, 0, r * 1.9, 0, TAU); c.fill(); }
+    shadedBall(c, r, '#F4FFD0', '#8CC63F', '#3E6E14', '#1F3A0A');
+    c.save(); c.rotate((p.age || 0) * 3 * (p.vx < 0 ? -1 : 1));
+    const leaves = 1 + Math.floor(g * 3.99);
+    for (let i = 0; i < leaves; i++) {
+      c.save(); c.rotate(i * TAU / 4); c.translate(0, -r * 0.95);
+      c.fillStyle = i % 2 ? '#2E86D6' : '#B6F25A'; c.strokeStyle = '#1F3A0A'; c.lineWidth = 1.2;
+      const lw = r * (0.35 + 0.35 * g), lh = r * (0.6 + 0.6 * g);
+      c.beginPath(); c.moveTo(0, 0); c.quadraticCurveTo(lw, -lh * 0.5, 0, -lh); c.quadraticCurveTo(-lw, -lh * 0.5, 0, 0); c.fill(); c.stroke();
+      c.restore();
+    }
+    c.restore();
+    c.fillStyle = 'rgba(255,255,255,0.75)'; c.beginPath(); c.ellipse(-r * 0.35, -r * 0.35, r * 0.28, r * 0.18, -0.6, 0, TAU); c.fill();
+  };
+  // K-그린 2번 뿌리탄: an acorn-like seed with a root tail (drawn along the flight)
+  D.rootseed = (c, look, p, s) => {
+    c.scale(s, s);
+    c.strokeStyle = '#7A5A30'; c.lineWidth = 3; c.lineCap = 'round';
+    c.beginPath(); c.moveTo(-8, 0); c.quadraticCurveTo(-16, -5, -22, 1); c.quadraticCurveTo(-27, 6, -32, 2); c.stroke();
+    c.lineWidth = 2; c.beginPath(); c.moveTo(-14, -1); c.quadraticCurveTo(-18, 6, -24, 9); c.stroke();
+    const g = c.createLinearGradient(0, -9, 0, 9); g.addColorStop(0, '#E6F8B0'); g.addColorStop(0.5, '#6AA22E'); g.addColorStop(1, '#2C4A12');
+    c.fillStyle = g; c.strokeStyle = '#1F3A0A'; c.lineWidth = 1.4;
+    c.beginPath(); c.ellipse(2, 0, 12, 9, 0, 0, TAU); c.fill(); c.stroke();
+    c.fillStyle = '#2E86D6'; c.beginPath(); c.ellipse(9, 0, 5, 8.5, 0, 0, TAU); c.fill(); c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.6)'; c.beginPath(); c.ellipse(-1, -4, 5, 2.2, 0, 0, TAU); c.fill();
+  };
   // plain ball (teleport shell and anything without its own drawing)
   D.ball = (c, look, p, s) => {
     const r = 7 * 2.1 * s;
@@ -242,7 +271,7 @@ const SHELLS = (() => {
   };
 
   // shapes drawn along the flight direction (the rest handle their own spin / stay upright)
-  const ALIGNED = { arrow: 1, bolt: 1, shell: 1, missile: 1, rocket: 1, laser: 1, beacon: 1, ksplit: 1, kshard: 1 };
+  const ALIGNED = { arrow: 1, bolt: 1, shell: 1, missile: 1, rocket: 1, laser: 1, beacon: 1, ksplit: 1, kshard: 1, rootseed: 1 };
   S.draw = function (c, look, p) {
     const fn = D[look.shape] || D.ball, s = look.size || 1;
     c.save(); c.translate(p.x, p.y);
@@ -260,6 +289,7 @@ const SHELLS = (() => {
     shell: { col: 'rgba(255,224,138,1)', w: 2.5, a: 0.55, n: 20 }, missile: null, rocket: null,
     laser: { col: null, w: 8, a: 0.9, n: 44, glow: 22 }, plasma: { col: 'rgba(255,120,170,1)', w: 7, a: 0.45, n: 24 },
     kball: { col: 'rgba(140,200,255,1)', w: 4, a: 0.5, n: 22 }, ksplit: { col: 'rgba(216,245,154,1)', w: 4, a: 0.5, n: 22 }, kshard: { col: 'rgba(255,255,255,1)', w: 3, a: 0.45, n: 16 },
+    seed: { col: 'rgba(182,242,90,1)', w: 4, a: 0.5, n: 24 }, rootseed: { col: 'rgba(122,90,48,1)', w: 3, a: 0.45, n: 18 },
   };
   S.trail = shape => (shape in TRAIL ? TRAIL[shape] : { col: 'rgba(255,255,255,1)', w: 5, a: 0.6, n: 28 });
 

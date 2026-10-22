@@ -639,8 +639,8 @@ function createRenderer(cv, mini) {
         R.fx.push({ kind: 'flash', x: e.x, y: e.y, r: shape === 'missile' ? 80 : 50, t: 0, life: 0.3, col: '#FF8A30' });
         for (let i = 0; i < (shape === 'missile' ? 8 : 3); i++) R.fx.push({ kind: 'smoke', x: e.x + (vrnd() - 0.5) * 40, y: e.y - vrnd() * 20, vy: -40 - vrnd() * 30, t: -vrnd() * 0.2, life: 1.3, r: 12 + vrnd() * 12, dark: true });
         break;
-      case 'laser': case 'plasma': case 'kball': case 'ksplit': case 'kshard': {
-        const col = shape === 'laser' ? (w.look.color) : shape === 'plasma' ? '#FF7FA8' : (e.child ? ['#2E86D6', '#8CC63F'][vrnd() < 0.5 ? 0 : 1] : '#8CC8FF');
+      case 'laser': case 'plasma': case 'kball': case 'ksplit': case 'kshard': case 'seed': case 'rootseed': {
+        const col = shape === 'laser' ? (w.look.color) : shape === 'plasma' ? '#FF7FA8' : shape === 'seed' || shape === 'rootseed' ? (vrnd() < 0.7 ? '#B6F25A' : '#2E86D6') : (e.child ? ['#2E86D6', '#8CC63F'][vrnd() < 0.5 ? 0 : 1] : '#8CC8FF');
         R.fx.push({ kind: 'zap', x: e.x, y: e.y, r: 46, t: 0, life: 0.35, col });
         for (let i = 0; i < 10; i++) { const a = vrnd() * Math.PI * 2, v = 200 + vrnd() * 220; R.fx.push({ kind: 'needle', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.25 + vrnd() * 0.15, col }); }
         break;
@@ -685,6 +685,7 @@ function createRenderer(cv, mini) {
         }
         case 'impact': impactFx(e); break;
         case 'beam': R.beams.push({ x: e.x, t: 0, life: e.ticks / CONFIG.physics.tickRate + 0.1 }); R.onSfx('beam'); break;
+        case 'root': R.fx.push({ kind: 'root', x0: e.x0, y0: e.y0, pts: e.pts, t: 0, life: e.ticks * e.pts.length / CONFIG.physics.tickRate + 0.9, grow: e.ticks * e.pts.length / CONFIG.physics.tickRate }); break;
         case 'roll': R.fx.push({ kind: 'roller', x0: e.x0, y0: e.y0, x1: e.x1, y1: e.y1, t: 0, life: e.ticks / CONFIG.physics.tickRate }); break;
         case 'out': text(clamp(e.x, 40, m.W - 40), clamp(e.y, 60, m.H - 60), e.tele ? '순간이동 실패' : '장외', e.tele ? '#9CC6F7' : '#FFFFFF'); break;
         case 'crate': R.crateDrop[e.id] = { t: 0 }; { const c = m.crates.find(k => k.id === e.id); if (c) R.helis.push({ x: c.x, y: Math.max(-160, c.y - 940), t: 0, dir: c.x < m.W / 2 ? 1 : -1 }); } R.onSfx('crate'); break;
@@ -1147,6 +1148,21 @@ function createRenderer(cv, mini) {
     else if (f.kind === 'dust') { ctx.fillStyle = f.col; ctx.globalAlpha = 0.45 * (1 - k); ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1 + k), 0, 7); ctx.fill(); ctx.globalAlpha = 1; }
     else if (f.kind === 'bubble') { ctx.strokeStyle = `rgba(150,240,90,${0.9 * (1 - k)})`; ctx.fillStyle = `rgba(120,210,60,${0.35 * (1 - k)})`; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(f.x + Math.sin(f.t * 8) * 3, f.y, f.r, 0, 7); ctx.fill(); ctx.stroke(); }
     else if (f.kind === 'plus') { ctx.fillStyle = `rgba(110,240,200,${1 - k})`; ctx.fillRect(f.x - 5, f.y - 1.5, 10, 3); ctx.fillRect(f.x - 1.5, f.y - 5, 3, 10); }
+    else if (f.kind === 'root') { // 뿌리탄: a root creeps along the ground from the blast to each burst point
+      const all = [{ x: f.x0, y: f.y0 }].concat(f.pts), segs = all.length - 1, prog = Math.min(1, f.t / f.grow) * segs, fade = f.t > f.grow ? 1 - (f.t - f.grow) / (f.life - f.grow) : 1;
+      ctx.save(); ctx.globalAlpha = Math.max(0, fade); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const [col, lw] of [['#3A2A14', 13], ['#7A5A30', 8], ['#B6F25A', 2.4]]) {
+        ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath(); ctx.moveTo(all[0].x, all[0].y + 2);
+        for (let i = 0; i < segs && i < prog; i++) {
+          const a = all[i], b = all[i + 1], q = Math.min(1, prog - i), steps = 8;
+          for (let j = 1; j <= steps * q; j++) { const u = j / steps, wob = Math.sin((i * steps + j) * 1.7) * 4; ctx.lineTo(a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u + 2 + wob); }
+        }
+        ctx.stroke();
+      }
+      for (let i = 1; i <= segs && i <= prog; i++) { const p = all[i]; ctx.fillStyle = i % 2 ? '#8CC63F' : '#2E86D6'; ctx.strokeStyle = '#1F3A0A'; ctx.lineWidth = 1.2;
+        for (const sg of [-1, 1]) { ctx.save(); ctx.translate(p.x, p.y - 2); ctx.rotate(sg * 0.5); ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(7, -10, 0, -20); ctx.quadraticCurveTo(-7, -10, 0, 0); ctx.fill(); ctx.stroke(); ctx.restore(); } }
+      ctx.restore();
+    }
     else if (f.kind === 'roller') { // the burning boulder rolls on
       const x = lerp(f.x0, f.x1, k), y = lerp(f.y0, f.y1, k) - 14, dir = f.x1 >= f.x0 ? 1 : -1;
       SHELLS.draw(ctx, ROLL_LOOK, { x, y, vx: dir, vy: 0, age: f.t * 2.4, id: 7 });
