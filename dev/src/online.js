@@ -141,6 +141,17 @@ function openLink(code, idx, create) {
     ON.link = link;
   });
 }
+function goHomeAnywhere() {
+  AU.play && AU.play('ui');
+  if (screen === 'home') { const h = $('home'); if (h) h.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const playing = screen === 'game' && match && match.phase !== 'over';
+  if (ON.link || ON.active) {
+    if (confirm(playing ? '게임에서 나가 처음 화면으로 갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.' : '방에서 나가 처음 화면으로 갈까요?')) leaveOnline();
+    return;
+  }
+  if (playing && !confirm(SOLOPLAY.active ? '도전을 그만두고 처음 화면으로 갈까요? 이번 기록은 남지 않아요.' : TUT.on ? '튜토리얼을 끝내고 처음 화면으로 갈까요?' : '연습을 끝내고 처음 화면으로 갈까요?')) return;
+  showScreen('home');
+}
 function leaveOnline() {
   dirClearIfLast();
   if (ON.link) ON.link.leave();
@@ -550,6 +561,9 @@ function bindOnlineUi() {
   $('rematchBtn').onclick = () => { AU.unlock(); if (ON.link && ON.link.rematch()) $('rematchBtn').disabled = true; };
   $('readyBtn').onclick = () => { AU.play('ui'); const me = ON.link && ON.link.me(); if (me) ON.link.setReady(!me.ready); };
   $('leaveGame').onclick = () => leaveOnline();
+  // 「케이요새」 글자(처음 화면·대기방·연습 설정·소탕전·명예의 전당·게임 중·결과 화면)를 누르면 어디서든 처음 화면으로
+  document.addEventListener('click', e => { const h = e.target.closest && e.target.closest('.homelink'); if (h) { e.preventDefault(); goHomeAnywhere(); } });
+  document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('homelink') && e.target.tagName !== 'BUTTON') { e.preventDefault(); goHomeAnywhere(); } });
   $('exitBtn').onclick = () => {
     if (ON.active) { if (confirm('게임에서 나갈까요? 내 탱크는 남아서 차례가 자동으로 넘어갑니다.')) leaveOnline(); }
     else if (SOLOPLAY.active) { if (confirm('도전을 그만두고 나갈까요? 이번 기록은 남지 않아요.')) showScreen('solo'); }

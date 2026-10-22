@@ -506,6 +506,28 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .pubtog { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); font-size: 13px; font-weight: 700; cursor: pointer; }
 .pubtog input { width: 18px; height: 18px; accent-color: var(--gold); }
 @media (max-width: 760px) { .ways { grid-template-columns: minmax(0, 1fr); } .rrow { grid-template-columns: 1fr auto; } .rrow .mp, .rrow .pn { display: none; } }
+.homelink { cursor: pointer; width: fit-content; border-radius: 10px; transition: opacity .15s, transform .15s; }
+.homelink:hover { opacity: 0.82; }
+.homelink:active { transform: scale(0.98); }
+.homelink:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.iconbtn.gbrand { font-family: var(--font-display); font-weight: 400; font-size: 15px; letter-spacing: 0.04em; display: inline-flex; align-items: center; gap: 2px; width: auto; }
+.iconbtn.gbrand em { font-style: normal; color: var(--gold); }
+.overbox > .lbrand { margin: 0 auto 6px; }
+.extras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.xway { display: flex; align-items: center; gap: 16px; padding: 20px 22px; border-radius: 18px; border: 2px solid #9B7CFF; background: linear-gradient(120deg, #1B1636, #121828 65%); color: inherit; font: inherit; text-align: left; cursor: pointer; transition: transform .15s, box-shadow .15s, background .15s; }
+.xway.prac { border-color: #4CC3FF; background: linear-gradient(120deg, #0F2433, #121828 65%); }
+.xway:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(0,0,0,.7); }
+.xway:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.xway:disabled { opacity: .5; cursor: default; transform: none; }
+.xway .wi { flex: 0 0 auto; width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: #2A2152; color: #C9B6FF; font-style: normal; }
+.xway.prac .wi { background: #0E3047; color: #8FDBFF; }
+.xway .xt { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.xway .xt b { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.xway .xt b em { font-style: normal; font-size: 13px; font-weight: 800; color: #C9B6FF; border: 1px solid #6E58C8; border-radius: 999px; padding: 2px 9px; margin-left: 6px; vertical-align: 4px; }
+.xway .xt small { font-size: 14px; color: var(--muted); line-height: 1.45; }
+.xway .xgo { font-size: 26px; font-weight: 800; color: #C9B6FF; }
+.xway.prac .xgo { color: #8FDBFF; }
+@media (max-width: 760px) { .extras { grid-template-columns: minmax(0, 1fr); } .xway { padding: 16px 18px; } .xway .xt b { font-size: 20px; } }
 </style>
 
 <div id="app">
@@ -519,6 +541,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     </div>
     <div class="right">
       <div class="mapbox">
+        <button class="iconbtn homelink gbrand" id="gameHome" type="button" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></button>
         <canvas id="mini" width="220" height="80" aria-label="미니맵: 눌러서 시점 이동"></canvas>
         <button class="iconbtn" id="recenter" type="button">내 탱크로<kbd>F</kbd></button>
         <div class="setrow"><button class="iconbtn" id="sndBtn" type="button" aria-pressed="true">소리 켜짐</button><button class="iconbtn" id="musicBtn" type="button" aria-pressed="true">음악 켜짐</button><button class="iconbtn" id="shakeBtn" type="button" aria-pressed="true">흔들림</button></div>
@@ -588,7 +611,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup home">
       <div class="brand">
         <div>
-          <h1><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></h1>
+          <h1 class="homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></h1>
           <p>과학기술인의 요새를 지켜라 — R&amp;D 턴제 포격전</p>
         </div>
         <div class="brandside">
@@ -627,11 +650,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         </div>
         <div class="note" id="homeMsg" role="status" aria-live="polite"></div>
       </div>
+      <div class="extras">
+        <button class="xway tut" id="tutorialBtn" type="button"><i class="wi" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 001.5.86l10.5-6.5a1 1 0 000-1.72L9.5 4.64A1 1 0 008 5.5z"/></svg></i><span class="xt"><b>튜토리얼 <em>1분</em></b><small>처음이라면 여기부터 · 이동·각도·파워·발사를 차례로 따라 해 봐요</small></span><span class="xgo" aria-hidden="true">→</span></button>
+        <button class="xway prac" id="practiceBtn" type="button"><i class="wi" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="11" rx="3"/><path d="M8 11v3M6.5 12.5h3M15.5 12h.01M18 13.5h.01"/></svg></i><span class="xt"><b>혼자 연습 · 봇 대전</b><small>한 기기에서 봇(쉬움·보통·어려움)과 대결 · 맵과 탱크를 직접 골라요</small></span><span class="xgo" aria-hidden="true">→</span></button>
+      </div>
       <div class="card rooms">
         <div class="rh"><h3>지금 열린 방</h3><span class="note">코드 없이 눌러서 들어가기 · 방장이 「목록에 공개」를 켠 방만 보여요</span><span class="rn" id="roomCount" hidden></span></div>
         <div class="rlist" id="roomList"></div>
       </div>
-      <div class="cta"><button class="ghost" id="tutorialBtn" type="button">튜토리얼 (1분)</button><button class="ghost" id="practiceBtn" type="button">혼자 연습 · 봇 대전</button><span style="flex:1"></span><div class="probe" id="probe" data-s="idle"></div></div>
+      <div class="cta"><span style="flex:1"></span><div class="probe" id="probe" data-s="idle"></div></div>
     </div>
   </div>
 
@@ -639,7 +666,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup soloset">
       <div class="sohead">
         <div>
-          <div class="lbrand"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
+          <div class="lbrand homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
           <h2 class="lt">연구부정 소탕전</h2>
           <div class="note" id="soDay"></div>
         </div>
@@ -680,7 +707,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup fameset">
       <div class="sohead">
         <div>
-          <div class="lbrand"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
+          <div class="lbrand homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
           <h2 class="lt">명예의 전당</h2>
           <div class="note" id="fDay"></div>
         </div>
@@ -704,7 +731,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="lobbyhead">
         <div>
-          <div class="lbrand"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
+          <div class="lbrand homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
           <h2 class="lt">대기방<span id="roomCode"></span></h2>
           <div class="note" id="lobbyStatus" role="status"></div>
         </div>
@@ -743,7 +770,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
     <div class="setup">
       <div class="brand">
         <div>
-          <h1><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></h1>
+          <h1 class="homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></h1>
           <p>한 기기 연습 모드</p>
         </div>
         <div class="cta"><span class="note" style="max-width:380px">자리마다 사람 또는 봇(쉬움·보통·어려움)을 고르세요. 사람 자리는 한 기기에서 번갈아 조작합니다.</span><button class="ghost" id="backHome" type="button">← 처음 화면</button></div>
@@ -794,6 +821,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
   <div class="overlay over" id="soloOver" hidden>
     <div class="overbox soover">
+      <div class="lbrand homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
       <div class="sokick" id="sooKick">연구부정 소탕전</div>
       <h2 id="sooTitle">소탕 완료!</h2>
       <div class="sotime" id="sooTime"></div>
@@ -810,6 +838,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   </div>
   <div class="overlay over" id="over" hidden>
     <div class="overbox">
+      <div class="lbrand homelink" role="link" tabindex="0" title="처음 화면으로"><span class="kmark" aria-hidden="true"></span>케이<em>요새</em></div>
       <h2 id="overTitle">레드 팀 승리</h2>
       <div class="note" id="overSub"></div>
       <div class="ovmvp" id="overMvp" hidden></div>
