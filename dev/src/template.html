@@ -528,6 +528,20 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .xway .xgo { font-size: 26px; font-weight: 800; color: #C9B6FF; }
 .xway.prac .xgo { color: #8FDBFF; }
 @media (max-width: 760px) { .extras { grid-template-columns: minmax(0, 1fr); } .xway { padding: 16px 18px; } .xway .xt b { font-size: 20px; } }
+/* portrait phones (2026-10-22): one compact two-row bottom panel so the battlefield stays visible, smaller touch pad, minimap column trimmed */
+@media (max-width: 600px) {
+  .hud-bottom { left: 6px; right: 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); padding: 8px 10px; gap: 6px 8px; border-radius: 14px; }
+  .who { gap: 0; } .who .nm { font-size: 14px; } .who .sub { font-size: 10px; } .who .sub[style] { display: none; } .bar { width: 72px; height: 5px; margin-top: 2px; }
+  .weps { gap: 4px; } .wep { padding: 4px 7px; font-size: 11px; }
+  #angDial { width: 54px; height: 30px; } .angle .v { font-size: 20px; } .angle .r { display: none; } .angnum { min-width: 38px; }
+  .power { flex: 1 1 140px; min-width: 0; gap: 2px; } .power .row { font-size: 10px; } .gauge { height: 14px; }
+  .items { gap: 4px; } .item { width: 34px; height: 34px; }
+  .passbtn { min-width: 0; min-height: 0; padding: 6px 10px; font-size: 13px; border-radius: 10px; } .passbtn small { display: none; }
+  .tb { width: 48px; height: 48px; font-size: 19px; } .fire { width: 78px; height: 78px; font-size: 20px; }
+  .mapbox .setrow, #recenter { display: none; } #mini { width: 118px; } .wind { width: 104px; }
+  .slot .tag input, .tag select.ctl, .chatin input, .share input { font-size: 16px; } /* iOS: no zoom-in on focus */
+}
+@media (max-height: 520px) and (min-width: 601px) { .who { max-width: 150px; overflow: hidden; } .who > div { min-width: 0; } .who .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .weps { flex-shrink: 0; } .passbtn { white-space: nowrap; } }
 </style>
 
 <div id="app">

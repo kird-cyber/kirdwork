@@ -100,7 +100,7 @@ function renderSolo() {
   if (!SOLOPLAY.tank) SOLOPLAY.tank = soStore.get('tank', 'rookie');
   const picks = $('soPicks'); picks.innerHTML = '';
   buildPicks(picks, SOLOPLAY.tank, k => { AU.play('ui'); SOLOPLAY.tank = k; soStore.set('tank', k); renderSolo(); }, '내 탱크', k => renderTankCard($('soTankInfo'), k));
-  picks.onmouseleave = () => renderTankCard($('soTankInfo'), SOLOPLAY.tank);
+  picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('soTankInfo'), SOLOPLAY.tank); };
   renderTankCard($('soTankInfo'), SOLOPLAY.tank);
   const nk = $('soNick'); if (!nk.value) nk.value = soStore.get('nick', '') || savedNick() || '';
   $('soMsg').textContent = '';

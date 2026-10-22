@@ -32,7 +32,7 @@ function buildPicks(box, current, onPick, label, onInfo) {
     b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
     if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/${Math.round(HIDDEN_KEYS.length / CONFIG.randomTank.chance)} 확률로 나옵니다 (히든 ${HIDDEN_KEYS.length}종 합쳐 1/${Math.round(1 / CONFIG.randomTank.chance)})`; b.onclick = () => onInfo && onInfo(k); }
     else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
-    if (onInfo) b.onmouseenter = () => onInfo(k);
+    if (onInfo) b.onpointerenter = e => { if (e.pointerType === 'mouse') onInfo(k); }; // touch: a tap shows the card and keeps it (no hover)
     box.append(b);
   }
 }
@@ -421,7 +421,7 @@ function renderSetup() {
     const picks = document.createElement('div'); picks.className = 'picks';
     if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
     buildPicks(picks, sl.tank, k => { sl.tank = k; setupInfo = k; saveSetup(); renderSetup(); }, sp.textContent, k => renderTankCard($('setupTankInfo'), k));
-    picks.onmouseleave = () => renderTankCard($('setupTankInfo'), setupInfo);
+    picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('setupTankInfo'), setupInfo); };
     row.appendChild(picks); slots.appendChild(row);
   }
   if (!setupInfo) setupInfo = setup.slots.red[0].tank;

@@ -544,6 +544,20 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .xway .xgo { font-size: 26px; font-weight: 800; color: #C9B6FF; }
 .xway.prac .xgo { color: #8FDBFF; }
 @media (max-width: 760px) { .extras { grid-template-columns: minmax(0, 1fr); } .xway { padding: 16px 18px; } .xway .xt b { font-size: 20px; } }
+/* portrait phones (2026-10-22): one compact two-row bottom panel so the battlefield stays visible, smaller touch pad, minimap column trimmed */
+@media (max-width: 600px) {
+  .hud-bottom { left: 6px; right: 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); padding: 8px 10px; gap: 6px 8px; border-radius: 14px; }
+  .who { gap: 0; } .who .nm { font-size: 14px; } .who .sub { font-size: 10px; } .who .sub[style] { display: none; } .bar { width: 72px; height: 5px; margin-top: 2px; }
+  .weps { gap: 4px; } .wep { padding: 4px 7px; font-size: 11px; }
+  #angDial { width: 54px; height: 30px; } .angle .v { font-size: 20px; } .angle .r { display: none; } .angnum { min-width: 38px; }
+  .power { flex: 1 1 140px; min-width: 0; gap: 2px; } .power .row { font-size: 10px; } .gauge { height: 14px; }
+  .items { gap: 4px; } .item { width: 34px; height: 34px; }
+  .passbtn { min-width: 0; min-height: 0; padding: 6px 10px; font-size: 13px; border-radius: 10px; } .passbtn small { display: none; }
+  .tb { width: 48px; height: 48px; font-size: 19px; } .fire { width: 78px; height: 78px; font-size: 20px; }
+  .mapbox .setrow, #recenter { display: none; } #mini { width: 118px; } .wind { width: 104px; }
+  .slot .tag input, .tag select.ctl, .chatin input, .share input { font-size: 16px; } /* iOS: no zoom-in on focus */
+}
+@media (max-height: 520px) and (min-width: 601px) { .who { max-width: 150px; overflow: hidden; } .who > div { min-width: 0; } .who .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .weps { flex-shrink: 0; } .passbtn { white-space: nowrap; } }
 </style>
 </head>
 <body>
@@ -3503,6 +3517,13 @@ const TMAP_ART = (() => {
 })();
 
 // ---- render.js
+// older phones (iOS Safari < 16, old Samsung Internet) lack ctx.roundRect: a small stand-in so drawing never throws
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    r = Math.max(0, Math.min(Array.isArray(r) ? (r[0] || 0) : (+r || 0), Math.abs(w) / 2, Math.abs(h) / 2));
+    this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this;
+  };
+}
 // ============================================================== RENDER (reads match state, never changes it)
 // Visual-only randomness and timing live here (Math.random, performance.now).
 
@@ -5592,7 +5613,7 @@ function renderLobby() {
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
   buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크', k => renderTankInfo(k));
-  picks.onmouseleave = () => renderTankInfo(me ? me.tank : savedTank());
+  picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankInfo(me ? me.tank : savedTank()); };
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
@@ -6033,7 +6054,7 @@ function buildPicks(box, current, onPick, label, onInfo) {
     b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
     if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/${Math.round(HIDDEN_KEYS.length / CONFIG.randomTank.chance)} 확률로 나옵니다 (히든 ${HIDDEN_KEYS.length}종 합쳐 1/${Math.round(1 / CONFIG.randomTank.chance)})`; b.onclick = () => onInfo && onInfo(k); }
     else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
-    if (onInfo) b.onmouseenter = () => onInfo(k);
+    if (onInfo) b.onpointerenter = e => { if (e.pointerType === 'mouse') onInfo(k); }; // touch: a tap shows the card and keeps it (no hover)
     box.append(b);
   }
 }
@@ -6422,7 +6443,7 @@ function renderSetup() {
     const picks = document.createElement('div'); picks.className = 'picks';
     if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
     buildPicks(picks, sl.tank, k => { sl.tank = k; setupInfo = k; saveSetup(); renderSetup(); }, sp.textContent, k => renderTankCard($('setupTankInfo'), k));
-    picks.onmouseleave = () => renderTankCard($('setupTankInfo'), setupInfo);
+    picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('setupTankInfo'), setupInfo); };
     row.appendChild(picks); slots.appendChild(row);
   }
   if (!setupInfo) setupInfo = setup.slots.red[0].tank;
@@ -6772,7 +6793,7 @@ function renderSolo() {
   if (!SOLOPLAY.tank) SOLOPLAY.tank = soStore.get('tank', 'rookie');
   const picks = $('soPicks'); picks.innerHTML = '';
   buildPicks(picks, SOLOPLAY.tank, k => { AU.play('ui'); SOLOPLAY.tank = k; soStore.set('tank', k); renderSolo(); }, '내 탱크', k => renderTankCard($('soTankInfo'), k));
-  picks.onmouseleave = () => renderTankCard($('soTankInfo'), SOLOPLAY.tank);
+  picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('soTankInfo'), SOLOPLAY.tank); };
   renderTankCard($('soTankInfo'), SOLOPLAY.tank);
   const nk = $('soNick'); if (!nk.value) nk.value = soStore.get('nick', '') || savedNick() || '';
   $('soMsg').textContent = '';

@@ -223,7 +223,7 @@ function renderLobby() {
   const picks = $('myPicks'); picks.innerHTML = '';
   const myTank = me ? me.tank : savedTank();
   buildPicks(picks, myTank, k => { AU.play('ui'); saveTank(k); L.requestTank(k); renderTankInfo(k); }, '내 탱크', k => renderTankInfo(k));
-  picks.onmouseleave = () => renderTankInfo(me ? me.tank : savedTank());
+  picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankInfo(me ? me.tank : savedTank()); };
   renderTankInfo(myTank);
   // maps
   const maps = $('lobbyMaps'); maps.innerHTML = '';
