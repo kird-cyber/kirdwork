@@ -1,0 +1,76 @@
+<title>케이요새 월드</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;800;900&display=swap">
+<style>
+/*__V1CSS__*/
+/* ---- 월드 전용 */
+.hud{z-index:3}
+.homelink{display:block;margin-top:12px;text-align:center;font-weight:800;color:#1F6FB2}.menuhome{color:#FFE07A;margin:10px 0}
+.stp{display:flex;gap:6px;align-items:center}.stp input{flex:1}
+#danger{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top,0px)) + 58px);z-index:12;background:#E0533F;color:#fff;font-weight:900;border-radius:12px;padding:8px 16px;border:2px solid #0E2238;pointer-events:none;white-space:nowrap}#danger.far{background:#2B3F6B}#danger.mid{background:#B5701A}
+#roomcard{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top,0px)) + 112px);display:flex;gap:10px;align-items:center;background:rgba(14,20,38,.9);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:8px 14px;pointer-events:none;z-index:2;max-width:calc(100vw - 32px)}
+#roomcard i{width:10px;align-self:stretch;border-radius:6px}#roomcard b{display:block;font-size:16px;font-weight:900}#roomcard small{display:block;font-size:12px;color:#C9D6E8;font-weight:700}
+#roomcard.on{animation:rc .35s ease}@keyframes rc{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (max-width:760px){#roomcard{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 200px)}}
+#modal{z-index:10;grid-template-columns:minmax(0,1fr)}.box{min-width:0;justify-self:center;box-sizing:border-box}.smn,.rgc,.kpb{min-width:0}.simon{gap:6px}#toast,#banner{z-index:11}
+.mini canvas{max-height:56vh;object-fit:contain}
+#tasks{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:calc(max(10px,env(safe-area-inset-top,0px)) + 58px);width:236px;background:var(--panel);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 10px 10px;font-size:12.5px;font-weight:700;pointer-events:auto;max-height:calc(100vh - 220px);overflow:auto;z-index:2}
+#tasks.min .tk{display:none}#tasks.min .tk-bar{margin-bottom:0}
+.tk-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;cursor:pointer}.tk-h b{font-family:var(--disp);font-weight:400;font-size:16px;color:var(--gold)}
+.tk-bar{height:6px;border-radius:9px;background:#26324A;margin:6px 0 6px;overflow:hidden}.tk-bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
+.tk{padding:4px 0;border-top:1px solid rgba(255,255,255,.08);line-height:1.35;color:#fff}.tk em{font-style:normal;font-size:10px;font-weight:900;color:var(--mute);margin-right:6px}
+.tk.ok{color:#8BE07A;text-decoration:line-through;text-decoration-color:rgba(139,224,122,.6)}.tk.lock{color:var(--mute)}
+#inv{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 46px);display:flex;gap:6px;pointer-events:auto;z-index:2;max-width:calc(100vw - 32px);flex-wrap:wrap;justify-content:center}
+.iv{background:var(--panel);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:4px 8px;font-size:20px;display:flex;align-items:center;gap:4px}.iv small{font-size:11px;font-weight:800;color:#DCE6F2}
+.iv.fr b{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}.iv.fr.no{opacity:.45}
+#altBtn{position:fixed;right:calc(max(16px,env(safe-area-inset-right,0px)) + 116px);bottom:calc(env(safe-area-inset-bottom,0px) + 40px);width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.18);border:4px solid var(--ink);color:#fff;font:900 14px var(--body);display:none}
+@media (pointer:coarse){#altBtn.on{display:block}#inv{bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}}
+.rg{display:grid;grid-template-columns:34px 1fr 34px;gap:6px;align-items:center;background:var(--bg);padding:10px;border-radius:14px;border:2px solid var(--ink)}
+.rg-grid{grid-column:2;grid-row:1/-1;display:grid;gap:4px;width:100%;align-self:stretch}.rg-end{font-size:22px;text-align:center}.rg-end.l{grid-column:1}.rg-end.r{grid-column:3}
+.rgc{aspect-ratio:1;border:0;border-radius:8px;background:rgba(255,255,255,.06);padding:0;cursor:pointer;transform:rotate(var(--r,0deg));transition:transform .12s}
+.rgc svg{width:100%;height:100%;display:block}.rgc:focus-visible{outline:3px solid var(--gold)}
+.simon{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:10px 0}
+.smn{aspect-ratio:1;border-radius:50%;border:4px solid var(--ink);background:color-mix(in srgb,var(--c) 35%,#1E2638);cursor:pointer;font:900 13px var(--body);color:#fff;transition:transform .08s}
+.smn.on{background:var(--c);transform:scale(1.08);box-shadow:0 0 24px var(--c);color:var(--ink)}
+.kp-disp{font:900 34px ui-monospace,monospace;letter-spacing:.3em;text-align:center;background:#13294B;color:#FFE07A;border-radius:12px;padding:10px;margin:6px 0 10px}
+.kp-disp.term{background:#04140A;color:#7CFF8A;border:2px solid #2FA84F}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:0 auto}
+.kpb{border:2px solid var(--ink);border-radius:12px;background:#fff;font:900 22px var(--body);padding:12px 0;cursor:pointer;color:var(--ink)}.kpb.go{background:var(--gold);font-size:16px}
+.ord{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.ord div{background:#13294B;color:#fff;border-radius:12px;padding:10px;text-align:center}.ord small{display:block;color:var(--gold);font-weight:900}.ord b{display:block;font-size:34px}.ord span{font-size:12px;font-weight:800}
+.note{font-size:12.5px;color:#5B6B82;line-height:1.6}
+/* 메뉴 */
+#menu{position:fixed;inset:0;z-index:5;overflow:auto;background:radial-gradient(ellipse at 50% 0%,#1D3A6E 0%,#0B1020 62%);padding:max(20px,env(safe-area-inset-top,0px)) 16px 40px}
+.mwrap{max-width:1080px;margin:0 auto}
+.mt{text-align:center;margin:18px 0 6px}.mt h1{font-family:var(--disp);font-weight:400;font-size:clamp(40px,9vw,84px);margin:0;line-height:1;letter-spacing:.02em}.mt h1 em{font-style:normal;color:var(--gold)}
+.mt p{color:#C9D6E8;font-weight:700;margin:10px auto 0;max-width:60ch;line-height:1.6}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:26px}
+.mc{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:2px solid rgba(255,255,255,.14);border-radius:20px;padding:16px;color:#fff;text-align:left;cursor:pointer;font-family:var(--body);display:flex;flex-direction:column;gap:8px;transition:transform .15s,border-color .15s}
+.mc:hover,.mc:focus-visible{transform:translateY(-3px);border-color:var(--gold);outline:none}
+.mc canvas{width:100%;aspect-ratio:16/10;border-radius:12px;background:#0A0F1C;display:block}
+.mc h2{margin:2px 0 0;font-family:var(--disp);font-weight:400;font-size:28px}.mc .tg{font-size:12px;font-weight:900;color:var(--gold)}
+.mc p{margin:0;font-size:14px;line-height:1.55;color:#C9D6E8;font-weight:600}.mc ul{margin:0;padding-left:18px;font-size:13px;line-height:1.7;color:#DCE6F2;font-weight:700}
+.mc .go{margin-top:auto;background:var(--gold);color:var(--ink);border-radius:12px;padding:10px;text-align:center;font-weight:900}
+.mfoot{margin-top:22px;text-align:center;color:var(--mute);font-size:13px;font-weight:700;line-height:1.7}
+.mfoot button{background:none;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:10px;padding:6px 12px;font:800 13px var(--body);cursor:pointer;margin:4px}
+@media (max-width:860px){.modes{grid-template-columns:1fr}}
+@media (max-width:760px){.iv{padding:3px 6px;font-size:16px}.iv small{display:none}.iv.fr b{font-size:13px}#inv{gap:4px;flex-wrap:nowrap}.hbtn{white-space:nowrap}#modebox{display:none}#hintBtn,#mapBtn,#menuBtn{padding:7px 8px}#tasks{width:190px;font-size:11.5px;top:calc(max(10px,env(safe-area-inset-top,0px)) + 50px)}}
+.big{font-family:var(--disp);font-weight:400;font-size:44px;color:var(--gold)}
+#centerMsg{position:fixed;left:50%;top:32%;transform:translateX(-50%);font-family:var(--disp);font-size:clamp(28px,6vw,54px);color:#FFE07A;text-shadow:0 4px 0 #0E2238;pointer-events:none;z-index:2;text-align:center;white-space:nowrap}
+#centerMsg small{display:block;font-family:var(--body);font-size:15px;font-weight:800;color:#fff;text-shadow:none;margin-top:4px}
+.bar{position:fixed;left:50%;transform:translateX(-50%);top:calc(max(10px,env(safe-area-inset-top,0px)) + 58px);width:min(360px,60vw);height:10px;background:#26324A;border-radius:9px;overflow:hidden;z-index:2;pointer-events:none}.bar i{display:block;height:100%;background:linear-gradient(90deg,#8CC63F,#FFD24A)}
+</style>
+<canvas id="cv"></canvas>
+<div class="hud"><div class="hb brand">케이요새 <em>월드</em></div><div class="hb" id="modebox"><small>모드</small><span id="hmode">방탈출</span></div><div class="hb t"><small id="hlab">시간</small><span id="ht">0:00</span></div><div class="hb" id="locbox" style="min-width:0;overflow:hidden;text-overflow:ellipsis"><small>지금 위치</small><span id="hloc">중앙 로비</span></div><div class="sp"></div><button class="hbtn" id="hintBtn">힌트</button><button class="hbtn" id="mapBtn">지도</button><button class="hbtn" id="menuBtn">메뉴</button></div>
+<div id="tasks"></div>
+<div id="inv"></div>
+<div id="mmw"><canvas id="mm" width="300" height="210"></canvas></div>
+<div id="joy"><div id="joyk"></div></div><button id="actBtn" aria-label="사용">사용</button><button id="altBtn" aria-label="보조 행동">변신</button>
+<div id="keyhint">이동 WASD·방향키 · 사용 E · 지도 M · 힌트 H</div>
+<div id="centerMsg" hidden></div><div id="danger" hidden></div>
+<div id="roomcard" hidden></div><div id="toast" role="status" hidden></div>
+<div id="banner" hidden><b></b><small></small></div>
+<div id="modal" hidden><div class="box" role="dialog" aria-modal="true"></div></div>
+<div id="menu"></div>
+<script>
+if (!CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) { r = Math.min(typeof r === 'number' ? r : 0, w / 2, h / 2); this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); };

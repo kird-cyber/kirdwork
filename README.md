@@ -8,6 +8,15 @@
 - 온라인 중계는 무료 공개 MQTT 서버를 씁니다 (게임 입력만 오가며 저장되지 않습니다).
 - 개발 소스: `dev/`
 
+## 케이요새 광장 (둘러보기)
+
+메인 화면 오른쪽 「케이요새 광장」 서랍에서 들어갑니다. 넓은 화면에서는 늘 펼쳐져 있습니다.
+
+- KIRD 홍보관: https://kird-cyber.github.io/kirdwork/hall/ — 마스코트와 걷는 전시관, 스탬프 랠리·수료증·포토존·블록 쌓기
+- 케이요새 월드 (게임관): 방탈출 `world/?m=escape` · 숨바꼭질 `world/?m=hide` · 탈출전 `world/?m=chase` — 봇과 함께하는 1인용
+- 확장 전시관: https://kird-cyber.github.io/kirdwork/expo/ — 확장 맵·시나리오·전용 탱크·확장 게임 구상 이미지 110점
+- 개발 소스: `dev/plaza/` (월드·홍보관 `world/`에서 `python3 build.py`, `python3 hall/build.py`; 전시관 `expo/build.py`)
+
 ## 로프 연습장 (웜즈식 게임 준비)
 
 - 플레이: https://kird-cyber.github.io/kirdwork/rope/

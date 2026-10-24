@@ -547,6 +547,29 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .xway .xt small { font-size: 14px; color: var(--muted); line-height: 1.45; }
 .xway .xgo { font-size: 26px; font-weight: 800; color: #C9B6FF; }
 .xway.prac .xgo { color: #8FDBFF; }
+
+/* 케이요새 광장 — 오른쪽 둘러보기 서랍 (홍보관·게임관·전시관) */
+.plaza { position: fixed; top: 0; right: 0; bottom: 0; z-index: 30; pointer-events: none; }
+.pz-tab { pointer-events: auto; position: absolute; right: 0; top: 50%; transform: translateY(-50%); writing-mode: vertical-rl; background: linear-gradient(180deg, #2E86D6, #8CC63F); color: #0E1220; border: 0; border-radius: 14px 0 0 14px; padding: 16px 9px; font: 900 15px var(--font-body); letter-spacing: .12em; cursor: pointer; box-shadow: -6px 8px 24px -10px rgba(0,0,0,.8); display: flex; align-items: center; gap: 8px; }
+.pz-tab i { writing-mode: horizontal-tb; font-style: normal; background: #0E1220; color: var(--gold); border-radius: 999px; font-size: 10px; padding: 2px 6px; letter-spacing: 0; }
+.pz-tab:focus-visible, .pz-item:focus-visible, .pz-x:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.pz-dim { position: fixed; inset: 0; background: rgba(4,6,14,.55); opacity: 0; transition: opacity .2s; pointer-events: none; }
+.pz-panel { pointer-events: auto; position: absolute; top: 0; right: 0; bottom: 0; width: min(330px, 88vw); background: #10162A; border-left: 1px solid var(--line); box-shadow: -18px 0 40px -20px rgba(0,0,0,.9); transform: translateX(105%); transition: transform .25s ease; overflow-y: auto; padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(20px, env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 10px; }
+.plaza.open .pz-panel { transform: none; } .plaza.open .pz-dim { opacity: 1; pointer-events: auto; } .plaza.open .pz-tab { opacity: 0; pointer-events: none; }
+.pz-h { display: flex; align-items: flex-start; gap: 10px; }
+.pz-h div { flex: 1; } .pz-h small { display: block; color: var(--gold); font-weight: 900; font-size: 12px; letter-spacing: .08em; }
+.pz-h h2 { margin: 2px 0 0; font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1.05; }
+.pz-h p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.pz-x { background: none; border: 1px solid var(--line); color: var(--fg); border-radius: 10px; width: 36px; height: 36px; font: 900 16px var(--font-body); cursor: pointer; }
+.pz-g { margin: 8px 0 0; font-size: 12px; font-weight: 900; color: var(--muted); letter-spacing: .08em; }
+.pz-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: #161E36; color: inherit; text-decoration: none; transition: transform .15s, border-color .15s, background .15s; }
+.pz-item:hover { transform: translateX(-3px); border-color: var(--c, var(--gold)); background: #1B2442; }
+.pz-item .pi { flex: none; width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; font-size: 24px; background: var(--c, #2E86D6); box-shadow: inset 0 -4px 0 rgba(0,0,0,.18); }
+.pz-item b { display: block; font-size: 17px; font-weight: 800; } .pz-item small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.4; margin-top: 2px; }
+.pz-item .new { font-size: 10px; font-weight: 900; color: #0E1220; background: var(--gold); border-radius: 999px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+.pz-item .go { margin-left: auto; color: var(--muted); font-weight: 900; }
+.pz-foot { margin-top: auto; color: var(--muted); font-size: 12px; line-height: 1.5; padding-top: 8px; }
+@media (min-width: 1580px) { .plaza { left: auto; width: 300px; } .plaza .pz-panel { transform: none; width: 300px; background: rgba(16,22,42,.92); } .plaza .pz-tab, .plaza .pz-dim, .plaza .pz-x { display: none; } }
 @media (max-width: 760px) { .extras { grid-template-columns: minmax(0, 1fr); } .xway { padding: 16px 18px; } .xway .xt b { font-size: 20px; } }
 /* portrait phones (2026-10-22): one compact two-row bottom panel so the battlefield stays visible, smaller touch pad, minimap column trimmed */
 @media (max-width: 600px) {
@@ -696,6 +719,22 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       </div>
       <div class="cta"><span style="flex:1"></span><div class="probe" id="probe" data-s="idle"></div></div>
     </div>
+    <aside class="plaza" id="plaza" aria-label="케이요새 광장 — 둘러보기">
+      <div class="pz-dim" onclick="document.getElementById('plaza').classList.remove('open')"></div>
+      <button class="pz-tab" id="pzTab" type="button" aria-controls="pzPanel" aria-expanded="false" onclick="var p=document.getElementById('plaza');p.classList.add('open');this.setAttribute('aria-expanded','true')">케이요새 광장 <i>NEW</i></button>
+      <div class="pz-panel" id="pzPanel">
+        <div class="pz-h"><div><small>둘러보기</small><h2>케이요새 광장</h2><p>포격전 말고도 걸어 다니며 구경하고 노는 곳. 홍보관·게임관·전시관이 모여 있어요.</p></div><button class="pz-x" type="button" aria-label="닫기" onclick="document.getElementById('plaza').classList.remove('open');document.getElementById('pzTab').setAttribute('aria-expanded','false')">✕</button></div>
+        <div class="pz-g">홍보관</div>
+        <a class="pz-item" href="hall/" style="--c:#2E86D6"><span class="pi" aria-hidden="true">🏛️</span><span><b>KIRD 홍보관<span class="new">NEW</span></b><small>마스코트와 걷는 전시관 · 스탬프 랠리 · 수료증</small></span><span class="go" aria-hidden="true">›</span></a>
+        <div class="pz-g">게임관 · 케이요새 월드</div>
+        <a class="pz-item" href="world/?m=escape" style="--c:#7C5CE0"><span class="pi" aria-hidden="true">🔐</span><span><b>방탈출<span class="new">NEW</span></b><small>정전된 연구단지 · 17단계 잠금을 풀고 탈출</small></span><span class="go" aria-hidden="true">›</span></a>
+        <a class="pz-item" href="world/?m=hide" style="--c:#2FA84F"><span class="pi" aria-hidden="true">🫥</span><span><b>숨바꼭질<span class="new">NEW</span></b><small>소품으로 변신해 숨기 · 또는 술래가 되어 찾기</small></span><span class="go" aria-hidden="true">›</span></a>
+        <a class="pz-item" href="world/?m=chase" style="--c:#E0533F"><span class="pi" aria-hidden="true">🏃</span><span><b>탈출전<span class="new">NEW</span></b><small>단말기 복구 후 탈출 · 또는 위조탱이 되어 추격</small></span><span class="go" aria-hidden="true">›</span></a>
+        <div class="pz-g">전시관</div>
+        <a class="pz-item" href="expo/" style="--c:#F2A23A"><span class="pi" aria-hidden="true">🖼️</span><span><b>확장 전시관<span class="new">NEW</span></b><small>확장 맵·시나리오·전용 탱크·확장 게임 구상 110점</small></span><span class="go" aria-hidden="true">›</span></a>
+        <div class="pz-foot">광장의 게임은 봇과 함께하는 1인용 미리보기입니다.</div>
+      </div>
+    </aside>
   </div>
 
   <div class="overlay" id="solo" hidden>
