@@ -56,7 +56,7 @@ const CHASE = {
   escape(v, ex) { v.escaped = true; v.gone = true; sfx('win'); fxBurst(ex.x, ex.y, '#FFD24A', 26); if (v === PL) { PL.gone = true; this.finish(true); } else toast(`${v.name} 탱크 탈출!`); },
   finish(win) {
     const S = STATE; if (S.over) return; S.over = true; const esc = this.allies.filter(a => a.escaped).length;
-    later(() => { openModal(`<div class="win"><div class="key">${win ? '🚀' : '🔒'}</div><h3>${win ? '탈출 성공!' : '위조탱 승리'}</h3><p>${win ? `동료 ${esc}대도 함께 탈출` : '모두 격리실에 갇혔다'} · 복구한 단말기 ${S.fixed}곳 · ${fmtT(S.clock)}</p><div class="row"><button class="btn" id="again">다시 하기</button><button class="btn ghost" id="tomenu">모드 선택</button></div></div>`, { sticky: true }); $('#again').onclick = () => { closeModal(); startMode('chase'); }; $('#tomenu').onclick = () => { closeModal(); showMenu(); }; }, 1000);
+    later(() => { openModal(`<div class="win"><div class="key">${win ? '🚀' : '🔒'}</div><h3>${win ? '탈출 성공!' : '위조탱 승리'}</h3><p>${win ? `동료 ${esc}대도 함께 탈출` : '모두 격리실에 갇혔다'} · 복구한 단말기 ${S.fixed}곳 · ${fmtT(S.clock)}</p>${kirdFact()}<div class="row"><button class="btn" id="again">다시 하기</button><button class="btn ghost" id="tomenu">모드 선택</button></div></div>`, { sticky: true }); $('#again').onclick = () => { closeModal(); startMode('chase'); }; $('#tomenu').onclick = () => { closeModal(); showMenu(); }; }, 1000);
   },
   update(dt) {
     const S = STATE; if (S.over) return; const s = this.seeker; const surv = [PL].concat(this.allies);

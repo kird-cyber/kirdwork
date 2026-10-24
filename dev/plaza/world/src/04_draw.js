@@ -44,7 +44,7 @@ const DRAW = {
   cabletray(d, X, Y, W, H) { ctx.fillStyle = 'rgba(245,197,66,.35)'; ctx.fillRect(X, Y + H / 2 - 6, W, 12); line(X, Y + H / 2, X + W, Y + H / 2, '#F5C542', 2); },
   hvfence(d, X, Y, W, H) { ctx.strokeStyle = '#F5C542'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]); ctx.beginPath(); ctx.moveTo(X + W / 2, Y); ctx.lineTo(X + W / 2, Y + H); ctx.stroke(); ctx.setLineDash([]); },
   kstatue(d, X, Y, W, H) { const cx = X + W / 2, cy = Y + H / 2; shadowE(cx + 6, cy + 12, W / 2, H / 2.5); circ(cx, cy, W / 2 - 4, '#C9D3E2', OL, 3); circ(cx, cy, W / 2 - 16, '#F4F6FA', OL, 2); txt('K', cx, cy + 2, 40, '#2E86D6', 900); },
-  reception(d, X, Y, W, H) { shadowE(X + W / 2, Y + H + 2, W / 2, 9); rr(X, Y, W, H, 12, '#13294B', OL, 2.5); rr(X + 8, Y + 6, W - 16, 10, 4, '#2E86D6'); txt('KIRD · 케이요새', X + W / 2, Y + H - 12, 12, '#fff', 900); },
+  reception(d, X, Y, W, H) { shadowE(X + W / 2, Y + H + 2, W / 2, 9); rr(X, Y, W, H, 12, '#13294B', OL, 2.5); rr(X + 8, Y + 6, W - 16, 10, 4, '#2E86D6'); txt('KIRD · 미래비전 2050', X + W / 2, Y + H - 12, 12, '#fff', 900); },
   plantbig(d, X, Y, W, H) { const cx = X + W / 2, cy = Y + H / 2; circ(cx, cy + 6, 13, '#B5701A', OL, 2); circ(cx - 7, cy - 4, 12, '#5E9A22', OL, 2); circ(cx + 7, cy - 6, 11, '#8CC63F', OL, 2); circ(cx, cy - 13, 10, '#7DB54C', OL, 2); },
   board(d, X, Y, W, H) { rr(X, Y + 2, W, H - 4, 6, '#fff', OL, 2.5); txt(d.label, X + W / 2, Y + H / 2, 13, '#13294B', 900); if (STATE.uv && STATE.mode === 'escape') { txt(`접속번호 ${STATE.uvCode}`, X + W / 2, Y + H + 14, 16, '#C084FC', 900); } },
   sofa(d, X, Y, W, H) { rr(X + 2, Y + 2, W - 4, H - 4, 12, '#4C8DF0', OL, 2.5); rr(X + 8, Y + 8, 14, H - 16, 6, '#7FB0F8'); },

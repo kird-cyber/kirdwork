@@ -1,7 +1,7 @@
 import json,sys
 items=json.load(open('items.json'))
 home=sys.argv[1] if len(sys.argv)>1 else '../'
-SEC=[('map','확장 맵','과정·사업마다 새 맵 하나 — 맵·탱크만 더하면 새 교육 과정이 된다',23),('scene','활용 시나리오','연구윤리·안전·성과를 포격전 한 장면으로',20),('tank','과정 전용 탱크','과정 이름을 단 탱크와 무기 — 탱크 한 대가 교재 한 장',7),('escape','확장 게임 · 방탈출','캠퍼스 지도와 실내를 오가는 방탈출 구상',20),('hide','확장 게임 · 숨바꼭질','변신·위장으로 숨고 찾는 숨바꼭질 구상',20),('chase','확장 게임 · 탈출전','4 대 1 비대칭 탈출전 구상',20)]
+SEC=[('map','확장 맵','과정·사업마다 새 맵 하나 — 2025 성과·2026 교육 반영, 맵·탱크만 더하면 새 교육 과정이 된다',31),('scene','활용 시나리오','연구윤리·안전·성과를 포격전 한 장면으로',20),('tank','과정 전용 탱크','과정 이름을 단 탱크와 무기 — 탱크 한 대가 교재 한 장',7),('escape','확장 게임 · 방탈출','캠퍼스 지도와 실내를 오가는 방탈출 구상',20),('hide','확장 게임 · 숨바꼭질','변신·위장으로 숨고 찾는 숨바꼭질 구상',20),('chase','확장 게임 · 탈출전','4 대 1 비대칭 탈출전 구상',20)]
 html=f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>케이요새 확장 전시관</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

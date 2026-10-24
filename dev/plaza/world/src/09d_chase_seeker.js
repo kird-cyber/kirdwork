@@ -36,7 +36,7 @@ const CHASES = Object.assign(Object.create(CHASE), {
   escape(v, ex) { v.escaped = true; v.gone = true; sfx('bad'); toast(`${v.name} 탱크가 ${ex.n}로 탈출했다!`); },
   finish(win) {
     const S = STATE; if (S.over) return; S.over = true; const esc = this.allies.filter(a => a.escaped).length, out = this.allies.filter(a => a.out || a.caged).length; sfx(win ? 'win' : 'bad');
-    later(() => { openModal(`<div class="win"><div class="key">${win ? '👹' : '🚀'}</div><h3>${win ? '위조탱 승리!' : '탱크들이 탈출했다'}</h3><p>잡은 탱크 ${out}대 · 탈출 ${esc}대 · 복구된 단말기 ${S.fixed}곳</p><div class="row"><button class="btn" id="again">다시 하기</button><button class="btn ghost" id="swap">생존자 쪽 해보기</button><button class="btn ghost" id="tomenu">모드 선택</button></div></div>`, { sticky: true }); $('#again').onclick = () => { closeModal(); startMode('chaseS'); }; $('#swap').onclick = () => { closeModal(); startMode('chase'); }; $('#tomenu').onclick = () => { closeModal(); showMenu(); }; }, 900);
+    later(() => { openModal(`<div class="win"><div class="key">${win ? '👹' : '🚀'}</div><h3>${win ? '위조탱 승리!' : '탱크들이 탈출했다'}</h3><p>잡은 탱크 ${out}대 · 탈출 ${esc}대 · 복구된 단말기 ${S.fixed}곳</p>${kirdFact()}<div class="row"><button class="btn" id="again">다시 하기</button><button class="btn ghost" id="swap">생존자 쪽 해보기</button><button class="btn ghost" id="tomenu">모드 선택</button></div></div>`, { sticky: true }); $('#again').onclick = () => { closeModal(); startMode('chaseS'); }; $('#swap').onclick = () => { closeModal(); startMode('chase'); }; $('#tomenu').onclick = () => { closeModal(); showMenu(); }; }, 900);
   },
   showEnt(e) { if (e.gone) return false; if (e.caged) return true; return canSee(e.x, e.y) || Math.hypot(e.x - PL.x, e.y - PL.y) < 1.5; },
   drawTop() {
