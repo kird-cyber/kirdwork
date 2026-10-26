@@ -1,21 +1,20 @@
 // ================================================================ 기관 조형물 · 방 배치
-// decor: {t, x, y, w, h, solid, room, ...}  (타일 단위)
-const DEC = [];
-function D(t, x, y, w, h, solid, o) { const d = Object.assign({ t, x, y, w: w || 1, h: h || 1, solid: solid !== false }, o || {}); DEC.push(d); return d; }
+// decor: {t, x, y, w, h, solid, room, ...}  (타일 단위) — loadMap('lab')이 부를 때마다 새로 만든다
+function labDecor() {
 // ---- NSR maze walls (internal) & gates
 DOORLIST.splice(DOORLIST.findIndex(d => d.room === 'nsr' && d.y0 === 22), 1); // 보안 미로는 서쪽 문 하나
 for (let x = 111; x <= 112; x++) for (let y = 22; y <= 23; y++) { G[gi(x, y)] = TL.WALL; }
 DOORLIST.forEach((d, k) => d.k = k);
 const NSRW = [[105, 36, 116, 36], [106, 31, 118, 31], [105, 26, 116, 26], [109, 38, 109, 40], [113, 37, 113, 39], [108, 32, 108, 34], [114, 33, 114, 35], [110, 27, 110, 29], [115, 28, 115, 30]];
 for (const [x0, y0, x1, y1] of NSRW) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) G[gi(x, y)] = TL.WALL;
-const GATES = [{ x: 111, y0: 37, y1: 40, ph: 0 }, { x: 116, y0: 37, y1: 40, ph: 0.5 }, { x: 111, y0: 32, y1: 35, ph: 0.25 }, { x: 106, y0: 32, y1: 35, ph: 0.75 }, { x: 112, y0: 27, y1: 30, ph: 0.4 }, { x: 108, y0: 24, y1: 25, ph: 0.1 }];
+GATES.push({ x: 111, y0: 37, y1: 40, ph: 0 }, { x: 116, y0: 37, y1: 40, ph: 0.5 }, { x: 111, y0: 32, y1: 35, ph: 0.25 }, { x: 106, y0: 32, y1: 35, ph: 0.75 }, { x: 112, y0: 27, y1: 30, ph: 0.4 }, { x: 108, y0: 24, y1: 25, ph: 0.1 });
 for (const g of GATES) for (let y = g.y0; y <= g.y1; y++) G[gi(g.x, y)] = TL.GATE;
 // ---- 방 모서리 깎기 (네모 상자 탈피)
 for (const [x0, y0, x1, y1] of [[80, 14, 83, 16], [95, 4, 98, 5], [46, 38, 48, 40], [80, 24, 82, 26], [96, 37, 98, 40], [46, 48, 48, 50], [4, 14, 6, 16], [30, 4, 32, 6]]) for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) G[gi(x, y)] = TL.WALL;
 // ---- KAERI pool
 for (let y = 51; y <= 59; y++) for (let x = 83; x <= 95; x++) if (!(x >= 88 && x <= 90 && y >= 54 && y <= 56)) G[gi(x, y)] = TL.WATER;
 // ---- KIMM conveyors (direction per row)
-const CONV = {}; // gi -> dx  (2줄짜리 벨트 4묶음, 사이사이 안전 줄)
+// CONV: gi -> dx  (2줄짜리 벨트 4묶음, 사이사이 안전 줄)
 for (const [y0, dir] of [[50, 1], [53, -1], [56, 1], [59, -1]]) for (let y = y0; y <= y0 + 1; y++) for (let x = 105; x <= 118; x++) { G[gi(x, y)] = TL.CONV; CONV[gi(x, y)] = dir; }
 // ---- room decor
 // KARI 발사 시험장
@@ -69,19 +68,12 @@ D('fusebox', 117, 61, 1, 1, true, { label: '퓨즈함' }); D('crates', 105, 61, 
 D('station', 109, 70, 8, 2, true, { label: '화물역' }); D('signal', 7, 70, 2, 1, true, { label: '출발 신호' });
 D('cage', 58, 79, 5, 1, false, { label: '격리실' });
 // 선로: 위 y73, 아래 y77, 분기 x30/60/90 · 장애 구간
-const TRACK = { up: 73, lo: 77, x0: 6, x1: 116, sw: [30, 60, 90], block: [{ tr: 'up', x0: 34, x1: 56 }, { tr: 'lo', x0: 64, x1: 86 }, { tr: 'lo', x0: 96, x1: 108 }] };
+Object.assign(TRACK, { up: 73, lo: 77, x0: 6, x1: 116, sw: [30, 60, 90], block: [{ tr: 'up', x0: 34, x1: 56 }, { tr: 'lo', x0: 64, x1: 86 }, { tr: 'lo', x0: 96, x1: 108 }] });
 TRACK.sw.forEach((x, i) => D('lever', x - 1, 71, 1, 1, true, { id: 'lev' + i, i, st: 0 }));
 for (const b of TRACK.block) D('rockfall', b.x0, TRACK[b.tr] - 1, b.x1 - b.x0 + 1, 2, false);
 D('board2', 10, 79, 4, 1, true, { label: '운행 안내' });
 [16, 22, 31, 40, 48, 66, 75, 84, 94, 101].forEach((x, k) => D('container', x, 79, 3, 2, true, { c: ['#2E86D6', '#E0533F', '#F2A23A', '#2FA84F', '#7C5CE0'][k % 5] }));
 [[38, 70], [46, 70], [70, 70], [78, 70], [98, 70]].forEach(([x, y], k) => D('container', x, y, 3, 2, true, { c: ['#F2A23A', '#2FA84F', '#7C5CE0', '#2E86D6', '#E0533F'][k % 5] }));
 // KRIBB 압력판
-const PLATES = [[6, 60], [12, 57]];
-// helpers
-const SOLID = new Uint8Array(MW * MH);
-function bakeSolids() {
-  SOLID.fill(0);
-  for (const d of DEC) if (d.solid && !d.off) for (let y = Math.floor(d.y); y < Math.ceil(d.y + d.h); y++) for (let x = Math.floor(d.x); x < Math.ceil(d.x + d.w); x++) if (x >= 0 && y >= 0 && x < MW && y < MH) SOLID[gi(x, y)] = 1;
+PLATES.push([6, 60], [12, 57]);
 }
-bakeSolids();
-function decorById(id) { return DEC.find(d => d.id === id); }

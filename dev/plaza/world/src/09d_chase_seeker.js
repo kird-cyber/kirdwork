@@ -3,14 +3,14 @@ const CHASES = Object.assign(Object.create(CHASE), {
   name: '탈출전 · 위조탱', altLabel: '문 잠금', repT: 50, noAct: true, keys: '이동 WASD·방향키 · 부딪혀 잡기 · 문 잠금 Q · 지도 M',
   init() {
     Object.assign(STATE, { mode: 'chaseS', t: 0, clock: 0, pen: 0, over: false, fixed: 0, need: 5, open: false, left: 300, start: 8 });
-    setupOpenWorld(); scatterProps(); this.locks = {}; this.lockCd = 0;
+    setupOpenWorld(); scatterProps(); this.locks = {}; this.lockCd = 0; const C = chaseCfg();
     this.terms = shuffle(TERMSPOTS.slice()).slice(0, 7).map(t => Object.assign({ p: 0, done: false, by: null }, t));
-    Object.assign(PL, { x: CAGE.x, y: 75.5, a: -Math.PI / 2, col: 'fake', name: '위조탱(나)', speed: 5.0, disguise: null, paint: null, gone: false, caged: false, out: false, slow: 0, frozen: true, escaped: false });
-    this.allies = ['blue', 'green', 'orange', 'purple'].map((c, k) => mkBot({ x: 60.5 + k * 1.6, y: 39.6, col: c, name: ['파랑', '초록', '주황', '보라'][k], st: 'task', ally: true, caged: false, cageT: 0, escaped: false, out: false, brave: rnd(0.4, 0.9) }));
+    Object.assign(PL, { x: C.seeker[0], y: C.seeker[1], a: -Math.PI / 2, col: 'fake', name: '위조탱(나)', speed: 5.0, disguise: null, paint: null, gone: false, caged: false, out: false, slow: 0, frozen: true, escaped: false });
+    this.allies = ['blue', 'green', 'orange', 'purple'].map((c, k) => mkBot({ x: (C.allies[k] || C.pl)[0] + (k > 2 ? 1.2 : 0), y: (C.allies[k] || C.pl)[1], col: c, name: ['파랑', '초록', '주황', '보라'][k], st: 'task', ally: true, caged: false, cageT: 0, escaped: false, out: false, brave: rnd(0.4, 0.9) }));
     this.seeker = PL; PL.target = null; PL.st = 'player';
     ENTS = this.allies.slice(); INTER = []; CAM.x = PL.x * T; CAM.y = PL.y * T;
   },
-  intro() { openModal(`<div class="win"><div class="key">👹</div><h3>위조탱이 되어라</h3><p>탱크 4대가 단말기 7곳 중 5곳을 복구하면 탈출구가 열린다. 그 전에 <b>몸으로 부딪혀</b> 잡아 격리실로 보내자. 격리실에서 45초가 지나면 탈락.</p><p><b>${COARSE ? '문 잠금 버튼' : 'Q 문 잠금'}</b>: 근처 문 3개를 9초 동안 잠근다(30초마다). 소품으로 변신해 숨은 탱크도 부딪히면 잡힌다. 단말기 오류 경보가 울리면 지도에 표시된다.</p><p>2대 이상 탈출하면 패배, 그 전에 모두 잡으면 승리.</p><div class="row"><button class="btn" data-close>사냥 시작</button></div></div>`); },
+  intro() { openModal(`<div class="win"><div class="key">👹</div><h3>위조탱이 되어라</h3><p>무대: <b>${MAP.name}</b>. 탱크 4대가 단말기 7곳 중 5곳을 복구하면 탈출구가 열린다. 그 전에 <b>몸으로 부딪혀</b> 잡아 격리실로 보내자. 격리실에서 45초가 지나면 탈락.</p><p><b>${COARSE ? '문 잠금 버튼' : 'Q 문 잠금'}</b>: 근처 문 3개를 9초 동안 잠근다(30초마다). 소품으로 변신해 숨은 탱크도 부딪히면 잡힌다. 단말기 오류 경보가 울리면 지도에 표시된다.</p><p>2대 이상 탈출하면 패배, 그 전에 모두 잡으면 승리.</p><div class="row"><button class="btn" data-close>사냥 시작</button></div></div>`); },
   buildInter() { INTER = []; },
   alt() {
     if (STATE.over || PL.frozen) return;
@@ -21,6 +21,7 @@ const CHASES = Object.assign(Object.create(CHASE), {
   noise(x, y) { this.pings = (this.pings || []).concat([{ x, y, t: 0 }]); },
   update(dt) {
     const S = STATE; if (S.over) return; this.pings = (this.pings || []).filter(p => (p.t += dt) < 5);
+    if (S.tutHold) return;
     S.left -= dt; if (S.left <= 0) { this.finish(true); return; }
     if (S.start > 0) { S.start -= dt; if (S.start <= 0) { PL.frozen = false; sfx('alarm'); banner('사냥 시작!', '탱크 4대를 잡아라'); } }
     for (const a of this.allies) if (a.caged && !a.out) { a.cageT -= dt; if (a.cageT <= 0) { a.out = true; a.gone = true; toast(`${a.name} 탱크 탈락!`); } }
@@ -50,7 +51,7 @@ const CHASES = Object.assign(Object.create(CHASE), {
   mapLegend() { return '<span class="pill">■ 단말기 (노란 테 = 수리 중)</span><span class="pill">□ 탈출구</span><span class="pill" style="border-left:6px solid #E0533F">○ 경보</span>'; },
   hud() {
     const S = STATE; $('#ht').textContent = S.start > 0 ? fmtT(S.start) : fmtT(S.left); $('#hlab').textContent = S.start > 0 ? '출발 대기' : '남은 시간';
-    const r = roomAt(PL.x, PL.y); $('#hloc').textContent = r ? `${r.s} · ${r.n}` : '복도';
+    const r = roomAt(PL.x, PL.y); $('#hloc').textContent = r ? `${r.s} · ${r.n}` : MAP.corrName || '복도';
     const st = a => a.escaped ? '탈출' : a.out ? '탈락' : a.caged ? `격리 ${Math.ceil(a.cageT)}초` : '???';
     const html = `<div class="tk-h"><b>위조탱</b><span>단말기 ${S.fixed}/${S.need}</span></div><div class="tk-bar"><i style="width:${Math.min(1, S.fixed / S.need) * 100}%;background:#E0533F"></i></div>${this.allies.map(a => `<div class="tk${a.caged || a.out ? ' ok' : ''}">${a.name} — ${st(a)}</div>`).join('')}<div class="tk lock">${S.open ? '탈출구가 열렸다! 막아라' : 'Q 문 잠금 · 부딪혀서 잡기'}</div>`;
     if (html !== this._h) { this._h = html; $('#tasks').innerHTML = html; }

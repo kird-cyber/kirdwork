@@ -27,9 +27,9 @@ function astar(sx, sy, tx, ty, maxN) {
 function randFloor(roomId) {
   for (let k = 0; k < 400; k++) {
     let x, y; if (roomId) { const r = ROOMS[RID[roomId]].r; x = r[0] + rndi(r[2] - r[0] + 1); y = r[1] + rndi(r[3] - r[1] + 1); } else { x = rndi(MW); y = rndi(MH); }
-    if (botPass(x, y) && G[gi(x, y)] === TL.FLOOR && !GATEAT[gi(x, y)]) return [x + .5, y + .5];
+    if (botPass(x, y) && G[gi(x, y)] === TL.FLOOR && !GATEAT[gi(x, y)] && (!roomId || GR[gi(x, y)] === RID[roomId] || ROOMS[RID[roomId]].inner)) return [x + .5, y + .5];
   }
-  return [64.5, 38.5];
+  return roomId ? roomCenter(roomId) : [64.5, 38.5];
 }
 function mkBot(o) { return Object.assign({ x: 64.5, y: 38.5, r: 0.34, a: 0, col: 'red', name: '', tread: 0, path: null, pathT: 0, goal: null, stuck: 0, lx: 0, ly: 0 }, o); }
 function botGo(e, x, y) { if (e.failT && STATE.t < e.failT) { e.goal = null; e.path = null; return; } e.goal = [x, y]; e.path = astar(e.x, e.y, x, y, 14000); e.pathT = 0; if (!e.path) { e.failT = STATE.t + 0.7; e.goal = null; } }
@@ -53,8 +53,8 @@ function drawCone(e, fov, range, col) {
   ctx.closePath(); ctx.fill();
 }
 // ---------------------------------------------------------------- 소품
-const ROOMPROPS = { kari: ['cone', 'barrel'], kasi: ['scope', 'lamp'], kriss: ['flask', 'lamp'], kisti: ['server'], etri: ['router', 'server'], kigam: ['rock'], keri: ['coil', 'drum'], lobby: ['plant', 'chair'], kfe: ['canister'], nsr: ['server'], kribb: ['plant'], wikim: ['jar'], krict: ['drum', 'flask'], kaeri: ['barrel'], kimm: ['crate'], krri: ['crate', 'cone'], ctrl: ['chair'], corr: ['cone', 'plant'] };
-const PROPN = { cone: '라바콘', barrel: '드럼통', scope: '소형 망원경', lamp: '조명', flask: '플라스크', server: '서버', router: '공유기', rock: '바위', coil: '코일', drum: '약품통', plant: '화분', chair: '의자', canister: '가스통', jar: '김치독', crate: '상자' };
+// ROOMPROPS(방별 소품)는 맵 파일이 채운다
+const PROPN = { cone: '라바콘', barrel: '드럼통', scope: '소형 망원경', lamp: '조명', flask: '플라스크', server: '서버', router: '공유기', rock: '바위', coil: '코일', drum: '약품통', plant: '화분', chair: '의자', canister: '가스통', jar: '김치독', crate: '상자', bush: '덤불', stump: '그루터기', lantern: '정원등', duck: '오리 인형', bust: '흉상', bin: '휴지통', hydrant: '소화전', bike: '자전거', mailbox: '우체통', tire: '타이어', barrier: '바리케이드', book: '책 더미', cushion: '방석' };
 function propsHere(x, y) { const r = roomAt(x, y); return ROOMPROPS[r ? r.id : 'corr'] || ROOMPROPS.corr; }
 function drawProp(k, X, Y, a) {
   shadowE(X + 3, Y + 14, 16, 6);
@@ -73,17 +73,31 @@ function drawProp(k, X, Y, a) {
     case 'plant': circ(X, Y + 6, 11, '#B5701A', OL, 2); circ(X - 6, Y - 3, 10, '#5E9A22', OL, 2); circ(X + 6, Y - 5, 9, '#8CC63F', OL, 2); circ(X, Y - 11, 8, '#7DB54C', OL, 2); break;
     case 'chair': rr(X - 13, Y - 13, 26, 26, 7, '#4C8DF0', OL, 2.5); rr(X - 13, Y - 13, 26, 8, 4, '#2B3F6B'); break;
     case 'jar': circ(X, Y, 16, '#5A3A1E', OL, 2.5); circ(X, Y, 9, '#3A2410', OL, 1.5); break;
+    case 'bush': circ(X - 8, Y + 2, 11, '#3F7F2A', OL, 2); circ(X + 8, Y + 1, 12, '#4E9A33', OL, 2); circ(X, Y - 8, 12, '#62B23F', OL, 2); circ(X - 3, Y - 10, 3, 'rgba(255,255,255,.25)'); break;
+    case 'stump': ell(X, Y + 2, 15, 12, '#7A4E26', OL, 2.5); ell(X, Y, 12, 9, '#C8995C', OL, 1.5); ctx.strokeStyle = 'rgba(90,55,25,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(X, Y, 7, 5, 0, 0, 7); ctx.stroke(); break;
+    case 'lantern': rr(X - 3, Y - 4, 6, 20, 2, '#3A4152', OL, 1.5); circ(X, Y - 10, 10, '#FFE7A0', OL, 2); circ(X, Y - 10, 18, 'rgba(255,220,120,.18)'); break;
+    case 'duck': ell(X, Y + 4, 15, 10, '#FFD24A', OL, 2); circ(X + 8, Y - 6, 8, '#FFD24A', OL, 2); ctx.fillStyle = '#F2802A'; ctx.fillRect(X + 13, Y - 7, 7, 4); circ(X + 10, Y - 8, 1.6, OL); break;
+    case 'bust': rr(X - 12, Y + 2, 24, 14, 3, '#9AA6B8', OL, 2); circ(X, Y - 8, 10, '#DCE3EC', OL, 2); rr(X - 8, Y - 2, 16, 8, 3, '#C9D3E2', OL, 1.5); break;
+    case 'bin': rr(X - 11, Y - 14, 22, 28, 4, '#5B8C5A', OL, 2.5); rr(X - 13, Y - 16, 26, 6, 3, '#3F6B3E', OL, 2); txt('♻', X, Y + 2, 12, '#fff', 900); break;
+    case 'hydrant': rr(X - 8, Y - 14, 16, 26, 5, '#E0533F', OL, 2.5); circ(X, Y - 14, 8, '#C9402E', OL, 2); rr(X - 14, Y - 4, 28, 7, 3, '#C9402E', OL, 2); break;
+    case 'bike': circ(X - 10, Y + 4, 9, null, OL, 3); circ(X + 10, Y + 4, 9, null, OL, 3); line(X - 10, Y + 4, X, Y - 6, '#2E86D6', 3); line(X, Y - 6, X + 10, Y + 4, '#2E86D6', 3); line(X - 3, Y - 10, X + 5, Y - 10, OL, 3); break;
+    case 'mailbox': rr(X - 11, Y - 14, 22, 24, 6, '#E0533F', OL, 2.5); rr(X - 7, Y - 6, 14, 3, 1, OL); rr(X - 3, Y + 10, 6, 6, 1, '#5B6B82'); break;
+    case 'tire': circ(X, Y, 15, '#22252E', OL, 2); circ(X, Y, 7, '#5B6B82', OL, 1.5); break;
+    case 'barrier': rr(X - 16, Y - 8, 32, 14, 3, '#fff', OL, 2.5); for (let k = 0; k < 3; k++) { ctx.fillStyle = '#E0533F'; ctx.fillRect(X - 14 + k * 11, Y - 6, 5, 10); } rr(X - 14, Y + 6, 4, 9, 1, '#5B6B82'); rr(X + 10, Y + 6, 4, 9, 1, '#5B6B82'); break;
+    case 'book': for (let k = 0; k < 4; k++) rr(X - 13 + k % 2 * 2, Y + 8 - k * 7, 26, 7, 2, ['#E0533F', '#2E86D6', '#FFD24A', '#2FA84F'][k], OL, 1.5); break;
+    case 'cushion': rr(X - 14, Y - 12, 28, 24, 9, '#C084FC', OL, 2.5); circ(X, Y, 3, '#7C5CE0'); break;
     case 'crate': rr(X - 15, Y - 15, 30, 30, 3, '#C08A52', OL, 2.5); line(X - 15, Y - 15, X + 15, Y + 15, '#7A4E26', 2); line(X + 15, Y - 15, X - 15, Y + 15, '#7A4E26', 2); break;
   }
 }
 let PROPS = [];  // 장식용 작은 소품(통과 가능) — 숨바꼭질·탈출전
 function scatterProps() {
-  PROPS = []; for (const r of ROOMS) { if (r.id === 'ctrl') continue; const n = r.id === 'krri' ? 22 : 7; for (let k = 0; k < n; k++) { const [x, y] = randFloor(r.id); PROPS.push({ x, y, k: pick(ROOMPROPS[r.id]) }); } }
-  for (let k = 0; k < 26; k++) { const c = pick(CORR); const x = c[0] + rndi(c[2] - c[0] + 1), y = c[1] + rndi(c[3] - c[1] + 1); if (botPass(x, y)) PROPS.push({ x: x + .5, y: y + .5, k: pick(ROOMPROPS.corr) }); }
+  PROPS = []; for (const r of ROOMS) { if (r.hold || !ROOMPROPS[r.id]) continue; const n = r.nprops || (r.id === 'krri' ? 22 : 7); for (let k = 0; k < n; k++) { const [x, y] = randFloor(r.id); PROPS.push({ x, y, k: pick(ROOMPROPS[r.id]) }); } }
+  const nc = MAP && MAP.corrProps !== undefined ? MAP.corrProps : 26;
+  for (let k = 0, tries = 0; k < nc && tries < 2000; tries++) { let x, y; if (CORR.length) { const c = pick(CORR); x = c[0] + rndi(c[2] - c[0] + 1); y = c[1] + rndi(c[3] - c[1] + 1); } else { x = rndi(MW); y = rndi(MH); } if (GR[gi(x, y)] === -2 && G[gi(x, y)] === TL.FLOOR && botPass(x, y)) { PROPS.push({ x: x + .5, y: y + .5, k: pick(ROOMPROPS.corr) }); k++; } }
 }
 function drawProps() { for (const p of PROPS) { if (Math.abs(p.x * T - CAM.x) > VW / SC / 2 + 60 || Math.abs(p.y * T - CAM.y) > VH / SC / 2 + 60) continue; drawProp(p.k, p.x * T, p.y * T); } }
 function setupOpenWorld() {
-  STATE.drained = false; HOLES.clear(); FILLED.length = 0; PUSH = []; decorById('gdoor').off = true; decorById('toolbox').off = true; bakeSolids();
+  STATE.drained = false; HOLES.clear(); FILLED.length = 0; PUSH = []; for (const id of ['gdoor', 'toolbox']) { const d = decorById(id); if (d) d.off = true; } bakeSolids();
   STATE.power = true; STATE.fusion = true; STATE.laserOK = true;
 }
 function ring(x, y, col) { FX.push({ k: 'ring', x, y, c: col || '#FFD24A', t: 0, life: 1.6 }); }

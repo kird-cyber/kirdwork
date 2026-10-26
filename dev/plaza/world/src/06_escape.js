@@ -191,7 +191,7 @@ const ESC = {
   },
   hud() {
     const S = STATE; $('#ht').textContent = fmtT(S.clock + S.pen); $('#hlab').innerHTML = S.pen ? `시간 <span style="color:#FF8A7A">+${S.pen}초</span>` : '시간';
-    const r = roomAt(PL.x, PL.y); $('#hloc').textContent = r ? `${r.s} · ${r.n}` : '복도';
+    const r = roomAt(PL.x, PL.y); $('#hloc').textContent = r ? `${r.s} · ${r.n}` : MAP.corrName || '복도';
     const key = TASKS.map(t => (t.done() ? 1 : t.need() ? 2 : 0)).join('') + Object.keys(S.items).join() + Object.keys(S.frag).join();
     if (key !== this._hk) { this._hk = key; S.splits = S.splits || {}; for (const t of TASKS) if (t.done() && S.splits[t.id] === undefined) S.splits[t.id] = Math.floor(S.clock + S.pen); renderTasks(); renderInv(); }
   },

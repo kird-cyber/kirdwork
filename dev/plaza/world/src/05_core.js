@@ -23,7 +23,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 function doorUnlocked(d) { return MODE && MODE.doorOK ? MODE.doorOK(d) : true; }
 function gateActive(g) { const p = ((STATE.t / 2.6 + g.ph) % 1); return p < 0.42; }
 function gateWarn(g) { const p = ((STATE.t / 2.6 + g.ph) % 1); return p > 0.86; }
-const GATEAT = {}; for (const g of GATES) for (let y = g.y0; y <= g.y1; y++) GATEAT[gi(g.x, y)] = g;
+// GATEAT: 맵 파일에서 만든다 (게이트 타일 → 게이트)
 function pushAt(x, y) { for (const p of PUSH) if (p.x === x && p.y === y) return p; return null; }
 function tileBlocks(x, y, who) {
   if (x < 0 || y < 0 || x >= MW || y >= MH) return true;
@@ -131,7 +131,7 @@ function canSee(x, y) { return Math.hypot(x - PL.x, y - PL.y) <= VISR + 0.3 && l
 
 // ---------------------------------------------------------------- 카메라 · 렌더
 let CAM = { x: PL.x * T, y: PL.y * T }, SHAKE = 0;
-function roomFloor(i, j) { const v = GR[gi(i, j)]; if (v === -2) return 'corr'; if (v >= 0) return ROOMS[v].fl; return 'corr'; }
+function roomFloor(i, j) { const v = GR[gi(i, j)]; if (v === -2) return typeof MAP !== 'undefined' && MAP && MAP.corrFl || 'corr'; if (v >= 0) return ROOMS[v].fl; return 'corr'; }
 function lit(i, j) { if (!MODE || !MODE.dark) return true; return MODE.lit(i, j); }
 function drawFloor(i0, j0, i1, j1) {
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
@@ -167,16 +167,18 @@ function drawFloorLive(i0, j0, i1, j1) {
 }
 function wallAt(i, j) { if (i < 0 || j < 0 || i >= MW || j >= MH) return true; const t = G[gi(i, j)]; return t === TL.WALL || t === TL.VOID; }
 function drawWalls(i0, j0, i1, j1) {
+  const MS = typeof MAP !== 'undefined' ? MAP : null;
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
     if (!wallAt(i, j)) continue;
     // 바닥과 닿지 않은 벽은 빈 공간(VOID)으로
     let near = false; for (let b = -1; b <= 1 && !near; b++) for (let a = -1; a <= 1; a++) if (!wallAt(i + a, j + b)) { near = true; break; }
     const X = i * T, Y = j * T;
-    if (!near) { ctx.fillStyle = '#0A0F1C'; ctx.fillRect(X, Y, T + 1, T + 1); continue; }
-    const below = !wallAt(i, j + 1); const rv = GR[gi(i, j + 1)]; const rc = rv >= 0 ? ROOMS[rv].c : '#5B6B82';
+    if (!near) { if (MS && MS.voidFn) MS.voidFn(X, Y, i, j); else { ctx.fillStyle = '#0A0F1C'; ctx.fillRect(X, Y, T + 1, T + 1); } continue; }
+    const below = !wallAt(i, j + 1); const rv = GR[gi(i, j + 1)]; const rc = rv >= 0 ? ROOMS[rv].c : MS && MS.corrWall || '#5B6B82';
+    const wv = GR[gi(i, j)], wtop = wv >= 0 && ROOMS[wv].wallTop || MS && MS.wallTop || '#2A3450';
     ctx.fillStyle = '#1E2638'; ctx.fillRect(X, Y, T + 1, T + 1);
     if (below) { ctx.fillStyle = shade(rc, 0.62); ctx.fillRect(X, Y + T * 0.3, T + 1, T * 0.7 + 1); ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(X, Y + T * 0.3, T + 1, 4); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(X, Y + T - 5, T + 1, 5); }
-    ctx.fillStyle = '#2A3450'; ctx.fillRect(X, Y, T + 1, below ? T * 0.3 : T + 1);
+    ctx.fillStyle = wtop; ctx.fillRect(X, Y, T + 1, below ? T * 0.3 : T + 1);
   }
 }
 function dimWalls(i0, j0, i1, j1) {
@@ -237,8 +239,9 @@ function drawDoorSigns() {
     ctx.globalAlpha = .9; tag(`${ar} ${r.s}${ok ? '' : ' 🔒'}`, sx * T, sy * T, ok ? 'rgba(14,34,56,.72)' : col, '#fff', 12); ctx.globalAlpha = 1; }
 }
 function drawRoomLabels() {
-  for (const r of ROOMS) { if (r.inner) continue; const X = (r.r[0] + 0.3) * T, Y = (r.r[1] + 0.55) * T; ctx.globalAlpha = 0.85; tag(`${r.s} · ${r.n}`, X + 0, Y, shade(r.c, 0.7), '#fff', 15); ctx.globalAlpha = 1; }
+  for (const r of ROOMS) { if (r.inner) continue; const X = (r.lab ? r.lab[0] : r.r[0] + 0.3) * T, Y = (r.lab ? r.lab[1] : r.r[1] + 0.55) * T; ctx.globalAlpha = 0.85; tag(`${r.s} · ${r.n}`, X + 0, Y, shade(r.c, 0.7), '#fff', 15); ctx.globalAlpha = 1; }
 }
+let TUTDRAW = null; // 따라하기 안내 화살표 (있을 때만)
 let PROMPT = null; const COARSE = matchMedia('(pointer:coarse)').matches;
 function drawPrompt() {
   if (!PROMPT) return; const X = PROMPT.x * T, Y = PROMPT.y * T - 46 + Math.sin(STATE.t * 5) * 3;
@@ -286,6 +289,7 @@ function render(dt) {
   ctx.setTransform(DPR * SC, 0, 0, DPR * SC, Math.round(VW * DPR / 2 - (CAM.x + sh) * DPR * SC), Math.round(VH * DPR / 2 - (CAM.y + sh) * DPR * SC));
   if (USECHUNK) blitChunks(i0, j0, i1, j1, 'w'); else drawWalls(i0, j0, i1, j1); drawDoors(); dimWalls(i0, j0, i1, j1);
   MODE && MODE.drawTop && MODE.drawTop();
+  TUTDRAW && TUTDRAW();
   drawPrompt();
 }
 function drawTank(e) {
@@ -299,11 +303,13 @@ function drawTank(e) {
 function drawMapTo(c2, W, H, opt) {
   const s = Math.min(W / MW, H / MH), ox = (W - MW * s) / 2, oy = (H - MH * s) / 2;
   c2.fillStyle = '#0A0F1C'; c2.fillRect(0, 0, W, H);
-  for (const r of ROOMS) { if (r.inner) continue; c2.fillStyle = shade(r.c, 0.55); c2.fillRect(ox + r.r[0] * s, oy + r.r[1] * s, (r.r[2] - r.r[0] + 1) * s, (r.r[3] - r.r[1] + 1) * s); }
-  c2.fillStyle = '#3A4560'; for (const c of CORR) c2.fillRect(ox + c[0] * s, oy + c[1] * s, (c[2] - c[0] + 1) * s, (c[3] - c[1] + 1) * s);
+  const tiled = typeof MAP !== 'undefined' && MAP && MAP.tiled;
+  if (tiled) { c2.imageSmoothingEnabled = false; c2.drawImage(mapBaseImage(), ox, oy, MW * s, MH * s); }
+  else { for (const r of ROOMS) { if (r.inner) continue; c2.fillStyle = shade(r.c, 0.55); c2.fillRect(ox + r.r[0] * s, oy + r.r[1] * s, (r.r[2] - r.r[0] + 1) * s, (r.r[3] - r.r[1] + 1) * s); }
+  c2.fillStyle = '#3A4560'; for (const c of CORR) c2.fillRect(ox + c[0] * s, oy + c[1] * s, (c[2] - c[0] + 1) * s, (c[3] - c[1] + 1) * s); }
   if (RID.ctrl !== undefined) { const cr = ROOMS[RID.ctrl].r; c2.fillStyle = '#13294B'; c2.fillRect(ox + (cr[0] - 1) * s, oy + (cr[1] - 1) * s, (cr[2] - cr[0] + 3) * s, (cr[3] - cr[1] + 3) * s); c2.fillStyle = '#FFD24A'; c2.fillRect(ox + cr[0] * s, oy + cr[1] * s, (cr[2] - cr[0] + 1) * s, (cr[3] - cr[1] + 1) * s); }
   for (const d of DOORLIST) { const ok = doorUnlocked(d); c2.fillStyle = ok ? '#C9D1DE' : (MODE && MODE.lockColor ? MODE.lockColor(d) : '#E0533F'); c2.fillRect(ox + d.x0 * s, oy + d.y0 * s, (d.x1 - d.x0 + 1) * s, (d.y1 - d.y0 + 1) * s); }
-  if (opt && opt.labels) { c2.textAlign = 'center'; c2.textBaseline = 'middle'; for (const r of ROOMS) { if (r.inner) continue; const x = ox + (r.r[0] + r.r[2] + 1) / 2 * s, y = oy + (r.id === 'lobby' ? r.r[3] - 1.5 : (r.r[1] + r.r[3] + 1) / 2) * s; c2.font = `900 ${Math.max(10, s * 1.7)}px ${FONT}`; c2.fillStyle = '#fff'; c2.fillText(r.s, x, y - s * 1.2); c2.font = `800 ${Math.max(9, s * 1.25)}px ${FONT}`; c2.fillStyle = 'rgba(255,255,255,.8)'; c2.fillText(r.n, x, y + s * 0.9); } c2.font = `900 ${Math.max(9, s * 1.2)}px ${FONT}`; if (RID.ctrl !== undefined) { c2.fillStyle = OL; c2.fillText('관제실', ox + 64.5 * s, oy + 30 * s); } }
+  if (opt && opt.labels) { c2.textAlign = 'center'; c2.textBaseline = 'middle'; for (const r of ROOMS) { if (r.inner) continue; const x = ox + (r.ctr ? r.ctr[0] : (r.r[0] + r.r[2] + 1) / 2) * s, y = oy + (r.ctr ? r.ctr[1] : r.id === 'lobby' ? r.r[3] - 1.5 : (r.r[1] + r.r[3] + 1) / 2) * s; c2.font = `900 ${Math.max(10, s * 1.7)}px ${FONT}`; c2.fillStyle = '#fff'; c2.fillText(r.s, x, y - s * 1.2); c2.font = `800 ${Math.max(9, s * 1.25)}px ${FONT}`; c2.fillStyle = 'rgba(255,255,255,.8)'; c2.fillText(r.n, x, y + s * 0.9); } c2.font = `900 ${Math.max(9, s * 1.2)}px ${FONT}`; if (RID.ctrl !== undefined) { c2.fillStyle = OL; c2.fillText('관제실', ox + 64.5 * s, oy + 30 * s); } }
   if (MODE && MODE.mapMarks) MODE.mapMarks(c2, ox, oy, s, opt);
   c2.fillStyle = '#FFD24A'; c2.strokeStyle = OL; c2.lineWidth = 2; c2.beginPath(); c2.arc(ox + PL.x * s, oy + PL.y * s, Math.max(3.5, s * 1.1), 0, 7); c2.fill(); c2.stroke();
 }
@@ -311,7 +317,7 @@ let MAPOPEN = false;
 function toggleMap() {
   if (STATE.mode === 'menu') return;
   if (MAPOPEN) { closeModal(); return; }
-  openModal(`<div class="mh"><div><div class="mk">전체 지도 · M</div><h3>${MODE && MODE.mapTitle ? MODE.mapTitle : '케이요새 연구단지'}</h3></div><button class="x" data-close aria-label="닫기">✕</button></div><canvas id="bigmap" width="1220" height="840" style="width:100%;border-radius:12px;border:2px solid var(--ink)"></canvas><div class="maplegend">${MODE && MODE.mapLegend ? MODE.mapLegend() : ''}</div>`, { wide: true, onclose: () => { MAPOPEN = false; } });
+  openModal(`<div class="mh"><div><div class="mk">전체 지도 · M</div><h3>${MODE && MODE.mapTitle ? MODE.mapTitle : typeof MAP !== 'undefined' && MAP ? MAP.name : '케이요새 연구단지'}</h3></div><button class="x" data-close aria-label="닫기">✕</button></div><canvas id="bigmap" width="1220" height="840" style="width:100%;border-radius:12px;border:2px solid var(--ink)"></canvas><div class="maplegend">${MODE && MODE.mapLegend ? MODE.mapLegend() : ''}</div>`, { wide: true, onclose: () => { MAPOPEN = false; } });
   MAPOPEN = true; const c = $('#bigmap'); drawMapTo(c.getContext('2d'), c.width, c.height, { labels: true, big: true });
 }
 

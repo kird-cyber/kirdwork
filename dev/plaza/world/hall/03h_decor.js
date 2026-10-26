@@ -2,7 +2,7 @@
 const DEC = [];
 function D(t, x, y, w, h, solid, o) { const d = Object.assign({ t, x, y, w: w || 1, h: h || 1, solid: solid !== false }, o || {}); DEC.push(d); return d; }
 // 월드 엔진과 맞추기 위한 빈 구조
-const GATES = [], CONV = {}, PLATES = [];
+const GATES = [], CONV = {}, PLATES = [], GATEAT = {}, ROOMPROPS = {};
 const TRACK = { up: 0, lo: 0, x0: 0, x1: 0, sw: [], block: [] };
 const MILEYRS = ['2007', '2010', '2013', '2014', '2015', '2019', '2021', '2022', '2023', '2025'];
 // ---- 로비
