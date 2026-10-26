@@ -237,7 +237,7 @@
       S.codeNames = ''; showNewCodes(r.codes, '새 코드 ' + r.codes.length + '개'); load('codes');
     };
     $('#codeQ').oninput = e => { S.codeQ = e.target.value; const p = e.target.selectionStart; rCodes(c); fill(c); const n = $('#codeQ'); n.focus(); n.setSelectionRange(p, p); };
-    const url = location.href.replace(/admin\.html.*$/, '').replace(/#.*$/, '');
+    const url = bidBase();
     $('#codeCsv').onclick = () => MK.downloadCSV('kird-market_codes_list.csv', [['번호', '이름·메모', '참가 코드', '사용', '발급', '마지막 접속', '입찰 중', '입찰 주소']].concat(list.map(x => ['#' + x.id, x.label, x.code || '(재발급 필요)', x.active ? '사용' : '중지', fmtDate(x.created_at), x.last_at ? fmtDate(x.last_at) : '', x.bids, url])));
     $('#codePrint').onclick = () => { const a = shown.filter(x => x.active && x.code); if (!a.length) { toast('인쇄할 코드가 없어요.', 'bad'); return; } printCards(a, url); };
     // 선택 삭제 (입찰한 적 없는 코드만 지워짐)
@@ -275,6 +275,14 @@
   }
   const codesDlg = $('#codesDlg');
   // QR: the bidder page with this person's code already filled in (scan with the phone camera -> straight in)
+  // 직원용 입찰 사이트 주소 — 관리자 주소가 /admin, /admin.html, ?…, #… 어떤 꼴이어도 같은 폴더의 입찰 화면(index.html)으로
+  // (config.js 에 bidUrl 을 적으면 그 주소를 그대로 씀)
+  function bidBase() {
+    const c = window.MARKET_CONFIG || {};
+    if (c.bidUrl) return String(c.bidUrl).replace(/[?#].*$/, '');
+    try { const u = new URL('./', location.href); return u.protocol === 'file:' ? u.href + 'index.html' : u.href; }
+    catch (e) { return location.href.replace(/[?#].*$/, '').replace(/admin(\.html)?$/, ''); }
+  }
   const bidLink = (url, code) => url + '?c=' + encodeURIComponent(String(code || '').replace(/[^0-9A-Za-z]/g, ''));
   const qrSvg = (url, code, size) => window.KQR ? KQR.svg(bidLink(url, code), { size: size, margin: 1, label: '입찰 사이트 바로 가기 QR' }) : '';
   function showQR(x, url) {
@@ -286,7 +294,7 @@
     codesDlg.dataset.saved = 1; codesDlg.showModal();
   }
   function showNewCodes(codes, title) {
-    const url = location.href.replace(/admin\.html.*$/, '').replace(/#.*$/, '');
+    const url = bidBase();
     codesDlg.innerHTML = '<div class="cd"><h2 id="cdT">' + esc(title) + '</h2><div class="warn">' + ic('alert', 18, 2.2) + '<span>코드는 「참가 코드」 목록에서 언제든 다시 볼 수 있어요. 바로 나눠 줄 거라면 지금 <b>CSV로 받거나 인쇄</b>하세요.</span></div>' +
       '<div class="list"><table class="tbl"><thead><tr><th>번호</th><th>이름 · 메모</th><th>참가 코드</th><th>QR (바로 입장)</th></tr></thead><tbody>' + codes.map(x => '<tr><td class="num">#' + x.id + '</td><td>' + esc(x.label || '-') + '</td><td class="codev">' + esc(x.code) + '</td><td><span class="qsm">' + qrSvg(url, x.code, 64) + '</span></td></tr>').join('') + '</tbody></table></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="cdCsv">' + ic('download', 16) + 'CSV 내려받기</button><button class="btn" id="cdPrint">' + ic('print', 16) + '나눠 줄 카드 인쇄</button><button class="btn" id="cdCopy">' + ic('copy', 16) + '모두 복사</button><button class="btn ghost" id="cdClose" style="margin-left:auto">닫기</button></div></div>';
