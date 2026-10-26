@@ -180,3 +180,10 @@
   - 따라하기 `src/09t_tutor.js`: 모드별 첫 판 단계 안내(말풍선 + 길 따라 점선/화살표). 안내 중 `STATE.tutHold`로 술래 출발·제한 시간 멈춤. 처음 한 번만(`kw_tut_<mode>`), 메뉴 '따라하기 처음부터 다시 켜기', 일시정지 '따라하기 다시'.
   - 점검: `node tools/maptest.js lab garden city`(연결성·단말기/스폰 도달), 방탈출 기계 동작은 이전 빌드와 결과 동일.
 
+
+## 알파 마블 (2026-10-26, 사용자 요청)
+- 광장 서랍 '게임관 · 케이요새 월드' 맨 위(방탈출 앞)에 `marble/` 링크 추가(`src/template.html` → `python3 dev/build.py` → `dev/dist/index.html`을 루트 `index.html`로 복사).
+- `marble/index.html`은 `dev/plaza/marble/build.py`가 `src/` 조각(head·chars·facts·engine·icons·ui·avatar)을 이어 만든다. 상단 '케이요새 광장'(`../`) 링크는 빌드 때만 끼움.
+- 규칙: 44칸(15×9), 도시 24곳 8색×3, 연구시설 4, 알파 키 5, 특수 칸 7(부스터·재실험·기술료·기금 기부·사이언스 페스타·KIRD 본원) + 코너 4. 색 독점 통행료 2배, 즉시 승리 = 색 그룹 2개·변 독점·연구시설 4곳·전원 파산, 15라운드 총자산.
+- 밸런스 점검 `node dev/plaza/marble/src/sim.js 1500 4` (AI끼리, 4인전 대부분 15라운드 종료·파산 약 6%).
+- 도시 상징은 직접 그린 SVG(실사 사진·기업 로고 없음). 기록은 브라우저 localStorage(`kird-alpha-marble-v2`).

@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="KIRD 알파 마블 — 세계 과학기술 도시 24곳에 연구 거점을 세우는 부루마불형 보드게임">
+<link rel="icon" href="../favicon.png?v=2">
+<meta name="theme-color" content="#0A1222">
+<title>KIRD 알파 마블</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;800;900&display=swap">
+<style>
+/* 레이아웃: 가로로 긴 15×9 보드(44칸). 보드 가운데 왼쪽은 판 상황, 오른쪽은 주사위·예보·선택. 말은 보드 위 별도 층에서 한 칸씩 미끄러져 이동. 휴대폰은 보드를 가로 스크롤하고 조작판을 아래에 고정 */
+:root{
+  --night:#0A1222;--ink:#0E2238;--panel:#13213D;--panel2:#0F1B33;--line:rgba(255,255,255,.14);
+  --blue:#2E86D6;--lime:#8CC63F;--gold:#FFD24A;--paper:#F4F7FB;--mute:#9FB3CC;--red:#E0533F;--orange:#F08A24;
+  --l1:#F28C6B;--l2:#F2B84B;--l3:#B9D45A;--l4:#35BFA4;--l5:#4FA3EA;--l6:#9AA6D6;--l7:#B07CF2;--l8:#E86FA3;--fac:#6CC070;
+  --disp:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
+  color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--night);color:#fff;font-family:var(--body);-webkit-font-smoothing:antialiased}
+button{font-family:var(--body)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1320px;margin:0 auto;box-sizing:border-box}
+.num{font-variant-numeric:tabular-nums}
+.btn{background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:12px;padding:9px 14px;font-weight:900;font-size:14px;cursor:pointer;line-height:1.2}
+.btn small{display:block;font-size:11px;font-weight:800;opacity:.8}
+.btn.ghost{background:transparent;color:#fff;border-color:var(--line)}
+.btn.blue{background:var(--blue);color:#fff}
+.btn.lime{background:var(--lime)}
+.btn.dark{background:#3A465C;color:#fff}
+.btn.big{font-size:18px;padding:12px 22px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.top{display:flex;gap:8px;align-items:center;padding-block:10px;flex-wrap:wrap}
+.brand{font-family:var(--disp);font-size:22px}.brand em{font-style:normal;color:var(--gold)}
+.sp{flex:1}
+.pill{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-weight:800;font-size:13px}
+.pill b{color:var(--gold)}
+.seg2{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg2 button{background:none;border:0;color:var(--mute);font-weight:800;font-size:12.5px;padding:7px 10px;cursor:pointer}
+.seg2 button.on{background:var(--gold);color:var(--ink)}
+
+.boardscroll{padding-block:2px 10px}
+.frame{position:relative;width:min(100%,calc((100vh - 84px) * 15.6 / 9.6),1288px);margin:0 auto}
+.board{display:grid;grid-template-columns:1.3fr repeat(13,1fr) 1.3fr;grid-template-rows:1.3fr repeat(7,1fr) 1.3fr;gap:3px;aspect-ratio:15.6/9.6;background:#0D1B33;border:3px solid #0D1B33;border-radius:14px;box-shadow:0 0 0 2px var(--lime),0 24px 50px rgba(0,0,0,.5)}
+.cell{position:relative;border:0;border-radius:6px;background:#1A2A4A;color:#fff;padding:0 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;overflow:hidden;min-width:0;text-align:center;transition:background .2s}
+.cell .band{position:absolute;left:0;right:0;top:0;height:15%;background:var(--lc,transparent)}
+.cell.right .band{left:auto;width:15%;height:auto;bottom:0}
+.cell.left .band{right:auto;width:15%;height:auto;bottom:0}
+.cell.top .band{top:auto;bottom:0}
+.cell .ic{width:64%;height:42%;flex:none;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.4))}
+.cell.corner .ic{width:56%;height:46%}
+.dic{width:100%;height:100%;display:block}
+.deed .hd{display:flex;gap:14px;align-items:center}
+.deed .hd .dic{width:84px;height:84px;flex:none;background:#13213D;border-radius:14px;padding:6px;box-sizing:border-box}
+.dxi{display:inline-block;width:34px;height:34px;background:#13213D;border-radius:8px;padding:3px;box-sizing:border-box;vertical-align:middle;margin-right:8px;float:left}
+.cell .nm{font-weight:900;font-size:clamp(9px,.9vw,12.5px);line-height:1.12;word-break:keep-all}
+.cell .sub{font-size:clamp(8px,.78vw,11px);font-weight:800;color:var(--mute);line-height:1.1}
+.cell.corner{background:#1D3A66}
+.cell.corner .nm{font-family:var(--disp);font-weight:400;font-size:clamp(12px,1.35vw,19px);color:var(--gold)}
+.cell.key{background:#22324F}.cell.key .nm{color:var(--gold)}
+.cell.fac{background:#1C3A34}
+.cell.sp{background:#2A2346}.cell.sp .nm{color:#E6D7FF}
+.cell.kird{background:#1E4A3A}.cell.kird .nm{color:#C8F08E}
+.cell.own{box-shadow:inset 0 0 0 3px var(--oc)}
+.cell.trail{background:#2C4A7A}
+.cell .lv{position:absolute;right:3px;bottom:3px;display:flex;gap:2px}
+.cell.top .lv{bottom:auto;top:3px}
+.cell .lv i{display:block;width:5px;height:9px;border-radius:2px;background:var(--oc)}
+.cell .lv i.lm{width:10px;background:var(--gold);border:1px solid var(--oc)}
+.cell .tag{position:absolute;left:3px;top:3px;font-size:9px;font-weight:900;border-radius:4px;padding:0 3px;background:var(--gold);color:var(--ink);line-height:1.4}
+.cell.top .tag{top:auto;bottom:3px}
+.cell .mk{position:absolute;right:2px;top:2px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;font:900 12px var(--body);color:#fff;background:var(--mc);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);z-index:1;padding:0 3px}
+.cell.top .mk{top:auto;bottom:2px}
+.cell.marked{box-shadow:inset 0 0 0 3px var(--mc)}
+.cell.choose{animation:pulse 1s infinite}
+.cell.choose:hover{background:#2C4A7A}
+.cell.nochoose{opacity:.45}
+@keyframes pulse{50%{box-shadow:inset 0 0 0 3px var(--gold)}}
+@media (prefers-reduced-motion:reduce){.cell.choose{animation:none;box-shadow:inset 0 0 0 3px var(--gold)}}
+
+.tokens{position:absolute;inset:0;pointer-events:none}
+.tk{position:absolute;left:0;top:0;width:var(--ts,30px);height:var(--ts,30px);margin:calc(var(--ts,30px) / -2) 0 0 calc(var(--ts,30px) / -2);transition:transform var(--tt,.3s) cubic-bezier(.3,.7,.4,1);z-index:2}
+.tk .body{width:100%;height:100%;border-radius:50%;background:var(--pc);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.6);overflow:hidden;box-sizing:border-box}
+.tk .body svg{width:100%;height:100%;display:block}
+.tk.hop .body{animation:hop var(--tt,.3s) ease-out}
+.tk.active{z-index:3}
+.tk.active .body{box-shadow:0 0 0 4px var(--gold),0 4px 12px rgba(0,0,0,.6)}
+.tk .left{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-4px);background:var(--gold);color:var(--ink);font:900 13px var(--body);border-radius:8px;padding:1px 7px;border:2px solid var(--ink);white-space:nowrap}
+.tk .left:empty{display:none}
+@keyframes hop{0%{transform:translateY(0)}45%{transform:translateY(-55%) scale(1.08)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.tk{transition:none}.tk.hop .body{animation:none}}
+.banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;pointer-events:none;background:rgba(10,18,34,.94);border:3px solid var(--bc,var(--gold));border-radius:18px;padding:12px 26px;text-align:center;animation:pop .3s ease}
+.banner b{display:block;font-family:var(--disp);font-weight:400;font-size:clamp(24px,3.4vw,44px);color:var(--bc,var(--gold));line-height:1.1}
+.banner small{display:block;font-weight:800;color:#fff;font-size:15px;margin-top:4px}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.7);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.banner{animation:none}}
+
+.center{grid-row:2/9;grid-column:2/15;background:radial-gradient(ellipse at 40% 30%,#1C4C80,#0F2442 72%);border-radius:10px;display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:14px;padding:clamp(8px,1.2vw,16px);min-width:0;min-height:0;overflow:hidden}
+.cl{display:flex;flex-direction:column;gap:clamp(6px,.8vw,10px);min-width:0;min-height:0}
+.ctitle{font-family:var(--disp);font-size:clamp(22px,2.8vw,40px);line-height:1}
+.ctitle em{font-style:normal;color:var(--gold)}
+.gauge .lab{display:flex;justify-content:space-between;font-size:clamp(10px,.9vw,12.5px);font-weight:800;color:#DCE6F2;margin-bottom:3px;gap:6px}
+.gauge .bar{height:9px;border-radius:9px;background:#0A1530;overflow:hidden;border:1px solid var(--line)}
+.gauge .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),var(--gold));transition:width .4s}
+.score{display:grid;gap:4px}
+.sc{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:3px 8px 3px 3px}
+.sc.turn{border-color:var(--gold);background:rgba(255,210,74,.12)}
+.sc.out{opacity:.4}
+.sc .av{width:clamp(22px,2.2vw,30px);height:clamp(22px,2.2vw,30px);border-radius:50%;background:var(--pc);border:2px solid #fff;overflow:hidden;flex:none;box-sizing:border-box}
+.sc .av svg{width:100%;height:100%;display:block}
+.sc b{font-size:clamp(11px,1vw,13.5px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc .st{font-size:10.5px;font-weight:800;color:#FFB3A7;white-space:nowrap}
+.sc .m{margin-left:auto;font-weight:900;color:var(--gold);font-size:clamp(11px,1vw,14px);white-space:nowrap}
+.fact{font-size:clamp(9.5px,.85vw,12px);font-weight:700;color:var(--mute);line-height:1.45;margin-top:auto}
+.fact b{color:var(--gold)}
+.cr{display:flex;flex-direction:column;gap:clamp(6px,.8vw,10px);min-width:0;min-height:0}
+
+.ctrl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dicerow{display:flex;align-items:center;gap:12px}
+.die{width:clamp(38px,3.9vw,58px);height:clamp(38px,3.9vw,58px);flex:none}
+.die.spin{animation:sp .12s linear infinite}
+@keyframes sp{50%{transform:rotate(14deg) scale(.94)}}
+@media (prefers-reduced-motion:reduce){.die.spin{animation:none}}
+.tot{font-family:var(--disp);font-size:clamp(28px,3.3vw,48px);color:var(--gold);line-height:1;min-width:1.4em}
+.tot small{display:block;font-family:var(--body);font-size:12px;font-weight:800;color:#DCE6F2}
+.cmsg{font-weight:800;font-size:clamp(11.5px,1.05vw,14.5px);line-height:1.4;min-height:1.4em;color:#fff}
+.crow{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:10px;align-items:start}
+.notice{background:rgba(6,12,26,.72);border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.notice:empty{display:none}
+.notice h5{margin:0 0 5px;font-size:12px;font-weight:900;color:var(--gold);letter-spacing:.02em}
+.nr{display:flex;align-items:center;gap:7px;padding:3px 0;border-top:1px solid rgba(255,255,255,.06);font-size:clamp(11px,.95vw,13px);font-weight:800}
+.nr:first-of-type{border-top:0}
+.nr .s{min-width:24px;height:24px;border-radius:12px;display:grid;place-items:center;background:var(--mc);color:#fff;font-weight:900;font-size:13px;border:2px solid #fff;flex:none}
+.nr .w{min-width:0;flex:1;line-height:1.3}
+.nr .w small{display:block;font-size:11px;font-weight:700;color:var(--mute)}
+.nr .p{font-size:11.5px;color:var(--mute);white-space:nowrap}
+.nr.hit{background:rgba(255,210,74,.15);border-radius:8px}
+.risk{margin-top:5px;font-size:11.5px;font-weight:800;color:#FFB3A7}
+.risk.ok{color:#CBEFA0}
+.prompt{background:rgba(6,12,26,.82);border:2px solid var(--gold);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.prompt:empty{display:none}
+.prompt h4{margin:0;font-size:clamp(13px,1.15vw,16px);font-weight:900;line-height:1.3}
+.prompt p{margin:0;font-size:clamp(11px,.95vw,13px);font-weight:700;color:#DCE6F2;line-height:1.45}
+.prompt .row{display:flex;gap:6px;flex-wrap:wrap}
+.prompt .row .btn{flex:1 1 auto}
+
+#dock{display:none}
+.lower{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;padding-block:6px 30px}
+.pcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-content:start}
+.pcard{display:flex;gap:10px;align-items:center;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:8px 10px;position:relative;min-width:0}
+.pcard.turn{border-color:var(--gold)}
+.pcard.out{opacity:.4}
+.pcard .av{width:42px;height:42px;flex:none;border-radius:50%;background:var(--pc);border:2px solid #fff;overflow:hidden;box-sizing:border-box}
+.pcard .av svg{width:100%;height:100%;display:block}
+.pcard b{font-size:14px}
+.pcard .meta{font-size:11.5px;font-weight:700;color:var(--mute);line-height:1.45}
+.pcard .cash{font-family:var(--disp);font-size:17px;color:var(--gold);margin-left:auto;text-align:right;line-height:1.1;white-space:nowrap}
+.pcard .cash small{display:block;font-family:var(--body);font-size:10.5px;font-weight:800;color:var(--mute)}
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.bd{font-size:10.5px;font-weight:900;border-radius:6px;padding:1px 6px;background:rgba(255,255,255,.1)}
+.bd.w{background:rgba(224,83,63,.3);color:#FFB3A7}.bd.g{background:rgba(140,198,63,.25);color:#CBEFA0}
+.logbox{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px 12px;max-height:240px;overflow:auto;min-width:0}
+.logbox h3{margin:0 0 6px;font-size:13px;color:var(--mute);letter-spacing:.06em}
+.logbox ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.logbox li{font-size:12.5px;font-weight:600;line-height:1.45;color:#DCE6F2;border-top:1px solid rgba(255,255,255,.06);padding-top:4px}
+.logbox li:first-child{border-top:0;color:#fff}
+
+#modal{position:fixed;inset:0;z-index:30;background:rgba(5,10,22,.74);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));overflow:auto}
+.box{background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:20px;width:min(640px,100%);padding:18px 20px 20px;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:100%;overflow:auto;box-sizing:border-box}
+.box.wide{width:min(960px,100%)}
+.mh{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.mh h3{margin:0;font-family:var(--disp);font-weight:400;font-size:26px;line-height:1.15}
+.x{margin-left:auto;background:none;border:2px solid var(--ink);border-radius:10px;width:36px;height:36px;font-weight:900;cursor:pointer;color:var(--ink);flex:none}
+.box p{line-height:1.65;font-weight:600;margin:6px 0}
+.picks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.pk{border:2px solid #D3DCE8;border-radius:14px;background:#fff;padding:6px 4px;cursor:pointer;text-align:center;color:var(--ink);min-width:0}
+.pk svg{width:100%;max-width:60px;height:auto}
+.pk b{display:block;font-size:13px}.pk small{display:block;font-size:10.5px;font-weight:700;color:#3E5878;line-height:1.3;word-break:keep-all;min-height:2.6em}
+.pk.on{border-color:var(--ink);background:#FFF5CC}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{border:2px solid var(--ink);background:#fff;border-radius:99px;padding:7px 14px;font-weight:900;cursor:pointer;color:var(--ink)}
+.seg button.on{background:var(--ink);color:#fff}
+.card{border-radius:18px;padding:18px;color:var(--ink);border:3px solid var(--ink);background:#fff}
+.card .kind{font-size:12px;font-weight:900;letter-spacing:.08em;color:#fff;background:var(--kc);display:inline-block;border-radius:8px;padding:3px 9px}
+.card h4{font-family:var(--disp);font-weight:400;font-size:26px;margin:10px 0 6px;line-height:1.2}
+.card .q{font-size:17px;font-weight:800;line-height:1.55;margin:8px 0 12px}
+.opts{display:grid;gap:8px}
+.opt{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:12px 14px;font:800 15px var(--body);text-align:left;cursor:pointer;color:var(--ink)}
+.opt.right{background:#EAF6DA;border-color:#2FA84F}.opt.wrong{background:#FFECE8;border-color:var(--red)}
+.ox{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ox .opt{text-align:center;font-family:var(--disp);font-weight:400;font-size:40px;padding:8px}
+.res{margin-top:12px;font-weight:800;line-height:1.55}
+.res.ok{color:#2F7A1E}.res.no{color:#B3261E}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two .card{cursor:pointer;padding:14px}.two .card h4{font-size:20px}
+table.tb{width:100%;border-collapse:collapse;font-size:14px}
+table.tb td,table.tb th{border-bottom:1px solid #D3DCE8;padding:7px 6px;text-align:left;vertical-align:top}
+table.tb th{font-size:12px;color:#3E5878}
+table.tb .r{text-align:right}
+.tw{overflow-x:auto}
+.chipl{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--lc);margin-right:6px;vertical-align:0}
+.deed{border:3px solid var(--ink);border-radius:16px;overflow:hidden}
+.deed .hd{background:var(--lc);padding:12px 16px;color:var(--ink)}
+.deed .hd small{font-weight:900;font-size:12px}
+.deed .hd b{display:block;font-family:var(--disp);font-weight:400;font-size:30px;line-height:1.1}
+.deed .bd2{padding:12px 16px}
+.rules ul{padding-left:20px;line-height:1.75;font-weight:600;font-size:14.5px;margin:4px 0}
+.rules h4{margin:14px 0 4px}
+.rank{display:grid;gap:8px;margin:10px 0}
+.rk{display:flex;gap:10px;align-items:center;border:2px solid #D3DCE8;border-radius:14px;padding:8px 12px;background:#fff}
+.rk.w{border-color:var(--ink);background:#FFF5CC}
+.rk svg{width:44px;height:44px;flex:none}
+.rk .n{font-family:var(--disp);font-size:22px;width:28px}
+.rk .a{margin-left:auto;text-align:right;font-weight:900}
+.rk .a small{display:block;font-size:11.5px;color:#3E5878;font-weight:700}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:40;max-width:min(92vw,560px);background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:14px;padding:10px 16px;font-weight:800;font-size:15px;box-shadow:0 10px 24px rgba(0,0,0,.35);text-align:center}
+
+@media (max-width:760px){
+  .boardscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .frame{width:1000px;margin:0}
+  .center{grid-template-columns:1fr}
+  .cr{display:none}
+  .fact{display:none}
+  #dock{display:block;position:sticky;bottom:0;z-index:6;background:rgba(10,18,34,.97);border-top:2px solid var(--gold);padding-block:10px calc(10px + env(safe-area-inset-bottom,0px));margin-top:6px}
+  .crow{grid-template-columns:1fr}
+  .lower{grid-template-columns:1fr}
+  .pcards{grid-template-columns:1fr}
+  .picks{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .two{grid-template-columns:1fr}
+  .top .hide-m{display:none}
+  .top{padding-block:8px;gap:6px}.top .btn{padding:7px 10px;font-size:13px}.brand{font-size:19px}
+  .frame{width:880px}
+  #dock{padding-block:8px calc(8px + env(safe-area-inset-bottom,0px))}
+  #dock .ctrl{gap:6px}
+  #dock .die{width:32px;height:32px}
+  #dock .tot{font-size:26px}
+  #dock .dicerow{gap:8px}
+  #dock .cmsg{font-size:12px;min-height:0}
+  #dock .crow{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:6px}
+  #dock .notice{padding:6px 8px}
+  #dock .notice h5{font-size:11px;margin-bottom:3px}
+  #dock .nr{font-size:11.5px;gap:5px;padding:2px 0}
+  #dock .nr .s{min-width:20px;height:20px;font-size:11px}
+  #dock .nr .w small{font-size:10px}
+  #dock .prompt{padding:7px;gap:6px}
+  #dock .prompt p{display:none}
+  #dock .prompt h4{font-size:12.5px}
+  #dock .prompt .btn{padding:7px 8px;font-size:13px}
+  #dock .btn.big{font-size:15px;padding:10px 8px}
+}
+</style>
+</head>
+<body>
+
+
+<div class="wrap top">
+  <div class="brand">KIRD <em>α</em> 마블</div>
+  <span class="sp"></span>
+  <span class="pill num" id="roundPill">라운드 <b>1</b>/15</span>
+  <span class="pill num hide-m" id="fundPill">인재기금 <b>0α</b></span>
+  <div class="seg2" role="group" aria-label="말 이동 속도"><button type="button" data-sp="slow">천천히</button><button type="button" data-sp="normal" class="on">보통</button><button type="button" data-sp="fast">빠르게</button></div>
+  <button class="btn ghost" id="bDex" type="button">도시 도감</button>
+  <button class="btn ghost" id="bRules" type="button">규칙</button>
+  <button class="btn ghost" id="bNew" type="button">새 게임</button>
+  <a class="btn ghost" href="../" style="text-decoration:none">케이요새 광장</a>
+</div>
+<main>
+  <div class="wrap boardscroll" id="scroller"><div class="frame" id="frame"><div class="board" id="board"></div><div class="tokens" id="tokens"></div><div id="bannerHost"></div></div></div>
+  <div class="wrap" id="dock"></div>
+  <div class="wrap lower">
+    <div class="pcards" id="players"></div>
+    <div class="logbox"><h3>진행 기록</h3><ol id="log"></ol></div>
+  </div>
+</main>
+<div id="modal" hidden><div class="box" id="mbox"></div></div>
+<div id="toast" hidden></div>
+
+<script>
+const CHARS=[
+ {id:'alpha',name:'알파',biz:'알파캠퍼스',color:'#2E86D6',acc:'orb',lore:'회원 82만 명의 학습 플랫폼 알파캠퍼스를 안내하는 캐릭터. 머리 위 α 구슬에 수강 기록이 쌓인다.',style:'계산형 · 확률대로 움직인다',ai:{tight:.5,aggr:.45,bluff:.08},perk:'퀴즈 충전 보상 +50%',lines:{raise:'학습 완료, 갑니다!',fold:'복습하고 올게요',win:'수료증 받았습니다!',call:'일단 들어볼게요'}},
+ {id:'kclub',name:'케이클',biz:'K-클럽 경력개발',color:'#7CB82F',acc:'briefcase',lore:'입직 이전부터 은퇴 이후까지 과학기술인의 커리어를 잇는 K-클럽의 멘토.',style:'장기전형 · 무리하지 않는다',ai:{tight:.7,aggr:.3,bluff:.04},perk:'출석 보너스 +50%',lines:{raise:'커리어 점프!',fold:'다음 단계를 준비하죠',win:'경력 한 줄 추가!',call:'멘토링 차원에서 콜'}},
+ {id:'notri',name:'노트리',biz:'연구노트·연구윤리',color:'#7E57C2',acc:'note',lore:'모든 판을 연구노트에 기록하는 꼼꼼이. 틀린 기록은 지우지 않고 두 줄 긋고 서명한다.',style:'정석형 · 블러프를 거의 안 한다',ai:{tight:.65,aggr:.35,bluff:.02},perk:'이긴 판 보상 +3%',lines:{raise:'기록상 제가 유리합니다',fold:'오늘 기록은 여기까지',win:'날짜, 서명, 승리!',call:'데이터를 더 모아보죠'}},
+ {id:'safe',name:'세이피',biz:'연구실 안전',color:'#F08A24',acc:'helmet',lore:'안전모를 절대 벗지 않는 연구실안전 지킴이. 위험한 베팅을 보면 경보부터 울린다.',style:'보수형 · 위험 회피',ai:{tight:.8,aggr:.2,bluff:.02},perk:'연구지원금 2배',lines:{raise:'안전 점검 끝, 갑니다',fold:'위험 감지! 대피!',win:'무사고 승리!',call:'보호구 착용하고 콜'}},
+ {id:'leader',name:'리더온',biz:'리더십 교육',color:'#D9483B',acc:'crown',lore:'신진부터 리더까지 이어지는 역량 교육의 마지막 계단을 지키는 리더.',style:'압박형 · 큰 베팅으로 흐름을 쥔다',ai:{tight:.45,aggr:.78,bluff:.16},perk:'미션 보상 +30%',lines:{raise:'결단의 시간입니다',fold:'전략적 후퇴',win:'팀의 승리입니다',call:'받아들이겠습니다'}},
+ {id:'globi',name:'글로비',biz:'해외연구인력 정착',color:'#00A6A6',acc:'globe',lore:'한국에서 연구하는 외국인 과학자의 정착을 돕는 다국어 친구. 인사는 다섯 개 언어로 한다.',style:'변칙형 · 예측이 어렵다',ai:{tight:.5,aggr:.55,bluff:.22},perk:'블랙잭 배당 2:1',lines:{raise:"Let's go!",fold:'다음 비행기로 갈게요',win:'Welcome to Korea!',call:'OK, 콜!'}},
+ {id:'sprout',name:'새싹박사',biz:'청년과학자·대학원생',color:'#4FB3E0',acc:'sprout',lore:'이공계 대학원생 4명 팀으로 국가R&D 연구기획에 도전 중인 청년 연구자.',style:'패기형 · 자주 따라간다',ai:{tight:.32,aggr:.5,bluff:.12},perk:'신진연구자 라운지 승리 +10%',lines:{raise:'일단 도전!',fold:'교수님께 혼나겠다',win:'첫 논문 게재 기분!',call:'저도 따라갈게요'}},
+ {id:'strat',name:'전략이',biz:'전략연구사업',color:'#3D5AFE',acc:'rocket',lore:'국가전략기술 인재 양성과 전략연구사업 교류회를 이끄는 기획통. 판 전체를 로드맵으로 본다.',style:'전략형 · 강한 패에서 크게',ai:{tight:.6,aggr:.62,bluff:.08},perk:'하이로우 스윙 성공 +20%',lines:{raise:'로드맵대로 갑니다',fold:'다음 단계 기획으로',win:'전략 목표 달성!',call:'협력 연구로 콜'}},
+ {id:'davin',name:'다빈',biz:'AI·디지털 전환',color:'#8C9BB0',acc:'robot',lore:'미래비전 2050의 AI 교육 대전환을 상징하는 학습 로봇. 확률 계산이 취미.',style:'수학형 · 팟 오즈를 정확히 계산',ai:{tight:.55,aggr:.5,bluff:.05},perk:'확률 코치 정밀도 2배',lines:{raise:'승률 계산 완료',fold:'기대값 음수. 다이',win:'예측 적중',call:'팟 오즈 충족, 콜'}},
+ {id:'budget',name:'버짓',biz:'연구비 관리',color:'#2FA84F',acc:'calc',lore:'연구비 한 푼도 허투루 쓰지 않는 연구관리 전문가. 계산기와 영수증철이 늘 함께한다.',style:'절약형 · 싼 판만 본다',ai:{tight:.75,aggr:.3,bluff:.03},perk:'인재기금 수수료 면제',lines:{raise:'예산 범위 내 베팅',fold:'집행 보류합니다',win:'정산 완료!',call:'증빙 확인 후 콜'}},
+];
+
+const FACTS=[
+ ['알파캠퍼스','KIRD 학습플랫폼 알파캠퍼스는 회원 82만 명, 연간 30만 명 이상이 이용합니다.'],
+ ['미래비전 2050','KIRD는 AI 시대에 맞춰 기관 역할을 재정립한 「미래비전 2050」을 수립했습니다.'],
+ ['전략연구사업','PBS 단계적 폐지로 도입된 전략연구사업을 위해 설명회·교류회·교육을 지원합니다.'],
+ ['청년과학자','국가R&D 연구기획 프로그램은 8년간 120팀 422명을 지원했고, 올해 15팀으로 확대했습니다.'],
+ ['해외인재','외국인 이공계 연구자를 위한 해외연구인력 전주기 정착지원사업을 운영합니다.'],
+ ['K-클럽','경력개발 플랫폼 K-클럽은 입직 이전부터 은퇴 이후까지 경력을 잇습니다.'],
+ ['글로벌 협력','KIRD와 코트라는 과학기술·첨단산업 해외 인재 유치에 손잡았습니다.'],
+ ['공정채용','KIRD는 2024 공정채용 우수기업 어워즈에서 인사혁신처장상을 받았습니다.'],
+ ['전문기관 교육','연구관리 전문기관 통합교육으로 국가R&D 관리 역량을 키웁니다.'],
+ ['대학원생 경력','KIRD-대학 경력개발협의회와 이공계 대학원생 경력설계 교육을 운영합니다.'],
+];
+
+// ==ENGINE== 알파 마블 규칙 엔진 v2 (44칸, DOM 없음, HOOK으로 화면과 연결)
+const N=44,SAFETY=14,FUND=22,NURI=36;
+const START_CASH=2000000,SALARY=200000,MAX_ROUND=15,VISION_GOAL=250000,VISION_BONUS=150000,FUND_RATE=0.05;
+const TRIPLE_WIN=2;                         // 색 그룹 3개 완성 시 승리
+const RATE=[0.2,1.0,2.5,4.0,6.0];          // 통행료 = 땅값 × RATE[건물 단계]
+const BUILD=[0,0.4,0.6,0.8,1.0];          // 다음 단계 건설비 = 땅값 × BUILD[단계]
+const LV=['대지','랩','연구소','혁신캠퍼스','KIRD 인재센터'];
+const LV_SHORT=['대지','랩','연구소','캠퍼스','센터'];
+const FAC_PRICE=200000,FAC_TOLL=[0,60000,140000,280000,280000];
+const REWARD=150000,DONATE=150000,BOOST=3,BACK=2,KIRD_AID=100000;
+const LINES={1:{n:'신흥 아시아',c:'#F28C6B'},2:{n:'중화권 테크',c:'#F2B84B'},3:{n:'중동·오세아니아',c:'#B9D45A'},4:{n:'일본 연구도시',c:'#35BFA4'},5:{n:'유럽 혁신',c:'#4FA3EA'},6:{n:'유럽 과학',c:'#9AA6D6'},7:{n:'북미 테크',c:'#B07CF2'},8:{n:'K-혁신 클러스터',c:'#E86FA3'}};
+const SIDES={bottom:[1,13],left:[15,21],top:[23,35],right:[37,43]};
+const SIDE_NAME={bottom:'아래 변',left:'왼쪽 변',top:'위 변',right:'오른쪽 변'};
+const C=(n,line,p,biz,kw,kr)=>({t:'city',n,line,p,biz,kw,kr:!!kr});
+const CELLS=[
+ {t:'start',n:'출발점',d:`지날 때마다 연구지원금 ${SALARY/10000}만α`},
+ C('하노이',1,50000,'삼성전자 베트남 R&D센터·비엣텔','동남아 최대 규모 기업 연구소가 들어선 신흥 기술 도시'),
+ {t:'key',n:'알파 키'},
+ C('벵갈루루',1,60000,'인도우주연구기구(ISRO)·인포시스·인도과학원','인도의 실리콘밸리, 우주·소프트웨어'),
+ C('싱가포르',1,70000,'A*STAR 바이오폴리스·퓨전폴리스','국가 주도 바이오·IT 연구 단지'),
+ {t:'boost',n:'부스터',d:`실험 성공! ${BOOST}칸 더 전진`},
+ {t:'fac',n:'KSTAR',full:'KSTAR 핵융합 연구장치',kw:'대전, 한국형 초전도 핵융합장치'},
+ C('선전',2,90000,'화웨이·텐센트·BYD·DJI','하드웨어·전기차·드론 생태계'),
+ {t:'reward',n:'기술료 수입',d:`특허 기술이전 성공! ${REWARD/10000}만α를 받음`},
+ C('항저우',2,100000,'알리바바·딥시크·유니트리 로보틱스','AI·로봇 스타트업이 급성장하는 도시'),
+ C('신주',2,110000,'TSMC·대만 공업기술연구원(ITRI)','세계 반도체 파운드리의 심장'),
+ {t:'key',n:'알파 키'},
+ {t:'back',n:'재실험',d:`데이터 재확인! ${BACK}칸 뒤로`},
+ C('시드니',3,120000,'아틀라시안·UNSW 양자컴퓨팅','남반구 소프트웨어·양자 연구 거점'),
+ {t:'safety',n:'안전점검',d:'멈추면 2턴 쉼. 매 턴 안전 퀴즈로 탈출 도전'},
+ C('두바이',3,130000,'미래박물관·무함마드 빈 라시드 우주센터','스마트시티와 중동 우주 프로그램'),
+ C('텔아비브',3,140000,'스타트업 밀집·인근 와이즈만 과학연구소','인구 대비 스타트업 수 세계 최상위'),
+ {t:'donate',n:'기금 기부',d:`인재기금에 ${DONATE/10000}만α 기부`},
+ C('도쿄',4,160000,'소니·소프트뱅크·도쿄대','로봇·소재·전자 산업의 중심'),
+ {t:'fac',n:'나로',full:'나로우주센터',kw:'전남 고흥, 누리호 발사장'},
+ C('쓰쿠바',4,170000,'JAXA 쓰쿠바우주센터·산업기술종합연구소','국가 연구기관이 모인 연구학원도시'),
+ C('교토',4,180000,'닌텐도·교토대 iPS세포연구소','노벨상 배출 대학과 게임 기업의 도시'),
+ {t:'fund',n:'인재기금',d:'쌓인 인재기금을 모두 받음'},
+ C('파리',5,200000,'파스퇴르연구소·미스트랄 AI·스테이션 F','기초과학과 유럽 AI 스타트업'),
+ {t:'key',n:'알파 키'},
+ C('베를린',5,210000,'막스플랑크 연구소·테슬라 기가팩토리','유럽 스타트업 수도'),
+ C('아인트호번',5,220000,'ASML(인근 펠트호번)·필립스·브레인포트','반도체 노광장비의 세계 독점 기지'),
+ {t:'boost',n:'부스터',d:`실험 성공! ${BOOST}칸 더 전진`},
+ {t:'fac',n:'포항',full:'포항 방사광가속기',kw:'경북 포항, 4세대 방사광가속기'},
+ C('케임브리지',6,240000,'Arm·웰컴 생어연구소·케임브리지대','실리콘펜, 반도체 설계·유전체 연구'),
+ {t:'festa',n:'사이언스 페스타',d:'내 도시 하나를 골라 통행료 2배 (다음 페스타까지)'},
+ C('제네바',6,250000,'유럽입자물리연구소(CERN)','월드와이드웹이 태어난 입자물리 연구소'),
+ C('런던',6,260000,'구글 딥마인드·프랜시스 크릭 연구소','AI·의생명 연구의 유럽 중심'),
+ {t:'key',n:'알파 키'},
+ {t:'kird',n:'KIRD 본원',full:'KIRD 오창 본원',d:`교육 이수! 내 도시 1단계 무료 건설 (없으면 교육지원금 ${KIRD_AID/10000}만α)`},
+ C('시애틀',7,280000,'마이크로소프트·아마존','클라우드와 전자상거래의 본거지'),
+ {t:'nuri',n:'누리호',d:'원하는 칸으로 날아감'},
+ C('오스틴',7,290000,'테슬라 본사·삼성 오스틴 반도체','실리콘힐스, 전기차와 반도체'),
+ C('보스턴',7,300000,'MIT·하버드·모더나','세계 최대 바이오 클러스터'),
+ {t:'key',n:'알파 키'},
+ {t:'fac',n:'세종기지',full:'남극 세종과학기지',kw:'남극 킹조지섬, 극지 연구'},
+ C('실리콘밸리',8,340000,'엔비디아·애플·구글·스탠퍼드','AI·반도체 빅테크의 본거지'),
+ C('판교',8,360000,'카카오·넥슨·엔씨소프트','판교테크노밸리, 한국 ICT·게임 허브',1),
+ C('대덕',8,400000,'KAIST·한국전자통신연구원 등 출연연','대덕연구개발특구, 한국 과학기술의 심장',1),
+];
+const ABIL={alpha:'알파 키 퀴즈 정답 보상 2배',kclub:'출발점 통과 시 +5만α 추가',notri:'내 땅은 기술이전(인수) 불가',safe:'안전점검 1턴만 휴식',leader:'기술이전 비용 1.2배(기본 1.5배)',globi:'해외 도시 통행료 10% 할인',sprout:'신흥 아시아 땅값 20% 할인',strat:'누리호 이동 뒤 주사위 한 번 더',davin:'알파 키 카드 2장 중 골라 쓰기',budget:'건설비 10% 할인'};
+const AI_RESERVE={alpha:.12,kclub:.16,notri:.14,safe:.2,leader:.06,globi:.1,sprout:.08,strat:.1,davin:.12,budget:.18};
+const CARDS=[
+ {k:'news',t:'알파캠퍼스 회원 82만 명',d:'학습 열풍! 보너스를 받습니다.',fx:'money',v:100000},
+ {k:'news',t:'미래비전 2050 선포',d:'AI 시대 대전환을 축하하며 비전 보너스를 받습니다.',fx:'money',v:150000},
+ {k:'news',t:'청년과학자 15팀 확대',d:'국가R&D 연구기획 프로그램 확대! 모든 플레이어가 5만α를 받습니다.',fx:'allbank',v:50000},
+ {k:'news',t:'해외연구인력 정착지원',d:'외국인 연구자와 함께 누리호 발사장으로 이동합니다.',fx:'move',v:NURI},
+ {k:'news',t:'코트라와 해외인재 유치 협약',d:'출발점으로 이동해 연구지원금을 받습니다.',fx:'move',v:0},
+ {k:'news',t:'공정채용 인사혁신처장상',d:'수상 축하금을 받습니다.',fx:'money',v:100000},
+ {k:'news',t:'KIRD 연수 입교',d:'KIRD 오창 본원으로 이동해 교육을 받습니다.',fx:'move',v:34},
+ {k:'news',t:'대덕특구 견학',d:'대덕으로 이동합니다.',fx:'move',v:43},
+ {k:'ox',t:'연구윤리 OX',q:'존재하지 않는 데이터를 만들어내는 것은 \'위조\'다.',a:true,e:'맞습니다. 있는 데이터를 바꾸거나 지우면 \'변조\'입니다.'},
+ {k:'ox',t:'연구윤리 OX',q:'연구노트의 잘못 쓴 부분은 수정테이프로 깨끗이 지운다.',a:false,e:'줄을 그어 원래 기록이 보이게 두고 날짜·서명을 남깁니다.'},
+ {k:'ox',t:'연구윤리 OX',q:'다른 사람의 아이디어를 출처 없이 쓰면 표절이다.',a:true,e:'맞습니다. 아이디어도 출처를 밝혀야 합니다.'},
+ {k:'ox',t:'연구윤리 OX',q:'연구에 기여하지 않은 사람도 관행이면 저자로 넣어도 된다.',a:false,e:'부당한 저자 표시는 연구부정행위입니다.'},
+ {k:'ox',t:'연구윤리 OX',q:'결과를 맞추려고 실험 데이터 일부를 임의로 지우면 \'변조\'다.',a:true,e:'맞습니다. 데이터의 임의 삭제·변경은 변조입니다.'},
+ {k:'ox',t:'연구윤리 OX',q:'연구노트는 연구가 끝난 뒤 한꺼번에 정리해도 된다.',a:false,e:'연구노트는 수행하면서 바로 기록해야 증거 능력이 있습니다.'},
+ {k:'safe',t:'연구실 안전',q:'화학물질의 유해성과 응급조치를 확인하는 문서는?',o:['MSDS(물질안전보건자료)','연구계획서','장비 대장'],a:0,e:'MSDS로 유해성과 응급조치를 확인합니다.'},
+ {k:'safe',t:'연구실 안전',q:'연구실에서 불이 나면 가장 먼저 할 일은?',o:['주변에 알리고 대피·신고','실험 데이터 백업','원인 기록'],a:0,e:'인명 안전이 먼저입니다.'},
+ {k:'safe',t:'연구실 안전',q:'시약이 눈에 튀었을 때 먼저 할 일은?',o:['비상 세안기로 충분히 씻기','마른 수건으로 닦기','눈을 비비기'],a:0,e:'곧바로 흐르는 물이나 세안기로 충분히 씻어 냅니다.'},
+ {k:'safe',t:'연구실 안전',q:'유해 가스가 나오는 실험은 어디서 해야 할까?',o:['흄후드 안에서','창문 옆 책상','복도'],a:0,e:'흄후드로 가스를 배기합니다.'},
+ {k:'career',t:'K-클럽 멘토링 성공',d:'내 도시 하나에 건물 1단계를 무료로 짓습니다.',fx:'freebuild'},
+ {k:'career',t:'리더 과정 수료',d:'다음 통행료 1회가 면제됩니다.',fx:'shield'},
+ {k:'career',t:'해외 학회 발표',d:'원하는 칸으로 이동합니다.',fx:'choose'},
+ {k:'career',t:'연구비 정산 실수',d:'증빙 누락! 10만α를 냅니다.',fx:'money',v:-100000},
+ {k:'career',t:'연구실 안전점검 대상',d:'안전점검 칸으로 이동합니다. (면제권이 있으면 사용)',fx:'jail'},
+ {k:'career',t:'연구장비 교체',d:'건물 1단계당 2만α를 냅니다.',fx:'tax',v:20000},
+ {k:'career',t:'공동연구 성사',d:'모든 플레이어에게서 3만α씩 받습니다.',fx:'collect',v:30000},
+ {k:'career',t:'팀 워크숍 비용',d:'모든 플레이어에게 2만α씩 냅니다.',fx:'payall',v:20000},
+];
+let G=null;
+const HOOK={render(){},log(){},show:async()=>{},dice:async()=>{},step:async()=>{},beforeRoll:async()=>{},landed:async()=>{},over(){},ask:null};
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function newGame(chars,humanIdx){
+  G={players:chars.map((ch,i)=>({id:i,ch,human:i===humanIdx,cash:START_CASH,pos:0,jail:0,laps:0,out:false,contrib:0,shield:0,exempt:0,quizOK:0})),
+     cells:CELLS.map(c=>Object.assign({},c,{owner:-1,level:0,buyLap:0,invested:0})),
+     turn:0,round:1,fund:0,visionTotal:0,visionDone:false,festa:-1,deck:shuffleArr(CARDS.slice()),over:null,lastDice:[1,1],msg:''};
+  return G;
+}
+const alivePlayers=()=>G.players.filter(p=>!p.out);
+const owned=p=>G.cells.filter(c=>c.owner===p.id);
+const assets=p=>p.out?0:p.cash+owned(p).reduce((s,c)=>s+c.invested,0);
+const fmtA=n=>{n=Math.round(n);const a=Math.abs(n);let s;if(a>=1e8)s=(a/1e8).toFixed(1).replace(/\.0$/,'')+'억';else if(a>=1e4)s=(a/1e4).toFixed(a%1e4?1:0).replace(/\.0$/,'')+'만';else s=a.toLocaleString('ko-KR');return(n<0?'-':'')+s+'α'};
+const lineCells=L=>G.cells.filter(c=>c.t==='city'&&c.line===L);
+const lineDone=(L,pid)=>lineCells(L).every(c=>c.owner===pid);
+const priceOf=(p,c)=>Math.round(c.p*(p.ch.id==='sprout'&&c.line===1?.8:1));
+const buildCost=(p,c)=>Math.round(c.p*BUILD[c.level+1]*(p.ch.id==='budget'?.9:1));
+function tollOf(c,payer){
+  if(c.owner<0)return 0;
+  if(c.t==='fac'){const n=G.cells.filter(x=>x.t==='fac'&&x.owner===c.owner).length;return FAC_TOLL[n]}
+  let t=c.p*RATE[c.level];
+  if(lineDone(c.line,c.owner))t*=2;
+  if(G.cells.indexOf(c)===G.festa)t*=2;
+  if(payer&&payer.ch.id==='globi'&&!c.kr)t*=.9;
+  return Math.round(t);
+}
+const canLandmark=(p,c)=>c.level===3&&p.laps>c.buyLap;
+const canBuild=(p,c)=>c.t==='city'&&c.owner===p.id&&(c.level<3||canLandmark(p,c));
+const takeoverCost=(p,c)=>Math.round(c.invested*(p.ch.id==='leader'?1.2:1.5));
+function say(msg){G.msg=msg;HOOK.log(msg)}
+
+/* 주사위 예보: 지금 위치에서 2~12가 나오면 어디에 멈추는지, 영향이 큰 순서 */
+const WAYS=[0,0,1,2,3,4,5,6,5,4,3,2,1];
+function forecast(p){
+  const out=[];
+  for(let s=2;s<=12;s++){
+    const i=(p.pos+s)%N,c=G.cells[i];let kind='',amt=0,label='',score=0;
+    if(c.t==='city'||c.t==='fac'){
+      if(c.owner>=0&&c.owner!==p.id){amt=-tollOf(c,p);kind='toll';label=`통행료 ${fmtA(-amt)}`;score=-amt}
+      else if(c.owner===p.id){kind='own';label=canBuild(p,c)?'내 땅 · 건설 가능':'내 땅';score=c.t==='city'&&canBuild(p,c)?15000:5000}
+      else{kind='free';label=`빈 땅 ${fmtA(c.t==='fac'?FAC_PRICE:priceOf(p,c))}`;score=c.t==='fac'?40000:20000}
+    }else{
+      const M={key:['key','알파 키 카드',30000],safety:['bad','안전점검 2턴',160000],donate:['bad',`기부 ${fmtA(DONATE)}`,DONATE],reward:['good',`+${fmtA(REWARD)}`,REWARD],
+        boost:['good',`${BOOST}칸 더 → ${G.cells[(i+BOOST)%N].n}`,90000],back:['bad',`${BACK}칸 뒤로 → ${G.cells[(i-BACK+N)%N].n}`,60000],
+        fund:['good',`인재기금 ${fmtA(G.fund)}`,Math.max(30000,G.fund)],nuri:['good','원하는 칸으로',100000],kird:['good','무료 건설',120000],
+        festa:['good',owned(p).some(x=>x.t==='city')?'통행료 2배 지정':'페스타',owned(p).some(x=>x.t==='city')?80000:10000],start:['good','출발점',SALARY]};
+      [kind,label,score]=M[c.t]||['',c.n,0];
+    }
+    out.push({s,i,cell:c,kind,amt,label,score,prob:WAYS[s]/36});
+  }
+  const risk=out.filter(o=>o.kind==='toll').reduce((a,o)=>a+o.prob,0);
+  const top=out.slice().sort((a,b)=>b.score-a.score||b.prob-a.prob).slice(0,3);
+  return{all:out,top,risk};
+}
+
+async function decide(p,kind,ctx){
+  if(p.human&&HOOK.ask)return HOOK.ask(p,kind,ctx);
+  const res=AI_RESERVE[p.ch.id]*START_CASH*(G.round>12?.5:1);
+  const groupGain=c=>c.t==='city'?lineCells(c.line).filter(x=>x.owner===p.id).length:0;
+  switch(kind){
+    case'buy':return p.cash-ctx.cost>=res*(groupGain(ctx.cell)?.5:1);
+    case'build':{let best=0;for(const o of ctx.opts){if(p.cash-o.cost>=res*.8)best=o.lv}return best}
+    case'takeover':{const c=ctx.cell;const completes=lineCells(c.line).every(x=>x.owner===p.id||x===c);const g=groupGain(c);return p.cash-ctx.cost>=res*(completes?.05:g?.4:.8)&&(completes||Math.random()<(g?.75:.25))}
+    case'quiz':{const right=Math.random()<.7;if(ctx.k==='ox')return right?ctx.a:!ctx.a;return right?ctx.a:(ctx.a+1)%ctx.o.length}
+    case'jail':return'quiz';
+    case'choose':return aiChooseCell(p);
+    case'pickOwn':return ctx.cells.slice().sort((a,b)=>(kind==='pickOwn'&&ctx.mode==='festa'?tollOf(G.cells[b])-tollOf(G.cells[a]):G.cells[b].p-G.cells[a].p))[0];
+    case'card2':return cardValue(p,ctx[0])>=cardValue(p,ctx[1])?0:1;
+    case'roll':return true;
+  }
+}
+function cardValue(p,c){if(c.k==='ox'||c.k==='safe')return 6;const m={money:c.v/20000,allbank:2.5,move:3,freebuild:7,shield:5,choose:8,jail:-6,tax:-3,collect:3,payall:-2};return m[c.fx]??0}
+function aiChooseCell(p){
+  let best=0,bv=-1;
+  G.cells.forEach((c,i)=>{if(i===NURI)return;let v=0;
+    if((c.t==='city'||c.t==='fac')&&c.owner===-1&&p.cash>(c.p||FAC_PRICE)*1.3)v=(c.p||FAC_PRICE)/10000+10+(c.t==='city'?lineCells(c.line).filter(x=>x.owner===p.id).length*15:0);
+    else if(canBuild(p,c)&&p.cash>buildCost(p,c)*1.5)v=c.p/10000+5;
+    else if(c.t==='fund')v=G.fund/10000;
+    else if(c.t==='kird'&&owned(p).some(x=>canBuild(p,x)))v=14;
+    else if(i===0)v=8;
+    if(v>bv){bv=v;best=i}});
+  return best;
+}
+function buildOptions(p,c){
+  const opts=[];let lv=c.level,sum=0;
+  while(lv<4){if(lv===3&&!canLandmark(p,c))break;const t=Object.assign({},c,{level:lv});sum+=Math.round(c.p*BUILD[lv+1]*(p.ch.id==='budget'?.9:1));lv++;if(sum>p.cash)break;opts.push({lv,cost:sum,toll:Math.round(c.p*RATE[lv])})}
+  return opts;
+}
+async function buildFlow(p,c){
+  const opts=buildOptions(p,c);if(!opts.length)return;
+  const pick=await decide(p,'build',{cell:c,opts});
+  const o=opts.find(x=>x.lv===pick);if(!o)return;
+  p.cash-=o.cost;c.invested+=o.cost;const from=c.level;c.level=o.lv;
+  say(`${p.ch.name}, ${c.n}에 ${LV[o.lv]}${o.lv-from>1?`까지 ${o.lv-from}단계`:''} 건설 ${fmtA(o.cost)}`);
+}
+async function payTo(p,amt,to,why){
+  amt=Math.round(amt);if(amt<=0)return true;
+  if(p.cash<amt)await liquidate(p,amt);
+  if(p.cash<amt){if(to)to.cash+=p.cash;p.cash=0;bankrupt(p,why);return false}
+  p.cash-=amt;if(to)to.cash+=amt;return true;
+}
+async function liquidate(p,need){
+  const list=owned(p).sort((a,b)=>a.invested-b.invested);
+  for(const c of list){if(p.cash>=need)break;const v=Math.round(c.invested*.5);p.cash+=v;say(`${p.ch.name}, 자금이 모자라 ${c.n}을(를) ${fmtA(v)}에 매각`);c.owner=-1;c.level=0;c.invested=0;if(G.cells.indexOf(c)===G.festa)G.festa=-1;HOOK.render()}
+}
+function bankrupt(p,why){
+  p.out=true;owned(p).forEach(c=>{c.owner=-1;c.level=0;c.invested=0});
+  say(`${p.ch.name} 파산${why?` (${why})`:''}`);
+  if(alivePlayers().length===1)endGame(alivePlayers()[0],'상대 전원 파산');
+}
+function addFund(p,f){G.fund+=f;G.visionTotal+=f;p.contrib+=f;checkVision()}
+async function payToll(p,c){
+  const o=G.players[c.owner];const t=tollOf(c,p);
+  if(p.shield>0){p.shield--;say(`${p.ch.name}, 리더 과정 방패로 통행료 ${fmtA(t)} 면제`);return}
+  const f=Math.round(t*FUND_RATE);
+  if(p.cash<t)await liquidate(p,t);
+  if(p.cash<t){o.cash+=p.cash;p.cash=0;bankrupt(p,`${c.n} 통행료 ${fmtA(t)}`);return}
+  p.cash-=t;o.cash+=t-f;
+  say(`${p.ch.name} → ${o.ch.name} 통행료 ${fmtA(t)} (인재기금 ${fmtA(f)})`);
+  addFund(p,f);
+}
+function checkVision(){
+  if(!G.visionDone&&G.visionTotal>=VISION_GOAL){G.visionDone=true;alivePlayers().forEach(q=>q.cash+=VISION_BONUS);say(`미래비전 게이지 달성! 모두에게 비전 보너스 ${fmtA(VISION_BONUS)}`)}
+}
+function checkWin(p){
+  if(G.over||p.out)return;
+  const done=Object.keys(LINES).filter(L=>lineDone(+L,p.id));
+  if(done.length>=TRIPLE_WIN){endGame(p,`트리플 독점 · ${done.map(L=>LINES[L].n).join(', ')}`);return}
+  for(const [k,[a,b]] of Object.entries(SIDES)){const cs=G.cells.slice(a,b+1).filter(c=>c.t==='city');if(cs.every(c=>c.owner===p.id)){endGame(p,`변 독점 · ${SIDE_NAME[k]}`);return}}
+  if(G.cells.filter(c=>c.t==='fac').every(c=>c.owner===p.id))endGame(p,'국가 연구시설 4곳 독점');
+}
+function standings(){
+  const top=Math.max(...G.players.map(p=>p.contrib));
+  return G.players.map(p=>{const a=assets(p);const award=!p.out&&p.contrib===top&&top>0;return{p,a,award,score:p.out?-1:Math.round(a*(award?1.05:1))}}).sort((x,y)=>y.score-x.score);
+}
+function endGame(w,reason){if(G.over)return;G.over={winner:w,reason,table:standings()};say(`${w.ch.name} 승리 · ${reason}`);HOOK.over(G.over)}
+
+async function moveSteps(p,n,dir=1){
+  for(let k=0;k<n;k++){p.pos=(p.pos+dir+N)%N;if(dir>0&&p.pos===0)await passStart(p);await HOOK.step(p,n-k-1)}
+}
+async function moveTo(p,target){await moveSteps(p,(target-p.pos+N)%N)}
+async function passStart(p){
+  p.laps++;let s=SALARY;if(p.ch.id==='kclub')s+=50000;
+  const al=alivePlayers();if(al.length>1){const min=Math.min(...al.map(assets));if(assets(p)===min)s+=SALARY}
+  p.cash+=s;say(`${p.ch.name}, 출발점 통과 연구지원금 ${fmtA(s)}`);
+}
+function goSafety(p){
+  if(p.exempt>0){p.exempt--;say(`${p.ch.name}, 안전 면제권 사용`);return false}
+  p.pos=SAFETY;p.jail=p.ch.id==='safe'?1:2;say(`${p.ch.name}, 연구실 안전점검 (${p.jail}턴)`);return true;
+}
+async function drawCard(){if(!G.deck.length)G.deck=shuffleArr(CARDS.slice());return G.deck.pop()}
+async function freeBuild(p,why){
+  const cands=G.cells.map((c,i)=>i).filter(i=>canBuild(p,G.cells[i]));
+  if(!cands.length)return false;
+  const i=await decide(p,'pickOwn',{cells:cands,mode:'build',title:`${why}: 무료로 지을 도시를 고르세요`});
+  const c=G.cells[i];c.invested+=buildCost(p,c);c.level++;say(`${p.ch.name}, ${why}로 ${c.n}에 ${LV[c.level]} 무료 건설`);checkWin(p);return true;
+}
+async function useCard(p,card){
+  if(card.k==='ox'||card.k==='safe'){
+    const ans=await decide(p,'quiz',card);const right=ans===card.a;
+    await HOOK.show(p,card,{answered:true,right,ans});
+    if(right){const r=(card.k==='ox'?100000:50000)*(p.ch.id==='alpha'?2:1);p.cash+=r;p.quizOK++;if(card.k==='safe')p.exempt++;say(`${p.ch.name}, ${card.t} 정답! +${fmtA(r)}${card.k==='safe'?' · 안전 면제권':''}`)}
+    else say(`${p.ch.name}, ${card.t} 오답 (벌칙 없음)`);
+    return null;
+  }
+  await HOOK.show(p,card,{});
+  switch(card.fx){
+    case'money':if(card.v>0){p.cash+=card.v;say(`${p.ch.name}, ${card.t} +${fmtA(card.v)}`)}else{say(`${p.ch.name}, ${card.t} ${fmtA(card.v)}`);await payTo(p,-card.v,null,card.t)}break;
+    case'allbank':alivePlayers().forEach(q=>q.cash+=card.v);say(`${card.t}: 모두 +${fmtA(card.v)}`);break;
+    case'move':say(`${p.ch.name}, ${card.t}: ${G.cells[card.v].n}(으)로 이동`);await moveTo(p,card.v);return await landOn(p);
+    case'choose':{const t=await decide(p,'choose',{});say(`${p.ch.name}, ${G.cells[t].n}(으)로 이동`);await moveTo(p,t);return await landOn(p)}
+    case'jail':goSafety(p);break;
+    case'shield':p.shield++;say(`${p.ch.name}, 통행료 면제 방패 획득`);break;
+    case'freebuild':if(!await freeBuild(p,'멘토링'))say(`${p.ch.name}, 지을 도시가 없어 효과 없음`);break;
+    case'tax':{const n=owned(p).reduce((s,c)=>s+c.level,0);const t=n*card.v;say(`${p.ch.name}, 연구장비 교체 ${fmtA(t)}`);await payTo(p,t,null,card.t);break}
+    case'collect':for(const q of alivePlayers()){if(q!==p)await payTo(q,card.v,p,card.t)}say(`${p.ch.name}, 공동연구 성사! 모두에게서 ${fmtA(card.v)}씩`);break;
+    case'payall':for(const q of alivePlayers()){if(q!==p&&!p.out)await payTo(p,card.v,q,card.t)}say(`${p.ch.name}, 워크숍 비용 ${fmtA(card.v)}씩 지불`);break;
+  }
+  return null;
+}
+async function landOn(p,depth=0){
+  const c=G.cells[p.pos];HOOK.render();
+  if(depth>3)return null;
+  await HOOK.landed(p,c);
+  if(c.t==='city'||c.t==='fac'){
+    if(c.owner===-1){
+      const cost=c.t==='fac'?FAC_PRICE:priceOf(p,c);
+      if(p.cash>=cost&&await decide(p,'buy',{cell:c,cost})){p.cash-=cost;c.owner=p.id;c.invested=cost;c.buyLap=p.laps;c.level=0;say(`${p.ch.name}, ${c.full||c.n} 구입 ${fmtA(cost)}`);
+        if(c.t==='city'){checkWin(p);if(G.over)return null;await buildFlow(p,c)}}
+    }else if(c.owner===p.id){
+      if(canBuild(p,c))await buildFlow(p,c);
+    }else{
+      await payToll(p,c);
+      const o=G.players[c.owner];
+      if(!p.out&&c.t==='city'&&c.level<4&&o.ch.id!=='notri'){
+        const cost=takeoverCost(p,c);
+        if(p.cash>=cost&&await decide(p,'takeover',{cell:c,cost,owner:o})){p.cash-=cost;o.cash+=cost;c.owner=p.id;c.buyLap=p.laps;say(`${p.ch.name}, ${o.ch.name}의 ${c.n} 기술이전 ${fmtA(cost)}`)}
+      }
+    }
+  }else if(c.t==='key'){
+    let card=await drawCard();
+    if(p.ch.id==='davin'){const c2=await drawCard();const pick=await decide(p,'card2',[card,c2]);const other=pick?card:c2;card=pick?c2:card;G.deck.unshift(other)}
+    const r=await useCard(p,card);HOOK.render();checkWin(p);return r;
+  }else if(c.t==='safety'){goSafety(p)}
+  else if(c.t==='fund'){if(G.fund>0){p.cash+=G.fund;say(`${p.ch.name}, 인재기금 ${fmtA(G.fund)} 수령`);G.fund=0}else say(`${p.ch.name}, 인재기금이 비어 있음`)}
+  else if(c.t==='reward'){p.cash+=REWARD;say(`${p.ch.name}, 기술료 수입 +${fmtA(REWARD)}`)}
+  else if(c.t==='donate'){const ok=await payTo(p,DONATE,null,'기금 기부');if(ok){say(`${p.ch.name}, 인재기금에 ${fmtA(DONATE)} 기부`);addFund(p,DONATE)}}
+  else if(c.t==='boost'){say(`${p.ch.name}, 부스터! ${BOOST}칸 더 전진`);await moveSteps(p,BOOST);return await landOn(p,depth+1)}
+  else if(c.t==='back'){say(`${p.ch.name}, 재실험! ${BACK}칸 뒤로`);await moveSteps(p,BACK,-1);return await landOn(p,depth+1)}
+  else if(c.t==='festa'){const cands=G.cells.map((x,i)=>i).filter(i=>G.cells[i].t==='city'&&G.cells[i].owner===p.id);
+    if(cands.length){const i=await decide(p,'pickOwn',{cells:cands,mode:'festa',title:'사이언스 페스타: 통행료 2배로 만들 내 도시를 고르세요'});G.festa=i;say(`${p.ch.name}, 사이언스 페스타 개최! ${G.cells[i].n} 통행료 2배`)}
+    else say(`${p.ch.name}, 페스타를 열 도시가 없음`)}
+  else if(c.t==='kird'){if(!await freeBuild(p,'KIRD 교육 이수')){p.cash+=KIRD_AID;say(`${p.ch.name}, KIRD 교육지원금 +${fmtA(KIRD_AID)}`)}}
+  else if(c.t==='nuri'){const t=await decide(p,'choose',{});say(`${p.ch.name}, 누리호 발사! ${G.cells[t].n}(으)로`);await moveTo(p,t);const ex=await landOn(p,depth+1);return p.ch.id==='strat'?'again':ex}
+  HOOK.render();checkWin(p);return null;
+}
+async function rollDice(){const a=1+(Math.random()*6|0),b=1+(Math.random()*6|0);G.lastDice=[a,b];await HOOK.dice(a,b);return[a,b]}
+async function takeTurn(p){
+  if(p.jail>0){
+    const how=await decide(p,'jail',{});
+    if(how==='quiz'){const card=CARDS.filter(c=>c.k==='safe')[Math.random()*4|0];const ans=await decide(p,'quiz',card);const right=ans===card.a;await HOOK.show(p,card,{answered:true,right,ans,jail:true});
+      if(right){p.jail=0;say(`${p.ch.name}, 안전 퀴즈 정답으로 점검 통과`)}else{p.jail--;say(`${p.ch.name}, 안전점검 계속 (남은 ${p.jail}턴)`);HOOK.render();return}}
+    else{p.jail--;say(`${p.ch.name}, 안전점검 중 (남은 ${p.jail}턴)`);HOOK.render();return}
+  }
+  let doubles=0,bonus=false;
+  while(!G.over&&!p.out){
+    await HOOK.beforeRoll(p);
+    await decide(p,'roll',{});
+    const [a,b]=await rollDice();const dbl=a===b;
+    if(dbl)doubles++;
+    if(doubles===3){say(`${p.ch.name}, 더블 3번! 과로 경고`);goSafety(p);HOOK.render();break}
+    say(`${p.ch.name} 주사위 ${a}+${b}=${a+b}${dbl?' 더블!':''}`);
+    await moveSteps(p,a+b);
+    const r=await landOn(p);
+    if(G.over||p.out||p.jail>0)break;
+    if(r==='again'&&!bonus){bonus=true;say(`${p.ch.name}, 전략이 능력으로 한 번 더`);continue}
+    if(!dbl)break;
+  }
+  HOOK.render();
+}
+async function runGame(){
+  while(!G.over){
+    const p=G.players[G.turn];
+    if(!p.out)await takeTurn(p);
+    if(G.over)break;
+    let n=G.turn;do{n=(n+1)%G.players.length}while(G.players[n].out);
+    if(n<=G.turn)G.round++;
+    G.turn=n;
+    if(G.round>MAX_ROUND){const t=standings();endGame(t[0].p,`${MAX_ROUND}라운드 종료 · 총자산 1위`);break}
+    HOOK.render();
+  }
+}
+// ==/ENGINE==
+
+/* ---------- 도시·시설 상징 일러스트 (직접 그린 SVG, 64×64) ---------- */
+const S_='stroke="#EAF2FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+const ICONS={
+ '하노이':`<ellipse cx="32" cy="53" rx="22" ry="5" fill="#2E86D6" opacity=".6"/><rect x="29" y="31" width="6" height="21" fill="#B98C5A" ${S_}/><rect x="21" y="22" width="22" height="10" fill="#C0392B" ${S_}/><path d="M12 23Q20 21 24 13H40Q44 21 52 23Z" fill="#E8B04B" ${S_}/>`,
+ '벵갈루루':`<rect x="12" y="12" width="40" height="28" rx="3" fill="#1E3A64" ${S_}/><path d="M5 45h54l-4 7H9z" fill="#9FB3CC" ${S_}/><path d="M26 20l-6 6 6 6M38 20l6 6-6 6M34 18l-4 16" stroke="#8CC63F" stroke-width="2.6" fill="none" stroke-linecap="round"/>`,
+ '싱가포르':`<path d="M5 56h54" ${S_}/><rect x="12" y="22" width="9" height="34" fill="#9FB3CC" ${S_}/><rect x="27.5" y="22" width="9" height="34" fill="#9FB3CC" ${S_}/><rect x="43" y="22" width="9" height="34" fill="#9FB3CC" ${S_}/><path d="M5 20Q32 11 59 20L57 23H7Z" fill="#F4F7FB" ${S_}/>`,
+ '선전':`<path d="M17 21L47 43M47 21L17 43" ${S_}/><ellipse cx="15" cy="19" rx="10" ry="3" fill="#4FA3EA" opacity=".85"/><ellipse cx="49" cy="19" rx="10" ry="3" fill="#4FA3EA" opacity=".85"/><ellipse cx="15" cy="45" rx="10" ry="3" fill="#4FA3EA" opacity=".85"/><ellipse cx="49" cy="45" rx="10" ry="3" fill="#4FA3EA" opacity=".85"/><rect x="24" y="26" width="16" height="12" rx="4" fill="#E0533F" ${S_}/><circle cx="32" cy="42" r="3" fill="#0E2238" ${S_}/>`,
+ '항저우':`<path d="M32 4v7" ${S_}/><path d="M24 17h16l-3-6H27z" fill="#E8B04B" ${S_}/><path d="M20 29h24l-4-8H24z" fill="#E8B04B" ${S_}/><path d="M16 42h32l-4-9H20z" fill="#E8B04B" ${S_}/><rect x="20" y="42" width="24" height="12" fill="#C0392B" ${S_}/><path d="M6 56h52" ${S_}/><rect x="27" y="22" width="10" height="7" fill="#C0392B"/><rect x="25" y="34" width="14" height="8" fill="#C0392B"/>`,
+ '신주':`<circle cx="32" cy="32" r="23" fill="#5B6B88" ${S_}/><path d="M19 21h26M13 29h38M13 37h38M17 45h30M21 13v38M29 10v44M37 10v44M45 14v36" stroke="#B9D4FF" stroke-width="1.3" opacity=".85"/><path d="M24 55h16" stroke="#0E2238" stroke-width="3"/>`,
+ '시드니':`<path d="M5 50h54v6H5z" fill="#B98C5A" ${S_}/><path d="M11 50Q15 29 28 23Q23 38 26 50Z" fill="#F4F7FB" ${S_}/><path d="M25 50Q29 24 45 18Q38 35 41 50Z" fill="#F4F7FB" ${S_}/><path d="M40 50Q44 33 55 31Q50 41 53 50Z" fill="#F4F7FB" ${S_}/>`,
+ '두바이':`<path d="M32 3L34 17 37 19 38 33 41 35 43 56H21L23 35 26 33 27 19 30 17Z" fill="#B9D4FF" ${S_}/><path d="M6 56h52" ${S_}/><path d="M28 26h8M26 42h12" stroke="#2E86D6" stroke-width="1.6"/>`,
+ '텔아비브':`<path d="M32 8a15 15 0 0 0-9 27c2 2 3 4 3 7h12c0-3 1-5 3-7a15 15 0 0 0-9-27z" fill="#FFD24A" ${S_}/><path d="M26 46h12M27 51h10M29 56h6" ${S_}/><path d="M7 22h5M52 22h5M11 7l4 4M53 7l-4 4M32 1v3" ${S_}/><path d="M29 34l3-10 3 10" stroke="#E0533F" stroke-width="2" fill="none"/>`,
+ '도쿄':`<path d="M32 3L37 30L46 56H18L27 30Z" fill="#E0533F" ${S_}/><path d="M26 25h12M24 38h16M21 49h22" stroke="#F4F7FB" stroke-width="3"/><rect x="25" y="20" width="14" height="5" fill="#F4F7FB" ${S_}/>`,
+ '쓰쿠바':`<rect x="26" y="24" width="12" height="16" rx="2" fill="#FFD24A" ${S_}/><rect x="5" y="27" width="17" height="10" fill="#2E86D6" ${S_}/><rect x="42" y="27" width="17" height="10" fill="#2E86D6" ${S_}/><path d="M22 32h4M38 32h4M32 24v-8" ${S_}/><path d="M26 12a6 6 0 0 1 12 0" ${S_} fill="none"/><path d="M10 27v10M15 27v10M48 27v10M53 27v10" stroke="#B9D4FF" stroke-width="1.2"/><path d="M14 52l6-6M44 52l6-6" stroke="#9FB3CC" stroke-width="1.6"/>`,
+ '교토':`<path d="M7 15Q32 9 57 15L55 20H9Z" fill="#E0533F" ${S_}/><rect x="13" y="26" width="38" height="4" fill="#E0533F" ${S_}/><rect x="16" y="20" width="6" height="36" fill="#E0533F" ${S_}/><rect x="42" y="20" width="6" height="36" fill="#E0533F" ${S_}/><rect x="29" y="20" width="6" height="6" fill="#0E2238" ${S_}/>`,
+ '파리':`<path d="M32 3L29 21L24 37L14 56H24Q32 43 40 56H50L40 37L35 21Z" fill="#B98C5A" ${S_}/><path d="M26 29h12M21 41h22" ${S_}/>`,
+ '베를린':`<path d="M26 18v-6h12v6" fill="#2FA84F" ${S_}/><rect x="7" y="18" width="50" height="8" fill="#E8D8B0" ${S_}/><path d="M12 26v28M20 26v28M28 26v28M36 26v28M44 26v28M52 26v28" stroke="#E8D8B0" stroke-width="3.6"/><path d="M5 56h54" ${S_}/>`,
+ '아인트호번':`<path d="M24 6h16l-3 8H27z" fill="#B07CF2" ${S_}/><ellipse cx="32" cy="20" rx="11" ry="3.5" fill="#B9D4FF" ${S_}/><path d="M27 23l-5 17M37 23l5 17" stroke="#B07CF2" stroke-width="2.4"/><path d="M29 36l3 6 3-6z" fill="#FFD24A"/><ellipse cx="32" cy="47" rx="21" ry="7" fill="#5B6B88" ${S_}/><path d="M18 47h28M23 43.5h18M23 50.5h18" stroke="#B9D4FF" stroke-width="1.2"/>`,
+ '케임브리지':`<path d="M22 4C42 16 22 28 42 40S22 52 42 60" stroke="#4FA3EA" stroke-width="3.2" fill="none"/><path d="M42 4C22 16 42 28 22 40S42 52 22 60" stroke="#E86FA3" stroke-width="3.2" fill="none"/><path d="M27 10h10M30 16h4M27 22h10M27 34h10M30 40h4M27 46h10M27 58h10" stroke="#EAF2FF" stroke-width="2"/>`,
+ '제네바':`<circle cx="34" cy="30" r="20" fill="none" stroke="#4FA3EA" stroke-width="3.4"/><circle cx="34" cy="30" r="20" fill="none" stroke="#EAF2FF" stroke-width="1" stroke-dasharray="2 4"/><circle cx="16" cy="46" r="8" fill="none" stroke="#8CC63F" stroke-width="2.8"/><path d="M22 41l5-4" stroke="#8CC63F" stroke-width="2.8"/><circle cx="34" cy="10" r="4" fill="#FFD24A" ${S_}/><circle cx="54" cy="30" r="4" fill="#FFD24A" ${S_}/><circle cx="34" cy="50" r="4" fill="#FFD24A" ${S_}/><circle cx="14" cy="30" r="4" fill="#FFD24A" ${S_}/><path d="M30 30h8M34 26v8" stroke="#E86FA3" stroke-width="2"/>`,
+ '런던':`<path d="M24 18L32 3L40 18Z" fill="#5B6B88" ${S_}/><rect x="24" y="18" width="16" height="38" fill="#E8B04B" ${S_}/><circle cx="32" cy="27" r="5.5" fill="#F4F7FB" ${S_}/><path d="M32 24v3l2 1.5" stroke="#0E2238" stroke-width="1.6"/><path d="M24 37h16M24 46h16M28 37v19M36 37v19" stroke="#9A6A20" stroke-width="1.4"/><path d="M14 56h36" ${S_}/>`,
+ '시애틀':`<path d="M32 2v9" ${S_}/><ellipse cx="32" cy="15" rx="15" ry="4.5" fill="#F4F7FB" ${S_}/><path d="M22 18h20l-4 4H26z" fill="#B9D4FF" ${S_}/><path d="M29 22L23 56M35 22L41 56M26 38h12" ${S_}/><path d="M16 56h32" ${S_}/>`,
+ '오스틴':`<path d="M32 3l2 5h5l-4 3 2 5-5-3-5 3 2-5-4-3h5z" fill="#FFD24A" ${S_}/><path d="M32 17v4" ${S_}/><path d="M20 37Q32 14 44 37Z" fill="#F2C987" ${S_}/><path d="M14 56V37h36v19" fill="#E8B04B" ${S_}/><path d="M20 42v14M27 42v14M37 42v14M44 42v14" ${S_}/>`,
+ '보스턴':`<path d="M14 30Q32 8 50 30Z" fill="#DCE6F2" ${S_}/><rect x="11" y="30" width="42" height="5" fill="#DCE6F2" ${S_}/><path d="M16 35v17M24 35v17M32 35v17M40 35v17M48 35v17" stroke="#DCE6F2" stroke-width="3.4"/><rect x="9" y="52" width="46" height="4" fill="#DCE6F2" ${S_}/>`,
+ '실리콘밸리':`<rect x="17" y="17" width="30" height="30" rx="3" fill="#2FA84F" ${S_}/><rect x="24" y="24" width="16" height="16" fill="#0E2238" ${S_}/><text x="32" y="36" text-anchor="middle" font-size="9" font-weight="900" fill="#8CC63F" font-family="sans-serif">AI</text><path d="M24 10v7M32 10v7M40 10v7M24 47v7M32 47v7M40 47v7M10 24h7M10 32h7M10 40h7M47 24h7M47 32h7M47 40h7" ${S_}/>`,
+ '판교':`<path d="M14 22h36a8 8 0 0 1 8 8l2 15a5 5 0 0 1-9 3l-5-7H18l-5 7a5 5 0 0 1-9-3l2-15a8 8 0 0 1 8-8z" fill="#E86FA3" ${S_}/><path d="M18 28v9M13.5 32.5h9" ${S_}/><circle cx="44" cy="29" r="2.6" fill="#FFD24A"/><circle cx="50" cy="34" r="2.6" fill="#8CC63F"/><circle cx="38" cy="34" r="2.6" fill="#4FA3EA"/>`,
+ '대덕':`<path d="M32 3v10" ${S_}/><circle cx="32" cy="14" r="4" fill="#FFD24A" ${S_}/><path d="M28.5 22h7l-1.5 34h-4z" fill="#DCE6F2" ${S_}/><ellipse cx="32" cy="24" rx="13" ry="5" fill="#4FA3EA" ${S_}/><path d="M18 56h28" ${S_}/><path d="M20 34l-4 22M44 34l4 22" stroke="#9FB3CC" stroke-width="1.6"/>`,
+ 'KSTAR':`<ellipse cx="32" cy="34" rx="25" ry="15" fill="#5B6B88" ${S_}/><ellipse cx="32" cy="34" rx="17" ry="9" fill="none" stroke="#E86FA3" stroke-width="3"/><ellipse cx="32" cy="34" rx="9" ry="4.5" fill="#0E2238" ${S_}/><path d="M11 27v14M18 22v24M46 22v24M53 27v14" stroke="#B9D4FF" stroke-width="1.6"/><path d="M32 6v10M26 10l6 6 6-6" stroke="#FFD24A" stroke-width="2" fill="none"/>`,
+ '나로':`<path d="M32 4c6 6 7 16 7 26v14H25V30c0-10 1-20 7-26z" fill="#F4F7FB" ${S_}/><path d="M25 35l-6 10h6M39 35l6 10h-6" fill="#E0533F" ${S_}/><circle cx="32" cy="20" r="3" fill="#2E86D6"/><path d="M28 44l4 10 4-10" fill="#FFD24A"/><path d="M8 56h48M12 56V36h4v20" ${S_}/>`,
+ '포항':`<rect x="5" y="27" width="54" height="9" rx="4.5" fill="#5B6B88" ${S_}/><path d="M10 31.5h44" stroke="#FFD24A" stroke-width="2.6" stroke-dasharray="5 3"/><path d="M48 26l7-14M42 26l4-16M36 26l1-14" stroke="#B07CF2" stroke-width="2.2"/><path d="M13 36v16M25 36v16M37 36v16M49 36v16M8 54h48" ${S_}/>`,
+ '세종기지':`<path d="M4 58l10-8h36l10 8z" fill="#DCE6F2" ${S_}/><ellipse cx="32" cy="34" rx="14" ry="18" fill="#1A2A4A" ${S_}/><ellipse cx="32" cy="38" rx="9" ry="13" fill="#F4F7FB"/><circle cx="27.5" cy="25" r="2.2" fill="#F4F7FB"/><circle cx="36.5" cy="25" r="2.2" fill="#F4F7FB"/><path d="M29 29.5l3 3.5 3-3.5z" fill="#F08A24"/><path d="M25 51l-4 4h8M39 51l4 4h-8" fill="#F08A24"/>`,
+ start:`<path d="M14 58V6" ${S_}/><path d="M14 8h30l-6 8 6 8H14z" fill="#8CC63F" ${S_}/><path d="M24 42h28M44 34l8 8-8 8" stroke="#FFD24A" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+ safety:`<path d="M10 44a22 22 0 0 1 44 0z" fill="#FFD24A" ${S_}/><rect x="6" y="44" width="52" height="6" rx="2" fill="#FFD24A" ${S_}/><path d="M28 23h8v21h-8z" fill="#F08A24"/><path d="M32 6v6M17 12l3 4M47 12l-3 4" ${S_}/>`,
+ fund:`<ellipse cx="22" cy="50" rx="14" ry="5" fill="#FFD24A" ${S_}/><ellipse cx="22" cy="43" rx="14" ry="5" fill="#FFD24A" ${S_}/><ellipse cx="22" cy="36" rx="14" ry="5" fill="#FFD24A" ${S_}/><path d="M46 30L36 20c-6-6 2-14 10-8 8-6 16 2 10 8z" fill="#E86FA3" ${S_}/>`,
+ nuri:`<g transform="rotate(35 32 32)"><path d="M32 3c6 6 7 16 7 26v14H25V29c0-10 1-20 7-26z" fill="#F4F7FB" ${S_}/><path d="M25 34l-6 10h6M39 34l6 10h-6" fill="#E0533F" ${S_}/><circle cx="32" cy="19" r="3" fill="#2E86D6"/><path d="M26 43l6 18 6-18z" fill="#FFD24A"/></g><circle cx="10" cy="12" r="1.6" fill="#EAF2FF"/><circle cx="54" cy="52" r="1.6" fill="#EAF2FF"/><circle cx="8" cy="44" r="1.2" fill="#EAF2FF"/>`,
+ key:`<circle cx="22" cy="32" r="13" fill="#FFD24A" ${S_}/><text x="22" y="38" text-anchor="middle" font-size="17" font-weight="900" fill="#0E2238" font-family="sans-serif">α</text><path d="M35 32h22M49 32v9M56 32v7" ${S_}/>`,
+ boost:`<path d="M10 16l15 16-15 16M28 16l15 16-15 16" stroke="#8CC63F" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="54" y="38" text-anchor="middle" font-size="15" font-weight="900" fill="#8CC63F" font-family="sans-serif">+3</text>`,
+ back:`<path d="M54 16L39 32l15 16M36 16L21 32l15 16" stroke="#F08A24" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><text x="10" y="38" text-anchor="middle" font-size="15" font-weight="900" fill="#F08A24" font-family="sans-serif">-2</text>`,
+ reward:`<rect x="12" y="8" width="28" height="36" rx="2" fill="#F4F7FB" ${S_}/><path d="M18 16h16M18 23h16M18 30h10" stroke="#5B6B88" stroke-width="2.2"/><circle cx="42" cy="44" r="13" fill="#FFD24A" ${S_}/><text x="42" y="50" text-anchor="middle" font-size="16" font-weight="900" fill="#0E2238" font-family="sans-serif">α</text>`,
+ donate:`<path d="M32 56L12 36c-8-8 2-22 12-16l8 6 8-6c10-6 20 8 12 16z" fill="#E86FA3" ${S_}/><circle cx="32" cy="13" r="8" fill="#FFD24A" ${S_}/><path d="M32 22v8" stroke="#FFD24A" stroke-width="2.4" stroke-dasharray="2 3"/>`,
+ festa:`<path d="M32 32L32 6M32 32L54 18M32 32L54 46M32 32L32 58M32 32L10 46M32 32L10 18" stroke="#B07CF2" stroke-width="2.4" stroke-dasharray="3 4"/><circle cx="32" cy="6" r="4" fill="#FFD24A"/><circle cx="54" cy="18" r="4" fill="#E86FA3"/><circle cx="54" cy="46" r="4" fill="#8CC63F"/><circle cx="32" cy="58" r="4" fill="#4FA3EA"/><circle cx="10" cy="46" r="4" fill="#F08A24"/><circle cx="10" cy="18" r="4" fill="#FFD24A"/><circle cx="32" cy="32" r="7" fill="#F4F7FB" ${S_}/>`,
+ kird:`<path d="M30 46h24v10H30z" fill="#2E86D6" ${S_}/><path d="M4 22L32 10l28 12-28 12z" fill="#0E2238" ${S_}/><path d="M16 28v11c8 6 24 6 32 0V28" fill="#1E3A64" ${S_}/><path d="M56 24v14" ${S_}/><circle cx="56" cy="40" r="3" fill="#FFD24A"/><text x="32" y="25" text-anchor="middle" font-size="8" font-weight="900" fill="#8CC63F" font-family="sans-serif">KIRD</text>`,
+};
+const SYMBOL={'하노이':'일주사(한 기둥 사원)','벵갈루루':'소프트웨어 수도','싱가포르':'마리나 베이 샌즈','선전':'드론(DJI 본사 도시)','항저우':'서호 레이펑탑','신주':'실리콘 웨이퍼','시드니':'오페라하우스','두바이':'부르즈 할리파','텔아비브':'스타트업 전구','도쿄':'도쿄타워','쓰쿠바':'인공위성(JAXA)','교토':'후시미 이나리 도리이','파리':'에펠탑','베를린':'브란덴부르크 문','아인트호번':'EUV 노광장비','케임브리지':'DNA 이중나선(1953년 캐번디시 연구소에서 구조 규명)','제네바':'CERN 대형강입자가속기(LHC) 27km 고리','런던':'엘리자베스 타워(빅벤)','시애틀':'스페이스 니들','오스틴':'텍사스 주의사당','보스턴':'MIT 그레이트 돔','실리콘밸리':'AI 반도체 칩','판교':'게임 컨트롤러','대덕':'한빛탑(대전 엑스포과학공원)','KSTAR':'토카막 핵융합 장치','나로':'누리호 발사체','포항':'방사광가속기 빔라인','세종기지':'젠투펭귄'};
+function iconSVG(c,cls='ic'){const k=(c.t==='city'||c.t==='fac')?c.n:c.t;const g=ICONS[k];return g?`<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true">${g}</svg>`:''}
+
+/* ---------- 화면 ---------- */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const SEAT_COL=['#FFD24A','#4FA3EA','#E0533F','#8CC63F'];
+const CH=Object.fromEntries(CHARS.map(c=>[c.id,c]));
+const KIND={ox:['연구윤리 OX','#7E57C2'],safe:['연구실 안전','#F08A24'],news:['KIRD 소식','#2E86D6'],career:['커리어 이벤트','#2FA84F']};
+const MCOL={toll:'#E0533F',bad:'#F08A24',good:'#2FA84F',key:'#2E86D6',free:'#5B6B88',own:'#5B6B88',mine:'#C99A00'};
+const SPEED={slow:{step:560,dice:[14,75],look:1500,ban:1500},normal:{step:360,dice:[10,65],look:1050,ban:1100},fast:{step:110,dice:[4,45],look:250,ban:450}};
+const SAVE='kird-alpha-marble-v2';
+let REC={games:0,wins:0,avatar:'alpha',opp:3,speed:'normal'};
+try{const r=localStorage.getItem(SAVE);if(r)REC=Object.assign(REC,JSON.parse(r))}catch(e){}
+function saveRec(){try{localStorage.setItem(SAVE,JSON.stringify(REC))}catch(e){}}
+const SP=()=>SPEED[REC.speed]||SPEED.normal;
+const mq=window.matchMedia('(max-width: 760px)');
+let factI=Math.random()*FACTS.length|0;
+let choosing=null,marks=new Map(),trail=new Set(),notice=null,hitSum=0,activeTok=-1;
+let ctrl={dice:[1,1],spin:false,tot:'',msg:'',prompt:'',bind:null};
+let toastT;function toast(m,ms=2600){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,ms)}
+document.querySelectorAll('[data-sp]').forEach(b=>{b.classList.toggle('on',b.dataset.sp===REC.speed);b.onclick=()=>{REC.speed=b.dataset.sp;saveRec();document.querySelectorAll('[data-sp]').forEach(x=>x.classList.toggle('on',x===b))}});
+
+function gridPos(i){if(i===0)return[9,15];if(i<14)return[9,15-i];if(i===14)return[9,1];if(i<22)return[9-(i-14),1];if(i===22)return[1,1];if(i<36)return[1,i-21];if(i===36)return[1,15];return[i-35,15]}
+function sideOf(i){if(i===0||i===14||i===22||i===36)return'corner';if(i<14)return'bottom';if(i<22)return'left';if(i<36)return'top';return'right'}
+function dieSVG(n,spin){const P={1:[[50,50]],2:[[28,28],[72,72]],3:[[28,28],[50,50],[72,72]],4:[[28,28],[72,28],[28,72],[72,72]],5:[[28,28],[72,28],[50,50],[28,72],[72,72]],6:[[28,26],[72,26],[28,50],[72,50],[28,74],[72,74]]}[n];
+  return`<svg class="die${spin?' spin':''}" viewBox="0 0 100 100" role="img" aria-label="주사위 ${n}"><rect x="4" y="4" width="92" height="92" rx="18" fill="#fff" stroke="#0E2238" stroke-width="4"/>${P.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="9" fill="${n===1?'#E0533F':'#0E2238'}"/>`).join('')}</svg>`}
+const human=()=>G&&G.players.find(p=>p.human);
+
+/* ---------- 보드 ---------- */
+function cellSub(c,i){
+  if(c.t==='city')return c.owner>=0?`${LV_SHORT[c.level]} ${fmtA(tollOf(c))}`:fmtA(c.p);
+  if(c.t==='fac')return c.owner>=0?`통행 ${fmtA(tollOf(c))}`:'연구시설';
+  return {start:`+${fmtA(SALARY)}`,fund:fmtA(G.fund),safety:'2턴 휴식',nuri:'원하는 칸',key:'카드',boost:`+${BOOST}칸`,back:`-${BACK}칸`,reward:`+${fmtA(REWARD)}`,donate:`-${fmtA(DONATE)}`,festa:'통행료 2배',kird:'무료 건설'}[c.t]||'';
+}
+function renderBoard(){
+  if(!G)return;
+  let h='';
+  G.cells.forEach((c,i)=>{
+    const [r,col]=gridPos(i);const side=sideOf(i);
+    const sp=['boost','back','reward','donate','festa'].includes(c.t);
+    const mk=marks.get(i);
+    const cls=['cell',side,c.t==='city'?'city':'',c.t==='key'?'key':'',c.t==='fac'?'fac':'',sp?'sp':'',c.t==='kird'?'kird':'',side==='corner'?'corner':'',c.owner>=0?'own':'',trail.has(i)?'trail':'',mk?'marked':'',choosing?(choosing.ok(i)?'choose':'nochoose'):''].join(' ');
+    const lc=c.t==='city'?`var(--l${c.line})`:c.t==='fac'?'var(--fac)':'transparent';
+    const oc=c.owner>=0?SEAT_COL[c.owner]:'transparent';
+    const lv=c.owner>=0&&c.t==='city'?`<span class="lv">${c.level===4?'<i class="lm"></i>':''}${'<i></i>'.repeat(Math.min(c.level,3))}</span>`:'';
+    const tag=G.festa===i?'<span class="tag">2×</span>':(c.t==='city'&&c.owner>=0&&lineDone(c.line,c.owner)?'<span class="tag">독점</span>':'');
+    const m=mk?`<span class="mk" style="--mc:${mk.col}">${mk.s}</span>`:'';
+    h+=`<button type="button" class="${cls}" data-i="${i}" style="grid-row:${r};grid-column:${col};--lc:${lc};--oc:${oc};${mk?`--mc:${mk.col}`:''}" aria-label="${esc(c.full||c.n)}${c.owner>=0?`, ${esc(G.players[c.owner].ch.name)} 소유`:''}"><span class="band"></span>${iconSVG(c)}<span class="nm">${esc(c.n)}</span><span class="sub num">${cellSub(c,i)}</span>${lv}${tag}${m}</button>`;
+  });
+  const pct=Math.min(100,G.visionTotal/VISION_GOAL*100);const f=FACTS[factI];
+  h+=`<div class="center"><div class="cl"><div class="ctitle">알파 <em>마블</em></div>
+   <div class="gauge"><div class="lab"><span>미래비전 게이지${G.visionDone?' · 달성!':''}</span><span class="num">${fmtA(G.visionTotal)} / ${fmtA(VISION_GOAL)}</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
+   <div class="score" id="score"></div>
+   <div class="fact"><b>KIRD 한 장 · ${esc(f[0])}</b> ${esc(f[1])}${G.festa>=0?`<br><b>사이언스 페스타</b> ${esc(G.cells[G.festa].n)} 통행료 2배`:''}</div></div>
+   <div class="cr" id="crHost"></div></div>`;
+  $('board').innerHTML=h;
+  renderScore();renderCtrl();
+  $('roundPill').innerHTML=`라운드 <b>${Math.min(G.round,MAX_ROUND)}</b>/${MAX_ROUND}`;
+  $('fundPill').innerHTML=`인재기금 <b>${fmtA(G.fund)}</b>`;
+}
+function renderScore(){
+  const el=$('score');if(!el||!G)return;
+  el.innerHTML=G.players.map(p=>`<div class="sc ${G.players[G.turn]===p&&!G.over?'turn':''} ${p.out?'out':''}" style="--pc:${SEAT_COL[p.id]}"><span class="av">${avatar(p.ch)}</span><b>${esc(p.ch.name)}${p.human?' (나)':''}</b>${p.jail?`<span class="st">점검 ${p.jail}</span>`:''}<span class="m num">${p.out?'파산':fmtA(p.cash)}</span></div>`).join('');
+}
+function renderPlayers(){
+  if(!G)return;
+  $('players').innerHTML=G.players.map(p=>{
+    const groups=Object.keys(LINES).filter(L=>lineDone(+L,p.id)).length;
+    const bd=[p.jail>0?`<span class="bd w">안전점검 ${p.jail}턴</span>`:'',p.shield?`<span class="bd g">방패 ${p.shield}</span>`:'',p.exempt?`<span class="bd g">안전 면제권 ${p.exempt}</span>`:'',groups?`<span class="bd g">색 독점 ${groups}</span>`:'',p.out?'<span class="bd w">파산</span>':''].join('');
+    return`<div class="pcard ${G.players[G.turn]===p&&!G.over?'turn':''} ${p.out?'out':''}" style="--pc:${SEAT_COL[p.id]}"><div class="av">${avatar(p.ch)}</div><div style="min-width:0"><b>${esc(p.ch.name)}${p.human?' (나)':''}</b><div class="meta">${esc(ABIL[p.ch.id])}</div><div class="meta">땅 ${owned(p).length}곳 · 기금 기여 ${fmtA(p.contrib)}</div><div class="badges">${bd}</div></div><div class="cash num">${fmtA(p.cash)}<small>총자산 ${fmtA(assets(p))}</small></div></div>`}).join('');
+}
+function render(){renderBoard();renderPlayers();placeTokens(false)}
+
+/* ---------- 말 ---------- */
+function buildTokens(){
+  $('tokens').innerHTML=G.players.map(p=>`<div class="tk" id="tk${p.id}" style="--pc:${SEAT_COL[p.id]}"><div class="body">${avatar(p.ch)}</div><span class="left num"></span></div>`).join('');
+}
+function cellCenter(i){const el=$('board').querySelector(`[data-i="${i}"]`);if(!el)return[0,0,40];return[el.offsetLeft+el.offsetWidth/2,el.offsetTop+el.offsetHeight/2,Math.min(el.offsetWidth,el.offsetHeight)]}
+function placeTokens(anim,hopId){
+  if(!G)return;
+  const tl=$('tokens');const [, ,cw]=cellCenter(1);const ts=Math.max(16,Math.min(32,cw*.4));
+  tl.style.setProperty('--ts',ts+'px');tl.style.setProperty('--tt',anim?Math.min(.32,SP().step/1000*.85)+'s':'0s');
+  G.players.forEach(p=>{
+    const t=$('tk'+p.id);if(!t)return;t.hidden=p.out;if(p.out)return;
+    const same=G.players.filter(q=>!q.out&&q.pos===p.pos);const k=same.indexOf(p);
+    const [x,y]=cellCenter(p.pos);const dx=(k-(same.length-1)/2)*ts*.55,dy=(k-(same.length-1)/2)*ts*.18;
+    t.style.transform=`translate(${x+dx}px,${y+dy+cw*.2}px)`;
+    t.classList.toggle('active',p.id===activeTok);
+    if(hopId===p.id){t.classList.remove('hop');void t.offsetWidth;t.classList.add('hop')}
+  });
+}
+window.addEventListener('resize',()=>placeTokens(false));
+function follow(i){
+  if(!mq.matches)return;const sc=$('scroller');const [x]=cellCenter(i);const beh=REC.speed==='fast'?'auto':'smooth';
+  sc.scrollTo({left:Math.max(0,x-sc.clientWidth/2+16),behavior:beh});
+  const el=$('board').querySelector(`[data-i="${i}"]`);if(!el)return;const r=el.getBoundingClientRect();const lim=innerHeight-$('dock').offsetHeight-8;
+  if(r.bottom>lim)window.scrollBy({top:r.bottom-lim,behavior:beh});else if(r.top<8)window.scrollBy({top:r.top-8,behavior:beh});
+}
+function setLeft(p,n){const t=$('tk'+p.id);if(t)t.querySelector('.left').textContent=n>0?n:''}
+async function banner(big,small,col){
+  const host=$('bannerHost');host.innerHTML=`<div class="banner" style="--bc:${col}"><b>${esc(big)}</b>${small?`<small>${esc(small)}</small>`:''}</div>`;
+  await sleep(SP().ban);if(host)host.innerHTML='';
+}
+
+/* ---------- 조작판(주사위·예보·선택) ---------- */
+function noticeHTML(){
+  if(!notice)return'';const {p,fc}=notice;const me=human();
+  const rows=fc.top.map(o=>{
+    const mine=me&&o.cell.owner===me.id&&!p.human&&o.kind==='toll';
+    const col=mine?MCOL.mine:(MCOL[o.kind]||MCOL.key);
+    const lab=mine?`내 땅! 통행료 수입 ${fmtA(-o.amt)}`:o.label;
+    return`<div class="nr ${hitSum===o.s?'hit':''}"><span class="s" style="--mc:${col}">${o.s}</span><span class="w">${esc(o.cell.n)}<small>${esc(lab)}</small></span><span class="p num">${Math.round(o.prob*100)}%</span></div>`}).join('');
+  const r=Math.round(fc.risk*100);
+  return`<h5>${p.human?'주사위 예보':`${esc(p.ch.name)}의 예보`} · 12칸 안 주요 지점</h5>${rows}<div class="risk ${r?'':'ok'}">${p.human?'남의 땅에 걸릴 확률':'통행료 낼 확률'} ${r}%${r?'':' · 안전 구간'}</div>`;
+}
+function renderCtrl(){
+  const host=mq.matches?$('dock'):$('crHost');if(!host)return;
+  if(mq.matches&&$('crHost'))$('crHost').innerHTML='';else $('dock').innerHTML='';
+  host.innerHTML=`<div class="ctrl"><div class="dicerow">${dieSVG(ctrl.dice[0],ctrl.spin)}${dieSVG(ctrl.dice[1],ctrl.spin)}<div class="tot num">${ctrl.tot}</div></div><div class="cmsg">${esc(ctrl.msg||G.msg||'')}</div><div class="crow"><div class="notice">${noticeHTML()}</div><div class="prompt" id="prompt">${ctrl.prompt}</div></div></div>`;
+  if(ctrl.bind)ctrl.bind(host.querySelector('#prompt'));
+}
+mq.addEventListener('change',()=>{if(G)render()});
+function setPrompt(html,bind){ctrl.prompt=html;ctrl.bind=bind;renderCtrl()}
+function clearPrompt(){ctrl.prompt='';ctrl.bind=null}
+function askButtons(title,text,buttons){
+  return new Promise(res=>{
+    setPrompt(`<h4>${title}</h4>${text?`<p>${text}</p>`:''}<div class="row">${buttons.map((b,i)=>`<button type="button" class="btn ${b.cls||''}" data-i="${i}">${b.label}</button>`).join('')}</div>`,
+      el=>{el.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{clearPrompt();renderCtrl();res(buttons[+btn.dataset.i].v)})});
+  });
+}
+function chooseCell(title,text,ok){
+  return new Promise(res=>{choosing={ok,res};setPrompt(`<h4>${title}</h4><p>${text}</p>`,null);renderBoard();if(mq.matches)toast('보드를 좌우로 밀어 칸을 고르세요')});
+}
+const HUMAN_ASK=async(p,kind,ctx)=>{
+  if(kind==='roll')return askButtons('내 차례','예보를 확인하고 굴리세요.',[{label:'주사위 굴리기',v:true,cls:'lime big'}]);
+  if(kind==='buy'){const c=ctx.cell;return askButtons(`${esc(c.full||c.n)} 구입?`,`가격 ${fmtA(ctx.cost)} · 보유 ${fmtA(p.cash)}${c.biz?`<br>${esc(c.biz)}`:''}`,[{label:'구입',v:true},{label:'패스',v:false,cls:'dark'}])}
+  if(kind==='build'){const c=ctx.cell;return askButtons(`${esc(c.n)}에 건설`,`지금 통행료 ${fmtA(tollOf(c))}. 여러 단계를 한 번에 지을 수 있어요.`,[...ctx.opts.map(o=>({label:`${LV[o.lv]}까지<small>${fmtA(o.cost)} · 통행 ${fmtA(o.toll)}</small>`,v:o.lv})),{label:'안 짓기',v:0,cls:'dark'}])}
+  if(kind==='takeover'){const c=ctx.cell;return askButtons(`${esc(c.n)} 기술이전(인수)?`,`${esc(ctx.owner.ch.name)}에게 ${fmtA(ctx.cost)}를 주고 땅과 건물을 가져옵니다. 보유 ${fmtA(p.cash)}`,[{label:'기술이전',v:true,cls:'blue'},{label:'패스',v:false,cls:'dark'}])}
+  if(kind==='jail')return askButtons('연구실 안전점검 중',`남은 ${p.jail}턴. 안전 퀴즈를 맞히면 바로 출발합니다.`,[{label:'안전 퀴즈 도전',v:'quiz',cls:'lime'},{label:'쉬기',v:'wait',cls:'dark'}]);
+  if(kind==='choose')return chooseCell('이동할 칸을 누르세요','누리호 발사장을 뺀 아무 칸이나 고를 수 있어요.',i=>i!==NURI);
+  if(kind==='pickOwn'){const s=new Set(ctx.cells);return chooseCell(ctx.title,'반짝이는 내 도시 중 하나를 누르세요.',i=>s.has(i))}
+  if(kind==='quiz')return quizModal(p,ctx);
+  if(kind==='card2')return card2Modal(ctx);
+};
+$('board').addEventListener('click',e=>{
+  const b=e.target.closest('.cell');if(!b)return;const i=+b.dataset.i;
+  if(choosing){if(!choosing.ok(i)){toast('그 칸은 고를 수 없어요.');return}const r=choosing.res;choosing=null;clearPrompt();renderBoard();r(i);return}
+  deedModal(i);
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden&&!$('modal').dataset.lock)closeModal()});
+
+/* ---------- 모달 ---------- */
+function openModal(html,{wide,lock}={}){$('mbox').className='box'+(wide?' wide':'');$('mbox').innerHTML=html;$('modal').hidden=false;$('modal').dataset.lock=lock?'1':'';const x=$('mbox').querySelector('.x');if(x)x.onclick=closeModal}
+function closeModal(){$('modal').hidden=true;$('mbox').innerHTML='';$('modal').dataset.lock=''}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!$('modal').dataset.lock)closeModal()});
+function cardHead(card){const [kn,kc]=KIND[card.k];return`<span class="kind" style="--kc:${kc}">${kn}</span><h4>${esc(card.t)}</h4>`}
+function quizModal(p,card){
+  return new Promise(res=>{
+    const body=card.k==='ox'?`<div class="ox"><button type="button" class="opt" data-v="1">O</button><button type="button" class="opt" data-v="0">X</button></div>`:`<div class="opts">${card.o.map((o,i)=>`<button type="button" class="opt" data-v="${i}">${esc(o)}</button>`).join('')}</div>`;
+    openModal(`<div class="card">${cardHead(card)}<div class="q">${esc(card.q)}</div>${body}<div class="res" id="qres"></div><div style="margin-top:12px" id="qnext"></div></div>`,{lock:true});
+    $('mbox').querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      const v=card.k==='ox'?b.dataset.v==='1':+b.dataset.v;const right=v===card.a;
+      $('mbox').querySelectorAll('.opt').forEach(x=>{x.disabled=true;const xv=card.k==='ox'?x.dataset.v==='1':+x.dataset.v;if(xv===card.a)x.classList.add('right')});
+      if(!right)b.classList.add('wrong');
+      const r=(card.k==='ox'?100000:50000)*(p.ch.id==='alpha'?2:1);
+      $('qres').className='res '+(right?'ok':'no');$('qres').textContent=(right?`정답! +${fmtA(r)}${card.k==='safe'?' · 안전 면제권':''}  `:'아쉬워요. 벌칙은 없어요.  ')+card.e;
+      $('qnext').innerHTML='<button type="button" class="btn">확인</button>';$('qnext').querySelector('button').onclick=()=>{closeModal();res(v)};$('qnext').querySelector('button').focus();
+    });
+  });
+}
+function card2Modal(cards){
+  return new Promise(res=>{
+    openModal(`<div class="mh"><h3>다빈의 분석: 카드 고르기</h3></div><p>두 장 중 하나를 고르세요.</p><div class="two">${cards.map((c,i)=>`<div class="card" role="button" tabindex="0" data-i="${i}">${cardHead(c)}<p style="margin:0;font-weight:700">${esc(c.d||c.q)}</p></div>`).join('')}</div>`,{lock:true});
+    $('mbox').querySelectorAll('[data-i]').forEach(el=>{const f=()=>{closeModal();res(+el.dataset.i)};el.onclick=f;el.onkeydown=e=>{if(e.key==='Enter')f()}});
+  });
+}
+function deedModal(i){
+  const c=G.cells[i];const o=c.owner>=0?G.players[c.owner]:null;
+  if(c.t==='city'){
+    const mates=lineCells(c.line).map(x=>x.n).join(' · ');
+    const rows=LV.map((l,k)=>`<tr${k===c.level&&o?' style="background:#FFF5CC"':''}><td>${l}</td><td class="r num">${k?fmtA(Math.round(c.p*BUILD[k])):fmtA(c.p)}</td><td class="r num">${fmtA(Math.round(c.p*RATE[k]))}</td></tr>`).join('');
+    openModal(`<div class="mh"><h3>도시 증서</h3><button class="x" type="button" aria-label="닫기">✕</button></div><div class="deed" style="--lc:var(--l${c.line})"><div class="hd">${iconSVG(c,'dic')}<div><small>${LINES[c.line].n} · ${esc(mates)}</small><b>${esc(c.n)}</b></div></div><div class="bd2"><p><b>상징</b> ${esc(SYMBOL[c.n]||'')}</p><p><b>대표 기업·연구소</b> ${esc(c.biz)}</p><p>${esc(c.kw)}</p><p>${o?`소유 <b>${esc(o.ch.name)}</b> · ${LV[c.level]} · 지금 통행료 <b>${fmtA(tollOf(c))}</b>`:'아직 주인이 없어요'}</p><div class="tw"><table class="tb"><tr><th>건물</th><th class="r">건설비(대지는 땅값)</th><th class="r">통행료</th></tr>${rows}</table></div><p style="font-size:13px;color:#3E5878">같은 색 3곳을 모두 가지면 통행료 2배, 색 그룹 ${TRIPLE_WIN}개를 완성하면 즉시 승리. KIRD 인재센터는 혁신캠퍼스 뒤 출발점을 한 번 더 지나야 지을 수 있고 기술이전되지 않습니다.</p></div></div>`);
+  }else if(c.t==='fac'){
+    openModal(`<div class="mh"><h3>국가 연구시설</h3><button class="x" type="button" aria-label="닫기">✕</button></div><div class="deed" style="--lc:var(--fac)"><div class="hd">${iconSVG(c,'dic')}<div><small>연구시설</small><b>${esc(c.full)}</b></div></div><div class="bd2"><p><b>상징</b> ${esc(SYMBOL[c.n]||'')}</p><p>${esc(c.kw)}</p><p>${o?`소유 <b>${esc(o.ch.name)}</b>`:'아직 주인이 없어요'} · 가격 ${fmtA(FAC_PRICE)}</p><table class="tb"><tr><th>보유 수</th><th class="r">통행료</th></tr>${[1,2,3].map(n=>`<tr><td>${n}곳</td><td class="r">${fmtA(FAC_TOLL[n])}</td></tr>`).join('')}<tr><td>4곳</td><td class="r">즉시 승리</td></tr></table></div></div>`);
+  }else{
+    const d={key:'알파 키 카드를 뽑습니다. KIRD 소식, 연구윤리 OX, 연구실 안전, 커리어 이벤트 네 종류이며 퀴즈는 틀려도 벌칙이 없어요.'}[c.t]||c.d;
+    openModal(`<div class="mh"><h3>${esc(c.full||c.n)}</h3><button class="x" type="button" aria-label="닫기">✕</button></div><div style="width:96px;background:#13213D;border-radius:14px;padding:8px">${iconSVG(c,'dic')}</div><p>${esc(d)}</p>${c.t==='fund'?`<p>지금 쌓인 기금 <b>${fmtA(G.fund)}</b>. 판 전체 누적이 ${fmtA(VISION_GOAL)}이 되면 모두에게 비전 보너스 ${fmtA(VISION_BONUS)}.</p>`:''}`);
+  }
+}
+function openDex(){
+  const rows=Object.keys(LINES).map(L=>CELLS.filter(c=>c.t==='city'&&c.line===+L).map((c,k)=>`<tr>${k===0?`<td rowspan="3" style="vertical-align:middle"><span class="chipl" style="--lc:${LINES[L].c}"></span><b>${LINES[L].n}</b></td>`:''}<td><span class="dxi">${iconSVG(c,'dic')}</span><b>${esc(c.n)}</b><br><small>${esc(SYMBOL[c.n])}</small></td><td class="r num">${fmtA(c.p)}</td><td>${esc(c.biz)}</td></tr>`).join('')).join('');
+  const fac=CELLS.filter(c=>c.t==='fac').map(c=>`<tr><td><span class="dxi">${iconSVG(c,'dic')}</span><b>${esc(c.full)}</b></td><td>${esc(c.kw)}</td></tr>`).join('');
+  const sp=CELLS.filter(c=>['boost','back','reward','donate','festa','kird','fund','nuri','safety'].includes(c.t)).map(c=>`<tr><td><b>${esc(c.full||c.n)}</b></td><td>${esc(c.d)}</td></tr>`).join('');
+  openModal(`<div class="mh"><h3>도시 도감</h3><button class="x" type="button" aria-label="닫기">✕</button></div><p>세계 과학기술·빅테크 거점 24곳을 8개 색 그룹으로 묶었습니다. 출발점에서 멀수록 비쌉니다.</p><div class="tw"><table class="tb"><tr><th>색 그룹</th><th>도시</th><th class="r">땅값</th><th>대표 기업·연구소</th></tr>${rows}</table></div><h4 style="margin:16px 0 4px">국가 연구시설 (4곳 독점 시 승리)</h4><div class="tw"><table class="tb">${fac}</table></div><h4 style="margin:16px 0 4px">특수 칸</h4><div class="tw"><table class="tb">${sp}</table></div>`,{wide:true});
+}
+$('bDex').onclick=openDex;
+function openRules(){
+  openModal(`<div class="mh"><h3>알파 마블 규칙</h3><button class="x" type="button" aria-label="닫기">✕</button></div><div class="rules">
+  <h4>기본</h4><ul><li>2~4인, 시작 자금 ${fmtA(START_CASH)}. 주사위 2개 합만큼 이동, 더블이면 한 번 더(3번 연속이면 안전점검).</li><li>굴리기 전에 <b>주사위 예보</b>가 2~12 중 영향이 큰 3곳과 남의 땅에 걸릴 확률을 알려 줍니다.</li><li>출발점을 지날 때 연구지원금 ${fmtA(SALARY)}. 총자산 꼴찌는 2배.</li><li>빈 도시를 사면 그 자리에서 건물을 여러 단계 한 번에 지을 수 있어요: 랩 → 연구소 → 혁신캠퍼스 → KIRD 인재센터.</li><li>남의 도시에선 통행료를 내고, 원하면 투자액의 1.5배로 <b>기술이전(인수)</b>. 인재센터는 인수 불가.</li><li>같은 색 3곳을 모두 가지면 그 도시들 통행료 2배.</li></ul>
+  <h4>승리 (먼저 달성하면 즉시)</h4><ul><li><b>색 독점</b>: 색 그룹 ${TRIPLE_WIN}개 완성</li><li><b>변 독점</b>: 보드 한 변의 도시 모두 보유</li><li><b>연구시설 독점</b>: KSTAR·나로·포항·세종기지 4곳</li><li>상대 전원 파산</li><li>${MAX_ROUND}라운드 종료 시 총자산 1위 (인재기금 기여 1위는 +5% 공로상)</li></ul>
+  <h4>특수 칸</h4><ul><li><b>부스터</b> ${BOOST}칸 더 전진 · <b>재실험</b> ${BACK}칸 뒤로 · <b>기술료 수입</b> +${fmtA(REWARD)} · <b>기금 기부</b> ${fmtA(DONATE)}를 인재기금에</li><li><b>사이언스 페스타</b>: 내 도시 하나 통행료 2배(다음 페스타까지) · <b>KIRD 본원</b>: 내 도시 1단계 무료 건설</li><li><b>알파 키</b>: KIRD 소식·연구윤리 OX·연구실 안전·커리어 카드 · <b>안전점검</b>: 2턴 쉬거나 안전 퀴즈로 탈출 · <b>누리호</b>: 원하는 칸으로 · <b>인재기금</b>: 쌓인 기금 수령</li></ul>
+  <h4>함께 성장</h4><ul><li>모든 통행료의 5%와 기부금은 인재기금으로. 판 전체 누적이 ${fmtA(VISION_GOAL)}에 닿으면 모두에게 ${fmtA(VISION_BONUS)}.</li></ul>
+  <p style="font-size:13px;color:#3E5878">알파(α)는 현금·경품으로 교환되지 않는 학습용 가상 포인트입니다.</p></div>`,{wide:true});
+}
+$('bRules').onclick=openRules;
+
+/* ---------- HOOK 연결 ---------- */
+const ABORT=new Error('aborted');const guard=g=>{if(G!==g)throw ABORT};
+HOOK.render=()=>{renderBoard();renderPlayers();placeTokens(false)};
+HOOK.log=msg=>{const ol=$('log');const li=document.createElement('li');li.textContent=msg;ol.prepend(li);while(ol.children.length>80)ol.lastChild.remove();if(G){G.msg=msg;ctrl.msg=msg;const m=document.querySelector('.cmsg');if(m)m.textContent=msg;renderScore()}};
+HOOK.beforeRoll=async p=>{
+  const g=G;trail=new Set();hitSum=0;activeTok=p.id;ctrl.tot='';
+  notice={p,fc:forecast(p)};
+  marks=new Map(notice.fc.top.map(o=>{const me=human();const mine=me&&o.cell.owner===me.id&&!p.human&&o.kind==='toll';return[o.i,{s:o.s,col:mine?MCOL.mine:(MCOL[o.kind]||MCOL.key),kind:o.kind}]}));
+  ctrl.msg=p.human?'내 차례입니다.':`${p.ch.name}의 차례`;
+  renderBoard();renderPlayers();placeTokens(false);follow(p.pos);
+  if(!p.human){await sleep(SP().look);guard(g)}
+};
+HOOK.dice=async(a,b)=>{
+  const g=G;const [n,ms]=SP().dice;ctrl.spin=true;ctrl.tot='';
+  for(let k=0;k<n;k++){ctrl.dice=[1+(Math.random()*6|0),1+(Math.random()*6|0)];renderCtrl();await sleep(ms);guard(g)}
+  ctrl.spin=false;ctrl.dice=[a,b];hitSum=a+b;ctrl.tot=`${a+b}${a===b?'<small>더블!</small>':''}`;renderCtrl();
+  factI=(factI+1)%FACTS.length;await sleep(SP().step*1.6);guard(g);
+};
+HOOK.step=async(p,left)=>{
+  const g=G;trail.add(p.pos);
+  const el=$('board').querySelector(`[data-i="${p.pos}"]`);if(el)el.classList.add('trail');
+  setLeft(p,left);placeTokens(true,p.id);follow(p.pos);
+  await sleep(SP().step);guard(g);
+  if(left===0)setLeft(p,0);
+};
+HOOK.landed=async(p,c)=>{
+  const g=G;const me=human();const i=G.cells.indexOf(c);const mk=marks.get(i);
+  let big='',small='',col='';
+  if((c.t==='city'||c.t==='fac')&&c.owner>=0&&c.owner!==p.id){
+    const t=tollOf(c,p);
+    if(me&&c.owner===me.id){big='내 땅에 걸렸다!';small=`${p.ch.name} → 통행료 ${fmtA(t)}`;col='#FFD24A'}
+    else if(p.human){big='걸렸다!';small=`${c.n} 통행료 ${fmtA(t)}`;col='#E0533F'}
+    else{big=`${c.n}`;small=`${p.ch.name} → ${G.players[c.owner].ch.name} 통행료 ${fmtA(t)}`;col='#F08A24'}
+  }else if(['boost','back','reward','donate','festa','kird','nuri','fund','safety','key'].includes(c.t)){
+    const T={boost:['부스터!','#8CC63F'],back:['재실험','#F08A24'],reward:['기술료 수입!','#8CC63F'],donate:['기금 기부','#F08A24'],festa:['사이언스 페스타','#B07CF2'],kird:['KIRD 교육 이수','#8CC63F'],nuri:['누리호 발사!','#4FA3EA'],fund:['인재기금','#FFD24A'],safety:['안전점검','#E0533F'],key:['알파 키','#4FA3EA']}[c.t];
+    big=T[0];small=c.d||'';col=T[1];
+  }else if(p.human&&[...trail].some(j=>marks.get(j)&&marks.get(j).kind==='toll'&&j!==i)){big='휴, 피했다!';small='아슬아슬하게 지나갔어요';col='#8CC63F'}
+  if(mk&&p.human&&!big){big=c.n;col=mk.col}
+  renderPlayers();
+  if(big){await banner(big,small,col);guard(g)}
+};
+HOOK.show=async(p,card,info)=>{
+  if(p.human&&!(card.k==='ox'||card.k==='safe')){
+    await new Promise(res=>{openModal(`<div class="card">${cardHead(card)}<p style="font-size:16px">${esc(card.d)}</p><button type="button" class="btn" id="cOk">확인</button></div>`,{lock:true});$('cOk').onclick=()=>{closeModal();res()};$('cOk').focus()});
+    return;
+  }
+  if(p.human)return;
+  const g=G;const txt=(card.k==='ox'||card.k==='safe')?`${card.t} · ${info.right?'정답':'오답'}`:`${card.t}`;
+  await banner(`알파 키 · ${KIND[card.k][0]}`,`${p.ch.name}: ${txt}`,KIND[card.k][1]);guard(g);
+};
+HOOK.over=o=>{marks=new Map();notice=null;render();setTimeout(()=>showResult(o),500)};
+HOOK.ask=async(p,kind,ctx)=>{const g=G;renderPlayers();const v=await HUMAN_ASK(p,kind,ctx);guard(g);return v};
+
+function showResult(o){
+  const me=human();
+  REC.games++;if(o.winner===me)REC.wins++;saveRec();
+  openModal(`<div class="mh"><h3>${o.winner===me?'승리!':`${esc(o.winner.ch.name)} 승리`}</h3></div><p><b>${esc(o.reason)}</b></p><div class="rank">${o.table.map((r,i)=>`<div class="rk ${i===0?'w':''}"><span class="n">${i+1}</span>${avatar(r.p.ch)}<div><b>${esc(r.p.ch.name)}${r.p.human?' (나)':''}</b>${r.award?' · 인재양성 공로상':''}${r.p.out?' · 파산':''}</div><div class="a num">${fmtA(r.a)}<small>기금 기여 ${fmtA(r.p.contrib)}</small></div></div>`).join('')}</div><p style="font-size:13px;color:#3E5878">미래비전 게이지 ${G.visionDone?'달성':'미달성'} · 판 전체 인재기금 ${fmtA(G.visionTotal)} · 내 전적 ${REC.games}판 ${REC.wins}승</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="again">다시 하기</button><button type="button" class="btn dark" id="setup">캐릭터 바꾸기</button></div>`,{lock:true});
+  $('again').onclick=()=>{closeModal();startGame(REC.avatar,REC.opp)};$('setup').onclick=()=>{closeModal();openSetup()};
+}
+
+/* ---------- 시작 ---------- */
+function openSetup(){
+  let pick=REC.avatar,opp=REC.opp;
+  const draw=()=>{
+    openModal(`<div class="mh"><h3>알파 마블</h3>${G?'<button class="x" type="button" aria-label="닫기">✕</button>':''}</div><p>세계 과학기술 도시 24곳에 연구 거점을 세우고 KIRD 캐릭터와 겨루는 보드게임입니다. 굴리기 전에 뜨는 주사위 예보를 보고 운을 걸어 보세요. 색 그룹 ${TRIPLE_WIN}개 독점, 한 변 독점, 연구시설 4곳 독점 중 하나를 먼저 이루거나 ${MAX_ROUND}라운드 뒤 총자산 1위가 이깁니다.</p>
+    <h4 style="margin:12px 0 6px">내 캐릭터</h4><div class="picks">${CHARS.map(c=>`<button type="button" class="pk ${c.id===pick?'on':''}" data-c="${c.id}">${avatar(c)}<b>${c.name}</b><small>${ABIL[c.id]}</small></button>`).join('')}</div>
+    <h4 style="margin:14px 0 6px">상대 수</h4><div class="seg">${[1,2,3].map(n=>`<button type="button" class="${n===opp?'on':''}" data-o="${n}">${n}명</button>`).join('')}</div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap"><button type="button" class="btn" id="go">게임 시작</button><button type="button" class="btn dark" id="rl">규칙 보기</button><button type="button" class="btn dark" id="dx">도시 도감</button></div>`,{wide:true,lock:!G});
+    $('mbox').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{pick=b.dataset.c;draw()});
+    $('mbox').querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{opp=+b.dataset.o;draw()});
+    $('go').onclick=()=>{REC.avatar=pick;REC.opp=opp;saveRec();closeModal();startGame(pick,opp)};
+    $('rl').onclick=openRules;$('dx').onclick=openDex;
+  };
+  draw();
+}
+$('bNew').onclick=openSetup;
+function startGame(av,opp){
+  const others=shuffleArr(CHARS.filter(c=>c.id!==av)).slice(0,opp);
+  const chars=[CH[av],...others];
+  choosing=null;clearPrompt();marks=new Map();trail=new Set();notice=null;hitSum=0;ctrl={dice:[1,1],spin:false,tot:'',msg:'',prompt:'',bind:null};$('log').innerHTML='';
+  newGame(chars,0);buildTokens();
+  say(`게임 시작! ${chars.map(c=>c.name).join(', ')} · 출발점에서 시계 방향으로`);
+  render();
+  runGame().catch(e=>{if(e!==ABORT)console.error(e)});
+}
+openSetup();
+
+function avatar(ch,cls=''){
+  const c=ch.color,ink='#0E2238';
+  const robot=ch.acc==='robot';
+  const body=robot?`<rect x="16" y="26" width="68" height="64" rx="16" fill="${c}" stroke="${ink}" stroke-width="3"/><rect x="24" y="40" width="52" height="22" rx="11" fill="#0E2238"/><circle cx="38" cy="51" r="6" fill="#7CFF8A"/><circle cx="62" cy="51" r="6" fill="#7CFF8A"/><line x1="34" y1="26" x2="30" y2="12" stroke="${ink}" stroke-width="3"/><line x1="66" y1="26" x2="70" y2="12" stroke="${ink}" stroke-width="3"/><circle cx="30" cy="11" r="5" fill="#FFD24A" stroke="${ink}" stroke-width="2"/><circle cx="70" cy="11" r="5" fill="#FFD24A" stroke="${ink}" stroke-width="2"/><path d="M40 74 Q50 80 60 74" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/><text x="50" y="88" text-anchor="middle" font-size="9" font-weight="900" fill="${ink}">AI</text>`
+   :`<path d="M50 20 C78 20 88 42 88 62 C88 83 72 93 50 93 C28 93 12 83 12 62 C12 42 22 20 50 20Z" fill="${c}" stroke="${ink}" stroke-width="3"/><ellipse cx="50" cy="74" rx="22" ry="15" fill="#fff" opacity=".25"/><ellipse cx="38" cy="54" rx="8" ry="9" fill="#fff" stroke="${ink}" stroke-width="2"/><ellipse cx="62" cy="54" rx="8" ry="9" fill="#fff" stroke="${ink}" stroke-width="2"/><circle cx="39" cy="56" r="4" fill="${ink}"/><circle cx="63" cy="56" r="4" fill="${ink}"/><circle cx="40.5" cy="54" r="1.4" fill="#fff"/><circle cx="64.5" cy="54" r="1.4" fill="#fff"/><ellipse cx="29" cy="67" rx="5" ry="3" fill="#FF8FA3" opacity=".7"/><ellipse cx="71" cy="67" rx="5" ry="3" fill="#FF8FA3" opacity=".7"/><path d="M43 69 Q50 76 57 69" stroke="${ink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const A={
+   orb:`<line x1="50" y1="20" x2="50" y2="10" stroke="${ink}" stroke-width="3"/><circle cx="50" cy="8" r="8" fill="#FFD24A" stroke="${ink}" stroke-width="2.5"/><text x="50" y="12" text-anchor="middle" font-size="11" font-weight="900" fill="${ink}">α</text>`,
+   briefcase:`<rect x="64" y="72" width="28" height="20" rx="3" fill="#8A5A2B" stroke="${ink}" stroke-width="2.5"/><path d="M72 72 v-5 h12 v5" fill="none" stroke="${ink}" stroke-width="2.5"/><text x="78" y="86" text-anchor="middle" font-size="10" font-weight="900" fill="#FFD24A">K</text>`,
+   note:`<rect x="4" y="66" width="28" height="28" rx="3" fill="#fff" stroke="${ink}" stroke-width="2.5"/><line x1="9" y1="74" x2="27" y2="74" stroke="#7E57C2" stroke-width="2"/><line x1="9" y1="80" x2="27" y2="80" stroke="#7E57C2" stroke-width="2"/><line x1="9" y1="86" x2="21" y2="86" stroke="#7E57C2" stroke-width="2"/><rect x="66" y="20" width="5" height="22" rx="1" fill="#FFD24A" stroke="${ink}" stroke-width="2" transform="rotate(30 68 30)"/>`,
+   helmet:`<path d="M20 40 Q50 4 80 40 Z" fill="#FFD24A" stroke="${ink}" stroke-width="3"/><rect x="14" y="38" width="72" height="8" rx="4" fill="#FFD24A" stroke="${ink}" stroke-width="3"/><path d="M48 14 h4 v22 h-4z" fill="${ink}" opacity=".35"/>`,
+   crown:`<path d="M30 26 L34 8 L42 20 L50 4 L58 20 L66 8 L70 26 Z" fill="#FFD24A" stroke="${ink}" stroke-width="3" stroke-linejoin="round"/><path d="M44 80 L50 72 L56 80 L50 92Z" fill="#0E2238"/>`,
+   globe:`<circle cx="82" cy="78" r="13" fill="#5BC0EB" stroke="${ink}" stroke-width="2.5"/><ellipse cx="82" cy="78" rx="6" ry="13" fill="none" stroke="${ink}" stroke-width="2"/><line x1="69" y1="78" x2="95" y2="78" stroke="${ink}" stroke-width="2"/><path d="M28 86 Q50 96 72 86" stroke="#FFD24A" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+   sprout:`<path d="M50 22 V8" stroke="#2F8A2F" stroke-width="3"/><ellipse cx="42" cy="9" rx="9" ry="5" fill="#8CC63F" stroke="${ink}" stroke-width="2" transform="rotate(-25 42 9)"/><ellipse cx="58" cy="9" rx="9" ry="5" fill="#8CC63F" stroke="${ink}" stroke-width="2" transform="rotate(25 58 9)"/><circle cx="38" cy="55" r="11" fill="none" stroke="${ink}" stroke-width="2.5"/><circle cx="62" cy="55" r="11" fill="none" stroke="${ink}" stroke-width="2.5"/><line x1="49" y1="55" x2="51" y2="55" stroke="${ink}" stroke-width="2.5"/>`,
+   rocket:`<g transform="rotate(35 84 60)"><path d="M84 40 Q92 52 90 70 H78 Q76 52 84 40Z" fill="#fff" stroke="${ink}" stroke-width="2.5"/><circle cx="84" cy="56" r="3.5" fill="#3D5AFE" stroke="${ink}" stroke-width="1.5"/><path d="M78 66 l-6 8 h8z M90 66 l6 8 h-8z" fill="#E0533F" stroke="${ink}" stroke-width="1.5"/><path d="M80 72 Q84 84 88 72Z" fill="#FFD24A"/></g>`,
+   robot:'',
+   calc:`<rect x="66" y="64" width="26" height="30" rx="4" fill="#1E2A3E" stroke="${ink}" stroke-width="2.5"/><rect x="70" y="68" width="18" height="7" rx="1" fill="#7CFF8A"/><g fill="#DCE6F2"><rect x="70" y="78" width="4" height="4"/><rect x="77" y="78" width="4" height="4"/><rect x="84" y="78" width="4" height="4"/><rect x="70" y="85" width="4" height="4"/><rect x="77" y="85" width="4" height="4"/><rect x="84" y="85" width="4" height="4"/></g><path d="M26 34 Q50 22 74 34 L70 40 Q50 32 30 40Z" fill="#2FA84F" stroke="${ink}" stroke-width="2.5" opacity=".95"/>`,
+  };
+  return `<svg class="${cls}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(ch.name)}">${body}${A[ch.acc]||''}</svg>`;
+}
+
+
+</script>
+</body>
+</html>
