@@ -187,3 +187,10 @@
 - 규칙: 44칸(15×9), 도시 24곳 8색×3, 연구시설 4, 알파 키 5, 특수 칸 7(부스터·재실험·기술료·기금 기부·사이언스 페스타·KIRD 본원) + 코너 4. 색 독점 통행료 2배, 즉시 승리 = 색 그룹 2개·변 독점·연구시설 4곳·전원 파산, 15라운드 총자산.
 - 밸런스 점검 `node dev/plaza/marble/src/sim.js 1500 4` (AI끼리, 4인전 대부분 15라운드 종료·파산 약 6%).
 - 도시 상징은 직접 그린 SVG(실사 사진·기업 로고 없음). 기록은 브라우저 localStorage(`kird-alpha-marble-v2`).
+
+## 알파 유니버스 (2026-10-27)
+- `universe/index.html`은 `dev/plaza/universe/build.py`가 `src/game.html` + `src/tips.js` + `src/img/*.webp`(데이터 URI) + `dev/plaza/marble/src/avatar.js`를 이어 만든다. '케이요새 광장'(`../`) 버튼은 빌드 때만 끼움.
+- 광장 서랍 '게임관 · 케이요새 월드'에서 알파 마블 바로 아래(`src/template.html` → `python3 dev/build.py` → 루트 `index.html` 복사).
+- 규격: 수박게임 지름 비율, 내부 560×790, 위쪽 소식 띠(TIP_BAND 106). 점수 = 기본×100 × 콤보(최대 ×3) × 피버(×2). 등급 기준 0/5만/12만/22만/35만/55만/80만.
+- 소식: `src/tips.js` 테마별 50개(2025 연차보고서·2026 교육안내책자·2026 기사/보도자료, 문서 '알파 유니버스 테마별 문구 후보 150선'). 게임 시간 8초 뒤 첫 소식, 25초마다 5초.
+- 천체 그림: Solar System Scope 텍스처(CC BY 4.0)·NASA 3D Resources를 `src/render.py`로 구체 렌더링(원본 텍스처는 저장소에 없음). 기록은 localStorage `kird-universe-v1`.

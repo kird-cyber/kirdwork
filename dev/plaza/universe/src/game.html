@@ -1,0 +1,504 @@
+<title>KIRD 알파 유니버스</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@500;700;800;900&display=swap">
+<style>
+/* 레이아웃: 왼쪽 점수판 · 가운데 그릇(캔버스) · 오른쪽 범례. 휴대폰은 점수판 한 줄 위, 범례 가로 띠 아래. 밤하늘 단일 다크 화면 */
+:root{
+  --night:#060B18;--ink:#0E2238;--panel:rgba(16,26,48,.88);--line:rgba(255,255,255,.14);
+  --blue:#2E86D6;--lime:#8CC63F;--gold:#FFD24A;--paper:#F4F7FB;--mute:#9FB3CC;--red:#E0533F;
+  --disp:"Black Han Sans","Noto Sans KR",system-ui,sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
+  color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:radial-gradient(ellipse at 50% -10%,#1B2F5C 0%,#0B1530 38%,var(--night) 75%) fixed,var(--night);color:#fff;font-family:var(--body);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:var(--body)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.app{position:relative;z-index:1;display:grid;grid-template-columns:220px minmax(0,auto) 250px;gap:18px;justify-content:center;align-items:start;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 18px;min-height:100%;box-sizing:border-box}
+.side{display:flex;flex-direction:column;gap:10px;min-width:0}
+.brand{font-family:var(--disp);font-size:30px;line-height:1;letter-spacing:.01em}
+.brand em{font-style:normal;color:var(--gold)}
+.brand small{display:block;font-family:var(--body);font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.06em;margin-top:6px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;backdrop-filter:blur(4px)}
+.lab{font-size:12px;font-weight:900;color:var(--mute);letter-spacing:.06em}
+.score{font-family:var(--disp);font-size:40px;line-height:1.05;color:#fff}
+.best{font-family:var(--disp);font-size:28px;line-height:1.05;color:var(--gold)}
+.newrec{display:inline-block;margin-left:6px;font-family:var(--body);font-size:11px;font-weight:900;background:var(--red);color:#fff;border-radius:6px;padding:1px 6px;vertical-align:middle}
+.next{display:flex;align-items:center;gap:12px}
+.next img{width:64px;height:64px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+.next b{font-size:17px}.next small{display:block;color:var(--mute);font-weight:700;font-size:12px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{background:var(--gold);color:var(--ink);border:2px solid var(--ink);border-radius:12px;padding:9px 10px;font-weight:900;font-size:14px;cursor:pointer}
+.btn.ghost{background:transparent;color:#fff;border-color:var(--line)}
+.btn.full{grid-column:1/-1}
+.themes{display:grid;gap:6px}
+.th{display:flex;align-items:center;gap:8px;background:transparent;border:2px solid var(--line);border-radius:12px;color:#fff;padding:7px 10px;cursor:pointer;font-weight:800;font-size:13.5px;text-align:left}
+.th i{width:18px;height:18px;border-radius:5px;background:var(--tc);flex:none;border:2px solid rgba(255,255,255,.6)}
+.th.on{border-color:var(--gold);background:rgba(255,210,74,.12)}
+.hint{font-size:12px;color:var(--mute);font-weight:700;line-height:1.55}
+.stage{position:relative;min-width:0;display:flex;justify-content:center}
+#cv{display:block;touch-action:none;cursor:none;border-radius:6px}
+.legend{display:flex;flex-direction:column;gap:2px}
+.legend h2{font-family:var(--disp);font-weight:400;font-size:20px;margin:0 0 6px}
+.legend h2 small{font-family:var(--body);font-size:11.5px;font-weight:800;color:var(--mute);margin-left:6px}
+.lg{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:8px;align-items:center;background:none;border:0;border-radius:10px;padding:3px 6px;color:#fff;cursor:pointer;text-align:left;width:100%}
+.lg:hover{background:rgba(255,255,255,.06)}
+.lg img{width:34px;height:34px;justify-self:center}
+.lg b{font-size:14px;font-weight:900;display:block;line-height:1.2}
+.lg small{display:block;font-size:11px;color:var(--mute);font-weight:700;line-height:1.25}
+.lg .p{font-size:12px;font-weight:900;color:var(--gold);text-align:right;white-space:nowrap}
+.lg .p small{color:var(--mute);font-weight:700}
+.lg .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rc);margin-right:5px;vertical-align:1px}
+.lg.unseen{opacity:.4}
+.lg.unseen img{filter:grayscale(1) brightness(.7)}
+.lg.top{background:rgba(255,210,74,.12);box-shadow:inset 0 0 0 2px rgba(255,210,74,.55)}
+.lg .arrow{grid-column:1/-1;height:0}
+.rank{display:flex;gap:10px;align-items:center;background:none;border:0;color:#fff;padding:0;cursor:pointer;width:100%;text-align:left}
+.rank svg{width:56px;height:56px;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5))}
+.rank b{display:block;font-family:var(--disp);font-weight:400;font-size:21px;line-height:1.1;color:var(--rk)}
+.rank .tt{display:block;font-size:13px;font-weight:900;color:#fff}
+.rank small{display:block;font-size:11px;font-weight:700;color:var(--mute);margin-top:3px}
+.rbar{height:6px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:5px}
+.rbar i{display:block;height:100%;background:var(--rk);transition:width .4s}
+.promo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:35;text-align:center;pointer-events:none;animation:pr 2.2s ease forwards}
+.promo svg{width:120px;height:120px;filter:drop-shadow(0 0 24px var(--rk))}
+.promo b{display:block;font-family:var(--disp);font-weight:400;font-size:40px;color:var(--rk);text-shadow:0 3px 0 #0E2238}
+.promo small{display:block;font-weight:900;font-size:16px;color:#fff;text-shadow:0 2px 6px #000}
+@keyframes pr{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.promo{animation:none;opacity:1}}
+.box .emb svg{width:132px;height:132px;display:block;margin:2px auto 0}
+.box .rname{font-family:var(--disp);font-weight:400;font-size:28px;line-height:1.1}
+.box .rsub{font-weight:900;color:#3E5878;font-size:14px}
+.box .rk-table td:first-child{display:flex;align-items:center;gap:8px}
+.box .rk-table svg{width:30px;height:30px}
+.ebar{height:12px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden;margin:8px 0}
+.ebar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#4FA3EA,#B07CF2);transition:width .25s}
+.btn.hole{width:100%;background:#2A1E4A;color:#E7D2FF;border-color:#B07CF2}
+.btn.hole small{font-size:11px;opacity:.7;margin-left:4px}
+.btn.hole:not(:disabled){background:#B07CF2;color:#0E2238;animation:hp 1s ease-in-out infinite}
+.btn.hole:disabled{opacity:.55;cursor:not-allowed}
+@keyframes hp{50%{box-shadow:0 0 0 6px rgba(176,124,242,.35)}}
+@media (prefers-reduced-motion:reduce){.btn.hole:not(:disabled){animation:none}}
+.credit{font-size:10.5px;color:var(--mute);font-weight:600;line-height:1.5}
+.credit a{color:#BFD7F2}
+
+#modal{position:fixed;inset:0;z-index:30;background:rgba(3,6,16,.72);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));overflow:auto}
+.box{background:var(--paper);color:var(--ink);border:3px solid var(--ink);border-radius:20px;width:min(460px,100%);padding:18px 20px 20px;box-shadow:0 20px 50px rgba(0,0,0,.5);max-height:100%;overflow:auto;box-sizing:border-box;text-align:center}
+.box h3{font-family:var(--disp);font-weight:400;font-size:30px;margin:4px 0 6px;line-height:1.15}
+.box p{font-weight:700;line-height:1.6;margin:6px 0;color:#25344D}
+.box .big{font-family:var(--disp);font-size:52px;line-height:1;color:var(--ink)}
+.box .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.box .stat{display:flex;justify-content:center;gap:18px;margin:8px 0}
+.box .stat div{font-weight:800;color:#3E5878;font-size:13px}.box .stat b{display:block;font-size:20px;color:var(--ink)}
+.box img.hero{width:110px;height:110px;margin:4px auto 0;display:block;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
+.box .fact{background:#E9F0FA;border-radius:12px;padding:10px 12px;font-size:13.5px;text-align:left}
+.box .fact b{color:#1F6FB2}
+.box .x{position:absolute}
+.box table{width:100%;border-collapse:collapse;font-size:13.5px;text-align:left;margin-top:8px}
+.box td{border-bottom:1px solid #D3DCE8;padding:6px 4px}
+.box td:last-child{text-align:right;font-weight:800}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 14px);transform:translateX(-50%);z-index:40;max-width:min(92vw,520px);background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:14px;padding:9px 16px;font-weight:800;font-size:14px;box-shadow:0 10px 24px rgba(0,0,0,.35);text-align:center}
+@media (min-width:900px){#toast{top:auto;left:auto;right:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:none;max-width:260px;text-align:left}}
+
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr);gap:10px;padding-block:8px 16px}
+  .side.left{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.15fr) auto;gap:6px;align-items:stretch}
+  .next b{white-space:nowrap}.next{gap:6px}
+  .side.left .brand{grid-column:1/-1;font-size:22px;display:flex;align-items:baseline;gap:8px}
+  .side.left .brand small{margin:0}
+  .side.left .card{padding:8px 10px}
+  .score{font-size:26px}.best{font-size:22px}
+  .next img{width:40px;height:40px}.next b{font-size:14px}.next small{display:none}
+  .side.left .hint{display:none}
+  .side.left .energyCard{grid-column:1/-1;order:7;display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:6px 10px}.energyCard .ebar{margin:0}.energyCard .btn.hole{width:auto;padding:6px 10px;font-size:12.5px}
+  .side.left .rankCard{grid-column:1/-1;order:8;padding:6px 10px}.rankCard .lab{display:none}.rank svg{width:40px;height:40px}.rank b{font-size:17px}
+  .side.left .themesCard{grid-column:1/-1;order:9;padding:6px 8px}.themesCard .lab{display:none}
+  .themes{grid-template-columns:repeat(3,minmax(0,1fr))}.th{font-size:11.5px;padding:5px 6px;gap:5px}.th i{width:12px;height:12px}
+  .btns{grid-template-columns:1fr;align-content:center}
+  .btns .btn{padding:6px 8px;font-size:12.5px}
+  .btns .full{display:none}
+  .legend{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px}
+  .legend h2{display:none}
+  .lg{grid-template-columns:1fr;justify-items:center;width:auto;min-width:64px;padding:4px}
+  .lg img{width:30px;height:30px}
+  .lg b{font-size:11.5px;text-align:center}
+  .lg small,.lg .p small{display:none}
+  .lg .p{font-size:11px;text-align:center}
+  .side.right .card{padding:8px}
+}
+</style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="app">
+  <aside class="side left">
+    <div class="brand">알파 <em>유니버스</em><small>KIRD · 태양계 천체 합치기</small></div>
+    <div class="card"><div class="lab">현재 점수</div><div class="score num" id="score">0</div></div>
+    <div class="card"><div class="lab">최고 점수 · 이 PC <span class="newrec" id="newrec" hidden>신기록</span></div><div class="best num" id="best">0</div></div>
+    <div class="card rankCard"><div class="lab" style="margin-bottom:6px">과학기술인 등급</div><button type="button" class="rank" id="rank" aria-label="등급표 보기"></button></div>
+    <div class="card energyCard"><div class="lab">알파 에너지 <span id="feverTag" class="newrec" style="background:#7A3FC4" hidden>피버 ×2</span></div><div class="ebar"><i id="ebar"></i></div><button type="button" class="btn hole" id="bHole" disabled>블랙홀 발동 <small>B</small></button></div>
+    <div class="card"><div class="lab">다음 천체</div><div class="next" id="next"></div></div>
+    <div class="btns"><button class="btn" id="bRestart" type="button">다시 시작</button><button class="btn ghost" id="bSound" type="button">소리 켜기</button><button class="btn ghost full" id="bHow" type="button">하는 법</button></div>
+    <div class="card themesCard"><div class="lab" style="margin-bottom:8px">그릇 테마</div><div class="themes" id="themes"></div></div>
+    <p class="hint">마우스로 좌우를 맞추고 클릭, 휴대폰은 끌다가 떼면 떨어집니다. 같은 천체끼리 닿으면 한 단계 큰 천체가 됩니다. 위쪽 선을 넘으면 끝.</p>
+  </aside>
+  <main class="stage" id="stage"><canvas id="cv" aria-label="알파 유니버스 게임판"></canvas></main>
+  <aside class="side right">
+    <div class="card legend" id="legend"></div>
+    <p class="credit">천체 이미지: NASA 3D Resources(명왕성·금성), <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener">Solar System Scope</a> 텍스처(CC BY 4.0, NASA 자료 기반)를 구체로 다시 렌더링.</p>
+  </aside>
+</div>
+<div id="modal" hidden><div class="box" id="mbox"></div></div>
+<div id="toast" hidden></div>
+
+<script>
+/* ---------------- 데이터 ---------------- */
+const IMG=__IMAGES__;
+const BODIES=[
+ {k:'pluto',n:'명왕성',d:'2,376',e:'0.19',rim:'#F4A6B8',f:'2006년 왜행성으로 다시 분류됐어요. 하트 모양 톰보 지역은 2015년 뉴호라이즌스가 처음 자세히 찍었습니다.'},
+ {k:'moon',n:'달',d:'3,475',e:'0.27',rim:'#DDE4EE',f:'지구의 유일한 자연 위성. 한국의 첫 달 궤도선 다누리가 2022년 발사돼 달 궤도에서 관측했습니다.'},
+ {k:'mercury',n:'수성',d:'4,879',e:'0.38',rim:'#F08A24',f:'태양에 가장 가까운 행성. 태양을 한 바퀴 도는 데 88일이면 됩니다.'},
+ {k:'mars',n:'화성',d:'6,792',e:'0.53',rim:'#E0533F',f:'붉은빛은 표면의 산화철(녹) 때문입니다. 태양계에서 가장 높은 화산 올림푸스 산이 있어요.'},
+ {k:'venus',n:'금성',d:'12,104',e:'0.95',rim:'#FFD24A',f:'두꺼운 이산화탄소 대기 때문에 표면이 약 460℃로, 수성보다 뜨거운 태양계에서 가장 뜨거운 행성입니다.'},
+ {k:'earth',n:'지구',d:'12,756',e:'1',rim:'#2E86D6',f:'1972년 아폴로 17호가 찍은 지구 사진 「블루 마블」은 부루마불 이름의 유래가 됐습니다.'},
+ {k:'neptune',n:'해왕성',d:'49,528',e:'3.9',rim:'#5B6CFF',f:'천왕성보다 지름은 조금 작지만 질량은 더 큽니다. 태양계에서 바람이 가장 센 행성이에요.'},
+ {k:'uranus',n:'천왕성',d:'51,118',e:'4.0',rim:'#35D0D6',f:'자전축이 약 98° 기울어 거의 옆으로 누운 채 태양을 돕니다.'},
+ {k:'saturn',n:'토성',d:'120,536',e:'9.5',rim:'#E8C27A',f:'평균 밀도가 물보다 낮습니다. 고리는 얼음과 암석 조각이 모인 것이에요.'},
+ {k:'jupiter',n:'목성',d:'142,984',e:'11.2',rim:'#C7743A',f:'태양계에서 가장 큰 행성. 대적점은 지구보다 큰 거대한 폭풍입니다.'},
+ {k:'sun',n:'태양',d:'약 1,391,400',e:'109',rim:'#FFF1A8',f:'지름이 지구의 약 109배이고, 태양계 전체 질량의 99.8%를 차지합니다.'},
+];
+// 원작 규격: 지름(그릇 폭 560 기준)과 만들었을 때 점수
+const DIAM=[33,48,61,69,89,114,129,156,177,220,259];
+const PTS=[0,1,3,6,10,15,21,28,36,45,55];
+const SUN_PAIR=66;
+// 점수 체계: 기본 점수 ×100, 연속 합치기 콤보 배율, 알파 에너지로 블랙홀 발동 → 피버(×2)
+const UNIT=100,SUN_PAIR_PTS=66000,COMBO_MS=900,COMBO_STEP=0.25,COMBO_MAX=3,FEVER_MS=8000,HOLE_MS=700,HOLE_TIERS=2;
+const ptsOf=t=>PTS[t]*UNIT;
+// 그릇 테마 소식: 게임 시간 기준 8초 뒤 첫 소식, 이후 25초마다 5초 동안 (일시정지·모달 중엔 멈춤)
+const TIP_FIRST=8000,TIP_EVERY=25000,TIP_SHOW=5000;let tipT=TIP_FIRST,tip=null;const tipBag={};
+function nextTip(th){let b=tipBag[th];if(!b||!b.length){b=tipBag[th]=TIPS[th].map((_,i)=>i);for(let i=b.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[b[i],b[j]]=[b[j],b[i]]}}return TIPS[th][b.pop()]}
+const NEWS=[
+ ['알파캠퍼스','KIRD 학습플랫폼 알파캠퍼스는 과학기술인 누구나 듣는 온라인 배움터입니다.'],
+ ['미래비전 2050','KIRD는 AI 시대에 맞춰 기관 역할을 다시 정한 「미래비전 2050」을 세웠습니다.'],
+ ['K-클럽','KIRD 경력개발 플랫폼 K-클럽은 입직 이전부터 은퇴 이후까지 과학기술인의 경력을 잇습니다.'],
+ ['청년과학자','국가R&D 연구기획 프로그램으로 이공계 대학(원)생 팀의 연구기획 역량을 키웁니다.'],
+ ['해외연구인력','외국인 이공계 연구자의 한국 정착을 돕는 전주기 정착지원사업을 운영합니다.'],
+];
+const THEMES={
+ kird:{n:'KIRD 인재 우주관',c:'#8CC63F',line:'관람 한계선'},
+ lab:{n:'과학계 · 실험 수조',c:'#4FC3F7',line:'넘침 경고 눈금'},
+ space:{n:'우주계 · 정거장 격납고',c:'#9AA6BD',line:'궤도 이탈선'},
+};
+
+/* ---------------- 과학기술인 등급(롤 랭크식) ---------------- */
+const RANKS=[
+ {n:'브론즈',title:'예비 과학기술인',min:0,c:'#C98A55',dark:'#8A5A2B',div:true},
+ {n:'실버',title:'신진 과학기술인',min:50000,c:'#C6D0DD',dark:'#5B6B82',div:true},
+ {n:'골드',title:'중견 과학기술인',min:120000,c:'#FFD24A',dark:'#B07D00',div:true},
+ {n:'플래티넘',title:'책임 과학기술인',min:220000,c:'#4FD1C5',dark:'#13857B',div:true},
+ {n:'다이아몬드',title:'수석 과학기술인',min:350000,c:'#7FB8FF',dark:'#2E6CC0',div:true},
+ {n:'마스터',title:'리더 과학기술인',min:550000,c:'#C084FC',dark:'#7A3FC4',div:false},
+ {n:'챌린저',title:'미래비전 2050 리더',min:800000,c:'#FFE58A',dark:'#1F6FB2',div:false},
+];
+const DIVS=['IV','III','II','I'];
+function rankOf(sc){
+  let i=0;for(let k=0;k<RANKS.length;k++)if(sc>=RANKS[k].min)i=k;
+  const R=RANKS[i],hi=i+1<RANKS.length?RANKS[i+1].min:null;let d=-1,label=R.n,next=hi,nextLabel=hi?RANKS[i+1].n:'';
+  if(R.div&&hi){const step=(hi-R.min)/4;d=Math.min(3,Math.floor((sc-R.min)/step));label=`${R.n} ${DIVS[d]}`;if(d<3){next=Math.round(R.min+step*(d+1));nextLabel=`${R.n} ${DIVS[d+1]}`}}
+  const lo=d>=0?Math.round(R.min+(hi-R.min)/4*d):R.min;const pct=next?Math.min(1,(sc-lo)/(next-lo)):1;
+  return{i,d,label,next,nextLabel,pct};
+}
+function emblem(i){
+  const R=RANKS[i],c=R.c,dk=R.dark,id='g'+i+Math.random().toString(36).slice(2,6);
+  const wings=i>=1?`<path d="M18 52 Q4 40 8 22 Q14 34 26 40Z M82 52 Q96 40 92 22 Q86 34 74 40Z" fill="${c}" stroke="#0E2238" stroke-width="2.5" stroke-linejoin="round"/>`:'';
+  const wings2=i>=3?`<path d="M20 64 Q2 58 2 38 Q10 52 26 54Z M80 64 Q98 58 98 38 Q90 52 74 54Z" fill="${c}" opacity=".85" stroke="#0E2238" stroke-width="2.2" stroke-linejoin="round"/>`:'';
+  const crown=i>=5?`<path d="M34 16 L40 4 L46 13 L50 2 L54 13 L60 4 L66 16Z" fill="${i===6?'#FFD24A':c}" stroke="#0E2238" stroke-width="2.5" stroke-linejoin="round"/>`:'';
+  const gem=i>=4?`<path d="M50 74 L56 82 L50 92 L44 82Z" fill="#E8F4FF" stroke="#0E2238" stroke-width="2"/>`:'';
+  const stars=Array.from({length:Math.min(i,4)},(_,k)=>`<circle cx="${50+(k-(Math.min(i,4)-1)/2)*9}" cy="83" r="2.6" fill="#0E2238"/>`).join('');
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="${R.n} 엠블럼"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".25" stop-color="${c}"/><stop offset="1" stop-color="${dk}"/></linearGradient></defs>${wings2}${wings}${crown}<path d="M50 14 L78 28 L78 58 Q78 78 50 90 Q22 78 22 58 L22 28Z" fill="url(#${id})" stroke="#0E2238" stroke-width="3" stroke-linejoin="round"/><path d="M50 22 L70 32 L70 57 Q70 72 50 81 Q30 72 30 57 L30 32Z" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.6"/><text x="50" y="63" text-anchor="middle" font-family="Black Han Sans,Noto Sans KR,sans-serif" font-size="30" fill="#0E2238">α</text>${gem}${i<4?stars:''}</svg>`;
+}
+let curRank=0,lastRankKey='';
+function renderRank(){
+  const rk=rankOf(score),R=RANKS[rk.i];const key=rk.label;
+  if(key!==lastRankKey){$('rank').style.setProperty('--rk',R.c);$('rank').innerHTML=`${emblem(rk.i)}<span style="min-width:0;flex:1"><b>${rk.label}</b><span class="tt">${R.title}</span><span class="rbar"><i id="rbar"></i></span><small id="rnext"></small></span>`;lastRankKey=key}
+  $('rbar').style.width=(rk.pct*100)+'%';$('rnext').textContent=rk.next?`${rk.nextLabel}까지 ${fmt(rk.next-score)}점`:'최고 등급';
+  if(rk.i>curRank){curRank=rk.i;promote(rk.i)}
+}
+function promote(i){const R=RANKS[i];const el=document.createElement('div');el.className='promo';el.style.setProperty('--rk',R.c);el.innerHTML=`${emblem(i)}<b>${R.n} 승급!</b><small>${R.title}</small>`;document.body.appendChild(el);setTimeout(()=>el.remove(),2300);sfx(9)}
+function rankTable(){openModal(`<h3>과학기술인 등급</h3><p>한 판의 최종 점수로 등급이 정해집니다. 연구·기술·행정 직군 구분 없이 과학기술인의 경력 단계를 따릅니다. 브론즈~다이아몬드는 IV→I 네 단계로 나뉩니다.</p><table class="rk-table">${RANKS.map((R,i)=>`<tr><td>${emblem(i)}<span><b>${R.n}</b> · ${R.title}</span></td><td class="num">${fmt(R.min)}점~</td></tr>`).join('')}</table><p style="font-size:12.5px;color:#5B6B82">내 최고 등급: <b>${RANKS[SAVE.bestRank].n}</b> · 최고 점수 ${fmt(SAVE.best)}점</p><div class="row"><button class="btn" type="button" id="cClose">닫기</button></div>`);$('cClose').onclick=closeModal}
+
+/* ---------------- 저장 ---------------- */
+const KEY='kird-universe-v1';
+let SAVE={bestRank:0,best:0,bestDate:'',maxTier:0,games:0,seen:[0,1,2,3,4].map(()=>false),theme:'kird',sound:false};
+try{const r=localStorage.getItem(KEY);if(r)SAVE=Object.assign(SAVE,JSON.parse(r))}catch(e){}
+while(SAVE.seen.length<11)SAVE.seen.push(false);
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(SAVE))}catch(e){}}
+
+/* ---------------- 규격(세계 단위) ---------------- */
+const IW=560,IH=790,WALL=22,TIP_BAND=106,TOP=120+TIP_BAND;  // TIP_BAND: 맨 위 소식 띠           // 그릇 안쪽 폭·높이, 벽 두께, 그릇 위 여백
+const WW=IW+WALL*2,WH=TOP+IH+WALL;              // 캔버스 세계 크기
+const X0=WALL,FLOOR=TOP+IH,LINE_Y=TOP+24;       // 그릇 안쪽 왼쪽, 바닥, 게임오버 선(원작처럼 그릇 위쪽 끝 바로 아래)
+const HOLD_Y=TOP-52;                             // 떨어뜨리기 전 천체 높이
+const GRAV=1650,REST=0.12,MU=0.32,SUB=8,COOLDOWN=500,OVER_MS=1000,GRACE_MS=1000;
+const R=t=>DIAM[t]/2;
+
+/* ---------------- 이미지 ---------------- */
+const SPR=BODIES.map((b,i)=>{const im=new Image();im.src=IMG[i];return im});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>Math.round(n).toLocaleString('ko-KR');
+
+/* ---------------- 물리 ---------------- */
+let combo=0,maxCombo=0,lastMerge=-1e9,energy=0,fever=0,holes=[],holesUsed=0,feverFlash=0;
+let bodies=[],nextId=1,score=0,curTier=0,nextTier=0,aimX=IW/2,lastDrop=-1e9,over=false,paused=false,fx=[],now=0,popups=[],topTier=0,newRecord=false,shake=0;
+function randTier(){return Math.random()*5|0}
+function addBody(t,x,y,vx=0,vy=0){const b={id:nextId++,t,x,y,vx,vy,r:R(t),m:R(t)*R(t),a:Math.random()*6.28,w:0,born:now,overT:0,dead:false};bodies.push(b);return b}
+function step(dt){
+  const h=dt/SUB;const merges=[];
+  const all=bodies;bodies=all.filter(b=>!b.suck);
+  for(let s=0;s<SUB;s++){
+    for(const b of bodies){b.vy+=GRAV*h;b.x+=b.vx*h;b.y+=b.vy*h}
+    // 천체끼리
+    for(let i=0;i<bodies.length;i++){const a=bodies[i];if(a.dead)continue;
+      for(let j=i+1;j<bodies.length;j++){const b=bodies[j];if(b.dead)continue;
+        const dx=b.x-a.x,dy=b.y-a.y,rr=a.r+b.r;if(Math.abs(dx)>rr||Math.abs(dy)>rr)continue;
+        const d2=dx*dx+dy*dy;if(d2>=rr*rr)continue;
+        const d=Math.sqrt(d2)||0.001,nx=dx/d,ny=dy/d,ov=rr-d;
+        if(a.t===b.t)merges.push([a,b]);
+        const ia=1/a.m,ib=1/b.m,sum=ia+ib;
+        a.x-=nx*ov*ia/sum;a.y-=ny*ov*ia/sum;b.x+=nx*ov*ib/sum;b.y+=ny*ov*ib/sum;
+        const rvx=b.vx-a.vx,rvy=b.vy-a.vy,vn=rvx*nx+rvy*ny;
+        if(vn<0){const j=-(1+REST)*vn/sum;a.vx-=j*nx*ia;a.vy-=j*ny*ia;b.vx+=j*nx*ib;b.vy+=j*ny*ib;
+          const tx=-ny,ty=nx,vt=rvx*tx+rvy*ty;let jt=-vt/sum;const lim=MU*j;jt=Math.max(-lim,Math.min(lim,jt));
+          a.vx-=jt*tx*ia;a.vy-=jt*ty*ia;b.vx+=jt*tx*ib;b.vy+=jt*ty*ib}
+      }}
+    // 벽·바닥
+    for(const b of bodies){
+      if(b.x-b.r<X0){b.x=X0+b.r;if(b.vx<0)b.vx=-b.vx*REST;b.vy*=1-MU*0.08}
+      if(b.x+b.r>X0+IW){b.x=X0+IW-b.r;if(b.vx>0)b.vx=-b.vx*REST;b.vy*=1-MU*0.08}
+      if(b.y+b.r>FLOOR){b.y=FLOOR-b.r;if(b.vy>0)b.vy=-b.vy*REST;b.vx*=1-MU*0.1}
+    }
+  }
+  for(const b of bodies){b.vx*=0.9995;b.vy*=0.9995;b.w=b.vx/b.r;b.a+=b.w*dt}
+  // 블랙홀로 빨려 드는 천체
+  for(const b of all)if(b.suck){const H=b.suck;b.st+=dt*1000;const k=Math.min(1,dt*7);b.x+=(H.x-b.x)*k;b.y+=(H.y-b.y)*k;b.a+=dt*9;
+    if(b.st>=HOLE_MS&&!b.dead){b.dead=true;const v=Math.round((b.t+1)*500*(fever>0?2:1));score+=v;pop(b.x,b.y,v,'')}}
+  bodies=all.filter(b=>!b.dead||b.suck);
+  // 합치기: 먼저 닿은 쌍부터, 이미 쓰인 천체는 건너뜀
+  for(const [a,b] of merges){if(a.dead||b.dead)continue;a.dead=b.dead=true;
+    const x=(a.x*a.m+b.x*b.m)/(a.m+b.m),y=(a.y*a.m+b.y*b.m)/(a.m+b.m);
+    combo=now-lastMerge<=COMBO_MS?combo+1:1;lastMerge=now;if(combo>maxCombo)maxCombo=combo;
+    const mult=Math.min(COMBO_MAX,1+COMBO_STEP*(combo-1))*(fever>0?2:1);
+    if(a.t===10){const v=Math.round(SUN_PAIR_PTS*(fever>0?2:1));score+=v;burst(x,y,10,true);pop(x,y,v,'쌍성 블랙홀');toast('두 태양이 블랙홀로! +'+fmt(v));sfx(12);energy=100;continue}
+    const t=a.t+1;const nb=addBody(t,x,y,(a.vx+b.vx)/2,(a.vy+b.vy)/2);nb.born=now-GRACE_MS;
+    const v=Math.round(ptsOf(t)*mult/10)*10;score+=v;pop(x,y,v,combo>=2?`${combo}콤보 ×${mult.toFixed(2).replace(/\.?0+$/,'')}`:'');burst(x,y,t,false);sfx(t);
+    if(energy<100){energy=Math.min(100,energy+1+t*0.5);if(energy>=100){toast('알파 에너지 가득! 블랙홀을 발동할 수 있어요 (B)');sfx(11)}}
+    if(!SAVE.seen[t]){SAVE.seen[t]=true;discover(t)}
+    if(t>topTier)topTier=t;if(t>SAVE.maxTier)SAVE.maxTier=t;
+    if(t>=8)shake=6+t;
+  }
+  bodies=bodies.filter(b=>!b.dead);
+  // 게임오버: 선 위에 1초 넘게
+  if(fever>0)fever=Math.max(0,fever-dt*1000);
+  tipT-=dt*1000;if(tipT<=0){tip={s:nextTip(SAVE.theme),th:SAVE.theme,t:0};tipT=TIP_EVERY}
+  if(tip){tip.t+=dt*1000;if(tip.t>TIP_SHOW)tip=null}
+  for(const h of holes)h.t+=dt*1000;holes=holes.filter(h=>h.t<HOLE_MS+500);
+  for(const b of bodies){if(b.suck)continue;if(now-b.born<GRACE_MS){b.overT=0;continue}
+    if(b.y-b.r<LINE_Y){b.overT+=dt*1000;if(b.overT>OVER_MS){gameOver();return}}else b.overT=0}
+  if(score>SAVE.best){SAVE.best=score;SAVE.bestDate=new Date().toLocaleDateString('ko-KR');newRecord=true}
+}
+function drop(){
+  if(over||paused||now-lastDrop<COOLDOWN)return;
+  const r=R(curTier);const x=Math.max(X0+r,Math.min(X0+IW-r,X0+aimX));
+  const b=addBody(curTier,x,HOLD_Y);b.vy=60;
+  if(!SAVE.seen[curTier]){SAVE.seen[curTier]=true;renderLegend()}
+  if(now-lastMerge>350){combo=0;lastMerge=-1e9}
+  lastDrop=now;curTier=nextTier;nextTier=randTier();renderNext();sfx(-1);
+}
+
+function useHole(){
+  if(over||paused||energy<100)return;
+  const hx=X0+Math.max(60,Math.min(IW-60,aimX)),hy=TOP+IH*0.55;const H={x:hx,y:hy,t:0};holes.push(H);
+  let n=0;for(const b of bodies)if(!b.suck&&b.t<=HOLE_TIERS){b.suck=H;b.st=0;n++}
+  energy=0;fever=FEVER_MS;holesUsed++;shake=10;sfx(12);
+  toast(`블랙홀 발동! 작은 천체 ${n}개를 흡수하고 8초 동안 점수 ×2`);renderEnergy();
+}
+
+/* ---------------- 연출 ---------------- */
+function drawTip(){
+  const T=THEMES[tip.th],a=Math.min(1,tip.t/300,(TIP_SHOW-tip.t)/400);if(a<=0)return;
+  const x=X0+8,w=IW-16,maxW=w-28,room=TIP_BAND-8;let fs=Math.round(Math.min(28,Math.max(17,13/SC))),lines,lh,h;
+  for(;;){lh=fs+6;ctx.font=`800 ${fs}px "Noto Sans KR",sans-serif`;lines=[];let cur='';
+    for(const wd of tip.s.split(' ')){const tr=cur?cur+' '+wd:wd;if(ctx.measureText(tr).width>maxW&&cur){lines.push(cur);cur=wd}else cur=tr}lines.push(cur);
+    h=Math.round(fs*.72)+18+lines.length*lh;if(h<=room||fs<=12)break;fs--}
+  const y=4+(room-h)/2-(1-a)*8;
+  ctx.save();ctx.globalAlpha=a;ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  ctx.fillStyle='rgba(8,18,38,.9)';ctx.strokeStyle=T.c;ctx.lineWidth=2.5;ctx.beginPath();ctx.roundRect(x,y,w,h,12);ctx.fill();ctx.stroke();
+  const hs=Math.round(fs*.72);ctx.fillStyle=T.c;ctx.font=`900 ${hs}px "Noto Sans KR",sans-serif`;ctx.fillText(T.n+' 소식',x+14,y+hs+6);
+  ctx.fillStyle='#fff';ctx.font=`800 ${fs}px "Noto Sans KR",sans-serif`;lines.forEach((l,i)=>ctx.fillText(l,x+14,y+hs+10+lh*(i+1)-4));
+  ctx.restore();
+}
+function pop(x,y,v,lab){if(v>0)popups.push({x,y,v,lab:lab||'',t:0})}
+function burst(x,y,t,hole){const c=BODIES[t].rim;for(let k=0;k<(hole?40:10+t*2);k++){const a=Math.random()*6.28,s=(hole?260:90+t*18)*(0.4+Math.random());fx.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:hole?1.2:0.6,max:hole?1.2:0.6,c:hole?(k%2?'#B07CF2':'#FFF1A8'):c,hole})}}
+let AC=null;
+function sfx(t){if(!SAVE.sound)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.type=t<0?'triangle':'sine';o.frequency.value=t<0?260:180+t*55;g.gain.setValueAtTime(.0001,AC.currentTime);g.gain.exponentialRampToValueAtTime(.18,AC.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+(t<0?.09:.28));o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+.3)}catch(e){}}
+let toastT;function toast(m,ms=2600){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,ms)}
+function discover(t){renderLegend();const b=BODIES[t];toast(`새 천체 · ${b.n}! ${b.f}`,4200)}
+
+/* ---------------- 그리기 ---------------- */
+const cv=$('cv'),ctx=cv.getContext('2d');let SC=1,DPR=1;
+function fit(){
+  const stage=$('stage');const small=matchMedia('(max-width: 980px)').matches;
+  const availH=innerHeight-(small?250:30);const availW=small?innerWidth-32:Math.min(900,innerWidth-220-250-36-64);
+  SC=Math.max(.3,Math.min(availW/WW,availH/WH));DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.style.width=WW*SC+'px';cv.style.height=WH*SC+'px';cv.width=Math.round(WW*SC*DPR);cv.height=Math.round(WH*SC*DPR);
+}
+addEventListener('resize',fit);
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,r):ctx.rect(x,y,w,h)}
+const starsInBox=Array.from({length:90},()=>[Math.random()*IW,Math.random()*IH,Math.random()*1.4+.3,Math.random()]);
+function drawBack(th){
+  ctx.save();
+  if(th==='kird'){const g=ctx.createLinearGradient(0,TOP,0,FLOOR);g.addColorStop(0,'#0E1E3E');g.addColorStop(1,'#132A52');ctx.fillStyle=g;ctx.fillRect(X0,TOP,IW,IH);
+    ctx.fillStyle='rgba(255,255,255,.55)';for(const [x,y,s,p] of starsInBox){ctx.globalAlpha=.25+.35*Math.abs(Math.sin(now/1400+p*6));ctx.fillRect(X0+x,TOP+y,s,s)}ctx.globalAlpha=1;
+    const sh=ctx.createLinearGradient(X0,0,X0+IW,0);sh.addColorStop(0,'rgba(255,255,255,.06)');sh.addColorStop(.2,'rgba(255,255,255,0)');sh.addColorStop(.85,'rgba(255,255,255,0)');sh.addColorStop(1,'rgba(255,255,255,.05)');ctx.fillStyle=sh;ctx.fillRect(X0,TOP,IW,IH)}
+  else if(th==='lab'){const g=ctx.createLinearGradient(0,TOP,0,FLOOR);g.addColorStop(0,'rgba(120,210,240,.06)');g.addColorStop(.25,'rgba(79,195,247,.16)');g.addColorStop(1,'rgba(40,140,200,.32)');ctx.fillStyle='#0B1A2C';ctx.fillRect(X0,TOP,IW,IH);ctx.fillStyle=g;ctx.fillRect(X0,TOP,IW,IH);
+    ctx.fillStyle='rgba(200,240,255,.35)';for(let k=0;k<14;k++){const x=X0+((k*97)%IW),y=FLOOR-((now/14+k*61)%IH);ctx.beginPath();ctx.arc(x,y,2+(k%4),0,7);ctx.fill()}
+    ctx.strokeStyle='rgba(220,245,255,.55)';ctx.fillStyle='rgba(220,245,255,.75)';ctx.font='700 12px "Noto Sans KR",sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+    for(let k=0;k<=IH;k+=50){const y=FLOOR-k,big=k%100===0;ctx.lineWidth=big?2:1;ctx.beginPath();ctx.moveTo(X0,y);ctx.lineTo(X0+(big?22:12),y);ctx.stroke();if(big&&k>0&&k<IH)ctx.fillText(k+' mL',X0+26,y)}}
+  else{ctx.fillStyle='#04060D';ctx.fillRect(X0,TOP,IW,IH);for(const [x,y,s,p] of starsInBox){ctx.globalAlpha=.4+.5*Math.abs(Math.sin(now/900+p*8));ctx.fillStyle=p>.85?'#FFE6A8':'#FFFFFF';ctx.fillRect(X0+x,TOP+y,s*1.3,s*1.3)}ctx.globalAlpha=1;
+    const neb=ctx.createRadialGradient(X0+IW*.7,TOP+IH*.35,10,X0+IW*.7,TOP+IH*.35,320);neb.addColorStop(0,'rgba(176,124,242,.18)');neb.addColorStop(1,'rgba(176,124,242,0)');ctx.fillStyle=neb;ctx.fillRect(X0,TOP,IW,IH)}
+  ctx.restore();
+}
+function drawFrame(th){
+  ctx.save();const L=X0-WALL,Rr=X0+IW,B=FLOOR;
+  if(th==='kird'){
+    ctx.fillStyle='#13294B';ctx.fillRect(L,TOP-6,WALL,IH+WALL+6);ctx.fillRect(Rr,TOP-6,WALL,IH+WALL+6);ctx.fillRect(L,B,WW,WALL);
+    ctx.fillStyle='#8CC63F';for(const [x,y] of [[L,TOP-6],[Rr,TOP-6],[L,B],[Rr,B]])ctx.fillRect(x,y,WALL,WALL);
+    ctx.fillStyle='#FFD24A';rr(X0+IW/2-120,B+3,240,WALL-6,4);ctx.fill();ctx.fillStyle='#0E2238';ctx.font='900 13px "Noto Sans KR",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('KIRD 인재 우주관',X0+IW/2,B+WALL/2+1);
+    ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=2;ctx.strokeRect(X0+1,TOP,IW-2,IH-1);
+  }else if(th==='lab'){
+    ctx.fillStyle='rgba(190,232,245,.35)';ctx.fillRect(L,TOP-14,WALL,IH+14);ctx.fillRect(Rr,TOP-14,WALL,IH+14);
+    ctx.strokeStyle='rgba(225,248,255,.85)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(L+2,TOP-14);ctx.lineTo(L+2,B+WALL-2);ctx.lineTo(Rr+WALL-2,B+WALL-2);ctx.lineTo(Rr+WALL-2,TOP-14);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(X0,TOP-14);ctx.lineTo(X0,B);ctx.lineTo(Rr,B);ctx.lineTo(Rr,TOP-14);ctx.stroke();
+    ctx.fillStyle='rgba(190,232,245,.35)';ctx.fillRect(L,B,WW,WALL);
+    ctx.fillStyle='#6B4E2E';ctx.fillRect(L-6,B+WALL-4,WW+12,6);
+    ctx.fillStyle='rgba(225,248,255,.9)';ctx.beginPath();ctx.moveTo(Rr+WALL-2,TOP-14);ctx.lineTo(Rr+WALL+10,TOP-24);ctx.lineTo(Rr+WALL+10,TOP-18);ctx.lineTo(Rr+WALL-2,TOP-6);ctx.fill();
+  }else{
+    const g=ctx.createLinearGradient(L,0,L+WALL,0);g.addColorStop(0,'#3A465C');g.addColorStop(.5,'#8A97AA');g.addColorStop(1,'#4A576E');
+    ctx.fillStyle=g;ctx.fillRect(L,TOP-10,WALL,IH+WALL+10);const g2=ctx.createLinearGradient(Rr,0,Rr+WALL,0);g2.addColorStop(0,'#4A576E');g2.addColorStop(.5,'#8A97AA');g2.addColorStop(1,'#3A465C');ctx.fillStyle=g2;ctx.fillRect(Rr,TOP-10,WALL,IH+WALL+10);
+    ctx.fillStyle='#5B6B82';ctx.fillRect(L,B,WW,WALL);
+    ctx.save();ctx.beginPath();ctx.rect(L,B,WW,WALL);ctx.clip();ctx.fillStyle='#FFD24A';for(let x=L-30;x<L+WW;x+=28){ctx.beginPath();ctx.moveTo(x,B+WALL);ctx.lineTo(x+14,B);ctx.lineTo(x+24,B);ctx.lineTo(x+10,B+WALL);ctx.fill()}ctx.restore();
+    ctx.fillStyle='#2A3346';for(let y=TOP+10;y<B;y+=46){for(const x of [L+WALL/2,Rr+WALL/2]){ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill()}}
+  }
+  // 게임오버 선
+  const danger=bodies.some(b=>b.overT>0);
+  ctx.setLineDash([10,8]);ctx.lineWidth=2.5;ctx.strokeStyle=danger&&Math.sin(now/90)>0?'#FF5A47':'rgba(255,120,100,.75)';ctx.beginPath();ctx.moveTo(X0,LINE_Y);ctx.lineTo(X0+IW,LINE_Y);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,170,150,.9)';ctx.font='800 12px "Noto Sans KR",sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText(THEMES[th].line,X0+IW-8,LINE_Y-4);
+  ctx.restore();
+}
+function drawBody(t,x,y,a,alpha=1){
+  const r=R(t),im=SPR[t];ctx.save();ctx.globalAlpha=alpha;
+  if(t===10){const g=ctx.createRadialGradient(x,y,r*.8,x,y,r*1.45);g.addColorStop(0,'rgba(255,200,80,.55)');g.addColorStop(1,'rgba(255,140,40,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r*1.45,0,7);ctx.fill()}
+  if(t===8){ctx.fillStyle='rgba(8,14,30,.6)';ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill()}
+  ctx.translate(x,y);ctx.rotate(t===8?a*0.15:a);
+  if(im.complete&&im.naturalWidth)ctx.drawImage(im,-r,-r,r*2,r*2);else{ctx.fillStyle=BODIES[t].rim;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.fill()}
+  ctx.restore();ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=BODIES[t].rim;ctx.lineWidth=t<5?2.5:3.2;ctx.beginPath();ctx.arc(x,y,r-1.2,0,7);ctx.stroke();ctx.restore();
+}
+const ALPHA_SVG=(()=>{try{return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(avatar({name:'알파',color:'#2E86D6',acc:'orb'}))}catch(e){return ''}})();
+const alphaImg=new Image();if(ALPHA_SVG)alphaImg.src=ALPHA_SVG;
+function drawDropper(th){
+  if(over)return;const r=R(curTier);const x=Math.max(X0+r,Math.min(X0+IW-r,X0+aimX));const ready=now-lastDrop>=COOLDOWN;
+  ctx.save();
+  if(th==='kird'){ if(alphaImg.complete&&alphaImg.naturalWidth)ctx.drawImage(alphaImg,x-r-58,HOLD_Y-34,52,52);ctx.strokeStyle='#8CC63F';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-r-12,HOLD_Y-6);ctx.quadraticCurveTo(x-r,HOLD_Y-r-6,x,HOLD_Y-r-4);ctx.stroke()}
+  else if(th==='lab'){ctx.fillStyle='rgba(225,248,255,.55)';ctx.strokeStyle='rgba(225,248,255,.95)';ctx.lineWidth=2;rr(x-6,HOLD_Y-r-58,12,46,5);ctx.fill();ctx.stroke();ctx.fillStyle='#E0533F';ctx.beginPath();ctx.ellipse(x,HOLD_Y-r-62,13,10,0,0,7);ctx.fill();ctx.beginPath();ctx.moveTo(x-4,HOLD_Y-r-12);ctx.lineTo(x,HOLD_Y-r-2);ctx.lineTo(x+4,HOLD_Y-r-12);ctx.fill()}
+  else{ctx.fillStyle='#8A97AA';ctx.fillRect(x-4,TIP_BAND,8,HOLD_Y-r-14-TIP_BAND);ctx.fillStyle='#5B6B82';rr(x-18,HOLD_Y-r-18,36,10,3);ctx.fill();ctx.strokeStyle='#C9D3E0';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-16,HOLD_Y-r-8);ctx.lineTo(x-r*.7-4,HOLD_Y-r*.3);ctx.moveTo(x+16,HOLD_Y-r-8);ctx.lineTo(x+r*.7+4,HOLD_Y-r*.3);ctx.stroke();ctx.fillStyle=ready?'#8CC63F':'#E0533F';ctx.beginPath();ctx.arc(x,HOLD_Y-r-13,3,0,7);ctx.fill()}
+  drawBody(curTier,x,HOLD_Y,0,ready?1:.55);
+  ctx.restore();
+}
+function render(){
+  ctx.setTransform(SC*DPR,0,0,SC*DPR,0,0);ctx.clearRect(0,0,WW,WH);
+  let sx=0,sy=0;if(shake>0){sx=(Math.random()-.5)*shake;sy=(Math.random()-.5)*shake;shake*=.88;if(shake<.4)shake=0}
+  ctx.translate(sx,sy);
+  const th=SAVE.theme;drawBack(th);
+  if(fever>0){ctx.save();ctx.globalAlpha=.18+.08*Math.sin(now/120);ctx.fillStyle='#B07CF2';ctx.fillRect(X0,TOP,IW,IH);ctx.restore()}
+  for(const H of holes){const k=Math.min(1,H.t/200),fade=H.t>HOLE_MS?Math.max(0,1-(H.t-HOLE_MS)/500):1,rad=70*k*fade+4;ctx.save();
+    const g=ctx.createRadialGradient(H.x,H.y,0,H.x,H.y,rad*1.8);g.addColorStop(0,'#000');g.addColorStop(.45,'rgba(10,0,30,.95)');g.addColorStop(.6,'rgba(176,124,242,.8)');g.addColorStop(1,'rgba(176,124,242,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(H.x,H.y,rad*1.8,0,7);ctx.fill();
+    ctx.strokeStyle='rgba(255,241,168,.85)';ctx.lineWidth=3;for(let q=0;q<3;q++){ctx.beginPath();ctx.arc(H.x,H.y,rad*(0.7+q*0.25),now/150+q*2,now/150+q*2+2.2);ctx.stroke()}ctx.restore()}
+  for(const b of bodies){if(b.suck){const sc=Math.max(0.05,1-b.st/HOLE_MS);ctx.save();ctx.translate(b.x,b.y);ctx.scale(sc,sc);ctx.translate(-b.x,-b.y);drawBody(b.t,b.x,b.y,b.a);ctx.restore()}else drawBody(b.t,b.x,b.y,b.a)}
+  for(const p of fx){ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.hole?3:2.4,0,7);ctx.fill()}ctx.globalAlpha=1;
+  drawFrame(th);drawDropper(th);if(tip)drawTip();
+  ctx.font='900 22px "Black Han Sans","Noto Sans KR",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  for(const p of popups){ctx.globalAlpha=Math.max(0,1-p.t/1.1);const y=p.y-p.t*50;ctx.font='900 22px "Black Han Sans","Noto Sans KR",sans-serif';ctx.fillStyle=fever>0?'#E7D2FF':'#FFD24A';ctx.strokeStyle='#0E2238';ctx.lineWidth=4;ctx.strokeText('+'+fmt(p.v),p.x,y);ctx.fillText('+'+fmt(p.v),p.x,y);
+    if(p.lab){ctx.font='900 15px "Noto Sans KR",sans-serif';ctx.fillStyle='#8CF0FF';ctx.strokeText(p.lab,p.x,y-22);ctx.fillText(p.lab,p.x,y-22)}}ctx.globalAlpha=1;
+  if(fever>0){ctx.font='900 26px "Black Han Sans","Noto Sans KR",sans-serif';ctx.textAlign='left';ctx.fillStyle='#E7D2FF';ctx.strokeStyle='#0E2238';ctx.lineWidth=5;const tx=`피버 ×2 · ${Math.ceil(fever/1000)}초`;ctx.strokeText(tx,X0+12,TOP+48);ctx.fillText(tx,X0+12,TOP+48)}
+  if(combo>=2&&now-lastMerge<COMBO_MS){ctx.font='900 24px "Black Han Sans","Noto Sans KR",sans-serif';ctx.textAlign='right';ctx.fillStyle='#8CF0FF';ctx.strokeStyle='#0E2238';ctx.lineWidth=5;const tx=`${combo} COMBO`;ctx.strokeText(tx,X0+IW-12,TOP+48);ctx.fillText(tx,X0+IW-12,TOP+48)}
+}
+
+/* ---------------- 화면 갱신 ---------------- */
+let lastE=-1,lastF=null;
+function renderEnergy(){const e=Math.floor(energy);if(e!==lastE){$('ebar').style.width=e+'%';$('bHole').disabled=energy<100||over;lastE=e}const f=fever>0;if(f!==lastF){$('feverTag').hidden=!f;lastF=f}}
+function renderNext(){const b=BODIES[curTier],n=BODIES[nextTier];$('next').innerHTML=`<img src="${IMG[nextTier]}" alt=""><div><b>${n.n}</b><small>지금 손에: ${esc(b.n)}</small></div>`}
+let lastScore=-1,lastBest=-1;
+function renderScore(){if(score!==lastScore){$('score').textContent=fmt(score);lastScore=score;renderRank()}if(SAVE.best!==lastBest){$('best').textContent=fmt(SAVE.best);lastBest=SAVE.best}$('newrec').hidden=!newRecord}
+function renderLegend(){
+  const maxNow=bodies.reduce((m,b)=>Math.max(m,b.t),-1);
+  $('legend').innerHTML=`<h2>범례<small>작은 것부터 · 누르면 설명</small></h2>`+BODIES.map((b,i)=>`<button type="button" class="lg ${SAVE.seen[i]?'':'unseen'} ${i===maxNow?'top':''}" data-i="${i}" style="--rc:${b.rim}"><img src="${IMG[i]}" alt=""><span><b><span class="dot"></span>${b.n}</b><small>지구×${b.e}${i<5?' · 떨어뜨림':''}</small></span><span class="p num">${i===0?'—':'+'+fmt(ptsOf(i))}<small><br>${i===10?'두 개면 +66,000':''}</small></span></button>`).join('');
+  $('legend').querySelectorAll('.lg').forEach(el=>el.onclick=()=>bodyCard(+el.dataset.i));
+}
+function renderThemes(){$('themes').innerHTML=Object.entries(THEMES).map(([k,t])=>`<button type="button" class="th ${SAVE.theme===k?'on':''}" data-t="${k}" style="--tc:${t.c}"><i></i>${t.n}</button>`).join('');
+  $('themes').querySelectorAll('.th').forEach(b=>b.onclick=()=>{SAVE.theme=b.dataset.t;persist();renderThemes()})}
+
+/* ---------------- 모달 ---------------- */
+function openModal(html){$('mbox').innerHTML=html;$('modal').hidden=false;paused=true}
+function closeModal(){$('modal').hidden=true;$('mbox').innerHTML='';paused=false}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal'&&!over)closeModal()});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('modal').hidden&&!over)closeModal()});
+function bodyCard(i){const b=BODIES[i];openModal(`<img class="hero" src="${IMG[i]}" alt=""><h3>${b.n}</h3><table><tr><td>실제 지름</td><td class="num">${b.d} km</td></tr><tr><td>지구와 비교</td><td class="num">×${b.e}</td></tr><tr><td>게임 단계</td><td>${i+1} / 11</td></tr><tr><td>만들면 얻는 기본 점수</td><td>${i===0?'떨어뜨리기 전용':'+'+fmt(ptsOf(i))}</td></tr></table><p class="fact" style="margin-top:12px">${esc(b.f)}</p><div class="row"><button class="btn" type="button" id="cClose">계속하기</button></div>`);$('cClose').onclick=closeModal}
+function howTo(){openModal(`<h3>하는 법</h3><p>위에서 천체를 떨어뜨려 같은 천체끼리 닿게 하세요. 둘이 합쳐져 한 단계 큰 천체가 됩니다.</p><p>명왕성 → 달 → 수성 → 화성 → 금성 → 지구 → 해왕성 → 천왕성 → 토성 → 목성 → 태양</p><p>손에 쥐는 천체는 작은 다섯 종류뿐. 천체가 위쪽 점선을 1초 넘게 넘어 있으면 끝납니다. 두 태양이 만나면 블랙홀이 되어 사라지고 +66,000점!</p><p><b>점수 올리는 법</b><br>· <b>콤보</b>: 한 번 떨어뜨려 연쇄로 합쳐지면 배율이 ×1.25, ×1.5 … 최대 ×3까지 올라갑니다.<br>· <b>소식</b>: 25초마다 그릇 테마에 맞는 KIRD·과학계·우주 소식이 그릇 위쪽에 5초 동안 떠요.<br>· <b>알파 에너지</b>: 합칠수록 차오르고, 가득 차면 <b>블랙홀</b>(B 키 또는 버튼)을 발동해 명왕성·달·수성을 모두 빨아들여 점수로 바꾸고 8초 동안 <b>피버 ×2</b>.</p><p>최종 점수에 따라 <b>브론즈 예비 → 실버 신진 → 골드 중견 → 플래티넘 책임 → 다이아몬드 수석 → 마스터 리더 과학기술인 → 챌린저 미래비전 2050 리더</b> 등급을 받습니다.</p><div class="row"><button class="btn" type="button" id="cClose">시작하기</button></div>`);$('cClose').onclick=closeModal}
+function gameOver(){
+  if(over)return;over=true;SAVE.games++;const prevBestRank=SAVE.bestRank;{const ri=rankOf(score).i;if(ri>SAVE.bestRank)SAVE.bestRank=ri}if(score>=SAVE.best){SAVE.best=score;SAVE.bestDate=new Date().toLocaleDateString('ko-KR')}persist();renderScore();
+  const t=Math.max(topTier,0),b=BODIES[t],news=NEWS[Math.random()*NEWS.length|0];
+  const rk=rankOf(score),R0=RANKS[rk.i],up=rk.i>prevBestRank;
+  const share=`알파 유니버스 · ${rk.label} ${R0.title} · ${fmt(score)}점 · ${b.n}까지 키웠어요`;
+  openModal(`<h3>${up?'최고 등급 갱신!':newRecord?'신기록!':'게임 끝'}</h3><div class="emb">${emblem(rk.i)}</div><div class="rname" style="color:${R0.dark}">${rk.label}</div><div class="rsub">${R0.title}</div><div class="big num" style="margin-top:6px">${fmt(score)}</div><p style="font-size:13px;margin:2px 0">${rk.next?`다음 등급 ${rk.nextLabel}까지 ${fmt(rk.next-score)}점`:'최고 등급입니다'}</p><div class="stat"><div>최고 점수<b class="num">${fmt(SAVE.best)}</b></div><div>최고 등급<b>${RANKS[SAVE.bestRank].n}</b></div><div>가장 큰 천체<b>${b.n}</b></div></div><div class="stat"><div>최대 콤보<b>${maxCombo}</b></div><div>블랙홀 발동<b>${holesUsed}회</b></div></div><p class="fact"><b>KIRD 한 장 · ${esc(news[0])}</b> ${esc(news[1])}</p><div class="row"><button class="btn" type="button" id="again">다시 하기</button><button class="btn ghost" style="color:var(--ink);border-color:#9FB3CC" type="button" id="copy">결과 문구 복사</button></div><p style="font-size:12px;color:#5B6B82;margin-top:10px">최고 점수는 이 PC 브라우저에만 저장됩니다.</p>`);
+  $('again').onclick=()=>{closeModal();restart()};
+  $('copy').onclick=()=>{const done=()=>toast('복사했어요: '+share);try{navigator.clipboard.writeText(share).then(done,()=>toast(share,5000))}catch(e){toast(share,5000)}};
+}
+function restart(){tipT=TIP_FIRST;tip=null;combo=0;maxCombo=0;lastMerge=-1e9;energy=0;fever=0;holes=[];holesUsed=0;lastE=-1;lastF=null;curRank=0;lastRankKey='';bodies=[];fx=[];popups=[];score=0;over=false;paused=false;topTier=0;newRecord=false;lastDrop=-1e9;curTier=randTier();nextTier=randTier();renderNext();renderScore();renderLegend()}
+
+/* ---------------- 입력 ---------------- */
+function toWorld(e){const r=cv.getBoundingClientRect();return (e.clientX-r.left)/SC-X0}
+cv.addEventListener('pointermove',e=>{aimX=toWorld(e)});
+cv.addEventListener('pointerdown',e=>{aimX=toWorld(e);if(e.pointerType==='mouse')drop();else cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse'){aimX=toWorld(e);drop()}});
+addEventListener('keydown',e=>{if(!$('modal').hidden)return;if(e.key==='ArrowLeft'){aimX-=16;e.preventDefault()}else if(e.key==='ArrowRight'){aimX+=16;e.preventDefault()}else if(e.key===' '||e.key==='Enter'){drop();e.preventDefault()}else if(e.key==='b'||e.key==='B'){useHole()}});
+$('bRestart').onclick=()=>{if(!over&&score>0){SAVE.games++;persist()}closeModal();restart()};
+$('bHow').onclick=howTo;
+$('bHole').onclick=useHole;
+$('rank').onclick=rankTable;
+function renderSound(){$('bSound').textContent=SAVE.sound?'소리 끄기':'소리 켜기'}
+$('bSound').onclick=()=>{SAVE.sound=!SAVE.sound;persist();renderSound();sfx(3)};
+addEventListener('pagehide',persist);
+
+/* ---------------- 배경 별 ---------------- */
+function drawStars(){const c=$('stars'),g=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;for(let k=0;k<160;k++){g.fillStyle=`rgba(255,255,255,${Math.random()*.6+.15})`;const s=Math.random()*1.6+.3;g.fillRect(Math.random()*c.width,Math.random()*c.height,s,s)}}
+addEventListener('resize',drawStars);
+
+/* ---------------- 루프 ---------------- */
+let last=performance.now(),acc=0,lastLegendTop=-2;
+function loop(t){
+  const dt=Math.min(.05,(t-last)/1000);last=t;
+  if(!paused&&!over){acc+=dt;while(acc>=1/60){now+=1000/60;step(1/60);acc-=1/60;if(over)break}}else acc=0;
+  for(const p of fx){p.x+=p.vx/60;p.y+=p.vy/60;if(p.hole){p.vx*=.95;p.vy*=.95}else p.vy+=300/60;p.life-=1/60}fx=fx.filter(p=>p.life>0);
+  for(const p of popups)p.t+=1/60;popups=popups.filter(p=>p.t<1.1);renderEnergy();
+  render();renderScore();
+  const mt=bodies.reduce((m,b)=>Math.max(m,b.t),-1);if(mt!==lastLegendTop){lastLegendTop=mt;renderLegend()}
+  requestAnimationFrame(loop);
+}
+drawStars();fit();renderThemes();renderSound();restart();
+if(!SAVE.games&&!SAVE.best)howTo();
+requestAnimationFrame(loop);
+// 테스트용 훅
+window.__U={get bodies(){return bodies},get score(){return score},get over(){return over},drop,setAim:x=>aimX=x,restart,SAVE};
+</script>

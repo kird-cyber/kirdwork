@@ -14,6 +14,7 @@
 
 - KIRD 홍보관: https://kird-cyber.github.io/kirdwork/hall/ — 2026 새 단장, 8개 전시실(미래비전 2050·2025 도전성과·홍보 스튜디오), 스탬프 랠리·수료증·배지 지갑
 - 알파 마블 (게임관 맨 위): https://kird-cyber.github.io/kirdwork/marble/ — 세계 과학기술 도시 24곳·국가 연구시설 4곳 44칸 부루마불형 보드게임, 주사위 예보, KIRD 캐릭터 10인 AI 대전, 알파 키(연구윤리·연구실 안전) 퀴즈. 소스 `dev/plaza/marble/` (`python3 dev/plaza/marble/build.py`)
+- 알파 유니버스 (게임관 알파 마블 아래): https://kird-cyber.github.io/kirdwork/universe/ — 명왕성→태양 11개 천체 합치기(수박게임 규격), 콤보·알파 에너지·블랙홀 피버 점수, 과학기술인 등급 7단계, 그릇 3종(KIRD·과학계·우주계) 테마별 소식 25초 간격. 소스 `dev/plaza/universe/` (`python3 dev/plaza/universe/build.py`)
 - 케이요새 월드 (게임관): 방탈출 `world/?m=escape`(연구단지 맵) · 숨바꼭질 `world/?m=hide`(과학 정원 맵) · 탈출전 `world/?m=chase`(야간 도심 맵) — 봇과 함께하는 1인용, 첫 판 따라하기 안내
 - 확장 전시관: https://kird-cyber.github.io/kirdwork/expo/ — 확장 맵·시나리오·전용 탱크·확장 게임 구상 이미지 110점
 - 개발 소스: `dev/plaza/` (월드·홍보관 `world/`에서 `python3 build.py`, `python3 hall/build.py`; 전시관 `expo/build.py`)
