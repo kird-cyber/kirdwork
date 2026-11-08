@@ -183,15 +183,7 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
   for (const mi of m.mines) if (!mi.dead && Math.sqrt((mi.x - x) * (mi.x - x) + (mi.y - y) * (mi.y - y)) < cr + 6) {
     mi.dead = true; schedule(m, 18, { kind: 'mineBoom', x: mi.x, y: mi.y - 4, owner: mi.owner });
   }
-  // a blast that reaches a crate: the shooter takes the item (inventory full or no shooter: the crate is just gone)
-  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < cr + CONFIG.turn.crateShotPad) {
-    c.dead = true;
-    if (owner && owner.alive && owner.items.length < CONFIG.turn.inventoryMax) {
-      owner.items.push(c.item);
-      m.events.push({ type: 'text', x: c.x, y: c.y - 40, text: '상자 명중!', color: CONFIG.items[c.item].color });
-      m.events.push({ type: 'pickup', idx: owner.idx, x: owner.x, y: owner.y, item: c.item, shot: true });
-    } else m.events.push({ type: 'crategone', x: c.x, y: c.y });
-  }
+  // a blast does not take a crate (2026-11 patch: shooting crates made games long); the crate only drops with the carved ground
   m.events.push({ type: 'boom', x, y, r, dr: r * P.blastDmgMul, color: (w && w.look && w.look.glow) || '#FFB040' });
   resettleObjects(m);
 }
@@ -630,24 +622,36 @@ function beginTurn(m) {
 }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
-// drive there, take it and fire in the same turn. Nowhere like that: anywhere, as before.
+// drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
+// (ties: random), so every tank gets the same number of crates near it, give or take one.
+// Nowhere like that near anyone: anywhere, as before (counts for nobody).
 function dropCrate(m) {
   const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
   if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
   const pick = () => { let r = rngNext(m) * total; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) return k; } return keys[0]; };
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
+  if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  for (let tries = 0; alive.length && tries < 40; tries++) {
-    const t = alive[Math.floor(rngNext(m) * alive.length)], side = rngNext(m) < 0.5 ? -1 : 1;
+  // fewest so far first; ties broken by the match's own random numbers
+  const order = alive.map(t => ({ t, k: m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
+  // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
+  for (const t of order) for (let tries = 0; tries < 48; tries++) {
+    const loose = tries >= 24, dyMax = T.crateNearDy * (loose ? 2 : 1), side = rngNext(m) < 0.5 ? -1 : 1;
     const hi = Math.max(lo + 20, Math.round(CONFIG.tanks[t.tankId].movePx * T.crateNearMove)); // within this tank's one turn of driving
-    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo))), item = pick();
+    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo)));
     if (x < 100 || x > m.W - 100) continue;
-    const y = surfaceAt(m, x, 0);
-    if (y < 0 || Math.abs(y - t.y) > T.crateNearDy) continue;
-    if (alive.some(o => Math.abs(o.x - x) < lo && Math.abs(o.y - y) < T.crateNearDy)) continue;
+    let y = surfaceAt(m, x, 0);
+    if (y >= 0 && Math.abs(y - t.y) > dyMax) { // under a roof or overhang: the floor at this tank's level instead of the top
+      let yy = Math.max(0, Math.floor(t.y - dyMax)); const W = m.W, xi = Math.floor(x);
+      while (yy < m.H && m.mask[yy * W + xi]) yy++;
+      while (yy < m.H && !m.mask[yy * W + xi]) yy++;
+      y = yy < m.H ? yy : -1;
+    }
+    if (y < 0 || Math.abs(y - t.y) > dyMax) continue;
+    if (alive.some(o => Math.abs(o.x - x) < (loose && o !== t ? 30 : lo) && Math.abs(o.y - y) < T.crateNearDy)) continue;
     if (m.crates.some(c => Math.abs(c.x - x) < 50)) continue;
-    put(x, y, item); return;
+    m.crateGot[t.idx]++; put(x, y, pick()); return;
   }
   for (let tries = 0; tries < 20; tries++) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();

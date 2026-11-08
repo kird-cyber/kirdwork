@@ -12,7 +12,7 @@ function onlineId() {
 }
 function savedNick() { try { return localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
 function saveNick(n) { try { localStorage.setItem('pg.nick', n); } catch (e) {} }
-function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden) ? t : 'rookie'; } catch (e) { return 'rookie'; } }
+function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || CONFIG.tanks[t] ? t : 'rookie'; } catch (e) { return 'rookie'; } }
 function saveTank(t) { try { localStorage.setItem('pg.tank', t); } catch (e) {} }
 function brokerOverride() { try { return new URLSearchParams(location.search).get('broker'); } catch (e) { return null; } }
 function brokerUrl(i) { return brokerOverride() || BROKERS[i] || BROKERS[0]; }

@@ -20,18 +20,18 @@ function randomThumb(w, h) {
   x.lineWidth = 6; x.strokeStyle = '#3A2A00'; x.strokeText('?', w / 2, h * 0.54); x.fillText('?', w / 2, h * 0.54);
   return c;
 }
-// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tanks side by side in full colour (shown, not pickable: only "?" can give it)
+// tank picker (practice setup + lobby + solo): the 8 tanks, "?" random, then the K tanks (KIRD colours) — all pickable.
+// The K tanks can also come out of "?" (randomTank.chance), as before.
 function buildPicks(box, current, onPick, label, onInfo) {
   for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
-    const hidden = HIDDEN_KEYS.includes(k);
+    const ktank = HIDDEN_KEYS.includes(k);
     const b = document.createElement('button'); b.type = 'button';
-    b.className = 'pick' + (current === k ? ' sel' : '') + (hidden ? ' locked' : '') + (k === 'random' ? ' rnd' : '');
+    b.className = 'pick' + (current === k ? ' sel' : '') + (ktank ? ' ktank' : '') + (k === 'random' ? ' rnd' : '');
     b.append(cloneCanvas(thumbs[k]));
     const sp = document.createElement('span'); sp.textContent = tankLabel(k); b.append(sp);
-    if (hidden) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = '? 랜덤 전용'; b.append(bd); }
-    b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
-    if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/${Math.round(HIDDEN_KEYS.length / CONFIG.randomTank.chance)} 확률로 나옵니다 (히든 ${HIDDEN_KEYS.length}종 합쳐 1/${Math.round(1 / CONFIG.randomTank.chance)})`; b.onclick = () => onInfo && onInfo(k); }
-    else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
+    if (ktank) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = 'KIRD'; b.append(bd); b.title = `KIRD 탱크 "${CONFIG.tanks[k].name}" — 직접 고를 수 있어요 ("?" 랜덤으로도 가끔 나옵니다)`; }
+    b.setAttribute('aria-label', (label ? label + ': ' : '') + (ktank ? `${CONFIG.tanks[k].name} (KIRD 탱크)` : tankLabel(k)));
+    b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k);
     if (onInfo) b.onpointerenter = e => { if (e.pointerType === 'mouse') onInfo(k); }; // touch: a tap shows the card and keeps it (no hover)
     box.append(b);
   }
@@ -109,7 +109,7 @@ function tankCardHTML(k) {
     + bar('속도', (1 / delay) / mx(t => 1 / dl(t)), `딜레이 ${delay}`);
   const traits = tankTraitText(d);
   const wep = (w, i) => `<div class="tc-wep"><div class="tc-wn"><kbd>${i + 1}</kbd>${esc(w.name)}</div><p>${esc(WEAPON_DESC[w.id] || '')}</p><div class="tc-chips">${weaponChips(w).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
-  return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">? 랜덤 전용 히든 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
+  return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">KIRD 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
     <div class="tc-body"><div class="tc-stats">${stats}${traits.length ? `<div class="tc-trait">${traits.map(esc).join('<br>')}</div>` : ''}</div>
     <div class="tc-weps">${d.weapons.map(wep).join('')}</div></div>`;
 }
@@ -431,7 +431,6 @@ function renderSetup() {
     sel.value = sl.ctl; sel.onchange = () => { sl.ctl = sel.value; saveSetup(); };
     tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
-    if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
     buildPicks(picks, sl.tank, k => { sl.tank = k; setupInfo = k; saveSetup(); renderSetup(); }, sp.textContent, k => renderTankCard($('setupTankInfo'), k));
     picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('setupTankInfo'), setupInfo); };
     row.appendChild(picks); slots.appendChild(row);

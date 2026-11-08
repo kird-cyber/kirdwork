@@ -422,7 +422,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
 }
 
 fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
-// supply crates: 3 every 4 turns, 120 px ~ one turn of driving to the side of a tank, gone after a few rounds; a blast takes them
+// supply crates: 3 every 8 turns, 60 px ~ one turn of driving to the side of a tank, gone after a few rounds; a blast does NOT take them
 {
   const tk = Object.keys(CONFIG.tanks)[0], T = CONFIG.turn;
   const m = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]);
@@ -432,22 +432,20 @@ fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
     for (const e of m.events) if (e.type === 'crate') { drops++; const dx = Math.min(...m.tanks.map(t => Math.abs(t.x - e.x))); if (dx < T.crateNear[0] || dx > CONFIG.tanks[tk].movePx * T.crateNearMove + 1) bad++; }
     m.crates = []; // taken (nobody drives in this test)
   }
-  check('보급 상자', `4턴에 ${T.crateRate[0]}개, 탱크 옆 ${T.crateNear[0]}~${Math.round(CONFIG.tanks[tk].movePx * T.crateNearMove)}px (한 턴 이동 안)`, '12턴에 9번, 벗어남 0', `${drops}번, 벗어남 ${bad}`, drops === 9 && bad === 0);
+  const want = Math.floor(12 * T.crateRate[0] / T.crateRate[1]);
+  check('보급 상자', `${T.crateRate[1]}턴에 ${T.crateRate[0]}개, 탱크 옆 ${T.crateNear[0]}~${Math.round(CONFIG.tanks[tk].movePx * T.crateNearMove)}px (한 턴 이동 안)`, `12턴에 ${want}번, 벗어남 0`, `${drops}번, 벗어남 ${bad}`, drops === want && bad === 0);
   { // drive to the crate and take it in the same turn
     const md = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]), it = Object.keys(CONFIG.items)[1];
     md.crates = [{ x: 1000 + Math.round(CONFIG.tanks[tk].movePx * T.crateNearMove), y: GROUND, item: it, dead: false, id: 9001, born: 1 }];
     for (let k = 0; k < 400 && md.tanks[0].fuel > 0; k++) A.cmdMove(md, 1);
     check('보급 상자', '가장 먼 자리에 떨어져도 이번 턴 이동으로 먹음', '획득', md.tanks[0].items.includes(it) ? '획득' : '못 먹음', md.tanks[0].items.includes(it));
   }
-  { // shoot the crate: the item goes to the shooter
+  { // shoot the crate: nothing happens to it (2026-11 patch) — no item for the shooter, the crate stays
     const ms = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]), it = Object.keys(CONFIG.items)[2];
     ms.crates = [{ x: 1500, y: GROUND, item: it, dead: false, id: 9002, born: 1 }];
     A.explode(ms, 1500, GROUND - 10, 30, 100, ms.tanks[0], null, false);
-    check('보급 상자', '내 포탄 폭발이 상자에 닿으면 아이템이 나에게', '획득', ms.tanks[0].items.includes(it) && !ms.crates.some(c => !c.dead) ? '획득' : '못 받음', ms.tanks[0].items.includes(it));
-    const mf = field([{ tank: tk, x: 1000 }, { tank: tk, x: 2600 }]); mf.tanks[0].items = new Array(T.inventoryMax).fill(it);
-    mf.crates = [{ x: 1500, y: GROUND, item: it, dead: false, id: 9003, born: 1 }];
-    A.explode(mf, 1500, GROUND - 10, 30, 100, mf.tanks[0], null, false);
-    check('보급 상자', '가방이 꽉 차 있으면 상자만 부서짐', `${T.inventoryMax}개 그대로`, mf.tanks[0].items.length + '개', mf.tanks[0].items.length === T.inventoryMax);
+    const left = ms.crates.some(c => c.id === 9002 && !c.dead);
+    check('보급 상자', '포탄 폭발이 상자에 닿아도 아이템 안 줌 · 상자 그대로', '안 줌 · 남음', `${ms.tanks[0].items.includes(it) ? '줌' : '안 줌'} · ${left ? '남음' : '사라짐'}`, !ms.tanks[0].items.includes(it) && left);
   }
   const life = T.crateLifeRounds * m.tanks.length, born = m.turnNo;
   m.crates = [{ x: 1800, y: GROUND, item: Object.keys(CONFIG.items)[0], dead: false, id: 7777, born }];

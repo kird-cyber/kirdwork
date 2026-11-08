@@ -12,7 +12,7 @@ const NET_PREFIX = 'kwpg/v1/';
 const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
 function genId() { return genCode(10).toLowerCase(); }
-function pickable(t) { return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden); }
+function pickable(t) { return t === 'random' || !!CONFIG.tanks[t]; } // K 탱크(히든)도 직접 고를 수 있음 (2026-11, 시연용)
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
 function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 

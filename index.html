@@ -200,7 +200,10 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .pick.rnd { background: #241E10; }
 .pick.locked { cursor: help; position: relative; border: 2px dashed rgba(255, 210, 74, 0.7); background: linear-gradient(160deg, #142A44, #1A2030 60%, #1E3018); }
 .pick.locked span { color: #CFE6FF; }
-.pick.locked .rndonly { font-size: 9px; font-weight: 900; color: #2A1A00; background: var(--gold); border-radius: 6px; padding: 0 5px; line-height: 14px; margin-top: 1px; }
+.pick.ktank { position: relative; background: linear-gradient(160deg, #142A44, #1A2030 60%, #1E3018); }
+.pick.ktank:not(.sel) { border-color: rgba(140, 198, 63, 0.75); }
+.pick.ktank span { color: #CFE6FF; }
+.pick.ktank .rndonly, .pick.locked .rndonly { font-size: 9px; font-weight: 900; color: #2A1A00; background: var(--gold); border-radius: 6px; padding: 0 5px; line-height: 14px; margin-top: 1px; }
 .cta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .start { padding: 14px 34px; border-radius: 14px; border: none; background: var(--gold); color: #2A1A00; font-family: var(--font-display); font-size: 24px; cursor: pointer; }
 .ghost { padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line); background: transparent; font-weight: 700; cursor: pointer; }
@@ -995,14 +998,13 @@ const CONFIG = {
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
-    crateRate: [3, 4],      // 3 crates every 4 turns (was 1 every 2: x1.5)
+    crateRate: [3, 8],      // 3 crates every 8 turns (2026-11: halved from 3 every 4 — too many items made games long)
     crateNear: [60],        // a crate lands 60 px ~ (movePx x crateNearMove) sideways from one tank: reachable this turn
     crateNearMove: 0.9,
     crateNearDy: 120,       // at most this far above/below that tank
-    crateShotPad: 18,       // a blast this much wider than its crater still takes a crate (shooter gets the item)
     // start positions: with this many players or fewer the outer spawnTrim of the width is left out; nearest enemy kept spawnEnemy px away
     spawnTrimMaxPlayers: 4, spawnTrim: 0.2, spawnEnemy: [600, 1600],
-    crateMax: 8,            // most crates lying around at once (no new drop past this)
+    crateMax: 4,            // most crates lying around at once (no new drop past this; halved with the rate)
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
@@ -1090,7 +1092,7 @@ const CONFIG = {
         { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
-    // random-only tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Never pickable; "?" gives one of them with randomTank.chance.
+    // K tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Pickable since 2026-11 (demo); "?" still gives one of them with randomTank.chance.
     kblue: {
       name: 'K-블루', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
@@ -1758,15 +1760,7 @@ function explode(m, x, y, r, dmg, owner, w, amp) {
   for (const mi of m.mines) if (!mi.dead && Math.sqrt((mi.x - x) * (mi.x - x) + (mi.y - y) * (mi.y - y)) < cr + 6) {
     mi.dead = true; schedule(m, 18, { kind: 'mineBoom', x: mi.x, y: mi.y - 4, owner: mi.owner });
   }
-  // a blast that reaches a crate: the shooter takes the item (inventory full or no shooter: the crate is just gone)
-  for (const c of m.crates) if (!c.dead && Math.sqrt((c.x - x) * (c.x - x) + (c.y - y) * (c.y - y)) < cr + CONFIG.turn.crateShotPad) {
-    c.dead = true;
-    if (owner && owner.alive && owner.items.length < CONFIG.turn.inventoryMax) {
-      owner.items.push(c.item);
-      m.events.push({ type: 'text', x: c.x, y: c.y - 40, text: '상자 명중!', color: CONFIG.items[c.item].color });
-      m.events.push({ type: 'pickup', idx: owner.idx, x: owner.x, y: owner.y, item: c.item, shot: true });
-    } else m.events.push({ type: 'crategone', x: c.x, y: c.y });
-  }
+  // a blast does not take a crate (2026-11 patch: shooting crates made games long); the crate only drops with the carved ground
   m.events.push({ type: 'boom', x, y, r, dr: r * P.blastDmgMul, color: (w && w.look && w.look.glow) || '#FFB040' });
   resettleObjects(m);
 }
@@ -2205,24 +2199,36 @@ function beginTurn(m) {
 }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
-// drive there, take it and fire in the same turn. Nowhere like that: anywhere, as before.
+// drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
+// (ties: random), so every tank gets the same number of crates near it, give or take one.
+// Nowhere like that near anyone: anywhere, as before (counts for nobody).
 function dropCrate(m) {
   const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
   if (m.crates.length >= T.crateMax) return;
   let total = 0; for (const k of keys) total += CONFIG.items[k].dropWeight;
   const pick = () => { let r = rngNext(m) * total; for (const k of keys) { r -= CONFIG.items[k].dropWeight; if (r < 0) return k; } return keys[0]; };
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
+  if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  for (let tries = 0; alive.length && tries < 40; tries++) {
-    const t = alive[Math.floor(rngNext(m) * alive.length)], side = rngNext(m) < 0.5 ? -1 : 1;
+  // fewest so far first; ties broken by the match's own random numbers
+  const order = alive.map(t => ({ t, k: m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
+  // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
+  for (const t of order) for (let tries = 0; tries < 48; tries++) {
+    const loose = tries >= 24, dyMax = T.crateNearDy * (loose ? 2 : 1), side = rngNext(m) < 0.5 ? -1 : 1;
     const hi = Math.max(lo + 20, Math.round(CONFIG.tanks[t.tankId].movePx * T.crateNearMove)); // within this tank's one turn of driving
-    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo))), item = pick();
+    const x = Math.round(t.x + side * (lo + rngNext(m) * (hi - lo)));
     if (x < 100 || x > m.W - 100) continue;
-    const y = surfaceAt(m, x, 0);
-    if (y < 0 || Math.abs(y - t.y) > T.crateNearDy) continue;
-    if (alive.some(o => Math.abs(o.x - x) < lo && Math.abs(o.y - y) < T.crateNearDy)) continue;
+    let y = surfaceAt(m, x, 0);
+    if (y >= 0 && Math.abs(y - t.y) > dyMax) { // under a roof or overhang: the floor at this tank's level instead of the top
+      let yy = Math.max(0, Math.floor(t.y - dyMax)); const W = m.W, xi = Math.floor(x);
+      while (yy < m.H && m.mask[yy * W + xi]) yy++;
+      while (yy < m.H && !m.mask[yy * W + xi]) yy++;
+      y = yy < m.H ? yy : -1;
+    }
+    if (y < 0 || Math.abs(y - t.y) > dyMax) continue;
+    if (alive.some(o => Math.abs(o.x - x) < (loose && o !== t ? 30 : lo) && Math.abs(o.y - y) < T.crateNearDy)) continue;
     if (m.crates.some(c => Math.abs(c.x - x) < 50)) continue;
-    put(x, y, item); return;
+    m.crateGot[t.idx]++; put(x, y, pick()); return;
   }
   for (let tries = 0; tries < 20; tries++) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();
@@ -5184,7 +5190,7 @@ const NET_PREFIX = 'kwpg/v1/';
 const CODE_ABC = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_ABC[(Math.random() * CODE_ABC.length) | 0]; return s; }
 function genId() { return genCode(10).toLowerCase(); }
-function pickable(t) { return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden); }
+function pickable(t) { return t === 'random' || !!CONFIG.tanks[t]; } // K 탱크(히든)도 직접 고를 수 있음 (2026-11, 시연용)
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
 function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 
@@ -5540,7 +5546,7 @@ function onlineId() {
 }
 function savedNick() { try { return localStorage.getItem('pg.nick') || ''; } catch (e) { return ''; } }
 function saveNick(n) { try { localStorage.setItem('pg.nick', n); } catch (e) {} }
-function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || (CONFIG.tanks[t] && !CONFIG.tanks[t].hidden) ? t : 'rookie'; } catch (e) { return 'rookie'; } }
+function savedTank() { try { const t = localStorage.getItem('pg.tank'); return t === 'random' || CONFIG.tanks[t] ? t : 'rookie'; } catch (e) { return 'rookie'; } }
 function saveTank(t) { try { localStorage.setItem('pg.tank', t); } catch (e) {} }
 function brokerOverride() { try { return new URLSearchParams(location.search).get('broker'); } catch (e) { return null; } }
 function brokerUrl(i) { return brokerOverride() || BROKERS[i] || BROKERS[0]; }
@@ -6212,18 +6218,18 @@ function randomThumb(w, h) {
   x.lineWidth = 6; x.strokeStyle = '#3A2A00'; x.strokeText('?', w / 2, h * 0.54); x.fillText('?', w / 2, h * 0.54);
   return c;
 }
-// tank picker (practice setup + lobby): the 8 pickable tanks, "?" random, then the hidden tanks side by side in full colour (shown, not pickable: only "?" can give it)
+// tank picker (practice setup + lobby + solo): the 8 tanks, "?" random, then the K tanks (KIRD colours) — all pickable.
+// The K tanks can also come out of "?" (randomTank.chance), as before.
 function buildPicks(box, current, onPick, label, onInfo) {
   for (const k of [...PICK_KEYS, 'random', ...HIDDEN_KEYS]) {
-    const hidden = HIDDEN_KEYS.includes(k);
+    const ktank = HIDDEN_KEYS.includes(k);
     const b = document.createElement('button'); b.type = 'button';
-    b.className = 'pick' + (current === k ? ' sel' : '') + (hidden ? ' locked' : '') + (k === 'random' ? ' rnd' : '');
+    b.className = 'pick' + (current === k ? ' sel' : '') + (ktank ? ' ktank' : '') + (k === 'random' ? ' rnd' : '');
     b.append(cloneCanvas(thumbs[k]));
     const sp = document.createElement('span'); sp.textContent = tankLabel(k); b.append(sp);
-    if (hidden) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = '? 랜덤 전용'; b.append(bd); }
-    b.setAttribute('aria-label', (label ? label + ': ' : '') + (hidden ? `${CONFIG.tanks[k].name} (랜덤으로만 나옴)` : tankLabel(k)));
-    if (hidden) { b.setAttribute('aria-disabled', 'true'); b.title = `히든 탱크 "${CONFIG.tanks[k].name}" — 고를 수 없어요. "?" 랜덤을 고르면 1/${Math.round(HIDDEN_KEYS.length / CONFIG.randomTank.chance)} 확률로 나옵니다 (히든 ${HIDDEN_KEYS.length}종 합쳐 1/${Math.round(1 / CONFIG.randomTank.chance)})`; b.onclick = () => onInfo && onInfo(k); }
-    else { b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k); }
+    if (ktank) { const bd = document.createElement('small'); bd.className = 'rndonly'; bd.textContent = 'KIRD'; b.append(bd); b.title = `KIRD 탱크 "${CONFIG.tanks[k].name}" — 직접 고를 수 있어요 ("?" 랜덤으로도 가끔 나옵니다)`; }
+    b.setAttribute('aria-label', (label ? label + ': ' : '') + (ktank ? `${CONFIG.tanks[k].name} (KIRD 탱크)` : tankLabel(k)));
+    b.setAttribute('aria-pressed', String(current === k)); b.onclick = () => onPick(k);
     if (onInfo) b.onpointerenter = e => { if (e.pointerType === 'mouse') onInfo(k); }; // touch: a tap shows the card and keeps it (no hover)
     box.append(b);
   }
@@ -6301,7 +6307,7 @@ function tankCardHTML(k) {
     + bar('속도', (1 / delay) / mx(t => 1 / dl(t)), `딜레이 ${delay}`);
   const traits = tankTraitText(d);
   const wep = (w, i) => `<div class="tc-wep"><div class="tc-wn"><kbd>${i + 1}</kbd>${esc(w.name)}</div><p>${esc(WEAPON_DESC[w.id] || '')}</p><div class="tc-chips">${weaponChips(w).map(x => `<span>${esc(x)}</span>`).join('')}</div></div>`;
-  return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">? 랜덤 전용 히든 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
+  return `<div class="tc-head"><b>${esc(d.name)}</b><span class="tc-era">${ERA_LABEL[d.era] || ''}</span>${d.hidden ? '<span class="tc-lock">KIRD 탱크</span>' : ''}<span class="tc-ang">각도 ${d.angleMin}°–${d.angleMax}°</span></div>
     <div class="tc-body"><div class="tc-stats">${stats}${traits.length ? `<div class="tc-trait">${traits.map(esc).join('<br>')}</div>` : ''}</div>
     <div class="tc-weps">${d.weapons.map(wep).join('')}</div></div>`;
 }
@@ -6623,7 +6629,6 @@ function renderSetup() {
     sel.value = sl.ctl; sel.onchange = () => { sl.ctl = sel.value; saveSetup(); };
     tag.append(sp, inp, sel); row.append(tag);
     const picks = document.createElement('div'); picks.className = 'picks';
-    if (CONFIG.tanks[sl.tank] && CONFIG.tanks[sl.tank].hidden) sl.tank = 'random';
     buildPicks(picks, sl.tank, k => { sl.tank = k; setupInfo = k; saveSetup(); renderSetup(); }, sp.textContent, k => renderTankCard($('setupTankInfo'), k));
     picks.onpointerleave = e => { if (e.pointerType === 'mouse') renderTankCard($('setupTankInfo'), setupInfo); };
     row.appendChild(picks); slots.appendChild(row);

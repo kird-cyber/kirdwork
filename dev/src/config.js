@@ -32,14 +32,13 @@ const CONFIG = {
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
     delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
-    crateRate: [3, 4],      // 3 crates every 4 turns (was 1 every 2: x1.5)
+    crateRate: [3, 8],      // 3 crates every 8 turns (2026-11: halved from 3 every 4 — too many items made games long)
     crateNear: [60],        // a crate lands 60 px ~ (movePx x crateNearMove) sideways from one tank: reachable this turn
     crateNearMove: 0.9,
     crateNearDy: 120,       // at most this far above/below that tank
-    crateShotPad: 18,       // a blast this much wider than its crater still takes a crate (shooter gets the item)
     // start positions: with this many players or fewer the outer spawnTrim of the width is left out; nearest enemy kept spawnEnemy px away
     spawnTrimMaxPlayers: 4, spawnTrim: 0.2, spawnEnemy: [600, 1600],
-    crateMax: 8,            // most crates lying around at once (no new drop past this)
+    crateMax: 4,            // most crates lying around at once (no new drop past this; halved with the rate)
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
@@ -127,7 +126,7 @@ const CONFIG = {
         { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
-    // random-only tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Never pickable; "?" gives one of them with randomTank.chance.
+    // K tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Pickable since 2026-11 (demo); "?" still gives one of them with randomTank.chance.
     kblue: {
       name: 'K-블루', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
