@@ -4,8 +4,8 @@
 // run: node tests/terrain_check.js
 const fs = require('fs'), path = require('path');
 const code = ['config.js', 'core.js', 'mapgen.js', 'sim.js', 'controller.js'].map(f => fs.readFileSync(path.join(__dirname, '../src', f), 'utf8')).join('\n');
-const A = new Function(code + '\n;return {CONFIG,createMatch,step,cmdMove,TMAP_K};')();
-const { CONFIG } = A, maps = Object.keys(A.TMAP_K);
+const A = new Function(code + '\n;return {CONFIG,createMatch,step,cmdMove,TMAP_F};')();
+const { CONFIG } = A, maps = Object.keys(A.TMAP_F);
 let pass = 0, fail = 0; const ok = (c, msg) => { c ? pass++ : fail++; console.log((c ? 'PASS ' : 'FAIL ') + msg); };
 for (const id of maps) {
   const tk = Object.keys(CONFIG.tanks), pl = []; for (let i = 0; i < 8; i++) pl.push({ id: 'p' + i, nick: 'p', team: i % 2 ? 'blue' : 'red', tankId: tk[i % tk.length] });

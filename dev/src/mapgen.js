@@ -264,83 +264,63 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
   return TG;
 }
-// Smooth, mirror-symmetric ground profiles for the KIRD 주제 맵 (2026-11): no walls, no tables to hide under, no deep pits.
-// K = keys for the left half (x 0..2600, y of the surface); between keys a soft S-curve (half straight, half smoothstep)
-// so the steepest slope is 1.25 x the average one; every map keeps it under ~0.5 (a tank climbs up to ~0.7).
-function profTop(K) {
-  return px => {
-    if (px > TCX) px = 2 * TCX - px;
-    for (let i = 1; i < K.length; i++) { const [x0, y0] = K[i - 1], [x1, y1] = K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
-    return K[K.length - 1][1];
-  };
+// KIRD 주제 맵 grounds (2026-11, v2): each map is built from its own structures — stacks of notebooks, a scale, a lab block,
+// drums, a receipt roll, a calculator, the evaluation dais... — but every structure is walkable: flat tops with soft ramps
+// (no walls, nothing to drive under, no deep pits). Not mirrored; the two teams spawn interleaved, so it stays fair.
+//  mesa: flat top a..b, h px above the floor (TG); ramps on both sides at average slope sL / sR (default 0.4).
+//        The ramp is an S-curve (half straight, half smoothstep): steepest point 1.25 x average → ≤ 0.5 (a tank climbs ~0.7).
+//        A mesa standing on another gives `on` = the height it starts from: its ramps then only climb the difference,
+//        so stacks, a roof on a building and the steps of a dais read as crisp terraces. Its whole span (ramps included)
+//        must sit on the flat top of the one below, or there would be a wall — tests/terrain_check.js catches that.
+//  dome: centre c, half-width w, height h; (1 - u²)² profile, steepest 1.54 h / w (kept ≤ 0.5).
+// The ground is the highest structure at each x. `art` says how thememaps.js paints it.
+function featH(f, x) {
+  if (f.k === 'dome') { const u = (x - f.c) / f.w; if (u <= -1 || u >= 1) return 0; const v = 1 - u * u; return f.h * v * v; }
+  if (x >= f.a && x <= f.b) return f.h;
+  const h0 = f.on || 0, left = x < f.a, r = (f.h - h0) / ((left ? f.sL : f.sR) || f.s || 0.4), t = left ? (x - (f.a - r)) / r : ((f.b + r) - x) / r;
+  return t <= 0 ? 0 : h0 + (f.h - h0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t));
 }
-const TMAP_K = {
-  scale: [[0, 1040], [320, 1040], [700, 1150], [1000, 1150], [1390, 1010], [1780, 1150], [2150, 1150], [2600, 1060]],   // 진실의 전당: bench mound · cabinet/shelf mound · signing-desk podium
-  notebook: [[0, 1080], [260, 1080], [640, 1150], [1100, 980], [2100, 970], [2600, 1070]],                              // 증명의 노트: a page plateau each side, the gutter a shallow dip
-  lab: [[0, 1010], [300, 1030], [800, 1070], [1300, 960], [1900, 1150], [2250, 1150], [2600, 1040]],                    // 예방의 실험동: yard hill · lab-block rise · reagent-store mound
-  archive: [[0, 1110], [470, 970], [1000, 1150], [1200, 1150], [1700, 960], [2150, 1110], [2600, 980]],                 // 신뢰의 집행실: receipt-roll mound · bundle hill · calculator hill
-  ridge: [[0, 1060], [300, 1060], [950, 900], [1750, 1090], [2600, 860]],                                               // 혁신의 능선: three crests (선정·단계·최종 평가), two shallow valleys (수행)
+function featSpan(f) { if (f.k === 'dome') return [f.c - f.w, f.c + f.w]; const d = f.h - (f.on || 0); return [f.a - d / (f.sL || f.s || 0.4), f.b + d / (f.sR || f.s || 0.4)]; }
+const M = (a, b, h, art, o) => Object.assign({ k: 'mesa', a, b, h, art }, o || {}), D = (c, w, h, art) => ({ k: 'dome', c, w, h, art });
+const TMAP_F = {
+  scale: [ // 진실의 전당 (연구윤리 실험실)
+    M(150, 850, 70, 'notebooks'), M(380, 620, 150, 'notebooks', { on: 70 }),            // 연구노트 더미 (계단식)
+    D(960, 240, 55, 'scroll'),                                               // 논문 원고 두루마리
+    M(1230, 1640, 120, 'cabinet'),                                           // 원본 데이터 보관함
+    M(1900, 2140, 100, 'pan'), M(2380, 2820, 200, 'scaleBase'), M(3060, 3300, 100, 'pan'), // 정의의 저울: 받침대 + 두 접시
+    M(3920, 4560, 230, 'shelf'),                                             // 출처 표기 서가
+    M(4950, 5400, 90, 'irb'),                                                // IRB 서류함
+  ],
+  notebook: [ // 증명의 노트 (책상 위)
+    M(130, 430, 170, 'mug'),                                                 // KIRD 머그
+    M(1100, 2300, 140, 'pageL'), M(2800, 4000, 180, 'pageR'),                // 펼친 연구노트: 왼쪽·오른쪽 쪽 (높이 다름)
+    M(3200, 3700, 225, 'pen', { s: 0.3, on: 180 }),                                   // 오른쪽 쪽 위의 만년필
+    M(4720, 5400, 90, 'binders'), M(4940, 5400, 170, 'binders', { on: 90 }), M(5120, 5400, 240, 'binders', { on: 170 }), // 바인더 더미 (계단식)
+  ],
+  lab: [ // 예방의 실험동 (연구실 안전)
+    M(350, 1450, 140, 'labFloor'), M(620, 1180, 240, 'labRoof', { on: 140 }),            // 실험동: 1층 + 옥상 (비상계단 = 경사)
+    M(1820, 2240, 90, 'drums'), M(1990, 2070, 150, 'drums', { on: 90 }),                 // 유해물질 드럼 더미
+    M(2750, 3650, 140, 'store'), M(3110, 3290, 260, 'extinguisher', { on: 140 }),       // 시약 창고 + 그 위에 선 소화기 (양옆은 철제 계단)
+    M(4020, 4220, 80, 'ppe'),                                                // 보호구 보관함
+    M(4650, 5600, 200, 'yard', { sL: 0.3 }),                                 // 잔디 언덕 (나무)
+  ],
+  archive: [ // 신뢰의 집행실 (연구비 관리)
+    D(520, 700, 220, 'roll'),                                                // 영수증 롤
+    M(1300, 2100, 100, 'bundle'), M(1560, 1840, 190, 'bundle', { on: 100 }),              // 증빙 묶음 (계단식)
+    M(2600, 3300, 160, 'calc'),                                              // 계산기
+    M(4150, 4300, 230, 'card', { sL: 0.25 }),                                // 기대 선 연구비 카드 (긴 오르막)
+    M(4760, 5400, 120, 'coins'), M(4960, 5400, 200, 'coins', { on: 120 }),                // 동전 더미 (계단식)
+  ],
+  ridge: [ // 혁신의 능선 (국가연구개발혁신법)
+    M(-1000, 6200, 50, 'grass'), M(-400, 250, 110, 'grass', { on: 50 }),                // 바닥 + 출발 언덕
+    M(780, 1120, 250, 'grass', { on: 50 }),                                              // 선정평가관 고지
+    M(2380, 2820, 300, 'grass', { on: 50 }),                                             // 단계평가 게이트 고지
+    M(3900, 4600, 150, 'dais', { on: 50 }), M(4060, 4440, 210, 'dais', { on: 150 }), M(4170, 4330, 250, 'dais', { on: 210 }), // 최종평가 단상 (3단)
+    M(4950, 5600, 120, 'grass', { on: 50 }),                                             // 성과 공개·활용 언덕
+  ],
 };
-const TMAP_TOP = {}; for (const k in TMAP_K) TMAP_TOP[k] = profTop(TMAP_K[k]);
-// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys (see TMAP_K.ridge)
-const RIDGE_K = TMAP_K.ridge.concat(TMAP_K.ridge.slice(0, -1).reverse().map(([x, y]) => [2 * TCX - x, y]));
-function ridgeTop(px) {
-  for (let i = 1; i < RIDGE_K.length; i++) { const [x0, y0] = RIDGE_K[i - 1], [x1, y1] = RIDGE_K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
-  return RIDGE_K[RIDGE_K.length - 1][1];
-}
-// the 2026-10 shapes (walls, desks, drums...): no longer the ground — thememaps.js paints them as background scenery
-const TMAP_OLDGEN = {
-  notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror((X, r) => {
-      fillBand(m, W, H, r ? X(2560) : 640, r ? X(640) : 2560, x => nbTop(r ? X(x) : x), () => TG);
-      tmRect(m, W, H, 610, TG - 30, 2590, TG, X);                                       // hard cover
-      tmRect(m, W, H, 230, TG - 330, 470, TG, X);                                       // KIRD mug (left) / binder stack (right)
-    });
-    tmCapsule(m, W, H, 2150, 2910, TG - 398, TG - 346, 26); fillPoly(m, W, H, [[2906, TG - 392], [3050, TG - 374], [3056, TG - 370], [2906, TG - 352]]); // fountain pen
-    rectF(m, W, H, 2180, TG - 406, 2410, TG - 396, 1);                                    // its clip
-  },
-  lab(W, H, m) { // 연구실 안전: two cut-away labs, steel stairs to the yard, hazard drums, GHS signs, the reagent store with a fire extinguisher on top
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    const top = TG - 350;
-    tmMirror(X => {
-      tmPoly(m, W, H, [[0, TG], [0, TG - 210], [140, TG - 200], [260, TG - 120], [330, TG - 30], [350, TG]], X);
-      tmRect(m, W, H, 374, top - 10, 1506, TG, X);                                      // lab building (2 floors, filled)
-      tmRect(m, W, H, 440, top - 70, 610, top, X);                                      // air handler
-      tmRect(m, W, H, 1304, top - 150, 1336, top, X); tmRect(m, W, H, 1298, top - 156, 1342, top - 146, X); // exhaust stacks
-      tmRect(m, W, H, 1374, top - 150, 1406, top, X); tmRect(m, W, H, 1368, top - 156, 1412, top - 146, X);
-      tmPoly(m, W, H, [[1500, top + 4], [1540, top + 4], [1860, TG], [1500, TG]], X);    // emergency stair
-      tmRect(m, W, H, 1910, TG - 110, 1990, TG, X); tmRect(m, W, H, 2000, TG - 110, 2080, TG, X); tmRect(m, W, H, 1955, TG - 220, 2035, TG - 110, X); // hazard drums
-      tmRect(m, W, H, 2110, TG - 40, 2230, TG, X); tmRect(m, W, H, 2158, TG - 100, 2182, TG - 40, X); // GHS sign plinth + post
-      tmPoly(m, W, H, [[2170, TG - 284], [2265, TG - 195], [2170, TG - 100], [2075, TG - 195]], X); tmRect(m, W, H, 2140, TG - 298, 2200, TG - 282, X);
-    });
-    rectF(m, W, H, 2280, TG - 230, 2920, TG, 1); rectF(m, W, H, 2260, TG - 246, 2940, TG - 226, 1); // reagent store
-    tmCapsule(m, W, H, 2510, 2690, TG - 546, TG - 246, 70); rectF(m, W, H, 2570, TG - 596, 2630, TG - 540, 1); rectF(m, W, H, 2470, TG - 616, 2730, TG - 596, 1); // the extinguisher
-  },
-  archive(W, H, m) { // 연구비 관리: an evidence archive; receipt rolls, fund cards leaning on receipt bundles, a calculator in the middle
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmDisc(m, W, H, X(470), TG - 240, 240);                                           // receipt roll
-      tmRect(m, W, H, 1500, TG - 280, 1860, TG, X);                                     // receipt bundle
-      tmPoly(m, W, H, [[1580, TG - 300], [1780, TG - 300], [1760, TG - 240], [1600, TG - 240]], X); // binder clip
-      tmPoly(m, W, H, [[1000, TG], [1520, TG - 310], [1705, TG]], X);                   // the fund card leaning on it: a ramp
-    });
-    rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
-  },
-  scale(W, H, m) { // 진실의 전당 (연구윤리 실험실): flat lab floor; lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
-      tmRect(m, W, H, 1250, TG - 190, 1530, TG, X);                                    // data cabinet (L) / citation shelf (R)
-      tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
-      tmRect(m, W, H, 740, TG - 62, 880, TG, X);                                       // lab-notebook stack (L) / IRB file box (R)
-      tmRect(m, W, H, 1960, TG - 44, 2080, TG, X);                                     // peer-review magnifier stand (L) / data backup drive (R)
-      tmCapsule(m, W, H, Math.min(X(1650), X(1920)), Math.max(X(1650), X(1920)), TG - 64, TG, 32); // rolled manuscript (low cover)
-    });
-    rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
-    rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
-  },
-};
+const TMAP_TOP = {}; for (const k in TMAP_F) { const F = TMAP_F[k]; TMAP_TOP[k] = px => { let h = 0; for (const f of F) { const v = featH(f, px); if (v > h) h = v; } return TG - h; }; }
+function ridgeTop(px) { return TMAP_TOP.ridge(px); } // 국가연구개발혁신법 맵 「혁신의 능선」
 for (const k in TMAP_TOP) MAPGEN[k] = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, TMAP_TOP[k], () => H - 4); // one smooth ground per 주제 맵
 
 function maskSurface(mask, W, H, x, from) {

@@ -1484,83 +1484,63 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
   return TG;
 }
-// Smooth, mirror-symmetric ground profiles for the KIRD 주제 맵 (2026-11): no walls, no tables to hide under, no deep pits.
-// K = keys for the left half (x 0..2600, y of the surface); between keys a soft S-curve (half straight, half smoothstep)
-// so the steepest slope is 1.25 x the average one; every map keeps it under ~0.5 (a tank climbs up to ~0.7).
-function profTop(K) {
-  return px => {
-    if (px > TCX) px = 2 * TCX - px;
-    for (let i = 1; i < K.length; i++) { const [x0, y0] = K[i - 1], [x1, y1] = K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
-    return K[K.length - 1][1];
-  };
+// KIRD 주제 맵 grounds (2026-11, v2): each map is built from its own structures — stacks of notebooks, a scale, a lab block,
+// drums, a receipt roll, a calculator, the evaluation dais... — but every structure is walkable: flat tops with soft ramps
+// (no walls, nothing to drive under, no deep pits). Not mirrored; the two teams spawn interleaved, so it stays fair.
+//  mesa: flat top a..b, h px above the floor (TG); ramps on both sides at average slope sL / sR (default 0.4).
+//        The ramp is an S-curve (half straight, half smoothstep): steepest point 1.25 x average → ≤ 0.5 (a tank climbs ~0.7).
+//        A mesa standing on another gives `on` = the height it starts from: its ramps then only climb the difference,
+//        so stacks, a roof on a building and the steps of a dais read as crisp terraces. Its whole span (ramps included)
+//        must sit on the flat top of the one below, or there would be a wall — tests/terrain_check.js catches that.
+//  dome: centre c, half-width w, height h; (1 - u²)² profile, steepest 1.54 h / w (kept ≤ 0.5).
+// The ground is the highest structure at each x. `art` says how thememaps.js paints it.
+function featH(f, x) {
+  if (f.k === 'dome') { const u = (x - f.c) / f.w; if (u <= -1 || u >= 1) return 0; const v = 1 - u * u; return f.h * v * v; }
+  if (x >= f.a && x <= f.b) return f.h;
+  const h0 = f.on || 0, left = x < f.a, r = (f.h - h0) / ((left ? f.sL : f.sR) || f.s || 0.4), t = left ? (x - (f.a - r)) / r : ((f.b + r) - x) / r;
+  return t <= 0 ? 0 : h0 + (f.h - h0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t));
 }
-const TMAP_K = {
-  scale: [[0, 1040], [320, 1040], [700, 1150], [1000, 1150], [1390, 1010], [1780, 1150], [2150, 1150], [2600, 1060]],   // 진실의 전당: bench mound · cabinet/shelf mound · signing-desk podium
-  notebook: [[0, 1080], [260, 1080], [640, 1150], [1100, 980], [2100, 970], [2600, 1070]],                              // 증명의 노트: a page plateau each side, the gutter a shallow dip
-  lab: [[0, 1010], [300, 1030], [800, 1070], [1300, 960], [1900, 1150], [2250, 1150], [2600, 1040]],                    // 예방의 실험동: yard hill · lab-block rise · reagent-store mound
-  archive: [[0, 1110], [470, 970], [1000, 1150], [1200, 1150], [1700, 960], [2150, 1110], [2600, 980]],                 // 신뢰의 집행실: receipt-roll mound · bundle hill · calculator hill
-  ridge: [[0, 1060], [300, 1060], [950, 900], [1750, 1090], [2600, 860]],                                               // 혁신의 능선: three crests (선정·단계·최종 평가), two shallow valleys (수행)
+function featSpan(f) { if (f.k === 'dome') return [f.c - f.w, f.c + f.w]; const d = f.h - (f.on || 0); return [f.a - d / (f.sL || f.s || 0.4), f.b + d / (f.sR || f.s || 0.4)]; }
+const M = (a, b, h, art, o) => Object.assign({ k: 'mesa', a, b, h, art }, o || {}), D = (c, w, h, art) => ({ k: 'dome', c, w, h, art });
+const TMAP_F = {
+  scale: [ // 진실의 전당 (연구윤리 실험실)
+    M(150, 850, 70, 'notebooks'), M(380, 620, 150, 'notebooks', { on: 70 }),            // 연구노트 더미 (계단식)
+    D(960, 240, 55, 'scroll'),                                               // 논문 원고 두루마리
+    M(1230, 1640, 120, 'cabinet'),                                           // 원본 데이터 보관함
+    M(1900, 2140, 100, 'pan'), M(2380, 2820, 200, 'scaleBase'), M(3060, 3300, 100, 'pan'), // 정의의 저울: 받침대 + 두 접시
+    M(3920, 4560, 230, 'shelf'),                                             // 출처 표기 서가
+    M(4950, 5400, 90, 'irb'),                                                // IRB 서류함
+  ],
+  notebook: [ // 증명의 노트 (책상 위)
+    M(130, 430, 170, 'mug'),                                                 // KIRD 머그
+    M(1100, 2300, 140, 'pageL'), M(2800, 4000, 180, 'pageR'),                // 펼친 연구노트: 왼쪽·오른쪽 쪽 (높이 다름)
+    M(3200, 3700, 225, 'pen', { s: 0.3, on: 180 }),                                   // 오른쪽 쪽 위의 만년필
+    M(4720, 5400, 90, 'binders'), M(4940, 5400, 170, 'binders', { on: 90 }), M(5120, 5400, 240, 'binders', { on: 170 }), // 바인더 더미 (계단식)
+  ],
+  lab: [ // 예방의 실험동 (연구실 안전)
+    M(350, 1450, 140, 'labFloor'), M(620, 1180, 240, 'labRoof', { on: 140 }),            // 실험동: 1층 + 옥상 (비상계단 = 경사)
+    M(1820, 2240, 90, 'drums'), M(1990, 2070, 150, 'drums', { on: 90 }),                 // 유해물질 드럼 더미
+    M(2750, 3650, 140, 'store'), M(3110, 3290, 260, 'extinguisher', { on: 140 }),       // 시약 창고 + 그 위에 선 소화기 (양옆은 철제 계단)
+    M(4020, 4220, 80, 'ppe'),                                                // 보호구 보관함
+    M(4650, 5600, 200, 'yard', { sL: 0.3 }),                                 // 잔디 언덕 (나무)
+  ],
+  archive: [ // 신뢰의 집행실 (연구비 관리)
+    D(520, 700, 220, 'roll'),                                                // 영수증 롤
+    M(1300, 2100, 100, 'bundle'), M(1560, 1840, 190, 'bundle', { on: 100 }),              // 증빙 묶음 (계단식)
+    M(2600, 3300, 160, 'calc'),                                              // 계산기
+    M(4150, 4300, 230, 'card', { sL: 0.25 }),                                // 기대 선 연구비 카드 (긴 오르막)
+    M(4760, 5400, 120, 'coins'), M(4960, 5400, 200, 'coins', { on: 120 }),                // 동전 더미 (계단식)
+  ],
+  ridge: [ // 혁신의 능선 (국가연구개발혁신법)
+    M(-1000, 6200, 50, 'grass'), M(-400, 250, 110, 'grass', { on: 50 }),                // 바닥 + 출발 언덕
+    M(780, 1120, 250, 'grass', { on: 50 }),                                              // 선정평가관 고지
+    M(2380, 2820, 300, 'grass', { on: 50 }),                                             // 단계평가 게이트 고지
+    M(3900, 4600, 150, 'dais', { on: 50 }), M(4060, 4440, 210, 'dais', { on: 150 }), M(4170, 4330, 250, 'dais', { on: 210 }), // 최종평가 단상 (3단)
+    M(4950, 5600, 120, 'grass', { on: 50 }),                                             // 성과 공개·활용 언덕
+  ],
 };
-const TMAP_TOP = {}; for (const k in TMAP_K) TMAP_TOP[k] = profTop(TMAP_K[k]);
-// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys (see TMAP_K.ridge)
-const RIDGE_K = TMAP_K.ridge.concat(TMAP_K.ridge.slice(0, -1).reverse().map(([x, y]) => [2 * TCX - x, y]));
-function ridgeTop(px) {
-  for (let i = 1; i < RIDGE_K.length; i++) { const [x0, y0] = RIDGE_K[i - 1], [x1, y1] = RIDGE_K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
-  return RIDGE_K[RIDGE_K.length - 1][1];
-}
-// the 2026-10 shapes (walls, desks, drums...): no longer the ground — thememaps.js paints them as background scenery
-const TMAP_OLDGEN = {
-  notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror((X, r) => {
-      fillBand(m, W, H, r ? X(2560) : 640, r ? X(640) : 2560, x => nbTop(r ? X(x) : x), () => TG);
-      tmRect(m, W, H, 610, TG - 30, 2590, TG, X);                                       // hard cover
-      tmRect(m, W, H, 230, TG - 330, 470, TG, X);                                       // KIRD mug (left) / binder stack (right)
-    });
-    tmCapsule(m, W, H, 2150, 2910, TG - 398, TG - 346, 26); fillPoly(m, W, H, [[2906, TG - 392], [3050, TG - 374], [3056, TG - 370], [2906, TG - 352]]); // fountain pen
-    rectF(m, W, H, 2180, TG - 406, 2410, TG - 396, 1);                                    // its clip
-  },
-  lab(W, H, m) { // 연구실 안전: two cut-away labs, steel stairs to the yard, hazard drums, GHS signs, the reagent store with a fire extinguisher on top
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    const top = TG - 350;
-    tmMirror(X => {
-      tmPoly(m, W, H, [[0, TG], [0, TG - 210], [140, TG - 200], [260, TG - 120], [330, TG - 30], [350, TG]], X);
-      tmRect(m, W, H, 374, top - 10, 1506, TG, X);                                      // lab building (2 floors, filled)
-      tmRect(m, W, H, 440, top - 70, 610, top, X);                                      // air handler
-      tmRect(m, W, H, 1304, top - 150, 1336, top, X); tmRect(m, W, H, 1298, top - 156, 1342, top - 146, X); // exhaust stacks
-      tmRect(m, W, H, 1374, top - 150, 1406, top, X); tmRect(m, W, H, 1368, top - 156, 1412, top - 146, X);
-      tmPoly(m, W, H, [[1500, top + 4], [1540, top + 4], [1860, TG], [1500, TG]], X);    // emergency stair
-      tmRect(m, W, H, 1910, TG - 110, 1990, TG, X); tmRect(m, W, H, 2000, TG - 110, 2080, TG, X); tmRect(m, W, H, 1955, TG - 220, 2035, TG - 110, X); // hazard drums
-      tmRect(m, W, H, 2110, TG - 40, 2230, TG, X); tmRect(m, W, H, 2158, TG - 100, 2182, TG - 40, X); // GHS sign plinth + post
-      tmPoly(m, W, H, [[2170, TG - 284], [2265, TG - 195], [2170, TG - 100], [2075, TG - 195]], X); tmRect(m, W, H, 2140, TG - 298, 2200, TG - 282, X);
-    });
-    rectF(m, W, H, 2280, TG - 230, 2920, TG, 1); rectF(m, W, H, 2260, TG - 246, 2940, TG - 226, 1); // reagent store
-    tmCapsule(m, W, H, 2510, 2690, TG - 546, TG - 246, 70); rectF(m, W, H, 2570, TG - 596, 2630, TG - 540, 1); rectF(m, W, H, 2470, TG - 616, 2730, TG - 596, 1); // the extinguisher
-  },
-  archive(W, H, m) { // 연구비 관리: an evidence archive; receipt rolls, fund cards leaning on receipt bundles, a calculator in the middle
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmDisc(m, W, H, X(470), TG - 240, 240);                                           // receipt roll
-      tmRect(m, W, H, 1500, TG - 280, 1860, TG, X);                                     // receipt bundle
-      tmPoly(m, W, H, [[1580, TG - 300], [1780, TG - 300], [1760, TG - 240], [1600, TG - 240]], X); // binder clip
-      tmPoly(m, W, H, [[1000, TG], [1520, TG - 310], [1705, TG]], X);                   // the fund card leaning on it: a ramp
-    });
-    rectF(m, W, H, 2240, TG - 330, 2960, TG, 1);                                          // calculator
-  },
-  scale(W, H, m) { // 진실의 전당 (연구윤리 실험실): flat lab floor; lab benches at the ends, data cabinet / citation shelf, the lab-notebook signing desk in the middle
-    rectF(m, W, H, 0, TG, W, H - 4, 1);
-    tmMirror(X => {
-      tmRect(m, W, H, 0, TG - 120, 300, TG, X); tmPoly(m, W, H, [[300, TG - 120], [420, TG], [300, TG]], X); // end bench + ramp
-      tmRect(m, W, H, 1250, TG - 190, 1530, TG, X);                                    // data cabinet (L) / citation shelf (R)
-      tmPoly(m, W, H, [[1170, TG], [1250, TG - 70], [1250, TG]], X); tmPoly(m, W, H, [[1530, TG - 70], [1610, TG], [1530, TG]], X); // step stools
-      tmRect(m, W, H, 740, TG - 62, 880, TG, X);                                       // lab-notebook stack (L) / IRB file box (R)
-      tmRect(m, W, H, 1960, TG - 44, 2080, TG, X);                                     // peer-review magnifier stand (L) / data backup drive (R)
-      tmCapsule(m, W, H, Math.min(X(1650), X(1920)), Math.max(X(1650), X(1920)), TG - 64, TG, 32); // rolled manuscript (low cover)
-    });
-    rectF(m, W, H, 2360, TG - 190, 2840, TG - 166, 1);                                    // signing desk top (tanks drive under it)
-    rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
-  },
-};
+const TMAP_TOP = {}; for (const k in TMAP_F) { const F = TMAP_F[k]; TMAP_TOP[k] = px => { let h = 0; for (const f of F) { const v = featH(f, px); if (v > h) h = v; } return TG - h; }; }
+function ridgeTop(px) { return TMAP_TOP.ridge(px); } // 국가연구개발혁신법 맵 「혁신의 능선」
 for (const k in TMAP_TOP) MAPGEN[k] = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, TMAP_TOP[k], () => H - 4); // one smooth ground per 주제 맵
 
 function maskSurface(mask, W, H, x, from) {
@@ -2871,7 +2851,7 @@ const SHELLS = (() => {
 
 // ---- thememaps.js
 // ============================================================== KIRD 주제 맵 그림 (연구윤리 · 연구노트 · 연구실 안전 · 연구비 관리)
-// The ground shapes live in mapgen.js (TMAP_K smooth profiles; TMAP_OLDGEN = the old furniture, painted as scenery); this paints them: a backdrop behind the terrain, the solid art (clipped to the mask),
+// The ground shapes live in mapgen.js (TMAP_F walkable structures; each structure painted by ART below); this paints them: a backdrop behind the terrain, the solid art (clipped to the mask),
 // and decorations drawn on the terrain picture. Visual only: nothing here touches the simulation.
 // Map-specific names: items, happenings (from CONFIG.maps[id].items / .happen); falls back to the usual names.
 function mapMetaOf(m) { return (m && CONFIG.maps[m.mapId]) || {}; }
@@ -3611,85 +3591,107 @@ const TMAP_ART = (() => {
   }
 
 
-  // ---------------------------------------------------------------- 2026-11: the 주제 맵 grounds are smooth hills now (TMAP_K in mapgen.js).
-  // The old furniture (benches, cabinets, the pen bridge, lab blocks, drums, receipt rolls, the calculator...) stays in the
-  // picture as background scenery: the old solid art clipped to the old shapes, plus the old decorations, behind the veil.
+  // ---------------------------------------------------------------- 2026-11 v2: the 주제 맵 grounds are built from walkable structures (TMAP_F in mapgen.js).
+  // Each structure is painted as what it is (a stack of notebooks, a scale, a lab block, drums, a receipt roll, a calculator...);
+  // a mesa's ramps are painted as its approach (steps, a slope of paper, a stair). The scene behind is the map's old back().
   const TOP = id => TMAP_TOP[id];
-  const LIFT_MAX = 120;
-  function oldProps(x, id, old) {
-    const mask = new Uint8Array(W * H); TMAP_OLDGEN[id](W, H, mask);
-    const c = document.createElement('canvas'); c.width = W; c.height = H; const y = c.getContext('2d');
-    old.solid(y);
-    const img = y.getImageData(0, 0, W, H), d = img.data; for (let i = 0; i < W * H; i++) if (!mask[i]) d[i * 4 + 3] = 0; y.putImageData(img, 0, 0);
-    const surface = (px, from) => { const v = maskSurface(mask, W, H, px, from || 0); return v < 0 ? H : v; };
-    y.save(); old.front(y, surface); y.restore();
-    // each piece of furniture is lifted to stand on the highest point of the new ground under it (its old floor comes up with it)
-    const a8 = y.getImageData(0, 0, W, G - 2).data, used = new Uint8Array(W);
-    for (let px = 0; px < W; px++) for (let py = 0; py < G - 2; py += 2) if (a8[(py * W + px) * 4 + 3] > 8) { used[px] = 1; break; }
-    const f = TOP(id); let px = 0;
-    while (px < W) {
-      if (!used[px]) { px++; continue; }
-      let b = px; while (b < W && (used[b] || (b + 24 < W && used.subarray(b, b + 24).some(v => v)))) b++;
-      let top = G; for (let q = px; q < b; q++) top = Math.min(top, f(q));
-      const lift = Math.min(LIFT_MAX, G - top + 4); // capped: tall pieces may sink a little into the hills instead of covering the wall boards
-      x.drawImage(c, px, 0, b - px, H, px, -lift, b - px, H);
-      px = b;
+  function fPoly(x, f, id) { // the band this structure shows: from its top down to the lower structures under it (taller ones are painted over it later)
+    const [A, B] = featSpan(f), F = TMAP_F[id], below = px => { let h = 0; for (const g of F) if (g !== f && g.h < f.h) { const v = featH(g, px); if (v > h) h = v; } return G - h + (h ? 0 : 60); };
+    const pts = []; for (let px = A; px <= B; px += 8) pts.push(px); pts.push(B);
+    x.beginPath(); pts.forEach((px, i) => { const y = G - featH(f, px); i ? x.lineTo(px, y) : x.moveTo(px, y); });
+    for (let i = pts.length - 1; i >= 0; i--) { const px = pts[i]; x.lineTo(px, Math.max(G - featH(f, px), below(px))); } x.closePath();
+  }
+  function rampsOf(f) { const [A, B] = featSpan(f); return f.k === 'dome' ? [] : [[A, f.a], [f.b, B]]; }
+  function layers(x, a, b, top, bot, cols, hgt, edge) { // horizontal bands (things lying in a pile)
+    let k = 0; for (let y = bot; y > top - hgt; y -= hgt, k++) { x.fillStyle = cols[k % cols.length]; x.fillRect(a, y - hgt, b - a, hgt); if (edge) { x.fillStyle = edge; x.fillRect(a, y - hgt + 2, b - a, 3); } }
+  }
+  function steps(x, a, b, top, col, line, dir) { // a stair drawn on a ramp: treads every 24 px
+    x.fillStyle = col; x.fillRect(a, top, b - a, G + 60 - top);
+    x.strokeStyle = line; x.lineWidth = 3; for (let y = G; y > top; y -= 24) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); }
+  }
+  const BOOKC = [KB, KG, '#E9EDF1', '#C98A50', '#3B4A5A', '#9B6BC9', '#F2C230'];
+  const ART = {
+    // ---- 진실의 전당
+    notebooks(x, f) { const t = G - f.h; layers(x, f.a - 400, f.b + 400, t, G + 40, BOOKC, 23, 'rgba(255,255,255,0.75)'); if (f.h > 100) text(x, '연구노트', (f.a + f.b) / 2, t + 34, 26, { color: '#FFF', weight: 900, stroke: 'rgba(20,30,40,0.7)', sw: 5 }); },
+    scroll(x, f) { x.fillStyle = vg(x, G - f.h, G, [[0, '#FFFDF4'], [1, '#D9CDAE']]); x.fillRect(f.c - f.w, G - f.h - 4, 2 * f.w, f.h + 70); x.strokeStyle = 'rgba(120,100,70,0.35)'; x.lineWidth = 2; for (let k = 1; k < 6; k++) { x.beginPath(); x.moveTo(f.c - f.w, G - f.h * k / 6); x.lineTo(f.c + f.w, G - f.h * k / 6); x.stroke(); } x.fillStyle = '#C0392B'; x.fillRect(f.c - 8, G - f.h - 4, 16, f.h + 10); },
+    cabinet(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); for (let k = 0; t + 20 + k * 30 < G - 10; k++) { x.fillStyle = '#2A343E'; x.fillRect(f.a + 30, t + 16 + k * 30, f.b - f.a - 60, 22); x.fillStyle = k % 2 ? '#3FD07A' : '#7FC4E8'; x.fillRect(f.a + 44, t + 24 + k * 30, 10, 6); } text(x, '원본 데이터 보관함', (f.a + f.b) / 2, t + 26, 22, { color: '#DFF7EF', weight: 900 }); },
+    pan(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#F2D27A'], [0.3, '#C9973E'], [1, '#6E4E1E']]); x.fillRect(f.a - 300, t, f.b - f.a + 600, f.h + 60); x.fillStyle = 'rgba(255,255,255,0.4)'; x.fillRect(f.a, t + 6, f.b - f.a, 6); },
+    scaleBase(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#F4F2EC'], [1, '#B9B2A2']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.fillStyle = '#9C7430'; x.fillRect(f.a - 500, t, f.b - f.a + 1000, 10); text(x, '정의의 저울', (f.a + f.b) / 2, t + 54, 30, { color: '#6B4A1C', weight: 900 }); text(x, 'RESEARCH INTEGRITY', (f.a + f.b) / 2, t + 96, 18, { color: '#8A7A5E', weight: 800 }); },
+    shelf(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#8A6240'], [1, '#5E3F26']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); for (let row = 0; row < 2; row++) { const y0 = t + 18 + row * 104; let i = 0; for (let px = f.a + 16; px < f.b - 30; px += 30, i++) { x.fillStyle = BOOKC[i % BOOKC.length]; x.fillRect(px, y0 + (i % 3) * 6, 24, 84 - (i % 3) * 6); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(px + 4, y0 + 30, 16, 5); } x.fillStyle = '#4A3018'; x.fillRect(f.a, y0 + 84, f.b - f.a, 10); } },
+    irb(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#E3E8EB'], [1, '#9AA3AB']]); x.fillRect(f.a, t, f.b - f.a + 400, f.h + 60); x.fillStyle = '#FFFFFF'; x.fillRect(f.a + 40, t + 20, 180, 44); text(x, 'IRB 승인 서류', f.a + 130, t + 42, 20, { color: '#1E3A5A', weight: 900 }); },
+    // ---- 증명의 노트
+    mug(x, f) { const t = G - f.h; x.fillStyle = hg(x, f.a, f.b, [[0, '#D8DEE2'], [0.3, '#FFFFFF'], [0.8, '#E3E8EB'], [1, '#B9C1C7']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.fillStyle = '#4A2E1A'; x.fillRect(f.a, t, f.b - f.a, 12); logoOnly(x, (f.a + f.b) / 2, t + 80, 48); },
+    pageL(x, f) { page(x, f, ['연구노트  No. 2026-017', '실험 목적 : 신소재 박막의 열안정성 확인', '원본 데이터 → 서버 저장 (raw_1019.csv)']); },
+    pageR(x, f) { page(x, f, ['측정 결과 (n = 3)', '결론 : 재현성 확인 → 동료 검증 요청', '참고 : Kim et al. (2025), p.41']); },
+    pen(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, t + 50, [[0, '#4A5A6C'], [0.3, '#1C2530'], [1, '#0B1016']]); x.fillRect(f.a - 300, t, f.b - f.a + 600, 48); x.fillStyle = vg(x, t, t + 48, [[0, '#F7DE96'], [0.5, '#C9973E'], [1, '#7A5520']]); x.fillRect(f.a + 120, t, 16, 48); x.fillRect(f.b - 40, t, 40, 48); x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(f.a - 300, t + 8, f.b - f.a + 600, 5); kMark(x, (f.a + f.b) / 2, t + 24, 26); },
+    binders(x, f) { const t = G - f.h; ['#2E86D6', '#3B4A5A', '#8CC63F', '#C98A50', '#2E86D6'].forEach((c, i) => { x.fillStyle = c; x.fillRect(f.a - 300, t + i * 34, W, 34); x.fillStyle = 'rgba(255,255,255,0.85)'; x.fillRect(f.a + 30, t + 8 + i * 34, 120, 18); }); text(x, ['연구노트 2025', '데이터 관리 계획', 'IRB 심의 서류'][Math.round(f.h / 80) - 1] || '', f.a + 90, t + 17, 13, { color: '#1E2A36', weight: 900 }); },
+    // ---- 예방의 실험동
+    labFloor(x, f) { x.save(); labBlock(x, f.a, f.b, 1, f.h); x.restore(); },
+    labRoof(x, f) { x.save(); x.translate(0, -140); labBlock(x, f.a, f.b, 1, f.h - 140); x.restore(); },
+    drums(x, f) { for (let px = f.a + 45; px < f.b; px += 90) drum(x, px, G - (f.h > 100 ? 90 : 0), 80, f.h > 100 ? 60 : 90, (px / 90 | 0) % 2 ? '#2E86D6' : '#F2C230'); },
+    store(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#D9DDE0'], [1, '#A9B0B5']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); hazardStripe(x, f.a, t, f.b, 14); for (const dx of [f.a + 110, f.b - 290]) { x.fillStyle = vg(x, t + 30, G, [[0, '#F2C230'], [1, '#C99A18']]); x.fillRect(dx, t + 30, 180, f.h - 30); ghs(x, dx + 90, t + 30 + (f.h - 30) / 2, 50, dx < (f.a + f.b) / 2 ? 'flame' : 'excl'); } text(x, '시약 창고', (f.a + f.b) / 2, G - 40, 26, { color: '#1E2A36', weight: 900 }); },
+    extinguisher(x, f) { const t = G - f.h, a = f.a, b = f.b; x.fillStyle = hg(x, a, b, [[0, '#7A0F14'], [0.3, '#E8383F'], [0.45, '#FF8A8E'], [0.6, '#E8383F'], [1, '#6A0C10']]); x.fillRect(a, t, b - a, f.h + 60); x.fillStyle = '#FFFFFF'; rr(x, a + 22, t + 30, b - a - 44, 74, 8); x.fill(); text(x, '소화기', (a + b) / 2, t + 54, 26, { color: '#C62828', weight: 900 }); text(x, '핀·조준·누르기', (a + b) / 2, t + 86, 13, { color: '#333', weight: 800 }); x.fillStyle = '#FFF'; x.beginPath(); x.arc((a + b) / 2, t + 16, 10, 0, 7); x.fill(); },
+    yard(x, f) { x.fillStyle = vg(x, G - f.h, G + 60, [[0, '#6A5A40'], [1, '#3A3028']]); x.fillRect(f.a - 700, G - f.h - 4, W, f.h + 80); },
+    // ---- 신뢰의 집행실
+    roll(x, f) { x.fillStyle = rg(x, f.c - 120, G - 120, 20, f.w, [[0, '#FFFFFF'], [0.8, '#EDEAE2'], [1, '#C9C4B8']]); x.fillRect(f.c - f.w, G - f.h - 4, 2 * f.w, f.h + 70); x.strokeStyle = 'rgba(150,140,120,0.35)'; x.lineWidth = 1.5; for (let k = 40; k < f.w; k += 14) { x.beginPath(); x.ellipse(f.c, G + 40, k, k * 0.42, 0, Math.PI, 0); x.stroke(); } x.fillStyle = '#8A7A5E'; x.beginPath(); x.ellipse(f.c, G + 40, 90, 40, 0, Math.PI, 0); x.fill(); text(x, '영수증', f.c, G - f.h + 60, 28, { color: '#6B5E44', weight: 900 }); },
+    bundle(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.strokeStyle = 'rgba(140,130,110,0.4)'; x.lineWidth = 1.5; for (let y = t + 8; y < G; y += 7) { x.beginPath(); x.moveTo(f.a - 500, y); x.lineTo(f.b + 500, y); x.stroke(); } if (f.h > 150) { x.fillStyle = '#1C1C1C'; x.fillRect(f.a + 40, t, 220, 16); receiptText(x, f.a + 20, t + 40, [['연구비 카드 결제', ''], ['재료비  시약', '128,000'], ['증빙  세금계산서', '첨부']], 260); } },
+    calc(x, f) { const t = G - f.h, a = f.a, b = f.b; x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(a, t, b - a, f.h + 60); x.fillStyle = '#B9E3C4'; rr(x, a + 30, t + 18, b - a - 60, 56, 8); x.fill(); text(x, '증빙 보관  5년', b - 50, t + 47, 32, { color: '#1E3A2A', weight: 900, align: 'right' }); for (let r2 = 0; r2 < 2; r2++) for (let c = 0; c < 6; c++) { x.fillStyle = c === 5 ? '#E8913C' : '#5A6672'; rr(x, a + 34 + c * ((b - a - 60) / 6), t + 88 + r2 * 34, (b - a - 60) / 6 - 12, 26, 5); x.fill(); } },
+    card(x, f) { const [A] = featSpan(f), ang = Math.atan2(-f.h, f.a - A); x.save(); x.translate(A + 40, G + 10); x.rotate(ang); x.fillStyle = hg(x, 0, 1300, [[0, '#2E86D6'], [1, '#2AA37A']]); x.fillRect(-60, -60, 1500, 200); x.fillStyle = '#F2C94C'; rr(x, 380, -40, 70, 50, 8); x.fill(); text(x, '연구비 카드', 620, -12, 40, { color: '#FFF', weight: 900 }); x.restore(); },
+    coins(x, f) { const t = G - f.h; for (let y = G + 40, k = 0; y > t - 20; y -= 20, k++) { x.fillStyle = k % 2 ? '#E9C46A' : '#C9972B'; x.fillRect(f.a - 400, y - 20, W, 20); x.fillStyle = 'rgba(255,255,255,0.3)'; x.fillRect(f.a - 400, y - 18, W, 3); } x.strokeStyle = 'rgba(120,80,20,0.35)'; x.lineWidth = 2; for (let px = f.a - 400; px < W; px += 14) { x.beginPath(); x.moveTo(px, t); x.lineTo(px, G + 40); x.stroke(); } text(x, '연구비', (f.a + Math.min(W, f.b)) / 2, t + 30, 22, { color: '#5A3E10', weight: 900 }); },
+    // ---- 혁신의 능선
+    grass() {},
+    dais(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, t + 60, [[0, '#FAF8F2'], [1, '#CFC8B8']]); x.fillRect(f.a - 700, t - 4, f.b - f.a + 1400, G + 60 - t); x.strokeStyle = '#B9B2A2'; x.lineWidth = 3; x.beginPath(); x.moveTo(f.a - 700, t + 40); x.lineTo(f.b + 700, t + 40); x.stroke(); },
+    ppe(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#2E9E4F'], [1, '#1D6E36']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); x.fillStyle = '#FFFFFF'; rr(x, f.a + 20, t + 14, f.b - f.a - 40, 34, 6); x.fill(); text(x, '보호구 보관함', (f.a + f.b) / 2, t + 31, 18, { color: '#1D6E36', weight: 900 }); },
+  };
+  function page(x, f, lines) { // an open notebook page lying on the desk: paper, ruled lines, margin, a few lines of ink
+    const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60);
+    x.strokeStyle = 'rgba(70,130,200,0.35)'; x.lineWidth = 1.5; for (let y = t + 30; y < G; y += 28) { x.beginPath(); x.moveTo(f.a - 500, y); x.lineTo(f.b + 500, y); x.stroke(); }
+    x.strokeStyle = 'rgba(220,60,60,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(f.a + 60, t); x.lineTo(f.a + 60, G); x.stroke();
+    lines.forEach((s, i) => ink(x, s, f.a + 80, t + 24 + i * 28, 20, i ? {} : { weight: 900, color: '#2E86D6', font: FONT }));
+    if (f.art === 'pageL') { sigBox(x, f.a + 700, t + 104, '작성자', '2026.10.19'); }
+  }
+  const RAMP = { // what a mesa's sides look like, per map
+    scale: (x, a, b, t) => steps(x, a, b, t, '#C9D2D8', 'rgba(90,100,110,0.45)'),
+    notebook: (x, a, b, t) => { x.fillStyle = vg(x, t, G, [[0, '#F6EFDD'], [1, '#D9CDB0']]); x.fillRect(a, t, b - a, G + 60 - t); x.strokeStyle = 'rgba(150,130,95,0.35)'; x.lineWidth = 1.2; for (let y = G; y > t; y -= 6) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); } },
+    lab: (x, a, b, t) => steps(x, a, b, t, '#7A848C', 'rgba(255,255,255,0.35)'),
+    archive: (x, a, b, t) => { x.fillStyle = vg(x, t, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]); x.fillRect(a, t, b - a, G + 60 - t); x.strokeStyle = 'rgba(140,130,110,0.4)'; x.lineWidth = 1.5; for (let y = G; y > t; y -= 7) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); } },
+    ridge: () => {},
+  };
+  const SELF_RAMP = { pan: 1, scaleBase: 1, mug: 1, pageL: 1, pageR: 1, pen: 1, binders: 1, yard: 1, bundle: 1, coins: 1, dais: 1, grass: 1, card: 1 }; // these paint their own sides
+  function paintFeatures(x, id) {
+    const F = TMAP_F[id].slice().sort((p, q) => p.h - q.h);
+    for (const f of F) {
+      x.save(); fPoly(x, f, id); x.clip();
+      if (!SELF_RAMP[f.art]) for (const [a, b] of rampsOf(f)) RAMP[id](x, a, b, G - f.h);
+      ART[f.art](x, f);
+      x.restore();
     }
   }
-  function topPath(x, id, off, a, b) { const f = TOP(id); a = a || 0; b = b == null ? W : b; x.beginPath(); x.moveTo(a, f(a) + off); for (let px = a; px <= b; px += 10) x.lineTo(px, f(px) + off); x.lineTo(b, f(b) + off); }
-  function topCap(x, id, off, w, col, a, b) { x.lineJoin = 'round'; topPath(x, id, off, a, b); x.lineWidth = w; x.strokeStyle = col; x.stroke(); }
-  function aboveFloor(x, id, fill) { const f = TOP(id); x.beginPath(); x.moveTo(0, G); for (let px = 0; px <= W; px += 10) x.lineTo(px, Math.min(G, f(px))); x.lineTo(W, G); x.closePath(); x.fillStyle = fill; x.fill(); }
-  const NEW = {
-    scale: { // 실험실 바닥: 회색 바닥재, 언덕은 고무 매트를 깐 단
-      solid(x) {
-        x.fillStyle = vg(x, 980, H, [[0, '#A7B2BA'], [0.1, '#8B979F'], [1, '#4E585F']]); x.fillRect(0, 900, W, H - 900);
-        aboveFloor(x, 'scale', vg(x, 1000, G, [[0, '#5E7C96'], [1, '#3F5A72']]));
-        x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, 900); x.lineTo(px, H); x.stroke(); }
-        topCap(x, 'scale', 7, 14, '#D7DEE3'); topCap(x, 'scale', 1, 3, '#FFFFFF');
-      },
-      front() {},
-    },
-    notebook: { // 책상 위: 나무 상판, 가운데 두 언덕은 펼친 연구노트 종이 더미
-      solid(x) {
-        x.fillStyle = vg(x, 960, H, [[0, '#9A6A40'], [0.08, '#7A4E2C'], [1, '#3E2614']]); x.fillRect(0, 900, W, H - 900);
-        const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.22)'; x.lineWidth = 2;
-        for (let y = 990; y < H; y += 20 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); }
-        const f = TOP('notebook'); x.save(); x.beginPath(); x.moveTo(640, G); for (let px = 640; px <= W - 640; px += 10) x.lineTo(px, f(px)); x.lineTo(W - 640, G); x.closePath(); x.clip();
-        x.fillStyle = vg(x, 960, G, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.fillRect(640, 900, W - 1280, G - 900);
-        x.strokeStyle = 'rgba(150,130,95,0.35)'; x.lineWidth = 1.2; for (let off = 12; off < 190; off += 6) { topPath(x, 'notebook', off, 640, W - 640); x.stroke(); }
-        x.fillStyle = hg(x, CX - 160, CX + 160, [[0, 'rgba(90,70,40,0)'], [0.5, 'rgba(90,70,40,0.28)'], [1, 'rgba(90,70,40,0)']]); x.fillRect(CX - 160, 900, 320, G - 900);
-        x.restore();
-        topCap(x, 'notebook', 6, 12, '#F6EFDD', 0, W); topCap(x, 'notebook', 1, 3, '#FFFFFF', 640, W - 640);
-      },
-      front() {},
-    },
-    lab: { // 실험동 마당: 바깥 언덕은 잔디, 가운데는 노란 안전선을 그은 콘크리트 마당
-      solid(x) {
-        concrete(x, 0, W, 900, H, 8);
-        const f = TOP('lab'); x.save(); x.beginPath(); x.moveTo(0, H); for (let px = 0; px <= 1300; px += 10) x.lineTo(px, f(px)); x.lineTo(1300, H); x.closePath();
-        x.moveTo(W - 1300, H); for (let px = W - 1300; px <= W; px += 10) x.lineTo(px, f(px)); x.lineTo(W, H); x.closePath(); x.clip();
-        x.fillStyle = vg(x, 950, H, [[0, '#6A5A40'], [0.4, '#55473A'], [1, '#3A3028']]); x.fillRect(0, 900, W, H - 900); x.restore();
-        topCap(x, 'lab', 10, 22, '#6FA34E', 0, 1320); topCap(x, 'lab', 10, 22, '#6FA34E', W - 1320, W);
-        topCap(x, 'lab', 6, 12, '#B9C1C7', 1300, W - 1300); topCap(x, 'lab', 20, 6, '#F2C230', 1300, W - 1300);
-      },
-      front() {},
-    },
-    archive: { // 보관실 바닥 위 언덕은 차곡차곡 쌓인 영수증 · 증빙 서류 더미
-      solid(x) {
-        noiseBand(x, 0, W, 900, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41);
-        aboveFloor(x, 'archive', vg(x, 960, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]));
-        x.save(); const f = TOP('archive'); x.beginPath(); x.moveTo(0, G); for (let px = 0; px <= W; px += 10) x.lineTo(px, Math.min(G, f(px))); x.lineTo(W, G); x.closePath(); x.clip();
-        x.strokeStyle = 'rgba(140,130,110,0.42)'; x.lineWidth = 1.5; for (let y = 960; y < G; y += 7) { x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke(); }
-        for (let px = 100; px < W; px += 360) { x.fillStyle = ['#2E86D6', '#8CC63F', '#E8913C'][(px / 360 | 0) % 3]; x.fillRect(px, 960, 10, G - 960); }
-        x.restore();
-        x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, G, W, 6);
-        topCap(x, 'archive', 5, 10, '#F4F1EA'); topCap(x, 'archive', 1, 3, '#FFFFFF');
-        for (const px of [470, mx(470), 1700, mx(1700)]) stamp(x, px, TOP('archive')(px) + 70, 34, '증빙', '#D62828', -0.2);
-      },
-      front() {},
-    },
+  const BASE = { // the floor under everything, per map
+    scale: x => { x.fillStyle = vg(x, 980, H, [[0, '#A7B2BA'], [0.1, '#8B979F'], [1, '#4E585F']]); x.fillRect(0, 800, W, H - 800); x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); } },
+    notebook: x => { x.fillStyle = vg(x, 960, H, [[0, '#9A6A40'], [0.08, '#7A4E2C'], [1, '#3E2614']]); x.fillRect(0, 800, W, H - 800); const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.22)'; x.lineWidth = 2; for (let y = G + 20; y < H; y += 20 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); } },
+    lab: x => { concrete(x, 0, W, 800, H, 8); },
+    archive: x => { noiseBand(x, 0, W, 800, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); },
   };
-  for (const id in NEW) { const old = S[id]; S[id] = Object.assign({}, old, { back(x) { old.back(x); oldProps(x, id, old); }, solid: NEW[id].solid, front: NEW[id].front }); }
+  const CAP = { scale: '#D7DEE3', notebook: null, lab: null, archive: null };
+  const NEW = {};
+  for (const id of ['scale', 'notebook', 'lab', 'archive']) NEW[id] = {
+    solid(x) { BASE[id](x); paintFeatures(x, id); if (CAP[id]) { x.lineJoin = 'round'; x.beginPath(); for (let px = 0; px <= W; px += 10) x.lineTo(px, TOP(id)(px) + 5); x.lineWidth = 10; x.strokeStyle = CAP[id]; x.stroke(); } },
+    front: id === 'lab' ? (x, surface) => { const r = rng(4); for (const tx of [4900, 5020, 5120]) tree(x, tx, surface(tx) + 6, 130 + r() * 40, r, tx === 5020 ? 'pine' : 'dark'); } : () => {},
+  };
+  const EXTRA = { // scenery that belongs to a structure but must not be ground (drawn behind it)
+    scale: x => { // the beam, post and chains of 정의의 저울 over its pedestal and pans
+      const cx = 2600, bt = 650; x.fillStyle = hg(x, cx - 20, cx + 20, [[0, '#6E4E1E'], [0.5, '#E9C46A'], [1, '#6E4E1E']]); x.fillRect(cx - 18, bt, 36, G - 200 - bt + 10);
+      x.fillStyle = vg(x, bt - 14, bt + 14, [[0, '#F2D27A'], [1, '#9C7430']]); rr(x, 1990, bt - 14, 1220, 28, 14); x.fill();
+      x.strokeStyle = '#9C7430'; x.lineWidth = 4; for (const px of [2020, 3180]) { x.beginPath(); x.moveTo(px, bt + 10); x.lineTo(px - 90, G - 100); x.moveTo(px, bt + 10); x.lineTo(px + 90, G - 100); x.stroke(); }
+      x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, bt - 50, 46, 0, 7); x.fill(); x.strokeStyle = '#C9973E'; x.lineWidth = 6; x.stroke(); kMark(x, cx, bt - 50, 50);
+    },
+    notebook: x => { x.strokeStyle = '#C9D0D5'; x.lineWidth = 26; x.beginPath(); x.arc(470, G - 95, 62, -Math.PI * 0.5, Math.PI * 0.5); x.stroke(); },
+    lab: x => { const cx = 3200, t = G - 260; x.fillStyle = hg(x, cx - 34, cx + 34, [[0, '#3A3A3A'], [0.5, '#8A8A8A'], [1, '#2A2A2A']]); x.fillRect(cx - 34, t - 60, 68, 64); x.fillStyle = '#1A1A1A'; x.fillRect(cx - 120, t - 80, 240, 22);
+      x.strokeStyle = '#1A1A1A'; x.lineWidth = 14; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - 30, t - 50); x.bezierCurveTo(cx - 200, t - 60, cx - 210, t + 60, cx - 150, t + 140); x.stroke(); x.lineCap = 'butt'; },
+  };
+  for (const id in NEW) { const old = S[id]; S[id] = Object.assign({}, old, { back(x) { old.back(x); if (EXTRA[id]) EXTRA[id](x); }, solid: NEW[id].solid, front: NEW[id].front }); }
+  { const rs = S.ridge.solid; S.ridge.solid = x => { rs(x); paintFeatures(x, 'ridge'); }; }
 
   function paint(x, m) { // after the base colours: the art clipped to the solid pixels, then the decorations
     const S1 = S[m.mapId], surface = (px, from) => { const y = maskSurface(m.mask, m.W, m.H, px, from || 0); return y < 0 ? m.H : y; };
