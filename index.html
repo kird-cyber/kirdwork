@@ -1013,9 +1013,11 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
-    // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
-    // only some matches have it at all (suddenChance, decided from the seed), and later than before (base 10 -> 16, 4 -> 6 per player)
-    suddenChance: 0.25, suddenBase: 16, suddenPerPlayer: 6, suddenDmg: 0.04, suddenWindMul: 1.5,
+    // sudden death (2026-11, for tournaments): every match, once the match clock reaches suddenAtSec (7 min) — the clock is
+    // the aiming time each turn's input carries (a timeout = the full minute) + the ticks shells fly and the ground settles,
+    // so it is the same on every device. Each turn from then on every tank loses suddenDmg of its max hp, +suddenDmgStep more
+    // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
+    suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 
@@ -1125,7 +1127,7 @@ const CONFIG = {
     quake: { every: 4, from: 4, shift: 55 },
     // weather that comes and goes during the match: one at a time, a few turns each
     weather: { list: ['tornado', 'pillar'], from: 3, chance: 0.2, minTurns: 3, maxTurns: 4 },
-    tornado: { w: 70, drift: 14 },
+    tornado: { w: 70, drift: 14, slow: 0.65 }, // a shell through it keeps its direction but loses 35% of its speed (2026-11: was a random fling)
     pillar: { w: 46, drift: 14, mul: 1.5 },
   },
   items: {
@@ -1146,23 +1148,23 @@ const CONFIG = {
       tipPool: 'common', tipMix: ['ethics', 'notebook', 'safety', 'budget'],
       guide: { title: '혁신의 능선', line: '절차를 지키면 연구가 자유로워진다.' },
       items: { shield: '협약서', heal: '이의신청', double: '공동연구개발기관', amplify: '우수 평가', calm: 'IRIS 통합관리', fuel: '협약 변경', tele: '단계 전환' },
-      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
+      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
     scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '연구윤리 실험실. 벽엔 위조·변조·표절 예방 포스터, 바닥엔 원본 데이터 보관함·출처 표기 서가·논문 원고 두루마리, 가운데는 밑으로 지나다니는 연구노트 서명대.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
       tipPool: 'ethics',
-      guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
+      guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
     notebook: { name: '증명의 노트', tag: '내 연구를 지켜 주는 가장 강력한 기록', desc: '책상 위에 펼친 거대한 연구노트. 두 쪽은 언덕, 가운데 제본선은 골짜기, 만년필이 다리.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구노트',
       tipPool: 'notebook',
-      guide: { title: '증명의 노트', line: '쓰고, 서명하고, 남겨라.' }, items: { shield: '확인자 서명', heal: '원본 데이터 첨부', double: '공동 기록', amplify: '재현 가능 기록', calm: '제본 노트', fuel: '그날 기록', tele: '전자노트' }, happen: { meteor: ['서명 누락 적발', '3턴마다 빨간 「누락」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['노트 분실', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['수정액 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['확인의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '연구노트 제출 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '누락' } },
+      guide: { title: '증명의 노트', line: '쓰고, 서명하고, 남겨라.' }, items: { shield: '확인자 서명', heal: '원본 데이터 첨부', double: '공동 기록', amplify: '재현 가능 기록', calm: '제본 노트', fuel: '그날 기록', tele: '전자노트' }, happen: { meteor: ['서명 누락 적발', '3턴마다 빨간 「누락」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['노트 분실', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['수정액 회오리', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['확인의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '연구노트 제출 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '누락' } },
     lab: { name: '예방의 실험동', tag: '사고는 실험 전에 막는다', desc: '실험동 두 채와 시약 창고 마당. 창고 위 소화기가 맵의 꼭대기. 3턴마다 연구실 화재로 불붙은 천장재가 떨어집니다.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구실안전', happening: 'meteor',
       tipPool: 'safety',
       guide: { title: '예방의 실험동', line: '위험은 미리 보고, 보호구는 꼭 챙겨라.' },
       items: { shield: '보호구', heal: '응급키트', double: '2인 1조 실험', amplify: '안전교육 이수', calm: 'MSDS 확인', fuel: '통로 확보', tele: '비상대피로' },
-      happen: { meteor: ['연구실 화재 발생', '3턴마다 불붙은 천장재가 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['시약장 흔들림', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['배기 역류', '역류에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['인화성 증기', '불기둥을 통과한 포탄은 위력 1.5배'], sudden: '대피 경보! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'debris' } },
+      happen: { meteor: ['연구실 화재 발생', '3턴마다 불붙은 천장재가 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['시약장 흔들림', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['배기 역류', '역류를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['인화성 증기', '불기둥을 통과한 포탄은 위력 1.5배'], sudden: '대피 경보! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'debris' } },
     archive: { name: '신뢰의 집행실', tag: '국민이 맡긴 연구비, 투명하게', desc: '증빙 상자가 가득한 문서고. 영수증 롤 언덕, 연구비 카드 경사로, 가운데 계산기 고지.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구비관리',
       tipPool: 'budget',
       guide: { title: '신뢰의 집행실', line: '계획대로 쓰고, 증빙으로 버텨라.' },
       items: { shield: '증빙서류', heal: '정산 완료', double: '연구혁신비', amplify: '성과활용지원비', calm: '연구비 카드', fuel: '집행계획', tele: '출장 승인' },
-      happen: { meteor: ['감사 지적', '3턴마다 빨간 「환수」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['예산 삭감', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['용도 외 사용', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['집중 투자', '금빛 기둥을 통과한 포탄은 위력 1.5배'], sudden: '정산 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '환수' } },
+      happen: { meteor: ['감사 지적', '3턴마다 빨간 「환수」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['예산 삭감', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['용도 외 사용', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['집중 투자', '금빛 기둥을 통과한 포탄은 위력 1.5배'], sudden: '정산 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '환수' } },
     temple: { name: '사막 신전', tag: '계단식 · 고지대 쟁탈', desc: '양끝이 높고 가운데가 파인 계단 지형. 높은 자리를 먼저 잡는 쪽이 유리합니다.', W: 5000, H: 1500, theme: 'desert' },
     valley: { name: '협곡 도시', tag: '얇은 지형 · 번지전', desc: '아주 얇은 골짜기 지형과 그 아래 한 겹 더. 발밑을 뚫어 떨어뜨리는 싸움이 핵심입니다.', W: 4800, H: 1500, theme: 'valley' },
     snow: { name: '설원 요새', tag: '성벽 · 엄폐전', desc: '눈 덮인 언덕 양쪽에 돌 성벽이 서 있습니다. 성벽 뒤에 숨거나 넘겨 쏘는 싸움.', W: 5200, H: 1500, theme: 'snow' },
@@ -1652,7 +1654,8 @@ function createMatch(opts) {
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
   const MH = CONFIG.maps[m.mapId] && CONFIG.maps[m.mapId].happening; if (MH) m.happening = MH; // a map can fix its happening (연구실 안전: always the lab fire)
-  m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death at all (1 in 4)
+  m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death (every match now; solo turns it off)
+  m.clock = 0; // aiming ticks so far (from the turn inputs); the match clock = m.clock + m.tick
   m.column = null; // weather comes later
   return m;
 }
@@ -1899,6 +1902,7 @@ function cmdFire(m, angle, power, weapon, used) {
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { angle, power, weapon, used });
+  m.clock = (m.clock || 0) + used;
   t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
@@ -1933,6 +1937,7 @@ function cmdTimeout(m) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t) return null;
   const input = inputOf(m, { timeout: true });
+  m.clock = (m.clock || 0) + CONFIG.turn.timeLimitTicks;
   const d = CONFIG.tanks[t.tankId];
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
     + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
@@ -1956,6 +1961,7 @@ function cmdPass(m, used) {
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pass: true, used });
+  m.clock = (m.clock || 0) + used;
   t.delay += passCost(m, t, used);
   t.st.passes = (t.st.passes || 0) + 1;
   m.phase = 'settle'; m.settle = 0;
@@ -2044,13 +2050,11 @@ function teleLand(m, p, x, y) {
   m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
   t.x = tx; t.y = sy; t.vy = 0; t.falling = false; updateTilt(m, t); checkTouch(m, t);
 }
-// tornado: the shell is flung in a new direction (deterministic, looks wild); fire pillar: the shell burns for x1.5 damage
+// tornado: the shell slows down (CONFIG.happenings.tornado.slow); fire pillar: the shell burns for x1.5 damage
 function columnHit(m, p) {
   p.inCol = true;
   if (m.column.kind === 'tornado') {
-    const a = ((p.id * 977 + m.tick * 131) % 2400) - 1200, c = cosD10(a), s = sinD10(a);
-    const vx = p.vx * c - p.vy * s, vy = p.vx * s + p.vy * c;
-    p.vx = vx * 1.05; p.vy = vy * 1.05 - 160;
+    const k = CONFIG.happenings.tornado.slow; p.vx *= k; p.vy *= k; // same direction, less speed: it lands shorter, the same way every time
     m.events.push({ type: 'tornadoHit', x: p.x, y: p.y });
   } else { p.fire = true; m.events.push({ type: 'pillarHit', x: p.x, y: p.y }); }
 }
@@ -2150,7 +2154,8 @@ function beginTurn(m) {
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
-  const T = CONFIG.turn, sudden = !!m.suddenOn && m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
+  const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
+  if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)
   const WD = T.windDrift, wmul = sudden ? T.suddenWindMul : 1;
@@ -2195,11 +2200,14 @@ function beginTurn(m) {
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
-    for (const o of m.tanks) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
+    m.suddenN = (m.suddenN || 0) + 1; const pct = Math.min(T.suddenDmgMax, T.suddenDmg + T.suddenDmgStep * (m.suddenN - 1));
+    for (const o of m.tanks) if (o.alive) hurt(m, o, Math.round(o.maxhp * pct), 'sudden');
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
   }
   m.phase = 'aim';
 }
+// the match clock in ticks: aiming time from the turn inputs + every tick the simulation ran (same on every device)
+function matchClock(m) { return (m.clock || 0) + m.tick; }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
 // drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
@@ -4184,7 +4192,8 @@ function createRenderer(cv, mini) {
         }
         case 'fallout': burst(e.x, m.H - 30, '#FFFFFF', 18); R.onBanner(`${t.nick} 낙사!`, t.team); R.onSfx('fall'); if (R.onDeath) R.onDeath(t); break;
         case 'text': text(e.x, e.y, e.text, e.color); break;
-        case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소 · 바람 강화'); R.onSfx('death'); shake(6); break;
+        case 'suddenSoon': R.onBanner('1분 뒤 서든데스! 그다음부터 매 턴 모두 체력이 줄어듭니다'); break;
+        case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화'); R.onSfx('death'); shake(6); break;
         case 'pickup': { const nm = itemName(m, e.item), base = CONFIG.items[e.item].name; text(e.x, e.y - 70, nm === base ? nm + ' 획득' : `${nm} 획득 — ${base}`, CONFIG.items[e.item].color); R.onSfx('pickup'); break; }
         case 'heal': text(e.x, e.y - 70, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 20 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t && e.item === 'tele') text(t.x, t.y - 70, '순간이동탄 장전', '#9CC6F7'); if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, itemName(m, e.item), CONFIG.items[e.item].color); R.onSfx('item'); } break;
@@ -4204,7 +4213,7 @@ function createRenderer(cv, mini) {
         case 'crategone': debris(e.x, e.y - 14, 5); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner((happenName(m, 'quake') || '지진') + '! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
-        case 'weatherStart': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + (e.kind === 'tornado' ? ' 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : ' 발생! 통과한 포탄 위력 1.5배')); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
+        case 'weatherStart': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + (e.kind === 'tornado' ? ' 발생! 지난 포탄은 힘이 빠져 덜 날아갑니다' : ' 발생! 통과한 포탄 위력 1.5배')); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
         case 'weatherSoon': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 곧 사라집니다'); break;
         case 'weatherEnd': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 사라졌습니다'); break;
         case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;
@@ -6329,7 +6338,10 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
-  setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : ''].filter(Boolean).join(' · '));
+  // countdown to sudden death in the last 3 minutes before it (the match clock + this turn's aiming so far)
+  let sdLeft = '';
+  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((CONFIG.turn.suddenAtSec * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
+  setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : '', sdLeft].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
@@ -6636,7 +6648,7 @@ function beginMatch(cfg, opts) {
   installMatch(createMatch(cfg), opts);
   $('over').hidden = true; $('loading').hidden = true;
 }
-const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
+const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
 function announceHappening() {
   const kd = match && match.tanks.filter(t => CONFIG.tanks[t.tankId].hidden);
   if (kd && kd.length) setTimeout(() => { if (match && match.tanks.includes(kd[0])) banner(`히든 탱크 등장! ${kd.map(t => t.nick).join(', ')} — ${CONFIG.tanks[kd[0].tankId].name}`); }, 5000);

@@ -245,7 +245,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
     check('아이템', '실드: 2대2면 적 공격 4턴(2바퀴) 뒤 사라짐', '시작 4 · 적 4턴 후 0', `시작 ${s2} · 적 ${enemy2}턴 후 ${two.tanks[0].shield}`, s2 === 4 && enemy2 === 4 && two.tanks[0].shield === 0);
   }
   { // sudden death goes through the shield
-    const md = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); md.suddenOn = true; md.turnNo = 500; md.tanks[1].shield = 4; const hb = md.tanks[1].hp;
+    const md = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); md.suddenOn = true; md.clock = CONFIG.turn.suddenAtSec * CONFIG.physics.tickRate; md.tanks[1].shield = 4; const hb = md.tanks[1].hp;
     A.cmdPass(md, 0); runFlight(md);
     check('아이템', '실드: 서든데스 피해는 막지 않음(실드 유지)', '체력 감소 · 실드 남음', `체력 -${hb - md.tanks[1].hp} · 실드 ${md.tanks[1].shield}`, md.tanks[1].hp < hb && md.tanks[1].shield > 0);
   }
@@ -295,10 +295,18 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const windy = land(false), calm = land(true);
   check('아이템', '무풍탄: 바람 10에서도 바람 없을 때와 같은 곳에 떨어짐', still, `무풍 ${calm} / 그냥 ${windy}`, calm === still && windy !== still);
   const T = CONFIG.turn, ms = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);
-  const sdTurn = T.suddenBase + T.suddenPerPlayer * 2; ms.suddenOn = true; ms.turnNo = sdTurn - 1; ms.events.length = 0;
+  const TR = CONFIG.physics.tickRate; ms.suddenOn = true; ms.clock = T.suddenAtSec * TR - ms.tick - 10; ms.events.length = 0; // 10 ticks before 7:00
   const hp = ms.tanks.map(t => t.hp); A.cmdTimeout(ms); let g = 0; while (ms.phase !== 'aim' && g++ < 5000) A.step(ms);
-  const lost = ms.tanks.map((t, i) => hp[i] - t.hp);
-  check('공통', `서든데스: ${sdTurn}턴부터 모두 최대 체력의 4% 감소`, ms.tanks.map(t => Math.round(t.maxhp * 0.04)).join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === Math.round(ms.tanks[i].maxhp * 0.04)));
+  const lost = ms.tanks.map((t, i) => hp[i] - t.hp), p1 = ms.tanks.map(t => Math.round(t.maxhp * T.suddenDmg));
+  check('공통', `서든데스: 경기 시간 ${T.suddenAtSec / 60}분이 지나면 모두 최대 체력의 ${T.suddenDmg * 100}% 감소`, p1.join(','), lost.join(','), ms.sudden && lost.every((v, i) => v === p1[i]));
+  const hp2 = ms.tanks.map(t => t.hp); A.cmdTimeout(ms); g = 0; while (ms.phase !== 'aim' && g++ < 5000) A.step(ms);
+  const lost2 = ms.tanks.map((t, i) => hp2[i] - t.hp), p2 = ms.tanks.map(t => Math.round(t.maxhp * (T.suddenDmg + T.suddenDmgStep)));
+  check('공통', `서든데스: 다음 턴엔 ${Math.round((T.suddenDmg + T.suddenDmgStep) * 100)}%로 커짐`, p2.join(','), lost2.join(','), lost2.every((v, i) => v === p2[i]));
+  const mc = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); mc.suddenOn = true; mc.clock = (T.suddenAtSec - T.suddenWarnSec) * TR - mc.tick - T.timeLimitTicks + 10; // the timeout below adds a full minute mc.events.length = 0;
+  A.cmdTimeout(mc); g = 0; let warn = false; while (mc.phase !== 'aim' && g++ < 5000) { A.step(mc); if (mc.events.some(e => e.type === 'suddenSoon')) warn = true; }
+  check('공통', '서든데스 1분 전 예고, 그 턴에는 아직 피해 없음', '예고 · 발동 전', `${warn ? '예고' : '예고 없음'} · ${mc.sudden ? '발동' : '발동 전'}`, warn && !mc.sudden);
+  const mf2 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]), c0 = mf2.clock; A.cmdFire(mf2, 45, 500, 0, 1234); A.cmdTimeout(mf2);
+  check('공통', '경기 시간: 발사는 조준한 시간만큼, 시간 초과는 1분 전부 더해짐', 1234, mf2.clock - c0, mf2.clock - c0 === 1234);
 }
 { // random-only company tanks: K-블루 (bounce + K split) · K-그린 (성장탄 + 뿌리탄), and the shared 1/9 odds
   const mb = field([{ tank: 'kblue', x: 1000 }, { tank: 'rookie', x: 3500 }]);
@@ -344,10 +352,11 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const xs = mq.tanks.map(t => t.x); A.cmdTimeout(mq); g = 0; let qe = false;
   while (mq.phase !== 'aim' && g++ < 9000) { A.step(mq); if (mq.events.some(e => e.type === 'quake')) qe = true; mq.events.length = 0; }
   check('해프닝', '지진: 다음 턴 전에 탱크가 밀려남', '이동 있음', mq.tanks.map((t, i) => Math.round(t.x - xs[i])).join(', '), qe && mq.tanks.some((t, i) => Math.abs(t.x - xs[i]) >= 1));
-  // tornado: a shell through it lands somewhere else
+  // tornado: a shell through it slows down and lands shorter, the same way every time
   const shot = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); if (col) mt.column = { kind: col, x: 1500, life: 3 }; const r = fireAndTrace(mt, 30, 700, 0); const b = r.evs.find(e => e.type === 'boom'); return { x: b ? Math.round(b.x) : null, r }; };
   const plain = shot(null), tor = shot('tornado');
-  check('해프닝', '토네이도: 통과한 포탄의 착탄점이 바뀜', `≠ ${plain.x}`, tor.x, tor.x !== plain.x && tor.r.evs.some(e => e.type === 'tornadoHit'));
+  const tor2 = shot('tornado');
+  check('해프닝', '토네이도: 통과한 포탄은 느려져 더 가까이 떨어짐 · 매번 같은 곳', `< ${plain.x}`, `${tor.x} / ${tor2.x}`, tor.x < plain.x && tor.x === tor2.x && tor.r.evs.some(e => e.type === 'tornadoHit'));
   // fire pillar: same landing spot, 1.5x damage
   const landX = (() => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 4300 }]); const r = fireAndTrace(mt, 30, 700, 0); return Math.round(r.evs.find(e => e.type === 'boom').x); })();
   const dmgAt = (col) => { const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: landX }]); if (col) mt.column = { kind: col, x: 1500, life: 3 }; const r = fireAndTrace(mt, 30, 700, 0); const e = r.evs.find(x => x.type === 'dmg' && x.idx === 1); return e ? e.amount : 0; };
@@ -448,6 +457,7 @@ fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
     check('보급 상자', '포탄 폭발이 상자에 닿아도 아이템 안 줌 · 상자 그대로', '안 줌 · 남음', `${ms.tanks[0].items.includes(it) ? '줌' : '안 줌'} · ${left ? '남음' : '사라짐'}`, !ms.tanks[0].items.includes(it) && left);
   }
   const life = T.crateLifeRounds * m.tanks.length, born = m.turnNo;
+  m.suddenOn = false; // 8 timeouts = 8 minutes of match clock: keep sudden death out of this one
   m.crates = [{ x: 1800, y: GROUND, item: Object.keys(CONFIG.items)[0], dead: false, id: 7777, born }];
   for (let k = 0; k < life; k++) { A.cmdTimeout(m); let g = 0; while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 5000) A.step(m); }
   check('보급 상자', `아무도 안 먹으면 ${life}턴 뒤 사라짐`, '사라짐', m.crates.some(c => c.id === 7777) ? '남음' : '사라짐', !m.crates.some(c => c.id === 7777));

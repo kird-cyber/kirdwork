@@ -6,7 +6,7 @@ const ok = (c, s) => { console.log((c ? 'PASS ' : 'FAIL ') + s); c ? pass++ : fa
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.now() - t0 < ms) { try { if (await fn()) return true; } catch (e) {} await sleep(step); } return false; }
 (async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const b = await chromium.launch();
   const p = await (await b.newContext({ viewport: { width: 1280, height: 760 } })).newPage();
   const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto('http://127.0.0.1:8765/index.html'); await p.waitForTimeout(600);
@@ -34,8 +34,8 @@ async function until(fn, ms, step = 150) { const t0 = Date.now(); while (Date.no
     const t0 = await until(async () => p.evaluate(() => __pg.match && __pg.match.turnNo >= 4), 60000);
     ok(t0, `${map}: 봇끼리 4턴 이상 진행 (오류 없이)`);
   }
-  // sudden death: jump the turn counter close to it on a bot game
-  await p.evaluate(() => { const m = __pg.match; m.turnNo = 16; });
+  // sudden death: jump the match clock close to it on a bot game
+  await p.evaluate(() => { const m = __pg.match; m.clock = __pg.CONFIG.turn.suddenAtSec * __pg.CONFIG.physics.tickRate - m.tick - 5; });
   ok(await until(async () => p.evaluate(() => __pg.match.sudden === true), 60000), '서든데스 발동');
   ok((await p.textContent('#windTxt')).includes('서든데스'), '바람 표시에 서든데스 안내');
   // music toggle

@@ -235,7 +235,10 @@ function updateHud() {
   setTxt('timer', m.phase === 'aim' ? secs + '' : '–');
   $('timer').classList.toggle('low', m.phase === 'aim' && secs <= 10);
   const wd = Math.abs(m.wind);
-  setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : ''].filter(Boolean).join(' · '));
+  // countdown to sudden death in the last 3 minutes before it (the match clock + this turn's aiming so far)
+  let sdLeft = '';
+  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((CONFIG.turn.suddenAtSec * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
+  setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : '', sdLeft].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });
   const used = m.turn && m.turn.itemUsed;
@@ -542,7 +545,7 @@ function beginMatch(cfg, opts) {
   installMatch(createMatch(cfg), opts);
   $('over').hidden = true; $('loading').hidden = true;
 }
-const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
+const HAPPEN = { meteor: ['운석 낙하', '3턴마다 불붙은 운석이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['지진', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['토네이도', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다 · 바람 따라 이동'], pillar: ['불기둥', '불기둥을 통과한 포탄은 위력 1.5배 · 바람 따라 이동'] };
 function announceHappening() {
   const kd = match && match.tanks.filter(t => CONFIG.tanks[t.tankId].hidden);
   if (kd && kd.length) setTimeout(() => { if (match && match.tanks.includes(kd[0])) banner(`히든 탱크 등장! ${kd.map(t => t.nick).join(', ')} — ${CONFIG.tanks[kd[0].tankId].name}`); }, 5000);

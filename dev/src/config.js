@@ -47,9 +47,11 @@ const CONFIG = {
     teamMax: 4,
     inventoryMax: 4,
     mineMax: 6,
-    // sudden death: from turn (base + perPlayer x players) every tank loses a share of its max hp each turn and wind gets stronger
-    // only some matches have it at all (suddenChance, decided from the seed), and later than before (base 10 -> 16, 4 -> 6 per player)
-    suddenChance: 0.25, suddenBase: 16, suddenPerPlayer: 6, suddenDmg: 0.04, suddenWindMul: 1.5,
+    // sudden death (2026-11, for tournaments): every match, once the match clock reaches suddenAtSec (7 min) — the clock is
+    // the aiming time each turn's input carries (a timeout = the full minute) + the ticks shells fly and the ground settles,
+    // so it is the same on every device. Each turn from then on every tank loses suddenDmg of its max hp, +suddenDmgStep more
+    // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
+    suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 
@@ -159,7 +161,7 @@ const CONFIG = {
     quake: { every: 4, from: 4, shift: 55 },
     // weather that comes and goes during the match: one at a time, a few turns each
     weather: { list: ['tornado', 'pillar'], from: 3, chance: 0.2, minTurns: 3, maxTurns: 4 },
-    tornado: { w: 70, drift: 14 },
+    tornado: { w: 70, drift: 14, slow: 0.65 }, // a shell through it keeps its direction but loses 35% of its speed (2026-11: was a random fling)
     pillar: { w: 46, drift: 14, mul: 1.5 },
   },
   items: {
@@ -180,23 +182,23 @@ const CONFIG = {
       tipPool: 'common', tipMix: ['ethics', 'notebook', 'safety', 'budget'],
       guide: { title: '혁신의 능선', line: '절차를 지키면 연구가 자유로워진다.' },
       items: { shield: '협약서', heal: '이의신청', double: '공동연구개발기관', amplify: '우수 평가', calm: 'IRIS 통합관리', fuel: '협약 변경', tele: '단계 전환' },
-      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
+      happen: { meteor: ['제재 도장', '3턴마다 빨간 「제재」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['특별평가', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['3책5공 초과', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['성과 활용', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '최종보고 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '제재' } },
     scale: { name: '진실의 전당', tag: '믿을 수 있는 연구가 되려면', desc: '연구윤리 실험실. 벽엔 위조·변조·표절 예방 포스터, 바닥엔 원본 데이터 보관함·출처 표기 서가·논문 원고 두루마리, 가운데는 밑으로 지나다니는 연구노트 서명대.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구윤리',
       tipPool: 'ethics',
-      guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
+      guide: { title: '진실의 전당', line: '기록하고, 밝히고, 함께 검증하라.' }, items: { shield: '연구노트', heal: '데이터 원본 보관', double: '공동연구', amplify: '동료 검증', calm: '출처 표기', fuel: 'IRB 승인', tele: '학회 발표' }, happen: { meteor: ['표절 적발', '3턴마다 빨간 「표절」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['데이터 변조', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['위조 회오리', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['검증의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '논문 철회 카운트다운! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '표절' } },
     notebook: { name: '증명의 노트', tag: '내 연구를 지켜 주는 가장 강력한 기록', desc: '책상 위에 펼친 거대한 연구노트. 두 쪽은 언덕, 가운데 제본선은 골짜기, 만년필이 다리.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구노트',
       tipPool: 'notebook',
-      guide: { title: '증명의 노트', line: '쓰고, 서명하고, 남겨라.' }, items: { shield: '확인자 서명', heal: '원본 데이터 첨부', double: '공동 기록', amplify: '재현 가능 기록', calm: '제본 노트', fuel: '그날 기록', tele: '전자노트' }, happen: { meteor: ['서명 누락 적발', '3턴마다 빨간 「누락」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['노트 분실', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['수정액 회오리', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['확인의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '연구노트 제출 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '누락' } },
+      guide: { title: '증명의 노트', line: '쓰고, 서명하고, 남겨라.' }, items: { shield: '확인자 서명', heal: '원본 데이터 첨부', double: '공동 기록', amplify: '재현 가능 기록', calm: '제본 노트', fuel: '그날 기록', tele: '전자노트' }, happen: { meteor: ['서명 누락 적발', '3턴마다 빨간 「누락」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['노트 분실', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['수정액 회오리', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['확인의 빛', '빛기둥을 통과한 포탄은 위력 1.5배'], sudden: '연구노트 제출 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '누락' } },
     lab: { name: '예방의 실험동', tag: '사고는 실험 전에 막는다', desc: '실험동 두 채와 시약 창고 마당. 창고 위 소화기가 맵의 꼭대기. 3턴마다 연구실 화재로 불붙은 천장재가 떨어집니다.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구실안전', happening: 'meteor',
       tipPool: 'safety',
       guide: { title: '예방의 실험동', line: '위험은 미리 보고, 보호구는 꼭 챙겨라.' },
       items: { shield: '보호구', heal: '응급키트', double: '2인 1조 실험', amplify: '안전교육 이수', calm: 'MSDS 확인', fuel: '통로 확보', tele: '비상대피로' },
-      happen: { meteor: ['연구실 화재 발생', '3턴마다 불붙은 천장재가 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['시약장 흔들림', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['배기 역류', '역류에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['인화성 증기', '불기둥을 통과한 포탄은 위력 1.5배'], sudden: '대피 경보! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'debris' } },
+      happen: { meteor: ['연구실 화재 발생', '3턴마다 불붙은 천장재가 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['시약장 흔들림', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['배기 역류', '역류를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['인화성 증기', '불기둥을 통과한 포탄은 위력 1.5배'], sudden: '대피 경보! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'debris' } },
     archive: { name: '신뢰의 집행실', tag: '국민이 맡긴 연구비, 투명하게', desc: '증빙 상자가 가득한 문서고. 영수증 롤 언덕, 연구비 카드 경사로, 가운데 계산기 고지.', W: 5200, H: 1500, theme: 'kird', special: 'KIRD 연구비관리',
       tipPool: 'budget',
       guide: { title: '신뢰의 집행실', line: '계획대로 쓰고, 증빙으로 버텨라.' },
       items: { shield: '증빙서류', heal: '정산 완료', double: '연구혁신비', amplify: '성과활용지원비', calm: '연구비 카드', fuel: '집행계획', tele: '출장 승인' },
-      happen: { meteor: ['감사 지적', '3턴마다 빨간 「환수」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['예산 삭감', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['용도 외 사용', '회오리에 들어간 포탄은 엉뚱한 곳으로 튕깁니다'], pillar: ['집중 투자', '금빛 기둥을 통과한 포탄은 위력 1.5배'], sudden: '정산 마감! 매 턴 모두 체력 감소 · 바람 강화' }, meteorLook: { kind: 'stamp', word: '환수' } },
+      happen: { meteor: ['감사 지적', '3턴마다 빨간 「환수」 도장이 떨어집니다 (붉은 원 = 낙하 지점)'], quake: ['예산 삭감', '4턴마다 땅이 흔들려 탱크가 밀려납니다'], tornado: ['용도 외 사용', '회오리를 지난 포탄은 힘이 빠져 덜 날아갑니다'], pillar: ['집중 투자', '금빛 기둥을 통과한 포탄은 위력 1.5배'], sudden: '정산 마감! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화' }, meteorLook: { kind: 'stamp', word: '환수' } },
     temple: { name: '사막 신전', tag: '계단식 · 고지대 쟁탈', desc: '양끝이 높고 가운데가 파인 계단 지형. 높은 자리를 먼저 잡는 쪽이 유리합니다.', W: 5000, H: 1500, theme: 'desert' },
     valley: { name: '협곡 도시', tag: '얇은 지형 · 번지전', desc: '아주 얇은 골짜기 지형과 그 아래 한 겹 더. 발밑을 뚫어 떨어뜨리는 싸움이 핵심입니다.', W: 4800, H: 1500, theme: 'valley' },
     snow: { name: '설원 요새', tag: '성벽 · 엄폐전', desc: '눈 덮인 언덕 양쪽에 돌 성벽이 서 있습니다. 성벽 뒤에 숨거나 넘겨 쏘는 싸움.', W: 5200, H: 1500, theme: 'snow' },

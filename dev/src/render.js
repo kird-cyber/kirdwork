@@ -679,7 +679,8 @@ function createRenderer(cv, mini) {
         }
         case 'fallout': burst(e.x, m.H - 30, '#FFFFFF', 18); R.onBanner(`${t.nick} 낙사!`, t.team); R.onSfx('fall'); if (R.onDeath) R.onDeath(t); break;
         case 'text': text(e.x, e.y, e.text, e.color); break;
-        case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소 · 바람 강화'); R.onSfx('death'); shake(6); break;
+        case 'suddenSoon': R.onBanner('1분 뒤 서든데스! 그다음부터 매 턴 모두 체력이 줄어듭니다'); break;
+        case 'sudden': R.onBanner(happenName(m, 'sudden') || '서든데스! 매 턴 모두 체력 감소(점점 커짐) · 바람 강화'); R.onSfx('death'); shake(6); break;
         case 'pickup': { const nm = itemName(m, e.item), base = CONFIG.items[e.item].name; text(e.x, e.y - 70, nm === base ? nm + ' 획득' : `${nm} 획득 — ${base}`, CONFIG.items[e.item].color); R.onSfx('pickup'); break; }
         case 'heal': text(e.x, e.y - 70, '+' + e.amount, '#6EF0C8'); for (let i = 0; i < 10; i++) R.fx.push({ kind: 'plus', x: e.x + (vrnd() - 0.5) * 60, y: e.y - 20 - vrnd() * 30, vy: -50 - vrnd() * 30, t: 0, life: 1 }); R.onSfx('heal'); break;
         case 'item': if (t && e.item === 'tele') text(t.x, t.y - 70, '순간이동탄 장전', '#9CC6F7'); if (t && e.item !== 'heal' && e.item !== 'tele') { text(t.x, t.y - 70, itemName(m, e.item), CONFIG.items[e.item].color); R.onSfx('item'); } break;
@@ -699,7 +700,7 @@ function createRenderer(cv, mini) {
         case 'crategone': debris(e.x, e.y - 14, 5); break;
         case 'meteor': R.meteors.push({ x: e.x, at: e.at, dur: e.dur }); break;
         case 'quake': R.onBanner((happenName(m, 'quake') || '지진') + '! 탱크가 흔들립니다'); shake(16); R.onSfx('boom', { tier: 3 }); for (const tk of m.tanks) if (tk.alive) { for (let i = 0; i < 8; i++) R.fx.push({ kind: 'dust', x: tk.x + (vrnd() - 0.5) * 60, y: tk.y - 2, vx: (vrnd() - 0.5) * 60, vy: -20 - vrnd() * 30, t: 0, life: 0.9, r: 6 + vrnd() * 6, col: R.th.debris }); } break;
-        case 'weatherStart': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + (e.kind === 'tornado' ? ' 발생! 들어간 포탄은 엉뚱하게 튕깁니다' : ' 발생! 통과한 포탄 위력 1.5배')); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
+        case 'weatherStart': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + (e.kind === 'tornado' ? ' 발생! 지난 포탄은 힘이 빠져 덜 날아갑니다' : ' 발생! 통과한 포탄 위력 1.5배')); R.onSfx('beam'); burst(e.x, Math.max(0, surfaceAt(m, e.x, 0)) - 40, e.kind === 'tornado' ? '#DCE6F0' : '#FFB040', 24); break;
         case 'weatherSoon': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 곧 사라집니다'); break;
         case 'weatherEnd': R.onBanner((happenName(m, e.kind) || (e.kind === 'tornado' ? '토네이도' : '불기둥')) + ' — 사라졌습니다'); break;
         case 'tornadoHit': burst(e.x, e.y, '#DCE6F0', 12); break;

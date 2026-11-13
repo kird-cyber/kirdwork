@@ -72,7 +72,8 @@ function createMatch(opts) {
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
   const MH = CONFIG.maps[m.mapId] && CONFIG.maps[m.mapId].happening; if (MH) m.happening = MH; // a map can fix its happening (연구실 안전: always the lab fire)
-  m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death at all (1 in 4)
+  m.suddenOn = rngNext(m) < CONFIG.turn.suddenChance; // this match gets sudden death (every match now; solo turns it off)
+  m.clock = 0; // aiming ticks so far (from the turn inputs); the match clock = m.clock + m.tick
   m.column = null; // weather comes later
   return m;
 }
@@ -319,6 +320,7 @@ function cmdFire(m, angle, power, weapon, used) {
   weapon = weapon === 1 && t.cd <= 0 ? 1 : 0;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { angle, power, weapon, used });
+  m.clock = (m.clock || 0) + used;
   t.st.shots++;
   t.aim = angle; t.lastAim = angle; t.lastPower = power;
   const w = d.weapons[weapon];
@@ -353,6 +355,7 @@ function cmdTimeout(m) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t) return null;
   const input = inputOf(m, { timeout: true });
+  m.clock = (m.clock || 0) + CONFIG.turn.timeLimitTicks;
   const d = CONFIG.tanks[t.tankId];
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
     + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
@@ -376,6 +379,7 @@ function cmdPass(m, used) {
   if (m.phase !== 'aim' || !t || !t.alive) return null;
   used = clampN(Math.round(used || 0), 0, CONFIG.turn.timeLimitTicks);
   const input = inputOf(m, { pass: true, used });
+  m.clock = (m.clock || 0) + used;
   t.delay += passCost(m, t, used);
   t.st.passes = (t.st.passes || 0) + 1;
   m.phase = 'settle'; m.settle = 0;
@@ -464,13 +468,11 @@ function teleLand(m, p, x, y) {
   m.events.push({ type: 'tele', idx: t.idx, x: t.x, y: t.y, x2: tx, y2: sy });
   t.x = tx; t.y = sy; t.vy = 0; t.falling = false; updateTilt(m, t); checkTouch(m, t);
 }
-// tornado: the shell is flung in a new direction (deterministic, looks wild); fire pillar: the shell burns for x1.5 damage
+// tornado: the shell slows down (CONFIG.happenings.tornado.slow); fire pillar: the shell burns for x1.5 damage
 function columnHit(m, p) {
   p.inCol = true;
   if (m.column.kind === 'tornado') {
-    const a = ((p.id * 977 + m.tick * 131) % 2400) - 1200, c = cosD10(a), s = sinD10(a);
-    const vx = p.vx * c - p.vy * s, vy = p.vx * s + p.vy * c;
-    p.vx = vx * 1.05; p.vy = vy * 1.05 - 160;
+    const k = CONFIG.happenings.tornado.slow; p.vx *= k; p.vy *= k; // same direction, less speed: it lands shorter, the same way every time
     m.events.push({ type: 'tornadoHit', x: p.x, y: p.y });
   } else { p.fire = true; m.events.push({ type: 'pillarHit', x: p.x, y: p.y }); }
 }
@@ -570,7 +572,8 @@ function beginTurn(m) {
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
-  const T = CONFIG.turn, sudden = !!m.suddenOn && m.turnNo >= T.suddenBase + T.suddenPerPlayer * m.tanks.length;
+  const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
+  if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)
   const WD = T.windDrift, wmul = sudden ? T.suddenWindMul : 1;
@@ -615,11 +618,14 @@ function beginTurn(m) {
   }
   if (sudden) {
     if (!m.sudden) { m.sudden = true; m.events.push({ type: 'sudden' }); }
-    for (const o of m.tanks) if (o.alive) hurt(m, o, Math.round(o.maxhp * T.suddenDmg), 'sudden');
+    m.suddenN = (m.suddenN || 0) + 1; const pct = Math.min(T.suddenDmgMax, T.suddenDmg + T.suddenDmgStep * (m.suddenN - 1));
+    for (const o of m.tanks) if (o.alive) hurt(m, o, Math.round(o.maxhp * pct), 'sudden');
     if (!t.alive) { m.phase = 'settle'; m.settle = 0; return; }
   }
   m.phase = 'aim';
 }
+// the match clock in ticks: aiming time from the turn inputs + every tick the simulation ran (same on every device)
+function matchClock(m) { return (m.clock || 0) + m.tick; }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
 // drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
