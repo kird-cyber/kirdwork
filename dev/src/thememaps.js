@@ -1,5 +1,5 @@
 // ============================================================== KIRD 주제 맵 그림 (연구윤리 · 연구노트 · 연구실 안전 · 연구비 관리)
-// The shapes live in mapgen.js (TMAPGEN); this paints them: a backdrop behind the terrain, the solid art (clipped to the mask),
+// The ground shapes live in mapgen.js (TMAP_K smooth profiles; TMAP_OLDGEN = the old furniture, painted as scenery); this paints them: a backdrop behind the terrain, the solid art (clipped to the mask),
 // and decorations drawn on the terrain picture. Visual only: nothing here touches the simulation.
 // Map-specific names: items, happenings (from CONFIG.maps[id].items / .happen); falls back to the usual names.
 function mapMetaOf(m) { return (m && CONFIG.maps[m.mapId]) || {}; }
@@ -704,15 +704,15 @@ const TMAP_ART = (() => {
       wave(x, 820, 60, 430, 40, 170, '#B4CEDD');
       wave(x, 930, 50, 300, 30, 120, '#9DBFA8');
       board(x, 60, 300, 560, '과제의 길', [['공모', '선정평가'], ['협약', '1단계 수행'], ['단계평가', '2단계 수행'], ['최종평가', '성과활용']], { color: '#1D5E9E', legs: 460 });
-      selectionHall(x, 950, 780);
+      selectionHall(x, 950, ridgeTop(950));
       const hx = 1360, hy = ridgeTop(hx); x.fillStyle = '#5E6870'; x.fillRect(hx - 5, hy - 230, 10, 240);
       x.fillStyle = '#FFFFFF'; rr(x, hx - 90, hy - 300, 180, 92, 12); x.fill(); x.strokeStyle = KB; x.lineWidth = 5; x.stroke();
       text(x, '협약', hx, hy - 268, 34, { color: '#1D5E9E', weight: 900 }); text(x, '협약서 서명', hx, hy - 230, 18, { color: '#5A646C', weight: 700 });
       labProps(x, 1750, '1단계'); labProps(x, 3450, '2단계', true);
-      statuePillar(x, 2130, 600, 82, 1010, 'blue', '도전하는 연구');
-      statuePillar(x, 3070, 600, 82, 1010, 'green', '함께하는 연구');
-      stageGate(x, 2600, 720);
-      finalStage(x, 4250, 780);
+      statuePillar(x, 2130, ridgeTop(2130) - 400, 82, ridgeTop(2130) + 30, 'blue', '도전하는 연구');
+      statuePillar(x, 3070, ridgeTop(3070) - 400, 82, ridgeTop(3070) + 30, 'green', '함께하는 연구');
+      stageGate(x, 2600, ridgeTop(2600));
+      finalStage(x, 4250, ridgeTop(4250));
       const px = 4760; x.fillStyle = vg(x, 760, 1000, [[0, '#F4F2EC'], [1, '#C9C4B8']]); x.fillRect(px - 130, 760, 260, 260);
       text(x, '성과', px, 820, 44, { color: '#4A3E2C', weight: 900 }); text(x, '공개 · 활용', px, 875, 34, { color: '#4A3E2C', weight: 900 });
       x.fillStyle = gold(x, 560, 760); x.beginPath(); x.moveTo(px - 90, 590); x.lineTo(px + 90, 590); x.quadraticCurveTo(px + 80, 700, px + 22, 712); x.lineTo(px + 22, 740); x.lineTo(px + 60, 760); x.lineTo(px - 60, 760); x.lineTo(px - 22, 740); x.lineTo(px - 22, 712); x.quadraticCurveTo(px - 80, 700, px - 90, 590); x.closePath(); x.fill();
@@ -737,6 +737,87 @@ const TMAP_ART = (() => {
   function cardAlong(x, ox, oy, ang) {
     const w = 640, h = 404; x.save(); x.translate(ox, oy); x.rotate(ang); x.translate(w / 2 - 10, h / 2 - 6); fundCard(x, 0, 0, w, 0); x.restore();
   }
+
+
+  // ---------------------------------------------------------------- 2026-11: the 주제 맵 grounds are smooth hills now (TMAP_K in mapgen.js).
+  // The old furniture (benches, cabinets, the pen bridge, lab blocks, drums, receipt rolls, the calculator...) stays in the
+  // picture as background scenery: the old solid art clipped to the old shapes, plus the old decorations, behind the veil.
+  const TOP = id => TMAP_TOP[id];
+  const LIFT_MAX = 120;
+  function oldProps(x, id, old) {
+    const mask = new Uint8Array(W * H); TMAP_OLDGEN[id](W, H, mask);
+    const c = document.createElement('canvas'); c.width = W; c.height = H; const y = c.getContext('2d');
+    old.solid(y);
+    const img = y.getImageData(0, 0, W, H), d = img.data; for (let i = 0; i < W * H; i++) if (!mask[i]) d[i * 4 + 3] = 0; y.putImageData(img, 0, 0);
+    const surface = (px, from) => { const v = maskSurface(mask, W, H, px, from || 0); return v < 0 ? H : v; };
+    y.save(); old.front(y, surface); y.restore();
+    // each piece of furniture is lifted to stand on the highest point of the new ground under it (its old floor comes up with it)
+    const a8 = y.getImageData(0, 0, W, G - 2).data, used = new Uint8Array(W);
+    for (let px = 0; px < W; px++) for (let py = 0; py < G - 2; py += 2) if (a8[(py * W + px) * 4 + 3] > 8) { used[px] = 1; break; }
+    const f = TOP(id); let px = 0;
+    while (px < W) {
+      if (!used[px]) { px++; continue; }
+      let b = px; while (b < W && (used[b] || (b + 24 < W && used.subarray(b, b + 24).some(v => v)))) b++;
+      let top = G; for (let q = px; q < b; q++) top = Math.min(top, f(q));
+      const lift = Math.min(LIFT_MAX, G - top + 4); // capped: tall pieces may sink a little into the hills instead of covering the wall boards
+      x.drawImage(c, px, 0, b - px, H, px, -lift, b - px, H);
+      px = b;
+    }
+  }
+  function topPath(x, id, off, a, b) { const f = TOP(id); a = a || 0; b = b == null ? W : b; x.beginPath(); x.moveTo(a, f(a) + off); for (let px = a; px <= b; px += 10) x.lineTo(px, f(px) + off); x.lineTo(b, f(b) + off); }
+  function topCap(x, id, off, w, col, a, b) { x.lineJoin = 'round'; topPath(x, id, off, a, b); x.lineWidth = w; x.strokeStyle = col; x.stroke(); }
+  function aboveFloor(x, id, fill) { const f = TOP(id); x.beginPath(); x.moveTo(0, G); for (let px = 0; px <= W; px += 10) x.lineTo(px, Math.min(G, f(px))); x.lineTo(W, G); x.closePath(); x.fillStyle = fill; x.fill(); }
+  const NEW = {
+    scale: { // 실험실 바닥: 회색 바닥재, 언덕은 고무 매트를 깐 단
+      solid(x) {
+        x.fillStyle = vg(x, 980, H, [[0, '#A7B2BA'], [0.1, '#8B979F'], [1, '#4E585F']]); x.fillRect(0, 900, W, H - 900);
+        aboveFloor(x, 'scale', vg(x, 1000, G, [[0, '#5E7C96'], [1, '#3F5A72']]));
+        x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, 900); x.lineTo(px, H); x.stroke(); }
+        topCap(x, 'scale', 7, 14, '#D7DEE3'); topCap(x, 'scale', 1, 3, '#FFFFFF');
+      },
+      front() {},
+    },
+    notebook: { // 책상 위: 나무 상판, 가운데 두 언덕은 펼친 연구노트 종이 더미
+      solid(x) {
+        x.fillStyle = vg(x, 960, H, [[0, '#9A6A40'], [0.08, '#7A4E2C'], [1, '#3E2614']]); x.fillRect(0, 900, W, H - 900);
+        const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.22)'; x.lineWidth = 2;
+        for (let y = 990; y < H; y += 20 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); }
+        const f = TOP('notebook'); x.save(); x.beginPath(); x.moveTo(640, G); for (let px = 640; px <= W - 640; px += 10) x.lineTo(px, f(px)); x.lineTo(W - 640, G); x.closePath(); x.clip();
+        x.fillStyle = vg(x, 960, G, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.fillRect(640, 900, W - 1280, G - 900);
+        x.strokeStyle = 'rgba(150,130,95,0.35)'; x.lineWidth = 1.2; for (let off = 12; off < 190; off += 6) { topPath(x, 'notebook', off, 640, W - 640); x.stroke(); }
+        x.fillStyle = hg(x, CX - 160, CX + 160, [[0, 'rgba(90,70,40,0)'], [0.5, 'rgba(90,70,40,0.28)'], [1, 'rgba(90,70,40,0)']]); x.fillRect(CX - 160, 900, 320, G - 900);
+        x.restore();
+        topCap(x, 'notebook', 6, 12, '#F6EFDD', 0, W); topCap(x, 'notebook', 1, 3, '#FFFFFF', 640, W - 640);
+      },
+      front() {},
+    },
+    lab: { // 실험동 마당: 바깥 언덕은 잔디, 가운데는 노란 안전선을 그은 콘크리트 마당
+      solid(x) {
+        concrete(x, 0, W, 900, H, 8);
+        const f = TOP('lab'); x.save(); x.beginPath(); x.moveTo(0, H); for (let px = 0; px <= 1300; px += 10) x.lineTo(px, f(px)); x.lineTo(1300, H); x.closePath();
+        x.moveTo(W - 1300, H); for (let px = W - 1300; px <= W; px += 10) x.lineTo(px, f(px)); x.lineTo(W, H); x.closePath(); x.clip();
+        x.fillStyle = vg(x, 950, H, [[0, '#6A5A40'], [0.4, '#55473A'], [1, '#3A3028']]); x.fillRect(0, 900, W, H - 900); x.restore();
+        topCap(x, 'lab', 10, 22, '#6FA34E', 0, 1320); topCap(x, 'lab', 10, 22, '#6FA34E', W - 1320, W);
+        topCap(x, 'lab', 6, 12, '#B9C1C7', 1300, W - 1300); topCap(x, 'lab', 20, 6, '#F2C230', 1300, W - 1300);
+      },
+      front() {},
+    },
+    archive: { // 보관실 바닥 위 언덕은 차곡차곡 쌓인 영수증 · 증빙 서류 더미
+      solid(x) {
+        noiseBand(x, 0, W, 900, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41);
+        aboveFloor(x, 'archive', vg(x, 960, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]));
+        x.save(); const f = TOP('archive'); x.beginPath(); x.moveTo(0, G); for (let px = 0; px <= W; px += 10) x.lineTo(px, Math.min(G, f(px))); x.lineTo(W, G); x.closePath(); x.clip();
+        x.strokeStyle = 'rgba(140,130,110,0.42)'; x.lineWidth = 1.5; for (let y = 960; y < G; y += 7) { x.beginPath(); x.moveTo(0, y); x.lineTo(W, y); x.stroke(); }
+        for (let px = 100; px < W; px += 360) { x.fillStyle = ['#2E86D6', '#8CC63F', '#E8913C'][(px / 360 | 0) % 3]; x.fillRect(px, 960, 10, G - 960); }
+        x.restore();
+        x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(0, G, W, 6);
+        topCap(x, 'archive', 5, 10, '#F4F1EA'); topCap(x, 'archive', 1, 3, '#FFFFFF');
+        for (const px of [470, mx(470), 1700, mx(1700)]) stamp(x, px, TOP('archive')(px) + 70, 34, '증빙', '#D62828', -0.2);
+      },
+      front() {},
+    },
+  };
+  for (const id in NEW) { const old = S[id]; S[id] = Object.assign({}, old, { back(x) { old.back(x); oldProps(x, id, old); }, solid: NEW[id].solid, front: NEW[id].front }); }
 
   function paint(x, m) { // after the base colours: the art clipped to the solid pixels, then the decorations
     const S1 = S[m.mapId], surface = (px, from) => { const y = maskSurface(m.mask, m.W, m.H, px, from || 0); return y < 0 ? m.H : y; };

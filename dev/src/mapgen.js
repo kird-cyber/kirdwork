@@ -264,13 +264,32 @@ function nbTop(px) { // the notebook's left page top edge (the right page mirror
   if (px <= 2560) { const u = (px - 2200) / 360; return TG - 340 + 150 * u * Math.sqrt(u); }
   return TG;
 }
-// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys, mirror-symmetric; slopes kept under the climb limit
-const RIDGE_K = [[0, 1000], [300, 1000], [950, 780], [1750, 1150], [2600, 720], [3450, 1150], [4250, 780], [4900, 1000], [5200, 1000]];
+// Smooth, mirror-symmetric ground profiles for the KIRD 주제 맵 (2026-11): no walls, no tables to hide under, no deep pits.
+// K = keys for the left half (x 0..2600, y of the surface); between keys a soft S-curve (half straight, half smoothstep)
+// so the steepest slope is 1.25 x the average one; every map keeps it under ~0.5 (a tank climbs up to ~0.7).
+function profTop(K) {
+  return px => {
+    if (px > TCX) px = 2 * TCX - px;
+    for (let i = 1; i < K.length; i++) { const [x0, y0] = K[i - 1], [x1, y1] = K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
+    return K[K.length - 1][1];
+  };
+}
+const TMAP_K = {
+  scale: [[0, 1040], [320, 1040], [700, 1150], [1000, 1150], [1390, 1010], [1780, 1150], [2150, 1150], [2600, 1060]],   // 진실의 전당: bench mound · cabinet/shelf mound · signing-desk podium
+  notebook: [[0, 1080], [260, 1080], [640, 1150], [1100, 980], [2100, 970], [2600, 1070]],                              // 증명의 노트: a page plateau each side, the gutter a shallow dip
+  lab: [[0, 1010], [300, 1030], [800, 1070], [1300, 960], [1900, 1150], [2250, 1150], [2600, 1040]],                    // 예방의 실험동: yard hill · lab-block rise · reagent-store mound
+  archive: [[0, 1110], [470, 970], [1000, 1150], [1200, 1150], [1700, 960], [2150, 1110], [2600, 980]],                 // 신뢰의 집행실: receipt-roll mound · bundle hill · calculator hill
+  ridge: [[0, 1060], [300, 1060], [950, 900], [1750, 1090], [2600, 860]],                                               // 혁신의 능선: three crests (선정·단계·최종 평가), two shallow valleys (수행)
+};
+const TMAP_TOP = {}; for (const k in TMAP_K) TMAP_TOP[k] = profTop(TMAP_K[k]);
+// 국가연구개발혁신법 맵 「혁신의 능선」: three crests and two valleys (see TMAP_K.ridge)
+const RIDGE_K = TMAP_K.ridge.concat(TMAP_K.ridge.slice(0, -1).reverse().map(([x, y]) => [2 * TCX - x, y]));
 function ridgeTop(px) {
   for (let i = 1; i < RIDGE_K.length; i++) { const [x0, y0] = RIDGE_K[i - 1], [x1, y1] = RIDGE_K[i]; if (px <= x1) { const t = (px - x0) / (x1 - x0); return y0 + (y1 - y0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t)); } }
   return RIDGE_K[RIDGE_K.length - 1][1];
 }
-const TMAPGEN = {
+// the 2026-10 shapes (walls, desks, drums...): no longer the ground — thememaps.js paints them as background scenery
+const TMAP_OLDGEN = {
   notebook(W, H, m) { // 연구노트: an open lab notebook on a desk; the pages are hills, the gutter a valley, the fountain pen a bridge
     rectF(m, W, H, 0, TG, W, H - 4, 1);
     tmMirror((X, r) => {
@@ -322,8 +341,7 @@ const TMAPGEN = {
     rectF(m, W, H, 2380, TG - 166, 2420, TG, 1); rectF(m, W, H, 2780, TG - 166, 2820, TG, 1); // its legs
   },
 };
-for (const k in TMAPGEN) MAPGEN[k] = (W, H, mask) => TMAPGEN[k](W, H, mask);
-MAPGEN.ridge = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, ridgeTop, () => H - 4); // 혁신의 능선: three crests, two valleys
+for (const k in TMAP_TOP) MAPGEN[k] = (W, H, mask) => fillBand(mask, W, H, 0, W - 1, TMAP_TOP[k], () => H - 4); // one smooth ground per 주제 맵
 
 function maskSurface(mask, W, H, x, from) {
   x = Math.floor(x); if (x < 0 || x >= W) return -1;
