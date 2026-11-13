@@ -1501,42 +1501,47 @@ function featH(f, x) {
   return t <= 0 ? 0 : h0 + (f.h - h0) * (0.5 * t + 0.5 * t * t * (3 - 2 * t));
 }
 function featSpan(f) { if (f.k === 'dome') return [f.c - f.w, f.c + f.w]; const d = f.h - (f.on || 0); return [f.a - d / (f.sL || f.s || 0.4), f.b + d / (f.sR || f.s || 0.4)]; }
-const M = (a, b, h, art, o) => Object.assign({ k: 'mesa', a, b, h, art }, o || {}), D = (c, w, h, art) => ({ k: 'dome', c, w, h, art });
+const M = (a, b, h, art, o) => Object.assign({ k: 'mesa', a, b, h, art }, o || {}), D = (c, w, h, art, o) => Object.assign({ k: 'dome', c, w, h, art }, o || {});
+// 2026-11 v3: designed again from the 522 「알고 계셨나요?」 sentences — every structure stands for a rule, and `lab`
+// is the short rule engraved on its face (thememaps.js draws it as a plaque; lx/lw/ly place it by hand where the face is odd).
 const TMAP_F = {
-  scale: [ // 진실의 전당 (연구윤리 실험실)
-    M(150, 850, 70, 'notebooks'), M(380, 620, 150, 'notebooks', { on: 70 }),            // 연구노트 더미 (계단식)
-    D(960, 240, 55, 'scroll'),                                               // 논문 원고 두루마리
-    M(1230, 1640, 120, 'cabinet'),                                           // 원본 데이터 보관함
-    M(1900, 2140, 100, 'pan'), M(2380, 2820, 200, 'scaleBase'), M(3060, 3300, 100, 'pan'), // 정의의 저울: 받침대 + 두 접시
-    M(3920, 4560, 230, 'shelf'),                                             // 출처 표기 서가
-    M(4950, 5400, 90, 'irb'),                                                // IRB 서류함
+  scale: [ // 진실의 전당 (연구윤리): 출처 서가 → 저자 시상대 → 정의의 저울 3단 → AI 단말 → 제재 받침
+    M(-500, 420, 180, 'shelf', { lab: ['출처 없이 쓰면 표절'] }),
+    M(1050, 1750, 90, 'podium', { lab: ['기여한 사람만 저자로'] }), M(1290, 1510, 180, 'podium', { on: 90, lab: ['저자'] }),
+    M(2150, 3450, 90, 'dais', { lab: ['위조 · 변조 · 표절 · 부당한 저자 표시'] }), M(2440, 3160, 180, 'dais', { on: 90, lab: ['참여제한 기준 3년 이내'] }), M(2690, 2910, 260, 'dais', { on: 180, lab: ['정의의 저울'] }),
+    M(3800, 4100, 120, 'ai', { lab: ['AI는 도구', '책임은 연구자'] }),
+    M(4550, 6000, 100, 'sanc', { lab: ['참여제한 최대 10년 → 2027.3부터 20년'] }), M(4850, 6000, 200, 'sanc', { on: 100, lab: ['제재부가금 5배 → 30배'] }),
   ],
-  notebook: [ // 증명의 노트 (책상 위)
-    M(130, 430, 170, 'mug'),                                                 // KIRD 머그
-    M(1100, 2300, 140, 'pageL'), M(2800, 4000, 180, 'pageR'),                // 펼친 연구노트: 왼쪽·오른쪽 쪽 (높이 다름)
-    M(3200, 3700, 225, 'pen', { s: 0.3, on: 180 }),                                   // 오른쪽 쪽 위의 만년필
-    M(4720, 5400, 90, 'binders'), M(4940, 5400, 170, 'binders', { on: 90 }), M(5120, 5400, 240, 'binders', { on: 170 }), // 바인더 더미 (계단식)
+  notebook: [ // 증명의 노트 (연구노트): 잉크병 → 제본 노트 → 펼친 두 쪽과 서명 도장 → 수정액 → 보존 상자
+    M(-500, 330, 160, 'ink', { lab: ['오래 가는 필기구로'] }),
+    M(900, 1500, 80, 'bound', { lab: ['쪽 번호 있는 제본 노트'] }),
+    M(1900, 2600, 150, 'pageL', { lab: ['객관적인 사실만 기록'] }), M(2900, 3700, 200, 'pageR', { lab: ['빈 공간에는 사선'] }),
+    M(3180, 3420, 270, 'stamp', { on: 200, lab: ['서명 + 날짜'] }),
+    M(4050, 4350, 90, 'whiteout', { lab: ['수정액 금지'] }),
+    M(4750, 6000, 110, 'box', { lab: ['과제 종료일부터 30년 보존'] }), M(5000, 6000, 210, 'box', { on: 110, lab: ['유출 금지'] }),
   ],
-  lab: [ // 예방의 실험동 (연구실 안전)
-    M(350, 1450, 140, 'labFloor'), M(620, 1180, 240, 'labRoof', { on: 140 }),            // 실험동: 1층 + 옥상 (비상계단 = 경사)
-    M(1820, 2240, 90, 'drums'), M(1990, 2070, 150, 'drums', { on: 90 }),                 // 유해물질 드럼 더미
-    M(2750, 3650, 140, 'store'), M(3110, 3290, 260, 'extinguisher', { on: 140 }),       // 시약 창고 + 그 위에 선 소화기 (양옆은 철제 계단)
-    M(4020, 4220, 80, 'ppe'),                                                // 보호구 보관함
-    M(4650, 5600, 200, 'yard', { sL: 0.3 }),                                 // 잔디 언덕 (나무)
+  lab: [ // 예방의 실험동 (연구실 안전): 잔디 언덕 → 비상샤워 → 실험동과 옥상 → 드럼 → 시약 창고와 소화기 → 폐액 보관
+    M(-800, 280, 170, 'yard'),
+    M(820, 1080, 70, 'shower', { lab: ['15분 이상 물로'] }),
+    M(1400, 2500, 130, 'labFloor', { lab: ['일상점검 · 연구 시작 전 매일 1회'] }), M(1750, 2150, 250, 'labRoof', { on: 130, lab: ['위급하면 사용 중지'] }),
+    M(2950, 3370, 90, 'drums', { lab: ['섞어 보관 금지'] }), M(3120, 3200, 150, 'drums', { on: 90 }),
+    M(3800, 4700, 140, 'store', { lab: ['MSDS는 잘 보이는 곳에'] }), M(4160, 4340, 260, 'ext', { on: 140, lab: ['소화기'] }),
+    M(4900, 6000, 90, 'waste', { lab: ['폐액은 종류별로', '라벨 필수'] }),
   ],
-  archive: [ // 신뢰의 집행실 (연구비 관리)
-    D(520, 700, 220, 'roll'),                                                // 영수증 롤
-    M(1300, 2100, 100, 'bundle'), M(1560, 1840, 190, 'bundle', { on: 100 }),              // 증빙 묶음 (계단식)
-    M(2600, 3300, 160, 'calc'),                                              // 계산기
-    M(4150, 4300, 230, 'card', { sL: 0.25 }),                                // 기대 선 연구비 카드 (긴 오르막)
-    M(4760, 5400, 120, 'coins'), M(4960, 5400, 200, 'coins', { on: 120 }),                // 동전 더미 (계단식)
+  archive: [ // 신뢰의 집행실 (연구비 관리): 동전 → 연구비 카드 → 영수증 롤 → 계산기 → 장비 상자 → 금고
+    M(-500, 500, 110, 'coins', { lab: ['연구비는 연구기간 안에'] }), M(-500, 220, 200, 'coins', { on: 110 }),
+    M(1450, 1600, 220, 'card', { sL: 0.25, lab: ['카드 · 계좌이체가 원칙'], lx: 1500, lw: 370, ly: 70 }),
+    D(2500, 520, 170, 'roll', { lab: ['회의비 · 결재문서나 회의록 + 영수증'], lx: 2500, lw: 500, ly: 46 }),
+    M(3100, 3800, 150, 'calc', { lab: ['연구혁신비 한도', '재료비+활동비의 10%'] }),
+    M(4180, 4620, 110, 'crate', { lab: ['계획에 없던 3천만 원 이상 장비', '사전 승인 필요'] }),
+    M(4700, 6000, 120, 'safe', { lab: ['학생인건비 공동관리 금지'] }), M(4980, 6000, 230, 'safe', { on: 120 }),
   ],
-  ridge: [ // 혁신의 능선 (국가연구개발혁신법)
-    M(-1000, 6200, 50, 'grass'), M(-400, 250, 110, 'grass', { on: 50 }),                // 바닥 + 출발 언덕
-    M(780, 1120, 250, 'grass', { on: 50 }),                                              // 선정평가관 고지
-    M(2380, 2820, 300, 'grass', { on: 50 }),                                             // 단계평가 게이트 고지
-    M(3900, 4600, 150, 'dais', { on: 50 }), M(4060, 4440, 210, 'dais', { on: 150 }), M(4170, 4330, 250, 'dais', { on: 210 }), // 최종평가 단상 (3단)
-    M(4950, 5600, 120, 'grass', { on: 50 }),                                             // 성과 공개·활용 언덕
+  ridge: [ // 혁신의 능선 (국가연구개발혁신법): 출발 → 선정평가 고지 → 수행 → 단계평가 고지 → 수행 → 최종평가 단상 → 성과
+    M(-1000, 6200, 50, 'grass'), M(-400, 250, 110, 'grass', { on: 50 }),
+    M(740, 1160, 250, 'grass', { on: 50, lab: ['이의신청은 10일 안에 한 번'] }),
+    M(2380, 2820, 300, 'grass', { on: 50, lab: ["'극히 불량'이면 과제 중단"] }),
+    M(3900, 4600, 150, 'dais', { on: 50, lab: ['최종보고서 · 협약 종료 후 60일까지'] }), M(4060, 4440, 210, 'dais', { on: 150, lab: ['3개월 안에 성과 공개'] }), M(4170, 4330, 250, 'dais', { on: 210 }),
+    M(4850, 5600, 130, 'grass', { on: 50, lab: ['성과활용보고 5년'] }),
   ],
 };
 const TMAP_TOP = {}; for (const k in TMAP_F) { const F = TMAP_F[k]; TMAP_TOP[k] = px => { let h = 0; for (const f of F) { const v = featH(f, px); if (v > h) h = v; } return TG - h; }; }
@@ -2868,7 +2873,9 @@ const TMAP_ART = (() => {
   function mx(px) { return 2 * CX - px; }
   function rr(x, a, b, w, h, r) { x.beginPath(); x.roundRect(a, b, w, h, r); }
   function poly(x, pts) { x.beginPath(); pts.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath(); }
+  let MUTE = false; // true while painting tiny room interiors on the 주제 맵 structures: their small labels would be cut by the structure's edge
   function text(x, s, px, py, size, opt = {}) {
+    if (MUTE) return;
     x.save(); x.font = `${opt.weight || 700} ${size}px ${opt.font || FONT}`; x.textAlign = opt.align || 'center'; x.textBaseline = opt.base || 'middle';
     if (opt.shadow) { x.shadowColor = opt.shadow; x.shadowBlur = opt.blur || 6; }
     if (opt.stroke) { x.lineJoin = 'round'; x.strokeStyle = opt.stroke; x.lineWidth = opt.sw || 4; x.strokeText(s, px, py); }
@@ -3132,310 +3139,7 @@ const TMAP_ART = (() => {
   }
 
   const S = {};
-  // ---------------------------------------------------------------- 진실의 전당 (연구윤리): 연구윤리 실험실 — 위조·변조·표절 예방
-  function ethBoards(x, y) {
-    board(x, 150, y, 1180, '이런 행위는 부정행위', [['위조 · 변조 · 표절 · 부당한 저자 표시', '연구'], ['연구비를 용도 외로 사용', '연구비'], ['거짓 · 부정한 방법으로 과제 신청·수행', '과제'], ['보안 위반 · 연구개발성과 무단 유출', '보안']], { color: '#8A5A1C', badge: '국가연구개발혁신법 제31조' });
-    board(x, mx(1330), y, 1180, '부정행위 검증과 제재', [['제보 → 예비조사 → 본조사 → 판정', '6개월 안'], ['제보자는 신분상 불이익 없이 보호', '보호'], ['참여제한 (2027.3부터 최대 20년)', '최대 10년'], ['제재부가금 (2027.3부터 최대 30배)', '최대 5배']], { color: '#8A5A1C', badge: '혁신법 제32조 · 연구윤리 지침' });
-  }
-  // a "no" sign: white disc, red ring and slash over a word
-  function banSign(x, cx, cy, r, word) {
-    x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill();
-    text(x, word, cx, cy + 2, r * 0.62, { color: '#1E2A36', weight: 900 });
-    x.strokeStyle = '#E3232B'; x.lineWidth = r * 0.16; x.beginPath(); x.arc(cx, cy, r * 0.9, 0, 7); x.stroke();
-    x.beginPath(); x.moveTo(cx - r * 0.64, cy - r * 0.64); x.lineTo(cx + r * 0.64, cy + r * 0.64); x.stroke();
-  }
-  // a prevention poster: the misconduct crossed out, and what prevents it
-  function ffpPoster(x, cx, top, w, word, how, sub, col) {
-    const h = w * 1.25;
-    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, cx - w / 2 + 6, top + 8, w, h, 16); x.fill();
-    x.fillStyle = '#FFFDF7'; rr(x, cx - w / 2, top, w, h, 16); x.fill();
-    x.fillStyle = col; rr(x, cx - w / 2, top, w, 56, [16, 16, 0, 0]); x.fill();
-    text(x, word + ' 예방', cx, top + 29, 30, { color: '#FFF', weight: 900 });
-    banSign(x, cx, top + 56 + w * 0.32, w * 0.24, word);
-    text(x, how, cx, top + h - 92, 30, { color: '#1E2A36', weight: 900 });
-    text(x, sub, cx, top + h - 48, 21, { color: '#56657A', weight: 700 });
-  }
-  // a mascot cut-out on the wall with a speech bubble (dir: which side the bubble's tail points from)
-  function mascotWall(x, cx, base, h, say, dir) {
-    const M = IMG.mascot, w = h * 360 / 340, top = base - h;
-    x.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, cx - w / 2 - 6, top - 4, w + 24, h + 58, 24); x.fill();
-    x.fillStyle = '#FFFFFF'; rr(x, cx - w / 2 - 12, top - 12, w + 24, h + 58, 24); x.fill();
-    x.save(); rr(x, cx - w / 2, top, w, h, 16); x.clip(); x.drawImage(M, 20, 0, 360, 340, cx - w / 2, top, w, h); x.restore();
-    text(x, '연구윤리 지킴이', cx, base + 22, 22, { color: '#1E3A5A', weight: 900 });
-    const bw = say.length * 26 + 50, bx = cx - bw / 2, by = base - h - 96;
-    x.fillStyle = '#FFFFFF'; rr(x, bx, by, bw, 64, 30); x.fill(); x.strokeStyle = '#2E86D6'; x.lineWidth = 4; x.stroke();
-    x.fillStyle = '#FFFFFF'; poly(x, [[cx - 14, by + 62], [cx + 14, by + 62], [cx + dir * 4, by + 92]]); x.fill();
-    text(x, say, cx, by + 33, 26, { color: '#1E3A5A', weight: 900 });
-  }
-  const FFP = [['위조', '원본 데이터 보관', '없는 결과를 만들지 않는다', '#C0392B'], ['변조', '기록하고 서명하기', '데이터를 임의로 바꾸지 않는다', '#D9822B'], ['표절', '출처를 밝히기', '남의 것을 내 것처럼 쓰지 않는다', '#2E86D6']];
-
-  S.scale = {
-    veil: 'rgba(236,240,244,0.26)', ceil: '#DDE3E8',
-    back(x) {
-      x.fillStyle = vg(x, 0, G, [[0, '#E9EEF1'], [1, '#D3DADF']]); x.fillRect(0, 0, W, H);
-      x.fillStyle = vg(x, G - 240, G, [[0, '#C9D2D8'], [1, '#B3BDC4']]); x.fillRect(0, G - 240, W, 240); x.fillStyle = '#9FAAB2'; x.fillRect(0, G - 246, W, 8);
-      for (let px = 100; px < W; px += 400) { x.fillStyle = 'rgba(255,255,230,0.55)'; x.fillRect(px, 40, 240, 14); x.fillStyle = vg(x, 54, 520, [[0, 'rgba(255,255,230,0.22)'], [1, 'rgba(255,255,230,0)']]); poly(x, [[px, 54], [px + 240, 54], [px + 330, 520], [px - 90, 520]]); x.fill(); }
-      ethBoards(x, 110);
-      FFP.forEach(([w, how, sub, c], i) => ffpPoster(x, [1390, CX, mx(1390)][i], 330, 340, w, how, sub, c));
-      // the KIRD mascots on the back wall, each with a reminder
-      mascotWall(x, 1990, G - 300, 250, '원본 데이터는 있는 그대로!', -1);
-      mascotWall(x, mx(1990), G - 300, 250, '출처 표기, 잊지 마세요!', 1);
-      // wall bits: clock, IRB whiteboard, a shelf of lab notebooks
-      x.fillStyle = '#FFFFFF'; rr(x, 520, 560, 380, 220, 10); x.fill(); x.strokeStyle = '#9AA3AB'; x.lineWidth = 8; x.stroke();
-      text(x, 'IRB 심의', 710, 600, 26, { color: '#1E3A5A', weight: 900 });
-      ['☑ 연구계획 승인', '☑ 동의서 확보', '☐ 결과 보고'].forEach((t, i) => text(x, t, 560, 646 + i * 40, 22, { color: '#2E86D6', weight: 700, align: 'left' }));
-      x.fillStyle = '#6B4A2C'; x.fillRect(mx(900), 760, 380, 14);
-      ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(900) + 14 + i * 50, 640 + (i % 2) * 12, 40, 120 - (i % 2) * 12); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(900) + 20 + i * 50, 670, 28, 20); });
-      text(x, '연구노트 2024 · 2025 · 2026', mx(900) + 190, 610, 20, { color: '#34404E', weight: 800 });
-    },
-    solid(x) {
-      x.fillStyle = vg(x, G, H, [[0, '#9AA6AE'], [0.05, '#7D8991'], [1, '#4E585F']]); x.fillRect(0, G, W, H - G);
-      x.strokeStyle = 'rgba(255,255,255,0.18)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, G + 40); x.stroke(); }
-      x.fillStyle = 'rgba(255,255,255,0.5)'; x.fillRect(0, G, W, 3);
-      both(x, () => {
-        x.fillStyle = vg(x, G - 120, G, [[0, '#2F3A44'], [0.1, '#E9EDF0'], [1, '#B9C1C7']]); x.fillRect(0, G - 120, 420, 120);
-        x.fillStyle = '#2F3A44'; x.fillRect(0, G - 122, 300, 12);
-      });
-      // data cabinet (left): a locked server rack
-      x.fillStyle = vg(x, G - 190, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(1170, G - 190, 440, 190);
-      for (let k = 0; k < 6; k++) { x.fillStyle = '#2A343E'; x.fillRect(1262, G - 176 + k * 28, 256, 22); x.fillStyle = k % 2 ? '#3FD07A' : '#7FC4E8'; x.fillRect(1272, G - 168 + k * 28, 8, 6); x.fillRect(1288, G - 168 + k * 28, 8, 6); }
-      // citation shelf (right): books with source tags
-      x.fillStyle = vg(x, G - 190, G, [[0, '#8A6240'], [1, '#5E3F26']]); x.fillRect(mx(1610), G - 190, 440, 190);
-      ['#2E86D6', '#C0392B', '#8CC63F', '#F2C230', '#3B4A5A', '#9B6BC9', '#2E86D6', '#D9822B'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 172, 26, 74); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(mx(1530) + 12 + i * 33, G - 150, 18, 10); });
-      x.fillStyle = '#4A3018'; x.fillRect(mx(1530), G - 96, 280, 8);
-      ['#3B4A5A', '#8CC63F', '#C0392B', '#2E86D6', '#F2C230', '#8CC63F', '#3B4A5A', '#9B6BC9'].forEach((c, i) => { x.fillStyle = c; x.fillRect(mx(1530) + 8 + i * 33, G - 82, 26, 74); });
-      // lab-notebook stack (left) / IRB file box (right)
-      ['#2E86D6', '#8CC63F', '#E9EDF0', '#2E86D6', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(740 + (i % 2) * 6, G - 12 - i * 12, 134, 12); });
-      x.fillStyle = vg(x, G - 62, G, [[0, '#D8DDE1'], [1, '#9AA3AB']]); x.fillRect(mx(880), G - 62, 140, 62); x.fillStyle = '#FFF'; x.fillRect(mx(880) + 24, G - 46, 92, 26);
-      // magnifier stand (left) / backup drive (right)
-      x.fillStyle = vg(x, G - 44, G, [[0, '#8A6240'], [1, '#4A3018']]); x.fillRect(1960, G - 44, 120, 44);
-      x.fillStyle = vg(x, G - 44, G, [[0, '#4A5A6C'], [1, '#1C2530']]); x.fillRect(mx(2080), G - 44, 120, 44); x.fillStyle = '#3FD07A'; x.fillRect(mx(2080) + 12, G - 30, 10, 6);
-      // rolled manuscripts lying on the floor (low cover), one on each side
-      both(x, () => {
-        x.fillStyle = vg(x, G - 64, G, [[0, '#FFFDF4'], [0.45, '#F1E8D2'], [1, '#C9BB98']]); x.fillRect(1640, G - 70, 290, 70);
-        x.strokeStyle = 'rgba(120,100,70,0.35)'; x.lineWidth = 2; for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(1700, G - 46 + k * 9); x.lineTo(1870, G - 46 + k * 9); x.stroke(); }
-        x.fillStyle = '#C0392B'; x.fillRect(1782, G - 64, 14, 64);
-        for (const ex of [1682, 1888]) { x.strokeStyle = 'rgba(140,115,80,0.6)'; x.lineWidth = 2.5; for (let r = 6; r < 26; r += 6) { x.beginPath(); x.arc(ex, G - 32, r, 0, 7); x.stroke(); } }
-      });
-      // signing desk (middle)
-      x.fillStyle = vg(x, G - 190, G - 166, [[0, '#C9925A'], [1, '#8C6640']]); x.fillRect(2360, G - 190, 480, 24); x.fillStyle = '#6B4A2C'; x.fillRect(2380, G - 166, 40, 166); x.fillRect(2780, G - 166, 40, 166);
-    },
-    front(x) {
-      for (const [cx, t] of [[1390, '원본 데이터 보관함'], [mx(1390), '출처 표기 서가']]) { x.fillStyle = '#FFFDF7'; rr(x, cx - 112, G - 34, 224, 28, 6); x.fill(); text(x, t, cx, G - 20, 18, { color: '#1E2A36', weight: 900 }); }
-      // open lab notebook + pen on the desk
-      x.fillStyle = '#FFFFFF'; poly(x, [[2440, G - 192], [2600, G - 204], [2760, G - 192], [2760, G - 190], [2440, G - 190]]); x.fill();
-      x.strokeStyle = '#1F3A93'; x.lineWidth = 2; for (let k = 0; k < 3; k++) { x.beginPath(); x.moveTo(2460, G - 197 + k * 0); x.stroke(); }
-      text(x, '연구노트 서명대', CX, G - 178, 17, { color: '#FFF7E8', weight: 900 });
-      for (const cx of [1742, mx(1742)]) text(x, '논문 원고', cx, G - 22, 15, { color: '#5A4630', weight: 900 });
-      for (const cx of [1834, mx(1834)]) text(x, '[1] [2]', cx, G - 22, 13, { color: '#8A6240', weight: 800 });
-      text(x, '연구노트', 810, G - 36, 15, { color: '#1E2A36', weight: 900 });
-      text(x, 'IRB 승인', mx(810), G - 33, 17, { color: '#1E2A36', weight: 900 });
-      // the peer-review magnifier on its stand
-      x.strokeStyle = '#6B4A2C'; x.lineWidth = 8; x.beginPath(); x.moveTo(2020, G - 44); x.lineTo(2020, G - 110); x.stroke();
-      x.strokeStyle = '#3B4A5A'; x.lineWidth = 10; x.beginPath(); x.arc(2020, G - 150, 42, 0, 7); x.stroke(); x.fillStyle = 'rgba(170,220,245,0.45)'; x.fill();
-      text(x, '동료 검증', 2020, G - 22, 16, { color: '#FFF7E8', weight: 900 });
-      text(x, '데이터 백업', mx(2020) + 8, G - 14, 14, { color: '#DFF7EF', weight: 900 });
-      logoPlate(x, CX, G - 90, 34);
-    },
-  };
-
-  // ---------------------------------------------------------------- 연구노트 (연구윤리)
-  S.notebook = {
-    veil: 'rgba(246,240,228,0.34)',
-    ceil: '#E9E2D4',
-    back(x) {
-      x.fillStyle = vg(x, 0, G, [[0, '#E9E2D4'], [1, '#D9CFBC']]); x.fillRect(0, 0, W, H);
-      x.fillStyle = vg(x, G - 260, G, [[0, '#B98F62'], [1, '#8C6640']]); x.fillRect(0, G - 260, W, 260);
-      x.fillStyle = 'rgba(60,35,15,0.25)'; for (let px = 0; px < W; px += 260) x.fillRect(px, G - 260, 4, 260); x.fillStyle = '#D9B98C'; x.fillRect(0, G - 268, W, 10);
-      const wa = 1150, wb = 4050, wt = 240, wbm = G - 300;
-      x.fillStyle = vg(x, wt, wbm, [[0, '#6FAEE0'], [0.7, '#BFDDF0'], [1, '#E8F2EC']]); x.fillRect(wa, wt, wb - wa, wbm - wt);
-      clouds(x, [[1600, 380, 90], [2900, 330, 110], [3700, 420, 70]], 0.9);
-      x.fillStyle = '#8DB59A'; x.beginPath(); x.moveTo(wa, wbm - 90); for (let px = wa; px <= wb; px += 30) x.lineTo(px, wbm - 120 - Math.sin(px / 300) * 40 - Math.sin(px / 90) * 8); x.lineTo(wb, wbm); x.lineTo(wa, wbm); x.fill();
-      for (const [a, b, h] of [[1500, 2100, 150], [2950, 3600, 210]]) { x.fillStyle = '#F2F4F5'; x.fillRect(a, wbm - h, b - a, h); x.fillStyle = '#5E9BA3'; for (let y = wbm - h + 24; y < wbm - 20; y += 44) x.fillRect(a + 10, y, b - a - 20, 16); }
-      x.fillStyle = '#D58A55'; x.fillRect(3480, wbm - 250, 80, 250);
-      x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(wa, wt, wb - wa, wbm - wt);
-      x.strokeStyle = '#F7F5F0'; x.lineWidth = 26; x.strokeRect(wa, wt, wb - wa, wbm - wt); x.lineWidth = 14; x.beginPath(); for (let px = wa + 725; px < wb; px += 725) { x.moveTo(px, wt); x.lineTo(px, wbm); } x.moveTo(wa, wt + 180); x.lineTo(wb, wt + 180); x.stroke();
-      x.fillStyle = '#F7F5F0'; x.fillRect(wa - 40, wbm, wb - wa + 80, 22); x.fillStyle = 'rgba(0,0,0,0.15)'; x.fillRect(wa - 40, wbm + 22, wb - wa + 80, 6);
-      x.fillStyle = '#7A5634'; x.fillRect(170, 300, 860, 470); x.fillStyle = vg(x, 312, 758, [[0, '#C9925A'], [1, '#B07A44']]); x.fillRect(184, 314, 832, 442);
-      mascotBanner(x, 340, 340, 200, '연구노트 쓰는 날');
-      x.fillStyle = '#FFFDF5'; x.fillRect(500, 350, 470, 360); x.fillStyle = '#E8402E'; x.beginPath(); x.arc(735, 356, 9, 0, 7); x.fill();
-      text(x, '연구노트 작성 원칙', 735, 400, 30, { color: '#1E3A5A', weight: 900 });
-      ['① 기록자·확인자가 날짜와 서명', '② 수정액 금지, 줄 긋고 서명', '③ 빈 칸에는 사선을 긋는다', '④ 원본 데이터 위치를 남긴다', '⑤ 30년 보존 · 노트는 기관 소유'].forEach((t, i) => text(x, t, 530, 455 + i * 50, 23, { color: '#34404E', weight: 600, align: 'left' }));
-      x.fillStyle = '#6B4A2C'; x.fillRect(4170, 560, 860, 18); x.fillStyle = 'rgba(0,0,0,0.18)'; x.fillRect(4170, 578, 860, 8);
-      ['#2E86D6', '#8CC63F', '#E8EDF1', '#2E86D6', '#3B4A5A', '#8CC63F', '#E8EDF1', '#C98A50'].forEach((c, i) => { x.fillStyle = c; x.fillRect(4200 + i * 64, 400 + (i % 3) * 10, 54, 160 - (i % 3) * 10); x.fillStyle = 'rgba(255,255,255,0.75)'; x.fillRect(4212 + i * 64, 440 + (i % 3) * 10, 30, 34); });
-      board(x, 4150, 610, 900, '전자연구노트도 인정', ['전자서명으로 기록자·확인자 확인', '입력 시각이 자동으로 기록', '위·변조 여부를 확인할 수 있어야'], { size: 22, color: '#1D5E9E', badge: '연구노트 지침' });
-      x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(4600, 300, 70, 0, 7); x.fill(); x.strokeStyle = '#3B4A5A'; x.lineWidth = 8; x.stroke(); x.lineWidth = 6; x.beginPath(); x.moveTo(4600, 300); x.lineTo(4600, 254); x.moveTo(4600, 300); x.lineTo(4636, 314); x.stroke();
-      x.fillStyle = 'rgba(255,240,215,0.2)'; x.fillRect(0, 0, W, G);
-    },
-    solid(x) {
-      x.fillStyle = vg(x, G, H, [[0, '#8A5A34'], [0.06, '#6E4526'], [1, '#3E2614']]); x.fillRect(0, G, W, H - G);
-      const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.25)'; x.lineWidth = 2;
-      for (let y = G + 30; y < H; y += 18 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); }
-      x.fillStyle = 'rgba(255,220,180,0.45)'; x.fillRect(0, G, W, 4);
-      both(x, (_, side) => {
-        x.fillStyle = vg(x, G - 30, G, [[0, '#3C93DC'], [1, '#1D5E9E']]); x.fillRect(600, G - 34, 2000, 34);
-        poly(x, [...nbPoly(-6), [2566, G - 26], [634, G - 26]]); x.fillStyle = vg(x, G - 340, G, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.fill();
-        x.save(); x.clip(); x.strokeStyle = 'rgba(150,130,95,0.35)'; x.lineWidth = 1.2;
-        for (let off = 236; off < 340; off += 5) { x.beginPath(); nbPoly(off).forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.stroke(); }
-        poly(x, [...nbPoly(-6), ...nbPoly(232).reverse()]); x.fillStyle = vg(x, G - 340, G - 100, [[0, '#FFFFFF'], [1, '#F6F3EA']]); x.fill();
-        x.strokeStyle = 'rgba(70,130,200,0.35)'; x.lineWidth = 1.5; for (let y = G - 300; y < G - 100; y += 32) { x.beginPath(); x.moveTo(640, y); x.lineTo(2560, y); x.stroke(); }
-        x.strokeStyle = 'rgba(220,60,60,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(880, G - 340); x.lineTo(880, G - 100); x.stroke();
-        x.fillStyle = hg(x, 2300, 2560, [[0, 'rgba(90,70,40,0)'], [1, 'rgba(90,70,40,0.35)']]); x.fillRect(2300, G - 360, 260, 360);
-        x.restore();
-        if (side > 0) {
-          x.fillStyle = hg(x, 230, 470, [[0, '#D8DEE2'], [0.3, '#FFFFFF'], [0.8, '#E3E8EB'], [1, '#B9C1C7']]); x.fillRect(226, G - 336, 248, 336);
-          x.fillStyle = '#4A2E1A'; x.beginPath(); x.ellipse(350, G - 326, 112, 10, 0, 0, 7); x.fill();
-          logoOnly(x, 350, G - 190, 52);
-        }
-      });
-      ['연구윤리 지침', 'IRB 심의 서류', '연구노트 2025', '연구노트 2026', '데이터 관리 계획'].forEach((t, i) => {
-        const y = G - 66 * (i + 1), c = [KB, '#3B4A5A', KG, KB, '#C98A50'][i];
-        x.fillStyle = c; rr(x, mx(470) - 10, y + 2, 262, 62, 6); x.fill();
-        x.fillStyle = 'rgba(255,255,255,0.88)'; x.fillRect(mx(470) + 40, y + 16, 160, 34); text(x, t, mx(470) + 120, y + 34, 18, { color: '#1E2A36', weight: 800 });
-      });
-      const T = G - 330;
-      ink(x, '연구노트', 900, T + 12, 30, { weight: 900, color: '#2E86D6', font: FONT }); ink(x, 'No. 2026-017', 1060, T + 14, 22, { color: '#56657A', font: FONT });
-      ink(x, '날짜  2026. 10. 19.', 1620, T + 14, 22, { color: '#56657A', font: FONT }); ink(x, 'p.12', 2130, T + 14, 20, { color: '#56657A', font: FONT });
-      ink(x, '실험 목적 : 신소재 박막의 열안정성 확인', 900, T + 58, 24); ink(x, '조건 : 25 ℃ / 습도 40 % / 3회 반복', 900, T + 90, 24);
-      ink(x, '원본 데이터 → 서버 저장 (raw_1019.csv)', 900, T + 122, 24);
-      x.strokeStyle = '#1F3A93'; x.lineWidth = 2; x.beginPath(); x.moveTo(1180, T + 150); x.lineTo(1420, T + 150); x.stroke(); ink(x, '1.82  2.05', 1440, T + 152, 22, { color: '#1F3A93' }); ink(x, '(재측정, 서명)', 1570, T + 152, 18, { color: '#C0392B' });
-      x.strokeStyle = '#1F3A93'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(1880, T + 40); x.lineTo(1880, T + 170); x.lineTo(2150, T + 170); x.stroke();
-      x.beginPath(); x.moveTo(1890, T + 160); x.bezierCurveTo(1960, T + 150, 2010, T + 70, 2140, T + 60); x.stroke();
-      [[1920, 152], [1980, 128], [2040, 92], [2100, 70]].forEach(([a, b]) => { x.fillStyle = '#C0392B'; x.beginPath(); x.arc(a, T + b, 5, 0, 7); x.fill(); });
-      sigBox(x, 1080, T + 184, '작성자', '2026.10.19'); sigBox(x, 1420, T + 184, '확인자', '2026.10.20');
-      ink(x, 'p.13', 4420, T + 14, 20, { color: '#56657A', font: FONT }); ink(x, '측정 결과 (n = 3)', 2880, T + 58, 24, { weight: 700 });
-      const ta = 2880, tt = T + 76; x.strokeStyle = '#1F3A93'; x.lineWidth = 1.6; for (let i = 0; i <= 4; i++) { x.beginPath(); x.moveTo(ta, tt + i * 26); x.lineTo(ta + 420, tt + i * 26); x.stroke(); } for (let j = 0; j <= 4; j++) { x.beginPath(); x.moveTo(ta + j * 105, tt); x.lineTo(ta + j * 105, tt + 104); x.stroke(); }
-      [['시료', '1차', '2차', '3차'], ['A', '1.82', '1.85', '1.80'], ['B', '2.05', '2.02', '2.07'], ['C', '2.41', '2.44', '2.39']].forEach((row, i) => row.forEach((c, j) => text(x, c, ta + 52 + j * 105, tt + 14 + i * 26, 17, { color: '#1F3A93', weight: i ? 500 : 800 })));
-      x.strokeStyle = '#1F3A93'; x.lineWidth = 2.5; x.beginPath(); x.moveTo(3460, T + 40); x.lineTo(3460, T + 90); x.lineTo(3410, T + 170); x.lineTo(3550, T + 170); x.lineTo(3500, T + 90); x.lineTo(3500, T + 40); x.stroke();
-      x.fillStyle = 'rgba(46,134,214,0.25)'; poly(x, [[3430, T + 140], [3530, T + 140], [3550, T + 170], [3410, T + 170]]); x.fill();
-      ink(x, '결론 : 재현성 확인 → 동료 검증 요청', 3620, T + 90, 24); ink(x, '참고 : Kim et al. (2025), p.41', 3620, T + 122, 22, { color: '#3B5BA8' });
-      sigBox(x, 3520, T + 184, '작성자', '2026.10.19'); sigBox(x, 3860, T + 184, '확인자', '2026.10.20');
-      const py = G - 372;
-      x.fillStyle = vg(x, py - 26, py + 26, [[0, '#4A5A6C'], [0.3, '#1C2530'], [1, '#0B1016']]); x.fillRect(2140, py - 30, 780, 60);
-      x.fillStyle = vg(x, py - 20, py + 20, [[0, '#F7DE96'], [0.5, '#C9973E'], [1, '#7A5520']]); x.fillRect(2420, py - 28, 16, 56); x.fillRect(2460, py - 28, 6, 56); x.fillRect(2880, py - 26, 12, 52);
-      x.fillStyle = vg(x, py - 36, py - 22, [[0, '#F7DE96'], [1, '#9C7430']]); x.fillRect(2176, py - 36, 238, 14);
-      x.fillStyle = vg(x, py - 18, py + 18, [[0, '#F7DE96'], [0.5, '#D7AA4E'], [1, '#8A6228']]); x.fillRect(2906, py - 24, 160, 48);
-      x.strokeStyle = '#5E4018'; x.lineWidth = 2; x.beginPath(); x.moveTo(2930, py); x.lineTo(3050, py); x.stroke();
-      x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(2170, py - 18, 700, 6);
-      kMark(x, 2560, py, 30);
-    },
-    front(x) {
-      [[1180, KB], [1300, KG]].forEach(([tx, c]) => { x.fillStyle = c; rr(x, tx, nbTop(tx) - 30, 70, 30, [5, 5, 0, 0]); x.fill(); x.fillStyle = c; rr(x, mx(tx) - 70, nbTop(tx) - 30, 70, 30, [5, 5, 0, 0]); x.fill(); });
-      [[300, '#2E86D6', -0.12], [350, '#1C2530', 0.02], [400, '#8CC63F', 0.14]].forEach(([px, c, a]) => { x.save(); x.translate(px, G - 326); x.rotate(a); x.fillStyle = c; rr(x, -10, -150, 20, 150, 8); x.fill(); x.fillStyle = 'rgba(255,255,255,0.4)'; x.fillRect(-6, -144, 4, 140); x.restore(); });
-      x.strokeStyle = '#C9D0D5'; x.lineWidth = 22; x.beginPath(); x.arc(230, G - 180, 70, Math.PI * 0.5, Math.PI * 1.5); x.stroke();
-      x.fillStyle = vg(x, G - 200, G + 60, [[0, '#2E86D6'], [1, '#1D5E9E']]); poly(x, [[2588, G - 190], [2612, G - 190], [2614, G], [2586, G]]); x.fill();
-    },
-  };
-
-  // ---------------------------------------------------------------- 화학 실험동 (연구실 안전)
-  S.lab = {
-    veil: 'rgba(222,236,246,0.30)',
-    back(x) {
-      const roof = G - 362;
-      board(x, 610, roof - 410, 760, '연구실 안전점검', [['일상점검 · 연구 시작 전', '매일'], ['정기점검', '연 1회 이상'], ['정밀안전진단 · 유해물질 연구실', '2년마다']], { color: '#C62828', badge: '연구실안전법', legs: 120 });
-      board(x, mx(1370), roof - 410, 760, '안전교육 · 사고 보고', [['신규교육 (학생 2시간)', '8시간'], ['정기교육 (저위험 연 3시간)', '반기 6시간'], ['중대연구실사고 보고', '지체 없이']], { color: '#C62828', badge: '연구실안전법 시행규칙', legs: 120 });
-      x.fillStyle = '#A9C7B2'; x.beginPath(); x.moveTo(0, G - 140); for (let px = 0; px <= W; px += 40) x.lineTo(px, G - 190 - Math.sin(px / 600) * 70 - Math.sin(px / 170) * 12); x.lineTo(W, G); x.lineTo(0, G); x.fill();
-    },
-    solid(x) {
-      concrete(x, 0, W, G, H, 8); hazardStripe(x, 1560, G, mx(1560), 16);
-      both(x, () => { x.fillStyle = vg(x, G - 210, G, [[0, '#6E8F4A'], [0.1, '#6A5A40'], [1, '#55473A']]); x.fillRect(0, G - 220, 360, 220); });
-      const top = labBlock(x, 380, 1500, 2, 175); labBlock(x, mx(1500), mx(380), 2, 175, { louvre: [mx(1500) + 860, mx(380) - 20, top] });
-      mascotBanner(x, mx(1500) + 945, G - 320, 96, '안전 제일');
-      both(x, () => {
-        roofKit(x, 380, 1500, top);
-        x.fillStyle = vg(x, top, G, [[0, '#6F7880'], [1, '#4A535B']]); poly(x, [[1500, top], [1545, top], [1866, G], [1500, G]]); x.fill();
-        x.strokeStyle = 'rgba(255,255,255,0.35)'; x.lineWidth = 3; for (let t = 0.05; t < 1; t += 0.06) { x.beginPath(); x.moveTo(1500 + 360 * t, top + 4 + (G - top) * t); x.lineTo(1540 + 320 * t, top + 4 + (G - top) * t); x.stroke(); }
-        drum(x, 1950, G, 80, 110, '#F2C230'); drum(x, 2040, G, 80, 110, '#2E86D6'); drum(x, 1995, G - 110, 80, 110, '#F2C230');
-        x.fillStyle = vg(x, G - 40, G, [[0, '#E6E9EB'], [1, '#A9B0B5']]); x.fillRect(2106, G - 44, 128, 44); hazardStripe(x, 2106, G - 44, 2234, 8);
-        x.fillStyle = '#8A939A'; x.fillRect(2154, G - 104, 32, 64);
-      });
-      // GHS signs, unmirrored so the symbols read right; red caps are the perch on top
-      [[2170, 'flame'], [mx(2170), 'excl']].forEach(([cx, k]) => { ghs(x, cx, G - 195, 100, k); x.fillStyle = '#E3232B'; x.fillRect(cx - 34, G - 302, 68, 22); });
-      // the reagent store
-      x.fillStyle = vg(x, G - 230, G, [[0, '#D9DDE0'], [1, '#A9B0B5']]); x.fillRect(2276, G - 232, 648, 232); x.fillStyle = '#7A838A'; x.fillRect(2256, G - 250, 688, 26);
-      hazardStripe(x, 2280, G - 224, 2920, 14);
-      for (const dx of [2370, 2650]) { x.fillStyle = vg(x, G - 180, G, [[0, '#F2C230'], [1, '#C99A18']]); x.fillRect(dx, G - 180, 180, 180); x.strokeStyle = '#7A6010'; x.lineWidth = 3; x.strokeRect(dx, G - 180, 180, 180); ghs(x, dx + 90, G - 100, 48, dx < CX ? 'ox' : 'gas'); }
-      text(x, '시약 창고', CX, G - 200, 24, { color: '#1E2A36', weight: 900 });
-      // the fire extinguisher on the store roof (the summit): red body, gauge, valve head, the flat lever
-      const bt = G - 546;
-      x.fillStyle = hg(x, 2506, 2694, [[0, '#7A0F14'], [0.25, '#E8383F'], [0.42, '#FF8A8E'], [0.55, '#E8383F'], [1, '#6A0C10']]); x.fillRect(2500, bt - 4, 200, G - 246 - bt + 8);
-      x.fillStyle = '#FFFFFF'; rr(x, 2530, G - 470, 140, 196, 8); x.fill();
-      text(x, '소화기', CX, G - 446, 26, { color: '#C62828', weight: 900 });
-      ['① 안전핀 뽑기', '② 노즐 조준', '③ 손잡이 누르기', '④ 골고루 분사'].forEach((t, i) => text(x, t, 2542, G - 412 + i * 30, 15, { color: '#222', weight: 800, align: 'left' }));
-      logoOnly(x, CX, G - 290, 18);
-      x.fillStyle = '#FFF'; x.beginPath(); x.arc(2650, bt + 40, 22, 0, 7); x.fill(); x.strokeStyle = '#333'; x.lineWidth = 4; x.stroke();
-      x.strokeStyle = '#2FBF6E'; x.lineWidth = 6; x.beginPath(); x.arc(2650, bt + 40, 15, Math.PI * 1.15, Math.PI * 1.85); x.stroke();
-      x.fillStyle = hg(x, 2566, 2634, [[0, '#3A3A3A'], [0.5, '#8A8A8A'], [1, '#2A2A2A']]); x.fillRect(2566, G - 600, 68, 64);
-      x.fillStyle = vg(x, G - 620, G - 594, [[0, '#2A2A2A'], [1, '#111']]); x.fillRect(2466, G - 620, 268, 26);
-    },
-    front(x, surface) {
-      both(x, () => {
-        exitSign(x, 1600, 990, 80);
-        const r = rng(4); for (const tx of [90, 200]) tree(x, tx, surface(tx, 500) + 4, 120 + r() * 30, r, tx === 200 ? 'pine' : 'dark');
-        grassTop(x, [[0, G - 210], [140, G - 200], [260, G - 120], [330, G - 30]], '#6FA34E');
-      });
-      logoPlate(x, 940, G - 380, 38);
-      // hose of the extinguisher and its safety pin, warning beacons on the store corners
-      x.strokeStyle = '#1A1A1A'; x.lineWidth = 14; x.lineCap = 'round'; x.beginPath(); x.moveTo(2580, G - 590); x.bezierCurveTo(2420, G - 600, 2430, G - 420, 2470, G - 300); x.stroke(); x.lineCap = 'butt';
-      x.strokeStyle = '#F2C230'; x.lineWidth = 6; x.beginPath(); x.arc(2660, G - 640, 18, 0, 7); x.stroke();
-      for (const bx of [2290, 2910]) { x.fillStyle = '#333'; x.fillRect(bx - 10, G - 262, 20, 12); x.fillStyle = rg(x, bx, G - 276, 2, 18, [[0, '#FFD0C8'], [0.5, '#FF3B2E'], [1, '#B3120A']]); x.beginPath(); x.arc(bx, G - 268, 15, Math.PI, 0); x.lineTo(bx + 15, G - 262); x.lineTo(bx - 15, G - 262); x.fill(); }
-    },
-    beacons: [[2290, G - 270], [2910, G - 270]],
-  };
-
-  // ---------------------------------------------------------------- 증빙 보관실 (연구비 관리)
-  S.archive = {
-    veil: 'rgba(16,24,34,0.38)',
-    ceil: '#2C3A48',
-    back(x) {
-      x.fillStyle = vg(x, 0, G, [[0, '#2C3A48'], [1, '#4A5A68']]); x.fillRect(0, 0, W, H);
-      const r = rng(8);
-      for (let a = 60; a < W; a += 640) {
-        x.fillStyle = '#6E7C88'; x.fillRect(a, 230, 12, G - 230); x.fillRect(a + 560, 230, 12, G - 230);
-        for (let y = 300; y < G - 40; y += 170) {
-          x.fillStyle = '#8A97A2'; x.fillRect(a, y + 130, 572, 12);
-          for (let bx = a + 20; bx < a + 540; bx += 132) { const yr = 2020 + Math.floor(r() * 7); x.fillStyle = vg(x, y + 40, y + 130, [[0, '#E9DCC0'], [1, '#C9B690']]); x.fillRect(bx, y + 40, 120, 90); x.fillStyle = '#FFF'; x.fillRect(bx + 18, y + 58, 84, 40); text(x, '증빙 ' + yr, bx + 60, y + 72, 15, { color: '#2A3440', weight: 800 }); text(x, ['인건비', '재료비', '장비비', '출장비', '회의비'][Math.floor(r() * 5)], bx + 60, y + 90, 12, { color: '#56657A', weight: 700 }); }
-        }
-      }
-      for (let i = 0; i < 9; i++) { const lx = 300 + i * 575; x.fillStyle = '#E8F4FF'; x.fillRect(lx - 90, 220, 180, 10); x.fillStyle = vg(x, 230, 700, [[0, 'rgba(220,240,255,0.25)'], [1, 'rgba(220,240,255,0)']]); poly(x, [[lx - 90, 230], [lx + 90, 230], [lx + 260, 760], [lx - 260, 760]]); x.fill(); }
-      x.fillStyle = 'rgba(30,44,58,0.35)'; x.fillRect(0, 0, W, G);
-      x.fillStyle = '#FAFBFC'; rr(x, CX - 300, 250, 600, 90, 10); x.fill(); logoOnly(x, CX - 140, 295, 50); text(x, '신뢰의 집행실', CX + 120, 296, 34, { color: '#1E2A36', weight: 900 });
-      mascotBanner(x, 1260, 430, 130, '증빙은 꼼꼼히');
-      board(x, 140, 300, 960, '연구비, 어디서 하나요?', [['과제 공고 · 신청 · 협약', 'IRIS'], ['집행 · 정산 (gaia.go.kr)', '통합이지바로'], ['집행 · 정산 (산업부 계열 등)', '통합RCMS'], ['과제 · 성과 정보', 'NTIS']], { color: '#1D5E9E' });
-      board(x, mx(1100), 300, 960, '연구비 집행 원칙', [['연구비카드 · 계좌이체가 원칙', '현금 예외'], ['증빙자료 보관', '종료 후 5년'], ['정산', '종료 후 3개월 내'], ['용도 외 사용 → 제재 + 환수', '최대 10년·5배']], { color: '#2E7D4F', badge: '혁신법 · 연구개발비 사용 기준' });
-    },
-    solid(x) {
-      noiseBand(x, 0, W, G, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); x.strokeStyle = 'rgba(0,0,0,0.18)'; x.lineWidth = 2; for (let px = 0; px < W; px += 200) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); }
-      both(x, () => {
-        const rx = 470, R = 244, ry = G - 240;
-        x.fillStyle = rg(x, rx - 60, ry - 70, 20, R, [[0, '#FFFFFF'], [0.8, '#EDEAE2'], [1, '#C9C4B8']]); x.beginPath(); x.arc(rx, ry, R, 0, 7); x.fill();
-        x.strokeStyle = 'rgba(150,140,120,0.35)'; x.lineWidth = 1.5; for (let k = 70; k < R; k += 9) { x.beginPath(); x.arc(rx, ry, k, 0, 7); x.stroke(); }
-        x.fillStyle = '#8A7A5E'; x.beginPath(); x.arc(rx, ry, 64, 0, 7); x.fill(); x.fillStyle = '#4A3E2C'; x.beginPath(); x.arc(rx, ry, 40, 0, 7); x.fill();
-        x.fillStyle = vg(x, G - 280, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]); x.fillRect(1496, G - 284, 368, 284);
-        x.strokeStyle = 'rgba(140,130,110,0.4)'; x.lineWidth = 1.5; for (let y = G - 274; y < G; y += 7) { x.beginPath(); x.moveTo(1500, y); x.lineTo(1860, y + ((y % 3) - 1) * 2); x.stroke(); }
-        x.fillStyle = '#1C1C1C'; poly(x, [[1576, G - 304], [1784, G - 304], [1764, G - 236], [1596, G - 236]]); x.fill();
-      });
-      receiptText(x, 1520, G - 230, [['연구비 카드 결제', ''], ['재료비  시약', '128,000'], ['증빙  세금계산서', '첨부']], 320);
-      receiptText(x, mx(1860), G - 230, [['출장 승인 번호', 'T-1019'], ['출장비  교통', '46,800'], ['증빙  영수증', '첨부']], 320);
-      for (const px of [1780, mx(1580)]) stamp(x, px, G - 50, 40, '증빙', '#D62828', -0.25);
-      // fund cards along the ramps (left rises to the right, right rises to the left); the text reads normally on both
-      x.save(); x.beginPath(); x.rect(0, 0, W, G); x.clip(); cardAlong(x, 1000, G, Math.atan2(-310, 520)); cardAlong(x, 3680, G - 310, Math.atan2(310, 520)); x.restore();
-      const a = 2240, b = 2960, t = G - 330;
-      x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(a - 4, t - 4, b - a + 8, G - t + 4);
-      x.fillStyle = '#B9E3C4'; rr(x, a + 40, t + 30, b - a - 80, 90, 10); x.fill(); x.fillStyle = 'rgba(0,0,0,0.08)'; x.fillRect(a + 40, t + 30, b - a - 80, 16);
-      text(x, '증빙 보관  5년', b - 70, t + 78, 46, { color: '#1E3A2A', weight: 900, align: 'right' });
-      const keys = ['7', '8', '9', '÷', 'C', '4', '5', '6', '×', '%', '1', '2', '3', '−', '=', '0', '00', '.', '+', '='];
-      keys.forEach((k, i) => { const c = i % 5, r2 = Math.floor(i / 5), kx = a + 40 + c * 130, ky = t + 140 + r2 * 46; if (ky + 40 > G - 4) return; x.fillStyle = k === '=' ? '#E8913C' : k === 'C' ? '#C9384A' : '#E9EDF0'; rr(x, kx, ky, 116, 38, 8); x.fill(); text(x, k, kx + 58, ky + 20, 22, { color: k === '=' || k === 'C' ? '#FFF' : '#2A3440', weight: 800 }); });
-      logoOnly(x, a + 110, t + 14, 16);
-    },
-    front(x) {
-      both(x, () => {
-        x.strokeStyle = '#B8C0C6'; x.lineWidth = 8; x.beginPath(); x.moveTo(1610, G - 300); x.lineTo(1640, G - 370); x.moveTo(1750, G - 300); x.lineTo(1720, G - 370); x.stroke();
-        x.fillStyle = '#FFFFFF'; x.fillRect(470, G - 8, 520, 8); x.fillStyle = 'rgba(0,0,0,0.12)'; for (let px = 520; px < 980; px += 30) x.fillRect(px, G - 6, 16, 2);
-      });
-    },
-  };
-  // ---------------------------------------------------------------- 혁신의 능선 (국가연구개발혁신법): 공모 → 선정평가 → 협약 → 1단계 수행 → 단계평가 → 2단계 수행 → 최종평가 → 성과활용
+  // ---------------------------------------------------------------- 혁신의 능선의 평가 시설 (선정평가관 · 단계평가 게이트 · 최종평가 단상)과 캐릭터 조형물
   function ridgeLine(x, off, step) { x.beginPath(); x.moveTo(0, ridgeTop(0) + off); for (let px = 0; px <= W; px += step || 20) x.lineTo(px, ridgeTop(px) + off); }
   function wave(x, base, a1, f1, a2, f2, col) { x.fillStyle = col; x.beginPath(); x.moveTo(0, H); for (let px = 0; px <= W; px += 40) x.lineTo(px, base + a1 * Math.sin(px / f1) + a2 * Math.sin(px / f2 + 1)); x.lineTo(W, H); x.closePath(); x.fill(); }
 
@@ -3529,169 +3233,260 @@ const TMAP_ART = (() => {
     x.save(); rr(x, cx - w / 2, top, w, h, 12); x.clip(); x.drawImage(IMG.mascot, cx - w / 2, top, w, h); x.restore();
     text(x, say, cx, top + h + 32, 26, { color: '#1E3A5A', weight: 900 });
   }
-  function labProps(x, vx, step, flip) { // 수행 골짜기: 실험 후드와 연구노트 서가 (flip: 후드를 왼쪽에, 서가 대신 캐릭터 포토존)
-    const a = flip ? vx - 250 : vx + 30, b = a + 220, t = 720;
-    x.fillStyle = hg(x, a, b, [[0, '#B7BEC4'], [0.5, '#E6EAED'], [1, '#A9B0B6']]); x.fillRect(a, t, b - a, 460);
-    x.fillStyle = '#5E6870'; x.fillRect(a - 6, t - 14, b - a + 12, 18);
-    x.fillStyle = vg(x, t + 40, t + 230, [[0, '#BFE3E8'], [1, '#6FAAB2']]); x.fillRect(a + 22, t + 40, b - a - 44, 190);
-    x.fillStyle = 'rgba(255,255,255,0.75)'; x.beginPath(); x.moveTo(a + 80, t + 228); x.lineTo(a + 96, t + 150); x.lineTo(a + 96, t + 110); x.lineTo(a + 116, t + 110); x.lineTo(a + 116, t + 150); x.lineTo(a + 132, t + 228); x.closePath(); x.fill();
-    x.fillStyle = 'rgba(140,198,63,0.85)'; x.fillRect(a + 150, t + 150, 26, 78); x.fillStyle = 'rgba(46,134,214,0.85)'; x.fillRect(a + 190, t + 170, 26, 58);
-    text(x, '실험', (a + b) / 2, t + 22, 22, { color: '#1E2A36', weight: 900 });
-    x.fillStyle = '#5E6870'; x.fillRect(a + 30, t - 70, 8, 56); x.fillRect(b - 38, t - 70, 8, 56);
-    x.fillStyle = KB; rr(x, a, t - 150, b - a, 86, 12); x.fill();
-    text(x, step + ' 수행', (a + b) / 2, t - 107, 34, { color: '#FFF', weight: 900 });
-    if (flip) photoFrame(x, vx + 200, 560, 220, 1000, '함께 해낸 연구');
-    const sa = vx - 330, sb = vx - 80, st = 800;
-    if (!flip) {
-    x.fillStyle = '#7A5A3A'; x.fillRect(sa, st, sb - sa, 380); x.fillStyle = '#5A3F26'; x.fillRect(sa, st + 120, sb - sa, 10);
-    const cols = [KB, KG, '#E8913C', '#2C5E8F', '#C9384A']; for (let k = 0; k < 9; k++) { x.fillStyle = cols[k % 5]; x.fillRect(sa + 12 + k * 26, st + 22, 22, 98); x.fillStyle = 'rgba(255,255,255,0.7)'; x.fillRect(sa + 16 + k * 26, st + 40, 14, 6); }
-    text(x, '연구노트', (sa + sb) / 2, st - 20, 24, { color: '#1E2A36', weight: 900, stroke: 'rgba(255,255,255,0.9)', sw: 6 });
-    }
-  }
-  S.ridge = {
-    veil: 'rgba(236,244,250,0.12)',
-    back(x) {
-      skyDay(x);
-      clouds(x, [[420, 170, 80], [1700, 120, 70], [3500, 140, 90], [4800, 200, 70]]);
-      wave(x, 820, 60, 430, 40, 170, '#B4CEDD');
-      wave(x, 930, 50, 300, 30, 120, '#9DBFA8');
-      board(x, 60, 300, 560, '과제의 길', [['공모', '선정평가'], ['협약', '1단계 수행'], ['단계평가', '2단계 수행'], ['최종평가', '성과활용']], { color: '#1D5E9E', legs: 460 });
-      selectionHall(x, 950, ridgeTop(950));
-      const hx = 1360, hy = ridgeTop(hx); x.fillStyle = '#5E6870'; x.fillRect(hx - 5, hy - 230, 10, 240);
-      x.fillStyle = '#FFFFFF'; rr(x, hx - 90, hy - 300, 180, 92, 12); x.fill(); x.strokeStyle = KB; x.lineWidth = 5; x.stroke();
-      text(x, '협약', hx, hy - 268, 34, { color: '#1D5E9E', weight: 900 }); text(x, '협약서 서명', hx, hy - 230, 18, { color: '#5A646C', weight: 700 });
-      labProps(x, 1750, '1단계'); labProps(x, 3450, '2단계', true);
-      statuePillar(x, 2130, ridgeTop(2130) - 400, 82, ridgeTop(2130) + 30, 'blue', '도전하는 연구');
-      statuePillar(x, 3070, ridgeTop(3070) - 400, 82, ridgeTop(3070) + 30, 'green', '함께하는 연구');
-      stageGate(x, 2600, ridgeTop(2600));
-      finalStage(x, 4250, ridgeTop(4250));
-      const px = 4760; x.fillStyle = vg(x, 760, 1000, [[0, '#F4F2EC'], [1, '#C9C4B8']]); x.fillRect(px - 130, 760, 260, 260);
-      text(x, '성과', px, 820, 44, { color: '#4A3E2C', weight: 900 }); text(x, '공개 · 활용', px, 875, 34, { color: '#4A3E2C', weight: 900 });
-      x.fillStyle = gold(x, 560, 760); x.beginPath(); x.moveTo(px - 90, 590); x.lineTo(px + 90, 590); x.quadraticCurveTo(px + 80, 700, px + 22, 712); x.lineTo(px + 22, 740); x.lineTo(px + 60, 760); x.lineTo(px - 60, 760); x.lineTo(px - 22, 740); x.lineTo(px - 22, 712); x.quadraticCurveTo(px - 80, 700, px - 90, 590); x.closePath(); x.fill();
-      x.strokeStyle = '#C9972B'; x.lineWidth = 12; x.beginPath(); x.arc(px - 92, 640, 40, Math.PI * 0.5, Math.PI * 1.5); x.stroke(); x.beginPath(); x.arc(px + 92, 640, 40, -Math.PI * 0.5, Math.PI * 0.5); x.stroke();
-    },
-    solid(x) {
-      noiseBand(x, 0, W, 600, H, [[0, '#8A6A44'], [0.3, '#6E5236'], [1, '#3E2E1E']], 51);
-      strata(x, 0, W, 760, H, 'rgba(40,26,14,0.22)', 5);
-      x.lineJoin = 'round';
-      ridgeLine(x, 22); x.lineWidth = 64; x.strokeStyle = '#4F8A3E'; x.stroke();
-      ridgeLine(x, 4); x.lineWidth = 22; x.strokeStyle = '#7DB85A'; x.stroke();
-      const r = rng(17); x.fillStyle = 'rgba(160,150,135,0.55)';
-      for (let i = 0; i < 40; i++) { const px = r() * W, py = ridgeTop(px) + 90 + r() * 260; x.beginPath(); x.ellipse(px, py, 22 + r() * 30, 12 + r() * 14, 0, 0, 7); x.fill(); }
-    },
-    front(x, surface) {
-      for (const px of [120, 230, W - 70]) tree(x, px, surface(px) + 6, px % 2 ? 190 : 150, 0, 'pine');
-      const r = rng(23); for (let i = 0; i < 70; i++) { const px = 300 + r() * (W - 600), y = surface(px); x.fillStyle = ['#FFFFFF', '#FFD24A', '#F59AB8'][i % 3]; x.beginPath(); x.arc(px, y + 4, 5, 0, 7); x.fill(); }
-    },
-  };
-
-  // the card art laid along a ramp: (ox, oy) is the card's top-left corner, the face hangs below the edge (the mask clips it)
-  function cardAlong(x, ox, oy, ang) {
-    const w = 640, h = 404; x.save(); x.translate(ox, oy); x.rotate(ang); x.translate(w / 2 - 10, h / 2 - 6); fundCard(x, 0, 0, w, 0); x.restore();
-  }
-
-
-  // ---------------------------------------------------------------- 2026-11 v2: the 주제 맵 grounds are built from walkable structures (TMAP_F in mapgen.js).
-  // Each structure is painted as what it is (a stack of notebooks, a scale, a lab block, drums, a receipt roll, a calculator...);
-  // a mesa's ramps are painted as its approach (steps, a slope of paper, a stair). The scene behind is the map's old back().
+  // ================================================================ 2026-11 v3 — the five 주제 맵, designed again from scratch.
+  // Ground = walkable structures (TMAP_F in mapgen.js), each one a rule from the 「알고 계셨나요?」 pool, its short form engraved
+  // on its face as a plaque. Behind: a fresh scene per map; every sign stands on posts that reach the ground, hangs from the
+  // ceiling rail, or is pinned to the board — nothing floats. Text is always fitted to its box. Every label registers its
+  // rectangle (REG) so tests/layout_check.js can prove nothing is cut off, hidden behind the ground, or on top of another.
   const TOP = id => TMAP_TOP[id];
-  function fPoly(x, f, id) { // the band this structure shows: from its top down to the lower structures under it (taller ones are painted over it later)
+  let REG = null;
+  const reg = (layer, name, a, t, w, h, o) => { if (REG) REG.push(Object.assign({ layer, name, a: Math.round(a), t: Math.round(t), w: Math.round(w), h: Math.round(h) }, o || {})); };
+  function fitSize(x, s, maxW, size, weight, font) { for (; size > 9; size--) { x.font = `${weight || 700} ${size}px ${font || FONT}`; if (x.measureText(s).width <= maxW) break; } return size; }
+  function fitText(x, s, cx, cy, maxW, size, opt = {}) { const z = fitSize(x, s, maxW, size, opt.weight || 700, opt.font); text(x, s, cx, cy, z, opt); return z; }
+  const SIGN = { head: 48, line: 36, pad: 14 };
+  function signH(n) { return SIGN.head + n * SIGN.line + SIGN.pad * 2 - 6; }
+  function signBoard(x, cx, top, w, title, lines, col) {
+    const h = signH(lines.length), a = cx - w / 2;
+    x.fillStyle = 'rgba(0,0,0,0.22)'; rr(x, a + 6, top + 8, w, h, 12); x.fill();
+    x.fillStyle = '#FBFCFD'; rr(x, a, top, w, h, 12); x.fill();
+    x.fillStyle = col; rr(x, a, top, w, SIGN.head, [12, 12, 0, 0]); x.fill();
+    fitText(x, title, cx, top + SIGN.head / 2 + 1, w - 36, 28, { color: '#FFF', weight: 900 });
+    lines.forEach((s, i) => {
+      const y = top + SIGN.head + SIGN.pad + i * SIGN.line + SIGN.line / 2 - 3; x.fillStyle = col; x.beginPath(); x.arc(a + 24, y, 5, 0, 7); x.fill();
+      const z = fitSize(x, s, w - 60, 24, 700); text(x, s, a + 40, y, z, { color: '#1E2A36', weight: 700, align: 'left' });
+    });
+    x.strokeStyle = 'rgba(30,42,54,0.35)'; x.lineWidth = 2; rr(x, a, top, w, h, 12); x.stroke();
+    reg('back', title, a, top, w, h); return h;
+  }
+  const steel = (x, px) => hg(x, px - 7, px + 7, [[0, '#5E6870'], [0.5, '#C9D1D8'], [1, '#5E6870']]);
+  function groundMin(id, a, b) { const f = TOP(id); let g = G; for (let px = a; px <= b; px += 10) g = Math.min(g, f(px)); return g; }
+  function postSign(x, id, cx, w, title, lines, col, up) { // stands on two posts that go into the ground
+    const f = TOP(id), h = signH(lines.length), top = groundMin(id, cx - w / 2, cx + w / 2) - (up || 150) - h;
+    for (const px of [cx - w * 0.32, cx + w * 0.32]) { x.fillStyle = steel(x, px); x.fillRect(px - 7, top + h - 8, 14, f(px) - (top + h) + 48); }
+    signBoard(x, cx, top, w, title, lines, col);
+  }
+  function hangSign(x, cx, top, w, title, lines, col, rail) { // hangs on two rods from the ceiling rail
+    for (const px of [cx - w * 0.32, cx + w * 0.32]) { x.fillStyle = steel(x, px); x.fillRect(px - 4, rail, 8, top - rail + 6); x.fillStyle = '#3A444E'; x.fillRect(px - 12, top - 4, 24, 10); }
+    signBoard(x, cx, top, w, title, lines, col);
+  }
+  function pinNote(x, cx, top, w, title, lines, col) { // a memo pinned on the cork board
+    const h = signH(lines.length), a = cx - w / 2;
+    x.fillStyle = 'rgba(0,0,0,0.2)'; x.fillRect(a + 6, top + 8, w, h); x.fillStyle = '#FFFDF2'; x.fillRect(a, top, w, h);
+    x.fillStyle = col; x.fillRect(a, top + SIGN.head - 4, w, 4);
+    fitText(x, title, cx, top + SIGN.head / 2 + 4, w - 40, 28, { color: col, weight: 900 });
+    lines.forEach((s, i) => { const y = top + SIGN.head + SIGN.pad + i * SIGN.line + SIGN.line / 2 - 3, z = fitSize(x, s, w - 56, 24, 700); text(x, '✓', a + 24, y, 20, { color: col, weight: 900 }); text(x, s, a + 42, y, z, { color: '#1E2A36', weight: 700, align: 'left' }); });
+    x.fillStyle = 'rgba(0,0,0,0.25)'; x.beginPath(); x.arc(cx + 2, top + 5, 11, 0, 7); x.fill(); x.fillStyle = '#E3232B'; x.beginPath(); x.arc(cx, top + 2, 11, 0, 7); x.fill(); x.fillStyle = 'rgba(255,255,255,0.6)'; x.beginPath(); x.arc(cx - 3, top - 1, 4, 0, 7); x.fill();
+    reg('back', title, a, top, w, h);
+  }
+  function frameOnPosts(x, id, cx, w, up, say) { // the KIRD characters in a frame on two posts (outdoor maps)
+    const f = TOP(id), ih = w * 340 / 360, h = ih + 54, top = groundMin(id, cx - w / 2 - 14, cx + w / 2 + 14) - up - h;
+    for (const px of [cx - w * 0.3, cx + w * 0.3]) { x.fillStyle = steel(x, px); x.fillRect(px - 6, top + h, 12, f(px) - (top + h) + 48); }
+    x.fillStyle = 'rgba(0,0,0,0.2)'; rr(x, cx - w / 2 - 8, top - 6, w + 28, h + 20, 18); x.fill();
+    x.fillStyle = '#FFFFFF'; rr(x, cx - w / 2 - 14, top - 14, w + 28, h + 20, 18); x.fill(); x.strokeStyle = KB; x.lineWidth = 5; x.stroke();
+    x.save(); rr(x, cx - w / 2, top, w, ih, 10); x.clip(); x.drawImage(IMG.mascot, 20, 0, 360, 340, cx - w / 2, top, w, ih); x.restore();
+    fitText(x, say, cx, top + ih + 24, w - 8, 24, { color: '#1E3A5A', weight: 900 });
+    reg('back', say, cx - w / 2 - 14, top - 14, w + 28, h + 20);
+  }
+  function hangMascot(x, cx, top, bw, say, rail) { for (const px of [cx - bw * 0.3, cx + bw * 0.3]) { x.fillStyle = steel(x, px); x.fillRect(px - 3, rail, 6, top - rail); } mascotBanner(x, cx, top, bw, say); reg('back', say, cx - bw / 2, top, bw, bw * 1.32); }
+
+  // ---- structures
+  function fPoly(x, f, id) { // the band this structure shows: from its top down to the lower structures under it
     const [A, B] = featSpan(f), F = TMAP_F[id], below = px => { let h = 0; for (const g of F) if (g !== f && g.h < f.h) { const v = featH(g, px); if (v > h) h = v; } return G - h + (h ? 0 : 60); };
     const pts = []; for (let px = A; px <= B; px += 8) pts.push(px); pts.push(B);
     x.beginPath(); pts.forEach((px, i) => { const y = G - featH(f, px); i ? x.lineTo(px, y) : x.moveTo(px, y); });
     for (let i = pts.length - 1; i >= 0; i--) { const px = pts[i]; x.lineTo(px, Math.max(G - featH(f, px), below(px))); } x.closePath();
   }
-  function rampsOf(f) { const [A, B] = featSpan(f); return f.k === 'dome' ? [] : [[A, f.a], [f.b, B]]; }
-  function layers(x, a, b, top, bot, cols, hgt, edge) { // horizontal bands (things lying in a pile)
-    let k = 0; for (let y = bot; y > top - hgt; y -= hgt, k++) { x.fillStyle = cols[k % cols.length]; x.fillRect(a, y - hgt, b - a, hgt); if (edge) { x.fillStyle = edge; x.fillRect(a, y - hgt + 2, b - a, 3); } }
-  }
-  function steps(x, a, b, top, col, line, dir) { // a stair drawn on a ramp: treads every 24 px
-    x.fillStyle = col; x.fillRect(a, top, b - a, G + 60 - top);
-    x.strokeStyle = line; x.lineWidth = 3; for (let y = G; y > top; y -= 24) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); }
-  }
+  const bx = (x, a, b, t, stops) => { x.fillStyle = vg(x, t, G + 20, stops); x.fillRect(a, t - 4, b - a, G + 64 - t); };
+  function treads(x, f, line) { if (f.k === 'dome') return; const [A, B] = featSpan(f); x.strokeStyle = line; x.lineWidth = 3; for (const [a, b] of [[A, f.a], [f.b, B]]) for (let y = G - (f.on || 0) - 2; y > G - f.h; y -= 22) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); } }
+  function topLine(x, f, w, col) { const [A, B] = featSpan(f); x.lineJoin = 'round'; x.beginPath(); for (let px = A; px <= B; px += 8) x.lineTo(px, G - featH(f, px) + w / 2 - 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); }
   const BOOKC = [KB, KG, '#E9EDF1', '#C98A50', '#3B4A5A', '#9B6BC9', '#F2C230'];
   const ART = {
-    // ---- 진실의 전당
-    notebooks(x, f) { const t = G - f.h; layers(x, f.a - 400, f.b + 400, t, G + 40, BOOKC, 23, 'rgba(255,255,255,0.75)'); if (f.h > 100) text(x, '연구노트', (f.a + f.b) / 2, t + 34, 26, { color: '#FFF', weight: 900, stroke: 'rgba(20,30,40,0.7)', sw: 5 }); },
-    scroll(x, f) { x.fillStyle = vg(x, G - f.h, G, [[0, '#FFFDF4'], [1, '#D9CDAE']]); x.fillRect(f.c - f.w, G - f.h - 4, 2 * f.w, f.h + 70); x.strokeStyle = 'rgba(120,100,70,0.35)'; x.lineWidth = 2; for (let k = 1; k < 6; k++) { x.beginPath(); x.moveTo(f.c - f.w, G - f.h * k / 6); x.lineTo(f.c + f.w, G - f.h * k / 6); x.stroke(); } x.fillStyle = '#C0392B'; x.fillRect(f.c - 8, G - f.h - 4, 16, f.h + 10); },
-    cabinet(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); for (let k = 0; t + 20 + k * 30 < G - 10; k++) { x.fillStyle = '#2A343E'; x.fillRect(f.a + 30, t + 16 + k * 30, f.b - f.a - 60, 22); x.fillStyle = k % 2 ? '#3FD07A' : '#7FC4E8'; x.fillRect(f.a + 44, t + 24 + k * 30, 10, 6); } text(x, '원본 데이터 보관함', (f.a + f.b) / 2, t + 26, 22, { color: '#DFF7EF', weight: 900 }); },
-    pan(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#F2D27A'], [0.3, '#C9973E'], [1, '#6E4E1E']]); x.fillRect(f.a - 300, t, f.b - f.a + 600, f.h + 60); x.fillStyle = 'rgba(255,255,255,0.4)'; x.fillRect(f.a, t + 6, f.b - f.a, 6); },
-    scaleBase(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#F4F2EC'], [1, '#B9B2A2']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.fillStyle = '#9C7430'; x.fillRect(f.a - 500, t, f.b - f.a + 1000, 10); text(x, '정의의 저울', (f.a + f.b) / 2, t + 54, 30, { color: '#6B4A1C', weight: 900 }); text(x, 'RESEARCH INTEGRITY', (f.a + f.b) / 2, t + 96, 18, { color: '#8A7A5E', weight: 800 }); },
-    shelf(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#8A6240'], [1, '#5E3F26']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); for (let row = 0; row < 2; row++) { const y0 = t + 18 + row * 104; let i = 0; for (let px = f.a + 16; px < f.b - 30; px += 30, i++) { x.fillStyle = BOOKC[i % BOOKC.length]; x.fillRect(px, y0 + (i % 3) * 6, 24, 84 - (i % 3) * 6); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(px + 4, y0 + 30, 16, 5); } x.fillStyle = '#4A3018'; x.fillRect(f.a, y0 + 84, f.b - f.a, 10); } },
-    irb(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#E3E8EB'], [1, '#9AA3AB']]); x.fillRect(f.a, t, f.b - f.a + 400, f.h + 60); x.fillStyle = '#FFFFFF'; x.fillRect(f.a + 40, t + 20, 180, 44); text(x, 'IRB 승인 서류', f.a + 130, t + 42, 20, { color: '#1E3A5A', weight: 900 }); },
-    // ---- 증명의 노트
-    mug(x, f) { const t = G - f.h; x.fillStyle = hg(x, f.a, f.b, [[0, '#D8DEE2'], [0.3, '#FFFFFF'], [0.8, '#E3E8EB'], [1, '#B9C1C7']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.fillStyle = '#4A2E1A'; x.fillRect(f.a, t, f.b - f.a, 12); logoOnly(x, (f.a + f.b) / 2, t + 80, 48); },
-    pageL(x, f) { page(x, f, ['연구노트  No. 2026-017', '실험 목적 : 신소재 박막의 열안정성 확인', '원본 데이터 → 서버 저장 (raw_1019.csv)']); },
-    pageR(x, f) { page(x, f, ['측정 결과 (n = 3)', '결론 : 재현성 확인 → 동료 검증 요청', '참고 : Kim et al. (2025), p.41']); },
-    pen(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, t + 50, [[0, '#4A5A6C'], [0.3, '#1C2530'], [1, '#0B1016']]); x.fillRect(f.a - 300, t, f.b - f.a + 600, 48); x.fillStyle = vg(x, t, t + 48, [[0, '#F7DE96'], [0.5, '#C9973E'], [1, '#7A5520']]); x.fillRect(f.a + 120, t, 16, 48); x.fillRect(f.b - 40, t, 40, 48); x.fillStyle = 'rgba(255,255,255,0.35)'; x.fillRect(f.a - 300, t + 8, f.b - f.a + 600, 5); kMark(x, (f.a + f.b) / 2, t + 24, 26); },
-    binders(x, f) { const t = G - f.h; ['#2E86D6', '#3B4A5A', '#8CC63F', '#C98A50', '#2E86D6'].forEach((c, i) => { x.fillStyle = c; x.fillRect(f.a - 300, t + i * 34, W, 34); x.fillStyle = 'rgba(255,255,255,0.85)'; x.fillRect(f.a + 30, t + 8 + i * 34, 120, 18); }); text(x, ['연구노트 2025', '데이터 관리 계획', 'IRB 심의 서류'][Math.round(f.h / 80) - 1] || '', f.a + 90, t + 17, 13, { color: '#1E2A36', weight: 900 }); },
-    // ---- 예방의 실험동
-    labFloor(x, f) { x.save(); labBlock(x, f.a, f.b, 1, f.h); x.restore(); },
-    labRoof(x, f) { x.save(); x.translate(0, -140); labBlock(x, f.a, f.b, 1, f.h - 140); x.restore(); },
-    drums(x, f) { for (let px = f.a + 45; px < f.b; px += 90) drum(x, px, G - (f.h > 100 ? 90 : 0), 80, f.h > 100 ? 60 : 90, (px / 90 | 0) % 2 ? '#2E86D6' : '#F2C230'); },
-    store(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#D9DDE0'], [1, '#A9B0B5']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); hazardStripe(x, f.a, t, f.b, 14); for (const dx of [f.a + 110, f.b - 290]) { x.fillStyle = vg(x, t + 30, G, [[0, '#F2C230'], [1, '#C99A18']]); x.fillRect(dx, t + 30, 180, f.h - 30); ghs(x, dx + 90, t + 30 + (f.h - 30) / 2, 50, dx < (f.a + f.b) / 2 ? 'flame' : 'excl'); } text(x, '시약 창고', (f.a + f.b) / 2, G - 40, 26, { color: '#1E2A36', weight: 900 }); },
-    extinguisher(x, f) { const t = G - f.h, a = f.a, b = f.b; x.fillStyle = hg(x, a, b, [[0, '#7A0F14'], [0.3, '#E8383F'], [0.45, '#FF8A8E'], [0.6, '#E8383F'], [1, '#6A0C10']]); x.fillRect(a, t, b - a, f.h + 60); x.fillStyle = '#FFFFFF'; rr(x, a + 22, t + 30, b - a - 44, 74, 8); x.fill(); text(x, '소화기', (a + b) / 2, t + 54, 26, { color: '#C62828', weight: 900 }); text(x, '핀·조준·누르기', (a + b) / 2, t + 86, 13, { color: '#333', weight: 800 }); x.fillStyle = '#FFF'; x.beginPath(); x.arc((a + b) / 2, t + 16, 10, 0, 7); x.fill(); },
-    yard(x, f) { x.fillStyle = vg(x, G - f.h, G + 60, [[0, '#6A5A40'], [1, '#3A3028']]); x.fillRect(f.a - 700, G - f.h - 4, W, f.h + 80); },
-    // ---- 신뢰의 집행실
-    roll(x, f) { x.fillStyle = rg(x, f.c - 120, G - 120, 20, f.w, [[0, '#FFFFFF'], [0.8, '#EDEAE2'], [1, '#C9C4B8']]); x.fillRect(f.c - f.w, G - f.h - 4, 2 * f.w, f.h + 70); x.strokeStyle = 'rgba(150,140,120,0.35)'; x.lineWidth = 1.5; for (let k = 40; k < f.w; k += 14) { x.beginPath(); x.ellipse(f.c, G + 40, k, k * 0.42, 0, Math.PI, 0); x.stroke(); } x.fillStyle = '#8A7A5E'; x.beginPath(); x.ellipse(f.c, G + 40, 90, 40, 0, Math.PI, 0); x.fill(); text(x, '영수증', f.c, G - f.h + 60, 28, { color: '#6B5E44', weight: 900 }); },
-    bundle(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60); x.strokeStyle = 'rgba(140,130,110,0.4)'; x.lineWidth = 1.5; for (let y = t + 8; y < G; y += 7) { x.beginPath(); x.moveTo(f.a - 500, y); x.lineTo(f.b + 500, y); x.stroke(); } if (f.h > 150) { x.fillStyle = '#1C1C1C'; x.fillRect(f.a + 40, t, 220, 16); receiptText(x, f.a + 20, t + 40, [['연구비 카드 결제', ''], ['재료비  시약', '128,000'], ['증빙  세금계산서', '첨부']], 260); } },
-    calc(x, f) { const t = G - f.h, a = f.a, b = f.b; x.fillStyle = vg(x, t, G, [[0, '#3A4652'], [1, '#1C242C']]); x.fillRect(a, t, b - a, f.h + 60); x.fillStyle = '#B9E3C4'; rr(x, a + 30, t + 18, b - a - 60, 56, 8); x.fill(); text(x, '증빙 보관  5년', b - 50, t + 47, 32, { color: '#1E3A2A', weight: 900, align: 'right' }); for (let r2 = 0; r2 < 2; r2++) for (let c = 0; c < 6; c++) { x.fillStyle = c === 5 ? '#E8913C' : '#5A6672'; rr(x, a + 34 + c * ((b - a - 60) / 6), t + 88 + r2 * 34, (b - a - 60) / 6 - 12, 26, 5); x.fill(); } },
-    card(x, f) { const [A] = featSpan(f), ang = Math.atan2(-f.h, f.a - A); x.save(); x.translate(A + 40, G + 10); x.rotate(ang); x.fillStyle = hg(x, 0, 1300, [[0, '#2E86D6'], [1, '#2AA37A']]); x.fillRect(-60, -60, 1500, 200); x.fillStyle = '#F2C94C'; rr(x, 380, -40, 70, 50, 8); x.fill(); text(x, '연구비 카드', 620, -12, 40, { color: '#FFF', weight: 900 }); x.restore(); },
-    coins(x, f) { const t = G - f.h; for (let y = G + 40, k = 0; y > t - 20; y -= 20, k++) { x.fillStyle = k % 2 ? '#E9C46A' : '#C9972B'; x.fillRect(f.a - 400, y - 20, W, 20); x.fillStyle = 'rgba(255,255,255,0.3)'; x.fillRect(f.a - 400, y - 18, W, 3); } x.strokeStyle = 'rgba(120,80,20,0.35)'; x.lineWidth = 2; for (let px = f.a - 400; px < W; px += 14) { x.beginPath(); x.moveTo(px, t); x.lineTo(px, G + 40); x.stroke(); } text(x, '연구비', (f.a + Math.min(W, f.b)) / 2, t + 30, 22, { color: '#5A3E10', weight: 900 }); },
-    // ---- 혁신의 능선
+    // 진실의 전당
+    shelf(x, f, A, B, t) { bx(x, A, B, t, [[0, '#9A6E46'], [1, '#5E3F26']]); treads(x, f, 'rgba(50,30,14,0.55)');
+      for (let y0 = t + 14, row = 0; y0 + 44 < G; y0 += 60, row++) { if (row === 1) continue; let i = row * 3; for (let px = Math.max(8, f.a + 12); px < f.b - 26; px += 28, i++) { x.fillStyle = BOOKC[i % BOOKC.length]; x.fillRect(px, y0 + (i % 3) * 4, 22, 44 - (i % 3) * 4); x.fillStyle = 'rgba(255,255,255,0.8)'; x.fillRect(px + 4, y0 + 18, 14, 4); } x.fillStyle = '#4A3018'; x.fillRect(Math.max(0, f.a), y0 + 44, f.b - Math.max(0, f.a), 8); } },
+    podium(x, f, A, B, t) { bx(x, A, B, t, [[0, '#FFFFFF'], [1, '#C4CDD4']]); treads(x, f, 'rgba(90,100,110,0.4)'); x.fillStyle = f.on ? '#E9C46A' : KB; x.fillRect(f.a, t - 4, f.b - f.a, 12); },
+    dais(x, f, A, B, t) { marble(x, A, t - 4, B, G + 60, 7 + f.h); treads(x, f, 'rgba(120,112,96,0.45)'); x.fillStyle = '#C9A55A'; x.fillRect(f.a, t - 4, f.b - f.a, 9); },
+    ai(x, f, A, B, t) { bx(x, A, B, t, [[0, '#26384A'], [1, '#131C26']]); treads(x, f, 'rgba(127,209,199,0.35)'); x.strokeStyle = 'rgba(127,209,199,0.5)'; x.lineWidth = 2; for (let k = 0; k < 6; k++) { const px = f.a + 20 + k * 52; x.beginPath(); x.moveTo(px, t + 8); x.lineTo(px, t + 22); x.lineTo(px + 18, t + 22); x.stroke(); x.fillStyle = '#7FD1C7'; x.fillRect(px + 16, t + 19, 6, 6); } },
+    sanc(x, f, A, B, t) { bx(x, A, B, t, [[0, '#8E2A2E'], [1, '#4E1418']]); treads(x, f, 'rgba(0,0,0,0.35)'); x.fillStyle = '#E9C46A'; x.fillRect(f.a, t - 4, W, 10); for (let px = f.a + 30; px < W; px += 90) { x.fillStyle = 'rgba(255,220,160,0.5)'; x.beginPath(); x.arc(px, t + 18, 4, 0, 7); x.fill(); } },
+    // 증명의 노트
+    ink(x, f, A, B, t) { x.fillStyle = hg(x, 0, f.b + 300, [[0, '#0E1E46'], [0.35, '#2B4BA0'], [0.55, '#16306E'], [1, '#0A1634']]); x.fillRect(A, t - 4, B - A, G + 64 - t); x.fillStyle = '#16181C'; x.fillRect(A, t - 4, f.b - A, 16); x.fillStyle = 'rgba(255,255,255,0.18)'; x.fillRect(60, t + 14, 26, f.h - 20); },
+    bound(x, f, A, B, t) { bx(x, A, B, t, [[0, '#FFFDF6'], [1, '#E3DAC2']]); x.strokeStyle = 'rgba(150,130,95,0.45)'; x.lineWidth = 1.2; for (let y = t + 16; y < G - 12; y += 5) { x.beginPath(); x.moveTo(A, y); x.lineTo(B, y); x.stroke(); } x.fillStyle = vg(x, t, t + 14, [[0, '#3C93DC'], [1, '#1D5E9E']]); x.fillRect(A, t - 4, B - A, 16); x.fillStyle = '#1D5E9E'; x.fillRect(A, G - 12, B - A, 80); },
+    pageL(x, f, A, B, t) { bx(x, A, B, t, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.strokeStyle = 'rgba(70,130,200,0.35)'; x.lineWidth = 1.5; for (let y = t + 26; y < G; y += 26) { x.beginPath(); x.moveTo(A, y); x.lineTo(B, y); x.stroke(); } x.strokeStyle = 'rgba(220,60,60,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(f.a + 50, t); x.lineTo(f.a + 50, G); x.stroke(); },
+    pageR(x, f, A, B, t) { ART.pageL(x, f, A, B, t); },
+    stamp(x, f, A, B, t) { bx(x, A, B, t, [[0, '#C98A50'], [1, '#8A5A2A']]); x.fillStyle = '#C0392B'; x.fillRect(A, G - f.on - 16, B - A, 16); x.fillStyle = 'rgba(255,255,255,0.25)'; x.fillRect(f.a + 14, t + 4, 10, f.h - f.on - 24); },
+    whiteout(x, f, A, B, t) { bx(x, A, B, t, [[0, '#FFFFFF'], [1, '#CFD6DB']]); x.fillStyle = '#E3232B'; x.fillRect(A, t - 4, B - A, 14); x.fillRect(A, G - 12, B - A, 12); },
+    box(x, f, A, B, t) { bx(x, A, B, t, [[0, '#D9B98C'], [1, '#A9855A']]); treads(x, f, 'rgba(90,60,30,0.4)'); x.fillStyle = '#B9966A'; x.fillRect(f.a, t - 4, W, 20); x.strokeStyle = 'rgba(90,60,30,0.45)'; x.lineWidth = 3; for (let px = f.a; px < W; px += 230) { x.beginPath(); x.moveTo(px, t); x.lineTo(px, G - (f.on || 0)); x.stroke(); } },
+    // 예방의 실험동
+    yard(x, f, A, B, t) { bx(x, A, B, t, [[0, '#6A5A40'], [1, '#3A3028']]); topLine(x, f, 26, '#5E9A44'); topLine(x, f, 8, '#8CC66A'); },
+    shower(x, f, A, B, t) { bx(x, A, B, t, [[0, '#2E9E4F'], [1, '#1D6E36']]); treads(x, f, 'rgba(255,255,255,0.3)'); x.fillStyle = 'rgba(0,0,0,0.35)'; for (let px = f.a + 20; px < f.b - 20; px += 22) x.fillRect(px, t + 2, 12, 5); },
+    labFloor(x, f, A, B, t) { bx(x, A, B, t, [[0, '#9AA3AB'], [1, '#6E7880']]); treads(x, f, 'rgba(255,255,255,0.4)'); MUTE = true; x.save(); labBlock(x, f.a, f.b, 1, f.h); x.restore(); MUTE = false; },
+    labRoof(x, f, A, B, t) { bx(x, A, B, t, [[0, '#9AA3AB'], [1, '#6E7880']]); treads(x, f, 'rgba(255,255,255,0.4)'); MUTE = true; x.save(); x.translate(0, -f.on); labBlock(x, f.a, f.b, 1, f.h - f.on); x.restore(); MUTE = false; },
+    drums(x, f, A, B, t) { bx(x, A, B, t, [[0, '#4A525A'], [1, '#2E343A']]); if (f.on) drum(x, (f.a + f.b) / 2, G - f.on, 76, f.h - f.on, '#F2C230'); else for (let px = f.a + 42, i = 0; px < f.b; px += 84, i++) drum(x, px, G, 78, f.h, i % 2 ? '#2E86D6' : '#F2C230'); },
+    store(x, f, A, B, t) { bx(x, A, B, t, [[0, '#D9DDE0'], [1, '#A9B0B5']]); treads(x, f, 'rgba(60,70,80,0.4)'); hazardStripe(x, f.a, t - 4, f.b, 16); for (const dx of [f.a + 40, f.b - 160]) { x.fillStyle = vg(x, t + 24, G, [[0, '#F2C230'], [1, '#C99A18']]); x.fillRect(dx, t + 26, 120, f.h - 26); ghs(x, dx + 60, t + 26 + (f.h - 26) / 2, 40, dx < (f.a + f.b) / 2 ? 'flame' : 'excl'); } },
+    ext(x, f, A, B, t) { x.fillStyle = hg(x, f.a, f.b, [[0, '#7A0F14'], [0.3, '#E8383F'], [0.45, '#FF8A8E'], [0.6, '#E8383F'], [1, '#6A0C10']]); x.fillRect(f.a, t - 4, f.b - f.a, f.h); const [a0, b0] = featSpan(f); x.fillStyle = '#7A848C'; x.fillRect(a0, t, f.a - a0, f.h); x.fillRect(f.b, t, b0 - f.b, f.h); treads(x, f, 'rgba(255,255,255,0.4)'); },
+    waste(x, f, A, B, t) { bx(x, A, B, t, [[0, '#5E6870'], [1, '#3A424A']]); treads(x, f, 'rgba(255,255,255,0.25)'); ['#E8402E', '#2E86D6', '#F2C230', '#8CC63F'].forEach((c, i) => { x.fillStyle = c; x.fillRect(f.a + 16 + i * 52, t - 4, 40, 12); }); },
+    // 신뢰의 집행실
+    coins(x, f, A, B, t) { for (let y = G + 40, k = 0; y > t - 20; y -= 18, k++) { x.fillStyle = k % 2 ? '#E9C46A' : '#C9972B'; x.fillRect(A, y - 18, B - A, 18); x.fillStyle = 'rgba(255,255,255,0.3)'; x.fillRect(A, y - 16, B - A, 3); } x.strokeStyle = 'rgba(120,80,20,0.3)'; x.lineWidth = 2; for (let px = 6; px < B; px += 14) { x.beginPath(); x.moveTo(px, t); x.lineTo(px, G + 40); x.stroke(); } },
+    card(x, f, A, B, t) { x.fillStyle = hg(x, A, B, [[0, '#2E86D6'], [1, '#2AA37A']]); x.fillRect(A, t - 4, B - A, G + 64 - t); const ang = Math.atan2(-f.h, f.a - A); x.save(); x.translate(A + 240, G - 30); x.rotate(ang); x.fillStyle = '#F2C94C'; rr(x, 0, -40, 64, 46, 8); x.fill(); x.fillStyle = 'rgba(255,255,255,0.5)'; for (let k = 0; k < 4; k++) x.fillRect(110 + k * 70, -22, 52, 10); x.restore(); },
+    roll(x, f) { x.fillStyle = rg(x, f.c - 120, G - 110, 20, f.w, [[0, '#FFFFFF'], [0.8, '#EDEAE2'], [1, '#C9C4B8']]); x.fillRect(f.c - f.w, G - f.h - 4, 2 * f.w, f.h + 70); x.strokeStyle = 'rgba(150,140,120,0.35)'; x.lineWidth = 1.5; for (let k = 60; k < f.w; k += 16) { x.beginPath(); x.ellipse(f.c, G + 30, k, k * 0.36, 0, Math.PI, 0); x.stroke(); } },
+    calc(x, f, A, B, t) { bx(x, A, B, t, [[0, '#3A4652'], [1, '#1C242C']]); treads(x, f, 'rgba(255,255,255,0.2)'); const kw = (f.b - f.a - 40) / 10; for (let c = 0; c < 10; c++) { if (c > 1 && c < 8) continue; for (let r2 = 0; r2 < 3; r2++) { x.fillStyle = c === 9 ? '#E8913C' : '#5A6672'; rr(x, f.a + 22 + c * kw, t + 22 + r2 * 38, kw - 10, 28, 5); x.fill(); } } },
+    crate(x, f, A, B, t) { bx(x, A, B, t, [[0, '#C99A5A'], [1, '#8A6230']]); treads(x, f, 'rgba(70,45,15,0.45)'); x.strokeStyle = 'rgba(70,45,15,0.5)'; x.lineWidth = 3; for (let px = f.a; px <= f.b; px += 50) { x.beginPath(); x.moveTo(px, t); x.lineTo(px, G); x.stroke(); } x.strokeRect(f.a + 2, t + 2, f.b - f.a - 4, f.h - 2); },
+    safe(x, f, A, B, t) { bx(x, A, B, t, [[0, '#8794A0'], [1, '#3F4A55']]); treads(x, f, 'rgba(255,255,255,0.3)'); x.fillStyle = '#2A333B'; x.fillRect(f.a, t - 4, W, 10); for (let px = f.a + 24; px < W; px += 60) { x.fillStyle = 'rgba(255,255,255,0.45)'; x.beginPath(); x.arc(px, t + 20, 4, 0, 7); x.fill(); }
+      if (f.on) { const cx = (f.a + W) / 2, cy = t + 62; x.fillStyle = '#C9D1D8'; x.beginPath(); x.arc(cx, cy, 30, 0, 7); x.fill(); x.strokeStyle = '#2A333B'; x.lineWidth = 5; x.stroke(); for (let k = 0; k < 4; k++) { x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + 40 * Math.cos(k * Math.PI / 2 + 0.6), cy + 40 * Math.sin(k * Math.PI / 2 + 0.6)); x.stroke(); } } },
+    // 혁신의 능선 (grass = the map's own soil and turf)
     grass() {},
-    dais(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, t + 60, [[0, '#FAF8F2'], [1, '#CFC8B8']]); x.fillRect(f.a - 700, t - 4, f.b - f.a + 1400, G + 60 - t); x.strokeStyle = '#B9B2A2'; x.lineWidth = 3; x.beginPath(); x.moveTo(f.a - 700, t + 40); x.lineTo(f.b + 700, t + 40); x.stroke(); },
-    ppe(x, f) { const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#2E9E4F'], [1, '#1D6E36']]); x.fillRect(f.a, t, f.b - f.a, f.h + 60); x.fillStyle = '#FFFFFF'; rr(x, f.a + 20, t + 14, f.b - f.a - 40, 34, 6); x.fill(); text(x, '보호구 보관함', (f.a + f.b) / 2, t + 31, 18, { color: '#1D6E36', weight: 900 }); },
   };
-  function page(x, f, lines) { // an open notebook page lying on the desk: paper, ruled lines, margin, a few lines of ink
-    const t = G - f.h; x.fillStyle = vg(x, t, G, [[0, '#FFFDF6'], [1, '#E9E1CC']]); x.fillRect(f.a - 500, t, f.b - f.a + 1000, f.h + 60);
-    x.strokeStyle = 'rgba(70,130,200,0.35)'; x.lineWidth = 1.5; for (let y = t + 30; y < G; y += 28) { x.beginPath(); x.moveTo(f.a - 500, y); x.lineTo(f.b + 500, y); x.stroke(); }
-    x.strokeStyle = 'rgba(220,60,60,0.5)'; x.lineWidth = 2; x.beginPath(); x.moveTo(f.a + 60, t); x.lineTo(f.a + 60, G); x.stroke();
-    lines.forEach((s, i) => ink(x, s, f.a + 80, t + 24 + i * 28, 20, i ? {} : { weight: 900, color: '#2E86D6', font: FONT }));
-    if (f.art === 'pageL') { sigBox(x, f.a + 700, t + 104, '작성자', '2026.10.19'); }
+  const PLAQUE = { scale: ['#F3E2B0', '#9C7430', '#3E2A0E'], notebook: ['#FFFFFF', '#1F3A93', '#1F3A93'], lab: ['#F2C230', '#1A1A1A', '#1A1A1A'], archive: ['#B9E3C4', '#1E3A2A', '#1E3A2A'], ridge: ['#F4F2EC', '#6B5E44', '#3E3424'] };
+  function plaque(x, f, st) { // the rule engraved on the structure's face
+    const L = f.lab; if (!L) return; let cx, cy, w, hmax;
+    if (f.lx != null) { cx = f.lx; cy = G - f.ly; w = f.lw; hmax = 2 * f.ly - 16; }
+    else { const a = Math.max(24, f.a), b = Math.min(W - 24, f.b), bt = G - f.h, bb = G - (f.on || 0); cx = (a + b) / 2; cy = (bt + bb) / 2 + 3; w = Math.min(b - a - 30, 780); hmax = bb - bt - 24; }
+    const n = L.length; let z = Math.min(34, Math.floor((hmax - 12) / n / 1.2)); for (const s of L) z = Math.min(z, fitSize(x, s, w - 36, z, 900));
+    let tw = 0; x.font = `900 ${z}px ${FONT}`; for (const s of L) tw = Math.max(tw, x.measureText(s).width);
+    const pw = tw + 36, ph = n * z * 1.2 + 12, a = cx - pw / 2, t = cy - ph / 2;
+    x.fillStyle = 'rgba(0,0,0,0.3)'; rr(x, a + 3, t + 4, pw, ph, 8); x.fill();
+    x.fillStyle = st[0]; rr(x, a, t, pw, ph, 8); x.fill(); x.strokeStyle = st[1]; x.lineWidth = 3; x.stroke();
+    L.forEach((s, i) => text(x, s, cx, t + 6 + z * 1.2 * (i + 0.5) + 1, z, { color: st[2], weight: 900 }));
+    reg('solid', L.join(' / '), a, t, pw, ph, { size: z });
   }
-  const RAMP = { // what a mesa's sides look like, per map
-    scale: (x, a, b, t) => steps(x, a, b, t, '#C9D2D8', 'rgba(90,100,110,0.45)'),
-    notebook: (x, a, b, t) => { x.fillStyle = vg(x, t, G, [[0, '#F6EFDD'], [1, '#D9CDB0']]); x.fillRect(a, t, b - a, G + 60 - t); x.strokeStyle = 'rgba(150,130,95,0.35)'; x.lineWidth = 1.2; for (let y = G; y > t; y -= 6) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); } },
-    lab: (x, a, b, t) => steps(x, a, b, t, '#7A848C', 'rgba(255,255,255,0.35)'),
-    archive: (x, a, b, t) => { x.fillStyle = vg(x, t, G, [[0, '#FFFFFF'], [1, '#DCD6C8']]); x.fillRect(a, t, b - a, G + 60 - t); x.strokeStyle = 'rgba(140,130,110,0.4)'; x.lineWidth = 1.5; for (let y = G; y > t; y -= 7) { x.beginPath(); x.moveTo(a, y); x.lineTo(b, y); x.stroke(); } },
-    ridge: () => {},
-  };
-  const SELF_RAMP = { pan: 1, scaleBase: 1, mug: 1, pageL: 1, pageR: 1, pen: 1, binders: 1, yard: 1, bundle: 1, coins: 1, dais: 1, grass: 1, card: 1 }; // these paint their own sides
   function paintFeatures(x, id) {
     const F = TMAP_F[id].slice().sort((p, q) => p.h - q.h);
-    for (const f of F) {
-      x.save(); fPoly(x, f, id); x.clip();
-      if (!SELF_RAMP[f.art]) for (const [a, b] of rampsOf(f)) RAMP[id](x, a, b, G - f.h);
-      ART[f.art](x, f);
-      x.restore();
-    }
+    for (const f of F) { const [A, B] = featSpan(f); x.save(); fPoly(x, f, id); x.clip(); ART[f.art](x, f, A, B, G - f.h); x.restore(); }
+    for (const f of F) plaque(x, f, PLAQUE[id]);
   }
-  const BASE = { // the floor under everything, per map
-    scale: x => { x.fillStyle = vg(x, 980, H, [[0, '#A7B2BA'], [0.1, '#8B979F'], [1, '#4E585F']]); x.fillRect(0, 800, W, H - 800); x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); } },
-    notebook: x => { x.fillStyle = vg(x, 960, H, [[0, '#9A6A40'], [0.08, '#7A4E2C'], [1, '#3E2614']]); x.fillRect(0, 800, W, H - 800); const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.22)'; x.lineWidth = 2; for (let y = G + 20; y < H; y += 20 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); } },
-    lab: x => { concrete(x, 0, W, 800, H, 8); },
-    archive: x => { noiseBand(x, 0, W, 800, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); },
-  };
-  const CAP = { scale: '#D7DEE3', notebook: null, lab: null, archive: null };
-  const NEW = {};
-  for (const id of ['scale', 'notebook', 'lab', 'archive']) NEW[id] = {
-    solid(x) { BASE[id](x); paintFeatures(x, id); if (CAP[id]) { x.lineJoin = 'round'; x.beginPath(); for (let px = 0; px <= W; px += 10) x.lineTo(px, TOP(id)(px) + 5); x.lineWidth = 10; x.strokeStyle = CAP[id]; x.stroke(); } },
-    front: id === 'lab' ? (x, surface) => { const r = rng(4); for (const tx of [4900, 5020, 5120]) tree(x, tx, surface(tx) + 6, 130 + r() * 40, r, tx === 5020 ? 'pine' : 'dark'); } : () => {},
-  };
-  const EXTRA = { // scenery that belongs to a structure but must not be ground (drawn behind it)
-    scale: x => { // the beam, post and chains of 정의의 저울 over its pedestal and pans
-      const cx = 2600, bt = 650; x.fillStyle = hg(x, cx - 20, cx + 20, [[0, '#6E4E1E'], [0.5, '#E9C46A'], [1, '#6E4E1E']]); x.fillRect(cx - 18, bt, 36, G - 200 - bt + 10);
-      x.fillStyle = vg(x, bt - 14, bt + 14, [[0, '#F2D27A'], [1, '#9C7430']]); rr(x, 1990, bt - 14, 1220, 28, 14); x.fill();
-      x.strokeStyle = '#9C7430'; x.lineWidth = 4; for (const px of [2020, 3180]) { x.beginPath(); x.moveTo(px, bt + 10); x.lineTo(px - 90, G - 100); x.moveTo(px, bt + 10); x.lineTo(px + 90, G - 100); x.stroke(); }
-      x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, bt - 50, 46, 0, 7); x.fill(); x.strokeStyle = '#C9973E'; x.lineWidth = 6; x.stroke(); kMark(x, cx, bt - 50, 50);
+
+  // ---- 진실의 전당 (연구윤리): a hall of marble columns and tall windows; the signs hang from the ceiling rail
+  S.scale = {
+    veil: 'rgba(236,240,244,0.22)', ceil: '#4A5560',
+    back(x) {
+      x.fillStyle = vg(x, 0, G, [[0, '#E9EEF1'], [1, '#CDD5DB']]); x.fillRect(0, 0, W, H);
+      for (let cx = 400; cx < W; cx += 800) { x.fillStyle = vg(x, 240, 900, [[0, '#8FC3EA'], [1, '#E6F2F8']]); rr(x, cx - 170, 240, 340, 660, [170, 170, 0, 0]); x.fill(); x.strokeStyle = '#F7F5F0'; x.lineWidth = 14; x.stroke(); x.lineWidth = 8; x.beginPath(); x.moveTo(cx, 240); x.lineTo(cx, 900); x.moveTo(cx - 170, 560); x.lineTo(cx + 170, 560); x.stroke(); }
+      x.fillStyle = vg(x, G - 250, G, [[0, '#B9C4CC'], [1, '#A3AFB8']]); x.fillRect(0, G - 250, W, 250); x.fillStyle = '#8E9AA4'; x.fillRect(0, G - 256, W, 8);
+      for (let cx = 0; cx <= W; cx += 800) columnBack(x, cx, G + 40, 1110, 84);
+      x.fillStyle = '#4A5560'; x.fillRect(0, 0, W, 76); x.fillStyle = '#2F3A44'; x.fillRect(0, 76, W, 12);
+      const R = 88;
+      hangSign(x, 760, 430, 540, '이런 것도 부정행위', ['연구비를 용도와 다르게 사용', '거짓으로 과제 신청 · 수행', '보안사항 누설 · 유출', '제보자에게 불이익 주기'], '#B5553C', R);
+      hangSign(x, 1400, 520, 460, '저자 표시', ['기여한 사람을 빼면 부당', '기여 없는 사람을 넣어도 부당', '특수관계자는 미리 보고'], '#1D5E9E', R);
+      hangMascot(x, 2020, 430, 190, '연구윤리 지킴이', R);
+      // 정의의 저울: post, beam and pans over the three-step dais
+      const cx = 2800, bt = 520, top = G - 260;
+      x.fillStyle = hg(x, cx - 18, cx + 18, [[0, '#6E4E1E'], [0.5, '#E9C46A'], [1, '#6E4E1E']]); x.fillRect(cx - 16, bt, 32, top - bt + 20);
+      x.fillStyle = vg(x, bt - 14, bt + 14, [[0, '#F2D27A'], [1, '#9C7430']]); rr(x, cx - 330, bt - 14, 660, 28, 14); x.fill();
+      for (const px of [cx - 300, cx + 300]) { x.strokeStyle = '#9C7430'; x.lineWidth = 4; x.beginPath(); x.moveTo(px, bt + 12); x.lineTo(px - 70, bt + 190); x.moveTo(px, bt + 12); x.lineTo(px + 70, bt + 190); x.stroke(); x.fillStyle = vg(x, bt + 186, bt + 230, [[0, '#F2D27A'], [1, '#8A6418']]); x.beginPath(); x.ellipse(px, bt + 190, 84, 34, 0, 0, Math.PI); x.fill(); x.fillRect(px - 84, bt + 184, 168, 8); }
+      x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(cx, bt - 56, 44, 0, 7); x.fill(); x.strokeStyle = '#C9973E'; x.lineWidth = 6; x.stroke(); kMark(x, cx, bt - 56, 48);
+      reg('back', '정의의 저울', cx - 390, bt - 104, 780, 340);
+      hangSign(x, 3900, 500, 500, 'AI와 연구윤리', ['AI는 도구, 책임은 연구자', '심사 자료는 외부 AI에 넣지 않기'], '#1F6F78', R);
+      hangSign(x, 4780, 400, 540, '부정행위의 제재', ['참여제한 최대 10년', '2027년 3월부터 최대 20년', '제재부가금 5배 → 30배', '관련 연구비는 환수'], '#8E2A2E', R);
     },
-    notebook: x => { x.strokeStyle = '#C9D0D5'; x.lineWidth = 26; x.beginPath(); x.arc(470, G - 95, 62, -Math.PI * 0.5, Math.PI * 0.5); x.stroke(); },
-    lab: x => { const cx = 3200, t = G - 260; x.fillStyle = hg(x, cx - 34, cx + 34, [[0, '#3A3A3A'], [0.5, '#8A8A8A'], [1, '#2A2A2A']]); x.fillRect(cx - 34, t - 60, 68, 64); x.fillStyle = '#1A1A1A'; x.fillRect(cx - 120, t - 80, 240, 22);
-      x.strokeStyle = '#1A1A1A'; x.lineWidth = 14; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - 30, t - 50); x.bezierCurveTo(cx - 200, t - 60, cx - 210, t + 60, cx - 150, t + 140); x.stroke(); x.lineCap = 'butt'; },
+    solid(x) {
+      x.fillStyle = vg(x, G, H, [[0, '#A7B2BA'], [0.1, '#8B979F'], [1, '#4E585F']]); x.fillRect(0, 800, W, H - 800);
+      x.strokeStyle = 'rgba(255,255,255,0.10)'; x.lineWidth = 2; for (let px = 0; px < W; px += 160) { x.beginPath(); x.moveTo(px, G); x.lineTo(px, H); x.stroke(); }
+      paintFeatures(x, 'scale');
+    },
+    front() {},
   };
-  for (const id in NEW) { const old = S[id]; S[id] = Object.assign({}, old, { back(x) { old.back(x); if (EXTRA[id]) EXTRA[id](x); }, solid: NEW[id].solid, front: NEW[id].front }); }
-  { const rs = S.ridge.solid; S.ridge.solid = x => { rs(x); paintFeatures(x, 'ridge'); }; }
+
+  // ---- 증명의 노트 (연구노트): on a desk, under a cork board; the rules are memos pinned to the board
+  S.notebook = {
+    veil: 'rgba(246,240,228,0.20)', ceil: '#EFE7D8',
+    back(x) {
+      x.fillStyle = vg(x, 0, G, [[0, '#EFE7D8'], [1, '#DDD2BE']]); x.fillRect(0, 0, W, H);
+      x.fillStyle = '#7A5634'; x.fillRect(0, 340, W, 420); x.fillStyle = vg(x, 356, 744, [[0, '#C9925A'], [1, '#B07A44']]); x.fillRect(0, 356, W, 388);
+      const r = rng(5); x.fillStyle = 'rgba(90,55,25,0.18)'; for (let i = 0; i < 900; i++) x.fillRect(r() * W, 356 + r() * 388, 3, 2);
+      x.fillStyle = vg(x, G - 190, G, [[0, '#CDBFA6'], [1, '#B9A98C']]); x.fillRect(0, G - 190, W, 190); x.fillStyle = '#A39274'; x.fillRect(0, G - 196, W, 8);
+      pinNote(x, 620, 420, 500, '이렇게 써요', ['객관적인 사실만', '제3자가 재현할 수 있게', '그날 바로 기록'], '#1F3A93');
+      pinNote(x, 1450, 450, 500, '고칠 때는', ['수정액으로 지우지 않기', '고치면 서명과 날짜', '빈 공간에는 사선'], '#C0392B');
+      x.fillStyle = 'rgba(0,0,0,0.2)'; x.fillRect(2106, 396, 208, 290); mascotBanner(x, 2200, 390, 200, '연구노트 쓰는 날'); x.fillStyle = '#E3232B'; x.beginPath(); x.arc(2200, 392, 11, 0, 7); x.fill(); reg('back', '연구노트 쓰는 날', 2100, 390, 200, 264);
+      pinNote(x, 3300, 400, 540, '서명', ['항상 날짜와 함께', '확인자 서명은 1~2주 안에', '확인자는 공동연구자가 아닌 사람'], '#2E7D4F');
+      pinNote(x, 4420, 440, 540, '보존', ['과제 종료일부터 30년', '과제에서 빠져도 담당부서에 제출', '유출 · 양도 · 매매 금지'], '#8A5A1C');
+      // the fountain pen standing in the ink bottle, and the signature stamp's handle
+      x.save(); x.translate(170, G - 160); x.rotate(0.22); x.fillStyle = hg(x, -16, 16, [[0, '#0B1016'], [0.4, '#4A5A6C'], [1, '#0B1016']]); x.fillRect(-16, -330, 32, 340); x.fillStyle = '#E9C46A'; x.fillRect(-17, -250, 34, 12); poly(x, [[-16, -330], [16, -330], [0, -392]]); x.fill(); x.restore(); reg('back', '만년필', 40, G - 560, 180, 400);
+      x.fillStyle = hg(x, 3260, 3340, [[0, '#6E3B10'], [0.5, '#C98A50'], [1, '#6E3B10']]); rr(x, 3262, G - 400, 76, 140, [30, 30, 6, 6]); x.fill(); reg('back', '도장 손잡이', 3262, G - 400, 76, 130);
+    },
+    solid(x) {
+      x.fillStyle = vg(x, G, H, [[0, '#9A6A40'], [0.08, '#7A4E2C'], [1, '#3E2614']]); x.fillRect(0, 800, W, H - 800);
+      const r = rng(17); x.strokeStyle = 'rgba(30,15,5,0.22)'; x.lineWidth = 2; for (let y = G + 20; y < H; y += 20 + r() * 14) { x.beginPath(); x.moveTo(0, y); for (let px = 0; px <= W; px += 80) x.lineTo(px, y + Math.sin(px / 340 + y) * 6); x.stroke(); }
+      paintFeatures(x, 'notebook');
+    },
+    front() {},
+  };
+
+  // ---- 예방의 실험동 (연구실 안전): the yard outside the lab block; safety signs stand on posts
+  S.lab = {
+    veil: 'rgba(222,236,246,0.20)',
+    back(x) {
+      skyDay(x); clouds(x, [[500, 200, 80], [1900, 150, 90], [3300, 230, 70], [4700, 170, 85]]);
+      wave(x, 900, 60, 520, 26, 150, '#B7D3C0'); wave(x, 1000, 40, 300, 18, 110, '#9FC3A8');
+      x.fillStyle = '#8A949C'; for (let px = 0; px < W; px += 90) x.fillRect(px, G - 150, 8, 150); x.fillRect(0, G - 150, W, 8); x.fillRect(0, G - 80, W, 6);
+      const GR = '#1D7A3E', RD = '#B5343A', YL = '#9A7410';
+      postSign(x, 'lab', 570, 560, '안전교육', ['신규 (진단대상 연구실) 6개월 안에 8시간', '학생은 참여 후 3개월 안에 2시간', '정기 (진단대상 연구실) 반기마다 6시간', '온라인은 60점 이상이어야 이수'], GR, 130);
+      // emergency shower over the green pad
+      { const px = 1040, t = G - 70; x.strokeStyle = '#1D7A3E'; x.lineWidth = 12; x.lineJoin = 'round'; x.beginPath(); x.moveTo(px, t + 30); x.lineTo(px, t - 300); x.lineTo(px - 90, t - 300); x.stroke(); x.fillStyle = '#1D7A3E'; x.beginPath(); x.ellipse(px - 90, t - 286, 46, 14, 0, 0, 7); x.fill();
+        x.fillStyle = '#0B8A43'; rr(x, px - 150, t - 390, 190, 56, 8); x.fill(); fitText(x, '비상샤워', px - 55, t - 361, 160, 30, { color: '#FFF', weight: 900 }); reg('back', '비상샤워', px - 150, t - 390, 190, 110); }
+      postSign(x, 'lab', 2740, 480, '점검과 위험분석', ['일상점검 · 매일 1회, 연구 시작 전', '사전유해인자위험분석 · 연구 전', '연구가 크게 바뀌면 다시'], YL, 150);
+      postSign(x, 'lab', 3640, 440, '사고가 나면', ['눈 · 피부 · 15분 이상 물로', '금수성 물질은 물 금지', '감전 · 전원부터 끄기'], RD, 150);
+      // the extinguisher's valve, lever and hose above the red body
+      { const cx = 4250, t = G - 260; x.fillStyle = hg(x, cx - 30, cx + 30, [[0, '#3A3A3A'], [0.5, '#8A8A8A'], [1, '#2A2A2A']]); x.fillRect(cx - 30, t - 56, 60, 60); x.fillStyle = '#1A1A1A'; rr(x, cx - 110, t - 78, 220, 24, 8); x.fill();
+        x.strokeStyle = '#1A1A1A'; x.lineWidth = 12; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - 26, t - 44); x.bezierCurveTo(cx - 170, t - 50, cx - 180, t + 40, cx - 130, t + 96); x.stroke(); x.lineCap = 'butt';
+        x.strokeStyle = '#F2C230'; x.lineWidth = 6; x.beginPath(); x.arc(cx + 60, t - 92, 16, 0, 7); x.stroke(); reg('back', '소화기 밸브', cx - 185, t - 112, 300, 110); }
+      postSign(x, 'lab', 4800, 460, '과태료', ['점검 · 교육 · 검진 안 하면 최대 1천만 원', '사고 미보고 · 거짓 보고 최대 500만 원'], '#5E4A8A', 170);
+    },
+    solid(x) { concrete(x, 0, W, 800, H, 8); hazardStripe(x, 0, G, W, 12); paintFeatures(x, 'lab'); },
+    front(x, surface) { const r = rng(4); for (const tx of [60, 170]) tree(x, tx, surface(tx) + 6, 120 + r() * 30, r, tx === 170 ? 'pine' : 'dark'); },
+  };
+
+  // ---- 신뢰의 집행실 (연구비 관리): the finance office at night — filing cabinets along the wall, signs on the ceiling rail
+  S.archive = {
+    veil: 'rgba(16,24,34,0.22)', ceil: '#1C2733',
+    back(x) {
+      x.fillStyle = vg(x, 0, G, [[0, '#243242'], [1, '#3E4E5E']]); x.fillRect(0, 0, W, H);
+      for (let a = 40; a < W; a += 330) { x.fillStyle = vg(x, 700, G, [[0, '#6E7C88'], [1, '#4A5662']]); x.fillRect(a, 700, 300, G - 700); for (let y = 716; y < G - 40; y += 104) { x.fillStyle = '#56636F'; x.fillRect(a + 12, y, 276, 92); x.fillStyle = '#C9D1D8'; x.fillRect(a + 120, y + 14, 60, 10); x.fillStyle = '#E9DCC0'; x.fillRect(a + 100, y + 38, 100, 30); } }
+      x.fillStyle = '#1C2733'; x.fillRect(0, 0, W, 76); x.fillStyle = '#0F1720'; x.fillRect(0, 76, W, 12);
+      for (let lx = 300; lx < W; lx += 650) { x.fillStyle = '#0F1720'; x.fillRect(lx - 3, 88, 6, 120); x.fillStyle = '#E8F4FF'; x.beginPath(); x.ellipse(lx, 214, 60, 16, 0, 0, 7); x.fill(); x.fillStyle = vg(x, 220, 760, [[0, 'rgba(220,240,255,0.16)'], [1, 'rgba(220,240,255,0)']]); poly(x, [[lx - 60, 220], [lx + 60, 220], [lx + 250, 760], [lx - 250, 760]]); x.fill(); }
+      const R = 88;
+      hangSign(x, 640, 420, 580, '연구혁신비 (2026.6.11 신설)', ['한도 · 재료비+활동비 합의 10%', '재료비 용도 · 한 건에 300만 원까지', '활동비 용도 · 한 건에 50만 원까지', '증빙 · 카드전표 + 입력한 사용목적'], '#1D5E9E', R);
+      hangMascot(x, 1500, 430, 180, '증빙은 꼼꼼히', R);
+      hangSign(x, 2500, 440, 560, '회의비', ['같은 과제 참여자끼리만 · 식비 불가', '다른 기관 참여자와 함께 · 가능', '10만 원 이하 · 기록으로 대신 가능'], '#2E7D4F', R);
+      hangSign(x, 3450, 520, 500, '출장비', ['두 여비규정 섞어 쓰기 금지', '식사를 제공받으면 그만큼 빼기', '국외 · 계획서 + 결과보고서'], '#8A5A1C', R);
+      hangSign(x, 4520, 430, 520, '연구비로 쓸 수 없어요', ['술 같은 유흥성 비용', '평일 점심값 (연구인력 지원비)', '학위과정 비용 · 종신 학회비'], '#8E2A2E', R);
+    },
+    solid(x) { noiseBand(x, 0, W, 800, H, [[0, '#5C6670'], [0.08, '#48515A'], [1, '#2C3238']], 41); paintFeatures(x, 'archive'); },
+    front() {},
+  };
+
+  // ---- 혁신의 능선 (국가연구개발혁신법): 출발 → 선정평가관 → 수행 → 단계평가 게이트 → 수행 → 최종평가 단상 → 성과
+  S.ridge = {
+    veil: 'rgba(236,244,250,0.12)',
+    back(x) {
+      skyDay(x); clouds(x, [[420, 170, 80], [1700, 120, 70], [3500, 140, 90], [4800, 200, 70]]);
+      wave(x, 820, 60, 430, 40, 170, '#B4CEDD'); wave(x, 930, 50, 300, 30, 120, '#9DBFA8');
+      const T = TOP('ridge');
+      postSign(x, 'ridge', 330, 420, '3책5공', ['동시에 최대 5개 과제', '그중 연구책임자로 3개까지'], '#1D5E9E', 190);
+      selectionHall(x, 950, T(950)); reg('back', '선정평가관', 600, T(950) - 550, 700, 300);
+      postSign(x, 'ridge', 1700, 440, '협약', ['통보받은 날부터 30일 안에', '안전교육 이수확인서 첨부'], '#2E7D4F', 170);
+      statuePillar(x, 2040, T(2040) - 400, 82, T(2040) + 30, 'blue', '도전하는 연구'); reg('back', '도전하는 연구', 1940, T(2040) - 500, 200, 250);
+      stageGate(x, 2600, T(2600)); reg('back', '단계평가 게이트', 2170, T(2600) - 662, 860, 420);
+      statuePillar(x, 3160, T(3160) - 400, 82, T(3160) + 30, 'green', '함께하는 연구'); reg('back', '함께하는 연구', 3060, T(3160) - 500, 200, 250);
+      postSign(x, 'ridge', 3520, 440, '평가', ['이의신청 · 10일 안에 한 번', "단계평가 '극히 불량'이면 중단"], '#8A5A1C', 170);
+      finalStage(x, 4250, T(4250)); reg('back', '최종평가', 3920, T(4250) - 640, 660, 500);
+      postSign(x, 'ridge', 4900, 440, '성과', ['최종보고서 · 종료 후 60일까지', '3개월 안에 보고서 · 성과목록 공개'], '#B5343A', 150);
+    },
+    solid(x) {
+      noiseBand(x, 0, W, 600, H, [[0, '#8A6A44'], [0.3, '#6E5236'], [1, '#3E2E1E']], 51); strata(x, 0, W, 760, H, 'rgba(40,26,14,0.22)', 5);
+      x.lineJoin = 'round'; ridgeLine(x, 22); x.lineWidth = 64; x.strokeStyle = '#4F8A3E'; x.stroke(); ridgeLine(x, 4); x.lineWidth = 22; x.strokeStyle = '#7DB85A'; x.stroke();
+      const r = rng(17); x.fillStyle = 'rgba(160,150,135,0.55)'; for (let i = 0; i < 40; i++) { const px = r() * W, py = G + 60 + r() * 240; x.beginPath(); x.ellipse(px, py, 22 + r() * 30, 12 + r() * 14, 0, 0, 7); x.fill(); }
+      paintFeatures(x, 'ridge');
+    },
+    front(x, surface) {
+      for (const px of [60, 150, W - 70]) tree(x, px, surface(px) + 6, px % 2 ? 190 : 150, 0, 'pine');
+      const r = rng(23); for (let i = 0; i < 70; i++) { const px = 300 + r() * (W - 600); if (px > 3880 && px < 4620) continue; const y = surface(px); x.fillStyle = ['#FFFFFF', '#FFD24A', '#F59AB8'][i % 3]; x.beginPath(); x.arc(px, y + 4, 5, 0, 7); x.fill(); }
+    },
+  };
+
+  function layout(id) { // every label's rectangle, for tests/layout_check.js
+    const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c.getContext('2d'); };
+    REG = []; S[id].back(mk()); S[id].solid(mk()); const out = REG; REG = null; return out;
+  }
 
   function paint(x, m) { // after the base colours: the art clipped to the solid pixels, then the decorations
     const S1 = S[m.mapId], surface = (px, from) => { const y = maskSurface(m.mask, m.W, m.H, px, from || 0); return y < 0 ? m.H : y; };
@@ -3704,7 +3499,7 @@ const TMAP_ART = (() => {
     const veil = S[m.mapId].veil; if (veil) { x.fillStyle = veil; x.fillRect(0, 0, W, H); } // push the scenery back so the solid ground stands out
     c.k = k; return c;
   }
-  return { has: id => !!S[id], paint, backdrop, beacons: id => (S[id] && S[id].beacons) || [], ceil: id => S[id] && S[id].ceil, stamp, flame };
+  return { has: id => !!S[id], paint, backdrop, layout, beacons: id => (S[id] && S[id].beacons) || [], ceil: id => S[id] && S[id].ceil, stamp, flame };
 })();
 
 // ---- render.js
@@ -6906,6 +6701,7 @@ function tipRecap(id) {
   el.innerHTML = '<div class="trh">💡 이번 판에서 본 문장</div><ul></ul>';
   const ul = el.querySelector('ul'); for (const t of top) { const li = document.createElement('li'); li.textContent = t[0]; ul.append(li); }
 }
+window.__tmap = { F: TMAP_F, TOP: TMAP_TOP, ART: TMAP_ART }; // tests/layout_check.js
 window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0, introTimer = 0;
