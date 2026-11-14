@@ -43,7 +43,7 @@ ok(g.m.phase === 'over', 'the run ends (' + (g.res.clear ? 'clear' : 'fail') + '
 const rp = A.soloReplay(day, 'rookie', g.inputs.map(x => JSON.parse(JSON.stringify(x))));
 ok(rp.hash === A.stateHash(g.m) && rp.kind === g.res.kind && rp.clear === g.res.clear && rp.time === g.res.time && rp.hp === g.res.hp, `replay from inputs gives the same end (time ${rp.time}s, hp ${rp.hp}, kills ${rp.kills})`);
 const sc = A.soloScore([{ used: 600 }, { used: 120 }, { timeout: true }, { pass: true, used: 240 }]);
-ok(sc.shots === 2 && Math.abs(sc.time - (5 + 1 + 60 + 2 + 6)) < 1e-9, 'score = my used time + 3 s per shot (timeouts count 60 s, passes no shot)');
+ok(sc.shots === 2 && Math.abs(sc.time - (5 + 1 + A.CONFIG.turn.timeLimitTicks / 120 + 2 + 6)) < 1e-9, 'score = my used time + 3 s per shot (timeouts count the whole turn limit, passes no shot)');
 // a forged input list does not reproduce a clear
 if (g.res.clear) { const forged = g.inputs.slice(0, Math.max(1, g.inputs.length - 2)); const fr = A.soloReplay(day, 'rookie', forged); ok(!fr.clear, 'cutting inputs off does not give a clear'); }
 // win rate check over a few runs per tank level, to see the challenge is beatable but not trivial

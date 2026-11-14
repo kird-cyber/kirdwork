@@ -148,6 +148,48 @@ function matchAwards(m) {
   for (const t of T) if (t.st.dealt === 0 && t.st.shots >= 3) add(t, '🕊️ 평화주의자', 'bad');
   return { mvp, out };
 }
+// both teams fell in the same turn: the sim picked the team that dealt more damage (m.tiebreak)
+function tiebreakNote(m) { const tb = m.tiebreak; return tb ? ` · 동시 탈락 — 준 피해 레드 ${tb.red} : 블루 ${tb.blue}` + (tb.red === tb.blue ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+// 결과 이미지: the result screen drawn as one PNG (date, map, winner, both rosters with their numbers) for the tournament record
+function resultCanvas() {
+  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const rows = Math.max(...['red', 'blue'].map(tm => m.tanks.filter(t => t.team === tm).length)), W = 1200, H = 330 + rows * 86 + 150;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const tx = (s, px, py, size, col, weight, align) => { x.font = `${weight || 700} ${size}px ${F}`; x.fillStyle = col; x.textAlign = align || 'left'; x.textBaseline = 'middle'; x.fillText(s, px, py); };
+  const fit = (s, px, py, size, col, weight, maxW, align) => { for (; size > 10; size--) { x.font = `${weight || 700} ${size}px ${F}`; if (x.measureText(s).width <= maxW) break; } tx(s, px, py, size, col, weight, align); };
+  x.fillStyle = '#0B1626'; x.fillRect(0, 0, W, H); x.fillStyle = '#12223A'; x.fillRect(0, 0, W, 92);
+  tx('케이요새 경기 결과', 40, 46, 30, '#E8F1FA', 900);
+  const d = new Date(), p2 = n => String(n).padStart(2, '0'), when = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  const secs = Math.round(matchClock(m) / CONFIG.physics.tickRate);
+  tx(`${when}  ·  ${CONFIG.maps[m.mapId].name}  ·  ${m.turnNo}턴  ·  경기 시간 ${Math.floor(secs / 60)}:${p2(secs % 60)}` + (ON.active && ON.code ? `  ·  방 ${ON.code}` : ''), W - 40, 46, 20, '#9FB8CC', 700, 'right');
+  const win = m.winner, col = { red: '#FF6B5A', blue: '#5AA9FF', draw: '#E7C77A' }[win] || '#E8F1FA';
+  tx(win === 'draw' ? '무승부' : teamName(win) + ' 승리', W / 2, 160, 64, col, 900, 'center');
+  const sum = tm => m.tanks.reduce((a, t) => a + (t.team === tm ? t.st.dealt : 0), 0);
+  const note = (m.forfeit ? `${teamName(m.forfeit)}이 모두 나가 기권` : m.tiebreak ? `양 팀 동시 탈락 — 준 피해로 판정 (레드 ${m.tiebreak.red} : 블루 ${m.tiebreak.blue})` : m.sudden ? '서든데스까지 진행' : '') ;
+  if (note) tx(note, W / 2, 218, 22, '#E7C77A', 700, 'center');
+  const aw = matchAwards(m), top = 262;
+  ['red', 'blue'].forEach((tm, k) => {
+    const a = 40 + k * 570, w = 550, tc = tm === 'red' ? '#FF6B5A' : '#5AA9FF';
+    x.fillStyle = tm === win ? 'rgba(231,199,122,0.16)' : 'rgba(255,255,255,0.05)'; x.fillRect(a, top, w, 56 + rows * 86 + 12);
+    x.fillStyle = tc; x.fillRect(a, top, w, 6);
+    tx(teamName(tm) + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
+    m.tanks.filter(t => t.team === tm).forEach((t, i) => {
+      const y = top + 62 + i * 86; x.fillStyle = 'rgba(255,255,255,0.06)'; x.fillRect(a + 10, y, w - 20, 78);
+      fit(t.nick + (aw.mvp === t ? '  ★MVP' : ''), a + 26, y + 26, 26, t.alive ? '#FFFFFF' : '#8FA6C0', 900, 300);
+      const state = m.forfeit === tm ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
+      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive ? '#B6F25A' : '#8FA6C0', 700, 'right');
+      tx(`피해 ${t.st.dealt}  ·  격파 ${t.st.kills}  ·  명중 ${t.st.hitTurns}/${t.st.shots}` + (t.st.friendly ? `  ·  팀킬 ${t.st.friendly}` : ''), a + 26, y + 58, 19, '#CFE0F2', 500);
+    });
+  });
+  tx('KIRD 케이요새  ·  Made by tykim(KIRD)', W / 2, H - 40, 18, '#6E839A', 500, 'center');
+  return c;
+}
+function saveResultImage() {
+  if (!match || match.phase !== 'over') return;
+  const c = resultCanvas(), d = new Date(), p2 = n => String(n).padStart(2, '0');
+  const name = `kyosae_result_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}_${p2(d.getHours())}${p2(d.getMinutes())}_${match.mapId}.png`; // ASCII: some browsers drop non-ASCII download names
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); banner('결과 이미지를 저장했습니다'); }, 'image/png');
+}
 R.onOver = (winner, forfeit) => {
   if (SOLOPLAY.active) { tipRecap('sooTips'); soloOver(winner); return; }
   tipRecap('overTips');
@@ -158,7 +200,7 @@ R.onOver = (winner, forfeit) => {
   else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
-  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '') + tiebreakNote(match);
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
   if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
@@ -250,7 +292,7 @@ function updateHud() {
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
         b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${esc(itemName(m, it))}</span>`;
-        b.title = `${itemName(m, it)} — ${meta.desc || meta.name}`; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
+        b.title = `${itemName(m, it)} — ${meta.desc || meta.name} · 딜레이 +${meta.delay != null ? meta.delay : CONFIG.turn.itemDelay}`; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);
@@ -610,7 +652,9 @@ function tipRecap(id) {
   el.innerHTML = '<div class="trh">💡 이번 판에서 본 문장</div><ul></ul>';
   const ul = el.querySelector('ul'); for (const t of top) { const li = document.createElement('li'); li.textContent = t[0]; ul.append(li); }
 }
+$('saveResult').onclick = saveResultImage;
 window.__tmap = { F: TMAP_F, TOP: TMAP_TOP, ART: TMAP_ART }; // tests/layout_check.js
+window.__result = { resultCanvas, saveResultImage };
 window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0, introTimer = 0;
@@ -618,7 +662,7 @@ const GUIDE_MS = 9500;
 function showMapGuide() {
   const meta = mapMetaOf(match), el = $('mguide'); if (!el) return false;
   if (!meta.guide) { el.hidden = true; return false; }
-  const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
+  const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)} · 딜레이 +${CONFIG.items[k].delay}</span></li>`).join('');
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
   el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${tipPoolOf(meta) ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc((pickTip(meta) || [''])[0])}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };

@@ -382,7 +382,8 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const fast = d0(0), slow = d0(30 * 120);
   check('공통', '시간 딜레이: 30초 쓰면 +120', '+120', '+' + (slow - fast), slow - fast === 120);
   const mt = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]); A.cmdTimeout(mt);
-  check('공통', '시간 초과: 기본+150+240', CONFIG.turn.baseDelay[3] + 150 + 240, mt.tanks[0].delay, mt.tanks[0].delay === CONFIG.turn.baseDelay[3] + 150 + 240);
+  const full = Math.round(CONFIG.turn.timeLimitTicks / 120 * CONFIG.turn.delayPerSec);
+  check('공통', `시간 초과: 기본+150+${full}`, CONFIG.turn.baseDelay[3] + 150 + full, mt.tanks[0].delay, mt.tanks[0].delay === CONFIG.turn.baseDelay[3] + 150 + full);
   // two turns in a row: a slow, item-using, far-moving turn lets a quick opponent go twice
   const m2 = field([{ tank: 'boulder', x: 1000 }, { tank: 'prism', x: 3000 }]);
   m2.tanks[1].delay = 0; m2.tanks[0].items = ['heal']; m2.tanks[0].hp = 500; A.cmdItem(m2, 0);
@@ -409,7 +410,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   A.cmdFire(m2, 45, 300, 0, 600); runFlight(m2);
   check('공통', '넘기고 쏜 뒤엔 상대 차례', 'trapper', m2.tanks[m2.cur].tankId, m2.tanks[m2.cur].tankId === 'trapper');
   // the opponent's expensive turn (move + weapon 2 + long think) lets me go twice in a row
-  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[1].delay = 340;
+  const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3000 }]); m3.tanks[1].delay = 400;
   A.cmdFire(m3, 45, 300, 0, 0); runFlight(m3); // me: 740
   const o = m3.tanks[m3.cur]; let g3 = 0; while (A.cmdMove(m3, -1) !== false && g3++ < 4000 && o.fuel > 0) {}
   A.cmdFire(m3, 45, 300, 1, 60 * 120); runFlight(m3); // trapper: 340+740+100+move+240 > 1480
@@ -476,5 +477,33 @@ fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'out', 'spec.json'), JSON.stringify(rows, null, 1));
 const fails = rows.filter(r => !r.pass);
 for (const r of rows) console.log((r.pass ? 'PASS' : 'FAIL') + ` | ${r.tank} | ${r.item} | 기대 ${r.expected} | 실제 ${r.actual}`);
+{ // 2026-11 tournament rules: delay by strength, turn order = lowest delay, team crates, tie-break by damage
+  const T = CONFIG.turn, mk = () => field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);
+  const cost = (fn) => { const m = mk(); m.tanks[0].delay = 0; fn(m); return m.tanks[0].delay; };
+  const plain = cost(m => A.cmdFire(m, 45, 300, 0, 0)), special = cost(m => A.cmdFire(m, 45, 300, 1, 0));
+  check('딜레이', '특수 무기는 기본 무기보다 그 무기의 추가 딜레이만큼 더 듦', plain + CONFIG.tanks.rookie.weapons[1].extraDelay, special, special === plain + CONFIG.tanks.rookie.weapons[1].extraDelay);
+  let okItems = true; const got = [];
+  for (const k of Object.keys(CONFIG.items)) { const c = cost(m => { m.tanks[0].items = [k]; A.cmdItem(m, 0); A.cmdFire(m, 45, 300, 0, 0); }); got.push(`${k} +${c - plain}`); if (c - plain !== CONFIG.items[k].delay) okItems = false; }
+  check('딜레이', '아이템을 쓰면 그 아이템의 딜레이가 더해짐 (더블샷 > 증폭 > 회복·실드 > 이동·무풍)', Object.keys(CONFIG.items).map(k => `${k} +${CONFIG.items[k].delay}`).join(', '), got.join(', '), okItems && CONFIG.items.double.delay > CONFIG.items.amplify.delay && CONFIG.items.amplify.delay > CONFIG.items.heal.delay && CONFIG.items.heal.delay > CONFIG.items.calm.delay);
+  let okW = true; const ws = [];
+  for (const k of Object.keys(CONFIG.tanks)) { const [a, b] = CONFIG.tanks[k].weapons; if (!((b.extraDelay || 0) >= (a.extraDelay || 0) + 100)) { okW = false; ws.push(k); } }
+  check('딜레이', '모든 탱크: 특수 무기 딜레이가 기본 무기보다 100 이상 큼', '전부', ws.join(',') || '전부', okW);
+  // turn order: over a 3:3 match of mixed turns, the tank that gets the turn always has the lowest delay (0 after rebasing)
+  const ps = []; ['rookie', 'hammer', 'prism', 'boulder', 'swarm', 'rage'].forEach((tk, i) => ps.push({ id: 'p' + i, nick: 'p' + i, team: i % 2 ? 'blue' : 'red', tankId: tk }));
+  const mo = A.createMatch({ seed: 4242, mapId: 'temple', players: ps }); mo.suddenOn = false; let g = 0, turns = 0, wrong = 0; const seen = new Set();
+  while (mo.phase !== 'over' && turns < 60 && g++ < 400000) {
+    if (mo.phase !== 'aim') { A.step(mo); mo.events.length = 0; continue; }
+    const cur = mo.tanks[mo.cur]; seen.add(cur.idx); turns++;
+    if (cur.delay !== 0 || mo.tanks.some(t => t.alive && (t.delay < 0 || (t.delay === 0 && t.idx < cur.idx)))) wrong++;
+    const k = turns % 4; if (k === 0) A.cmdPass(mo, 600); else if (k === 1) A.cmdTimeout(mo); else A.cmdFire(mo, 80, 120, k === 3 && cur.cd <= 0 ? 1 : 0, 1200 + 300 * (turns % 5));
+  }
+  check('딜레이', '3:3 60턴: 차례는 항상 딜레이가 가장 낮은 탱크, 6명 모두 차례가 옴', '어긋남 0 · 6명', `어긋남 ${wrong} · ${seen.size}명`, wrong === 0 && seen.size === 6);
+  // tie-break: both teams wiped in the same turn → the team that dealt more damage wins
+  const tb = mk(); tb.tanks[0].st.dealt = 500; tb.tanks[1].st.dealt = 900; tb.suddenOn = true; tb.clock = T.suddenAtSec * 120; tb.tanks.forEach(t => { t.hp = 1; });
+  A.cmdTimeout(tb); g = 0; while (tb.phase !== 'over' && g++ < 9000) A.step(tb);
+  check('공통', '서든데스로 양 팀이 같은 턴에 전멸 → 준 피해가 많은 팀 승리', 'blue (500 : 900)', `${tb.winner} (${tb.tiebreak ? tb.tiebreak.red + ' : ' + tb.tiebreak.blue : '-'})`, tb.winner === 'blue' && tb.tiebreak && tb.tiebreak.blue === 900);
+  const ta = mk(); ta.suddenOn = true; ta.clock = T.suddenAtSec * 120; const c0 = ta.clock; A.cmdTimeout(ta, 960);
+  check('공통', '나간 사람 자동 넘김은 실제 기다린 시간(8초)만 경기 시간에 더함', 960, ta.clock - c0, ta.clock - c0 === 960);
+}
 console.log(`\n${rows.length - fails.length}/${rows.length} passed`);
 process.exit(fails.length ? 1 : 0);

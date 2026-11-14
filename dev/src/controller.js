@@ -20,6 +20,7 @@ function createController(match, opts) {
   };
   // cap: longest real-time gap to catch up in one call (a hidden tab catches up in bigger chunks)
   c.frame = function (dtSec, cap, maxSteps) {
+    if (c.paused) return;
     c.acc += Math.min(dtSec, cap || 0.25);
     let n = 0; const lim = maxSteps || c.maxStepsPerFrame;
     while (c.acc >= TICK && n < lim) { c.tickOnce(); c.acc -= TICK; n++; }
@@ -56,9 +57,16 @@ function createController(match, opts) {
     c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
   };
   // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  // pause (online, a spectator's button): nothing ticks; the turn clock and the map-card hold are pushed back by the pause
+  c.paused = false; c.pausedAt = 0;
+  c.setPaused = function (on) {
+    on = !!on; if (on === c.paused) return; c.paused = on;
+    if (on) { c.pausedAt = c.clock(); c.charging = false; c.powerF = 0; }
+    else { const d = c.clock() - c.pausedAt; c.turnT0 += d; if (c.holdUntil) c.holdUntil += d; c.acc = 0; }
+  };
   c.held = function () { return c.holdUntil > 0 && c.clock() < c.holdUntil; };
   c.checkTime = function () {
-    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen || c.held()) return;
+    if (c.paused || !c.activeLocal() || c.match.turnNo !== c.lastTurnSeen || c.held()) return;
     c.syncTime();
     if (c.timeLeft <= 0) { c.charging = false; c.emit(cmdTimeout(c.match)); }
   };
@@ -88,9 +96,9 @@ function createController(match, opts) {
     c.syncTime(); c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   // 턴 넘기기 (only for the local active tank, never mid-charge)
-  c.pass = function () { if (!c.activeLocal() || c.charging || c.held()) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
+  c.pass = function () { if (c.paused || !c.activeLocal() || c.charging || c.held()) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
-  c.useItem = function (slot, tx, ty) { if (c.charging || c.held()) return false; return cmdItem(c.match, slot, tx, ty); };
+  c.useItem = function (slot, tx, ty) { if (c.paused || c.charging || c.held()) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
   return c;
 }

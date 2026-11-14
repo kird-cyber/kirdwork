@@ -101,7 +101,7 @@ function createRoomLink(o) {
     const late = !cur; // a game that started while we were connected (start or rematch) is not a late join
     r.room = msg;
     if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
-      r.gid = msg.game.gid; r.log = []; r.hashes = {};
+      r.gid = msg.game.gid; r.log = []; r.hashes = {}; r.gameOver = false;
       cb('onGame', msg.game, late);
     }
     if (msg.state === 'lobby') r.gid = null;
@@ -174,6 +174,11 @@ function createRoomLink(o) {
   function onReq(q) {
     const room = r.room; if (!room) return;
     const p = room.players.find(x => x.id === q.id), w = watchersOf(room).find(x => x.id === q.id);
+    // tournament helpers (2026-11): a spectator pauses / resumes the game; anyone in the room sends everyone back to the
+    // lobby once the game is over; anyone in the room picks the next map in the lobby (starting stays with the host)
+    if (q.type === 'pause') { if (w && room.state === 'game') r.setPause(!!q.on, q.id, w.nick); return; }
+    if (q.type === 'lobby') { if ((p || w) && room.state === 'game' && r.gameOver) r.backToLobby(); return; }
+    if (q.type === 'map') { if ((p || w) && room.state === 'lobby' && CONFIG.maps[q.map] && room.map !== q.map) { room.map = q.map; publishRoom(); } return; }
     if (q.type === 'join' && q.watch) {
       if (p || r.banned[q.id] || room.state !== 'lobby') return;
       if (w) { if (w.nick !== q.nick) { w.nick = String(q.nick || '').slice(0, 8) || '관전자'; publishRoom(); } return; }
@@ -226,6 +231,13 @@ function createRoomLink(o) {
   r.requestTeam = team => { if (r.isHost()) return r.setTeam(r.myId, team); pub('req', { type: 'team', id: r.myId, team }); };
   r.requestTank = tank => { o.tank = tank; if (r.isHost()) { const p = r.me(); if (p) { p.tank = tank; publishRoom(); } return; } pub('req', { type: 'tank', id: r.myId, tank }); };
   r.setMap = map => { if (r.isHost() && CONFIG.maps[map]) { r.room.map = map; publishRoom(); } };
+  r.requestMap = map => { if (r.isHost()) return r.setMap(map); if (r.me() || r.meW()) pub('req', { type: 'map', id: r.myId, map }); };
+  // pause: kept in the room state (retained), so a reload or a late spectator sees it too. Only the host writes it.
+  r.setPause = function (on, by, nick) { if (!r.isHost() || r.room.state !== 'game' || !!r.room.paused === !!on) return; r.room.paused = on ? { by, nick: String(nick || '').slice(0, 8), at: Date.now() } : null; publishRoom(); };
+  r.canPause = () => !!r.room && r.room.state === 'game' && (!!r.meW() || r.isHost());
+  r.requestPause = on => { if (!r.canPause()) return; if (r.isHost()) return r.setPause(on, r.myId, r.nick); pub('req', { type: 'pause', id: r.myId, on: !!on }); };
+  r.gameOver = false; // set by the game screen when this device's match is over (the host needs it to accept a 'lobby' request)
+  r.requestLobby = () => { if (r.isHost()) return r.backToLobby(); if (r.me() || r.meW()) pub('req', { type: 'lobby', id: r.myId }); };
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
   r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
@@ -238,7 +250,7 @@ function createRoomLink(o) {
       gid: genId(), seed: (Math.random() * 4294967296) >>> 0, mapId: r.room.map, at: Date.now(),
       players: r.room.players.map(p => ({ id: p.id, nick: p.nick, team: p.team, tankId: pickable(p.tank) && p.tank !== 'random' ? p.tank : rollRandomTank(Math.random) })), // the host rolls "?" once, everyone gets the result
     };
-    r.room.state = 'game';
+    r.room.state = 'game'; r.room.paused = null; r.gameOver = false;
     r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};
     publishRoom();
     cb('onGame', r.room.game, false); // our own echo is ignored, so start locally
@@ -246,7 +258,7 @@ function createRoomLink(o) {
   };
   r.backToLobby = function () {
     if (!r.isHost() || r.room.state !== 'game') return;
-    r.room.state = 'lobby';
+    r.room.state = 'lobby'; r.room.paused = null;
     r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
     r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
     for (const p of r.room.players) p.ready = false;

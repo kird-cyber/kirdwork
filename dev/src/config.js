@@ -23,15 +23,15 @@ const CONFIG = {
     crater: [1.3, 0.78],   // default crater: wider than deep (a weapon's own crater: [widen, deepen])          // damage at the very edge of the blast (centre = 100%)
   },
   turn: {
-    timeLimitTicks: 7200,  // 60 s
+    timeLimitTicks: 4800,  // 40 s (2026-11 tournament: was 60 s)
     baseDelay: { 1: 900, 2: 820, 3: 740, 4: 660, 5: 580 },
     delayPerMovePx: 0.6,
-    itemDelay: 80,
+    itemDelay: 80,         // an item without its own `delay` (each item has one now: stronger item = more delay)
     skipDelay: 150,
     // 턴 넘기기 (원작식): no shot, delay = base x delayMul + movement + item + time. Turn order is delay only, so a cheap pass
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
-    delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
+    delayPerSec: 4,        // every second spent on a turn adds this much delay (40 s = +160)
     crateRate: [3, 8],      // 3 crates every 8 turns (2026-11: halved from 3 every 4 — too many items made games long)
     crateNear: [60],        // a crate lands 60 px ~ (movePx x crateNearMove) sideways from one tank: reachable this turn
     crateNearMove: 0.9,
@@ -62,7 +62,7 @@ const CONFIG = {
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, crater: [1.45, 0.7], windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 220, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
@@ -71,7 +71,7 @@ const CONFIG = {
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
         { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 30, crater: [0.9, 1.1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, crater: [0.95, 1.05], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, crater: [0.95, 1.05], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 170, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
     hammer: {
@@ -80,7 +80,7 @@ const CONFIG = {
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
         { id: 'ap', name: '철갑 포탄', dmg: 438, radius: 35, crater: [0.85, 1.25], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
+        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
       ],
     },
     rookie: {
@@ -89,7 +89,7 @@ const CONFIG = {
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
         { id: 'std', name: '표준탄', dmg: 264, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'shell', color: '#5F7A30', size: 1.15 } },
-        { id: 'twin', name: '2연발', dmg: 206, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
+        { id: 'twin', name: '2연발', dmg: 206, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 230, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
       ],
     },
     trapper: {
@@ -98,7 +98,7 @@ const CONFIG = {
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
         { id: 'low', name: '수류탄', dmg: 228, radius: 35, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'grenade', color: '#5B6B2E', size: 1.2 } },
-        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 100, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
+        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 150, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
       ],
     },
     swarm: {
@@ -107,7 +107,7 @@ const CONFIG = {
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
         { id: 'missile', name: '유도 미사일', dmg: 191, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 160, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 210, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
@@ -116,7 +116,7 @@ const CONFIG = {
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
         { id: 'beam', name: '광선', dmg: 302, radius: 36, crater: [1.6, 0.55], windMul: 0, gravityMul: 0.55, pattern: { kind: 'single' }, extraDelay: 60, look: { shape: 'laser', color: '#7FFFF2', size: 1, glow: '#7FFFF2' } },
-        { id: 'prism3', name: '3분광', dmg: 177, radius: 26, crater: [1.5, 0.6], windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'laser', color: '#B9A6FF', size: 0.8, glow: '#B9A6FF' } },
+        { id: 'prism3', name: '3분광', dmg: 177, radius: 26, crater: [1.5, 0.6], windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 200, look: { shape: 'laser', color: '#B9A6FF', size: 0.8, glow: '#B9A6FF' } },
       ],
     },
     rage: {
@@ -125,7 +125,7 @@ const CONFIG = {
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
         { id: 'photon', name: '광탄', dmg: 209, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'plasma', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
-        { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 180, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
     // K tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Pickable since 2026-11 (demo); "?" still gives one of them with randomTank.chance.
@@ -135,7 +135,7 @@ const CONFIG = {
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
         { id: 'kbounce', name: 'K-바운스탄', dmg: 230, radius: 34, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
-        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 210, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
     kgreen: {
@@ -146,7 +146,7 @@ const CONFIG = {
         // 성장탄: the longer it flies, the bigger it grows (x0.75 at the muzzle → x1.4 after 3.2 s; radius grows with the square root)
         { id: 'kgrow', name: '성장탄', dmg: 205, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 0.75, max: 1.4, secs: 3.2 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
         // 뿌리탄: a small blast, then roots run along the ground the way it flew and burst up twice
-        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 110, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
+        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 230, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
       ],
     },
   },
@@ -165,13 +165,15 @@ const CONFIG = {
     pillar: { w: 46, drift: 14, mul: 1.5 },
   },
   items: {
-    double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
-    heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
-    tele: { name: '텔레포트', label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
-    shield: { name: '실드', label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
-    amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
-    fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
-    calm: { name: '무풍탄', label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },
+    // delay = what using it adds to the tank's turn delay (2026-11, by strength: a second shot 300, x1.5 damage 200,
+    // 250 hp or a blocked hit 160, utility 60~100; it was 80 for every item)
+    double: { name: '더블샷', delay: 300, label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
+    heal: { name: '회복', delay: 160, label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
+    tele: { name: '텔레포트', delay: 100, label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
+    shield: { name: '실드', delay: 160, label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
+    amplify: { name: '증폭', delay: 200, label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
+    fuel: { name: '연료', delay: 60, label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
+    calm: { name: '무풍탄', delay: 60, label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask.

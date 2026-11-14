@@ -33,7 +33,7 @@ function showScreen(name) {
   $('solo').hidden = name !== 'solo'; $('fame').hidden = name !== 'fame';
   if (name !== 'game') { $('soloOver').hidden = true; SOLOPLAY.active = false; }
   const g = name === 'game';
-  $('gchat').hidden = !(g && ON.active); if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
+  $('gchat').hidden = !(g && ON.active); if (!g || !ON.active) { $('pauseBtn').hidden = true; $('pauseOv').hidden = true; } if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
   $('diag').hidden = !g; if (!g) $('diag').textContent = '';
   $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); TUT.on = false; showCoach(); }
@@ -259,11 +259,11 @@ function renderLobby() {
     b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
     const inner = document.createElement('div'); inner.className = 'in';
     inner.innerHTML = (meta.special ? `<span class="kb">${meta.special}</span>` : '') + `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
-    b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
-    if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
+    b.append(inner); b.disabled = !(me || meW) && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
+    if (me || meW) b.onclick = () => { AU.play('ui'); L.requestMap(k); };
     maps.append(b);
   }
-  $('mapNote').textContent = isHost ? '(방장이 고릅니다 · 눌러서 변경)' : '(방장이 고릅니다)';
+  $('mapNote').textContent = '(참가자 · 관전자 누구나 눌러서 바꿀 수 있어요 · 시작은 방장)';
   $('pubTog').hidden = !isHost; $('pubChk').checked = !!room.pub;
   $('pubNote').hidden = isHost || !room.pub; $('pubNote').textContent = '열린 방 목록에 공개된 방';
   const st = $('lobbyStart');
@@ -306,7 +306,7 @@ function onlineCtrlOpts() {
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
-function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.auto, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
   if (!ON.active) return;
   const mine = ON.applied[inp.turnNo];
@@ -350,7 +350,7 @@ function remoteTick(m, t) {
     if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
     if (m.phase === 'aim') {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
-      else if (fin.timeout) cmdTimeout(m);
+      else if (fin.timeout) cmdTimeout(m, fin.auto ? fin.used || 0 : undefined);
       else if (fin.pass) cmdPass(m, fin.used);
       else if (fin.ended) { requestRebuild('ended'); return; }
       else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
@@ -398,6 +398,14 @@ function rebuildFrom(log) {
 // called from the main loop every frame while an online game is on screen
 function onlineFrame(now) {
   const L = ON.link, m = match; if (!L || !m || !ON.active) return;
+  // pause: follow the room state; while paused nothing below runs (no stall requests, auto-skips or forfeit countdown)
+  const pz = L.room && L.room.state === 'game' && L.room.paused && m.phase !== 'over' ? L.room.paused : null;
+  if (ctrl && ctrl.paused !== !!pz) {
+    ctrl.setPaused(!!pz);
+    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; ON.gone_red = 0; ON.gone_blue = 0; banner('경기 재개'); }
+  }
+  renderPause(pz, L);
+  if (pz) return;
   if (now - (ON.diagAt || 0) > 500) {
     ON.diagAt = now;
     const st = { online: '●', reconnecting: '재연결 중', connecting: '연결 중', failed: '끊김' }[L.status] || L.status;
@@ -434,7 +442,7 @@ function onlineFrame(now) {
     const gone = ON.goneSince && now - ON.goneSince > 8000;
     if (gone || waited > (CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate + 15) * 1000) {
       ON.autoSent[m.turnNo] = true;
-      L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true });
+      L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true, used: Math.min(CONFIG.turn.timeLimitTicks, Math.round(waited / 1000 * CONFIG.physics.tickRate)) });
     }
   }
 }
@@ -470,12 +478,22 @@ setInterval(() => {
   onlineFrame(now);
 }, 500);
 
+// pause button (spectators and the host) and the pause overlay (everyone)
+function renderPause(pz, L) {
+  const btn = $('pauseBtn'), ov = $('pauseOv'), can = L.canPause() && match && match.phase !== 'over';
+  if (btn.hidden === can) btn.hidden = !can;
+  const label = pz ? '▶ 경기 계속' : 'Ⅱ 일시정지'; if (btn.textContent !== label) btn.textContent = label;
+  if (ov.hidden === !!pz) ov.hidden = !pz;
+  if (pz) { const s = `${pz.nick || '관전자'} 님이 경기를 멈췄습니다` + (L.canPause() ? ' · 「경기 계속」을 누르면 이어집니다' : ' · 관전자가 「경기 계속」을 누르면 이어집니다'); if ($('pauseWho').textContent !== s) $('pauseWho').textContent = s; }
+}
 function onlineOver() {
-  const L = ON.link, isHost = L && L.isHost();
+  const L = ON.link, isHost = L && L.isHost(); if (L) L.gameOver = true;
+  $('pauseBtn').hidden = true; $('pauseOv').hidden = true;
   $('again').hidden = true; $('toSetup').hidden = true;
-  $('toLobby').hidden = !isHost; $('leaveGame').hidden = false;
+  $('toLobby').hidden = false; $('leaveGame').hidden = false; // anyone (players and spectators) may send the room back to the lobby
   $('rematchBtn').hidden = !isHost; $('rematchBtn').disabled = !(L && L.canRematch());
-  $('overWait').hidden = isHost;
+  $('overWait').hidden = false;
+  $('overWait').textContent = isHost ? '「대기방으로」: 멤버 그대로 대기방으로 돌아가 다른 맵을 골라 다음 경기를 합니다' : '「대기방으로」는 누구나 누를 수 있어요 — 멤버 그대로 대기방으로 돌아가 다른 맵으로 다음 경기를 합니다 (바로 재대결은 방장만)';
 }
 // ---------------------------------------------------------------- code cells (5 boxes, one letter each)
 const cells = () => [...document.querySelectorAll('#codeCells .cc')];
@@ -589,7 +607,8 @@ function bindOnlineUi() {
   };
   $('lobbyStart').onclick = () => { AU.unlock(); if (ON.link && ON.link.start()) $('lobbyStart').disabled = true; };
   $('leaveBtn').onclick = () => leaveOnline();
-  $('toLobby').onclick = () => { if (ON.link) ON.link.backToLobby(); };
+  $('toLobby').onclick = () => { if (ON.link) { ON.link.requestLobby(); $('toLobby').disabled = true; setTimeout(() => { $('toLobby').disabled = false; }, 3000); } };
+  $('pauseBtn').onclick = () => { const L = ON.link; if (L && L.canPause()) L.requestPause(!(L.room && L.room.paused)); };
   $('rematchBtn').onclick = () => { AU.unlock(); if (ON.link && ON.link.rematch()) $('rematchBtn').disabled = true; };
   $('readyBtn').onclick = () => { AU.play('ui'); const me = ON.link && ON.link.me(); if (me) ON.link.setReady(!me.ready); };
   $('leaveGame').onclick = () => leaveOnline();

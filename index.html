@@ -333,6 +333,11 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .mapc:disabled { cursor: default; opacity: 0.55; }
 .mapc.sel:disabled { opacity: 1; }
 #waitTag { position: absolute; left: 50%; transform: translateX(-50%); top: 84px; padding: 7px 16px; border-radius: 999px; background: var(--panel); font-size: 14px; font-weight: 700; pointer-events: none; white-space: nowrap; }
+#pauseOv { position: absolute; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; background: rgba(8,14,24,0.45); pointer-events: none; }
+#pauseOv[hidden] { display: none; }
+#pauseOv .pz { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 40px; border-radius: 18px; background: rgba(12,22,38,0.92); border: 2px solid #FFD24A; color: #E8F1FA; font-size: 16px; font-weight: 700; }
+#pauseOv .pz b { font-size: 40px; color: #FFD24A; font-weight: 900; }
+.pausebtn { border-color: #FFD24A !important; color: #FFE48A !important; }
 #diag { position: absolute; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 1px); font-size: 10px; color: rgba(169,179,198,0.6); pointer-events: none; font-variant-numeric: tabular-nums; }
 #netState { position: absolute; left: 50%; transform: translateX(-50%); top: 124px; padding: 7px 16px; border-radius: 999px; background: #5A1E16; color: #FFD4CA; font-size: 13px; font-weight: 700; pointer-events: none; }
 .probe { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
@@ -624,6 +629,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <canvas id="mini" width="220" height="80" aria-label="미니맵: 눌러서 시점 이동"></canvas>
         <button class="iconbtn" id="recenter" type="button">내 탱크로<kbd>F</kbd></button>
         <div class="setrow"><button class="iconbtn" id="sndBtn" type="button" aria-pressed="true">소리 켜짐</button><button class="iconbtn" id="musicBtn" type="button" aria-pressed="true">음악 켜짐</button><button class="iconbtn" id="shakeBtn" type="button" aria-pressed="true">흔들림</button></div>
+        <button class="iconbtn pausebtn" id="pauseBtn" type="button" hidden>Ⅱ 일시정지</button>
         <button class="iconbtn" id="exitBtn" type="button">나가기</button>
       </div>
       <div class="timer" id="timer">20</div>
@@ -639,6 +645,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   <div id="rotateTip" class="rotate" hidden><span>휴대폰을 가로로 돌리면 전장이 더 넓게 보여요</span><button class="mini" id="rotateX" type="button" aria-label="닫기">✕</button></div>
   <div id="coach" class="coach" hidden role="status"><div class="ch"><span id="coachStep"></span><button class="mini" id="coachSkip" type="button">건너뛰기</button></div><p id="coachText"></p></div>
   <div id="diag" aria-hidden="true"></div>
+  <div id="pauseOv" hidden><div class="pz"><b>Ⅱ 일시정지</b><span id="pauseWho"></span></div></div>
   <div class="gchat" id="gchat" hidden>
     <button class="iconbtn" id="chatBtn" type="button" aria-label="채팅 열기 (Enter)">💬</button>
     <div class="emotes" data-emotes></div>
@@ -912,7 +919,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <div><b>F</b>내 탱크로 시점 복귀</div>
         <div><b>미니맵 클릭</b>그 위치로 이동</div>
         <div><b>낙사</b>맵 아래로 떨어지면 탈락</div>
-        <div><b>턴 시간</b>한 사람당 60초</div>
+        <div><b>턴 시간</b>한 사람당 40초</div>
         <div><b>P</b>턴 넘기기 · 딜레이 1/4만 쌓임</div>
         <div><b>딜레이</b>낮은 순서로 차례 · 사격·이동·2번 무기·아이템·쓴 시간(1초당 +4)이 쌓임. 차이가 크면 연속 턴</div>
       </div>
@@ -950,6 +957,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
         <button class="start" id="rematchBtn" type="button" hidden>바로 재대결</button>
         <button class="ghost" id="toLobby" type="button" hidden>대기방으로</button>
         <button class="ghost" id="leaveGame" type="button" hidden>방 나가기</button>
+        <button class="ghost" id="saveResult" type="button">결과 이미지 저장</button>
       </div>
       <div class="note" id="overWait" hidden>방장이 재대결이나 대기방을 고르면 함께 이동합니다
       </div>
@@ -989,15 +997,15 @@ const CONFIG = {
     crater: [1.3, 0.78],   // default crater: wider than deep (a weapon's own crater: [widen, deepen])          // damage at the very edge of the blast (centre = 100%)
   },
   turn: {
-    timeLimitTicks: 7200,  // 60 s
+    timeLimitTicks: 4800,  // 40 s (2026-11 tournament: was 60 s)
     baseDelay: { 1: 900, 2: 820, 3: 740, 4: 660, 5: 580 },
     delayPerMovePx: 0.6,
-    itemDelay: 80,
+    itemDelay: 80,         // an item without its own `delay` (each item has one now: stronger item = more delay)
     skipDelay: 150,
     // 턴 넘기기 (원작식): no shot, delay = base x delayMul + movement + item + time. Turn order is delay only, so a cheap pass
     // brings the turn back sooner; two turns in a row happen on their own when the others' turns cost more
     pass: { delayMul: 0.25 },
-    delayPerSec: 4,        // every second spent on a turn adds this much delay (60 s = +240)
+    delayPerSec: 4,        // every second spent on a turn adds this much delay (40 s = +160)
     crateRate: [3, 8],      // 3 crates every 8 turns (2026-11: halved from 3 every 4 — too many items made games long)
     crateNear: [60],        // a crate lands 60 px ~ (movePx x crateNearMove) sideways from one tank: reachable this turn
     crateNearMove: 0.9,
@@ -1028,7 +1036,7 @@ const CONFIG = {
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, crater: [1.45, 0.7], windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 120, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 220, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
@@ -1037,7 +1045,7 @@ const CONFIG = {
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
         { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 30, crater: [0.9, 1.1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
-        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, crater: [0.95, 1.05], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 120, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
+        { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, crater: [0.95, 1.05], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 170, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
     hammer: {
@@ -1046,7 +1054,7 @@ const CONFIG = {
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
         { id: 'ap', name: '철갑 포탄', dmg: 438, radius: 35, crater: [0.85, 1.25], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 150, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
+        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
       ],
     },
     rookie: {
@@ -1055,7 +1063,7 @@ const CONFIG = {
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
         { id: 'std', name: '표준탄', dmg: 264, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'shell', color: '#5F7A30', size: 1.15 } },
-        { id: 'twin', name: '2연발', dmg: 206, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 100, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
+        { id: 'twin', name: '2연발', dmg: 206, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 230, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
       ],
     },
     trapper: {
@@ -1064,7 +1072,7 @@ const CONFIG = {
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
         { id: 'low', name: '수류탄', dmg: 228, radius: 35, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'grenade', color: '#5B6B2E', size: 1.2 } },
-        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 100, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
+        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 150, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
       ],
     },
     swarm: {
@@ -1073,7 +1081,7 @@ const CONFIG = {
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
         { id: 'missile', name: '유도 미사일', dmg: 191, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 160, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 210, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
@@ -1082,7 +1090,7 @@ const CONFIG = {
       sprite: { pivot: [226, 118], baseAngle: 0, dir: -1, muzzleLen: 0, behind: false, fixedMuzzle: [226, 118] },
       weapons: [
         { id: 'beam', name: '광선', dmg: 302, radius: 36, crater: [1.6, 0.55], windMul: 0, gravityMul: 0.55, pattern: { kind: 'single' }, extraDelay: 60, look: { shape: 'laser', color: '#7FFFF2', size: 1, glow: '#7FFFF2' } },
-        { id: 'prism3', name: '3분광', dmg: 177, radius: 26, crater: [1.5, 0.6], windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 100, look: { shape: 'laser', color: '#B9A6FF', size: 0.8, glow: '#B9A6FF' } },
+        { id: 'prism3', name: '3분광', dmg: 177, radius: 26, crater: [1.5, 0.6], windMul: 0, gravityMul: 0.55, pattern: { kind: 'spread', angles: [-50, 0, 50], powerJitter: 0, gapTicks: 0 }, extraDelay: 200, look: { shape: 'laser', color: '#B9A6FF', size: 0.8, glow: '#B9A6FF' } },
       ],
     },
     rage: {
@@ -1091,7 +1099,7 @@ const CONFIG = {
       sprite: { pivot: [119, 92], baseAngle: 90, dir: -1, muzzleLen: 72, behind: true },
       weapons: [
         { id: 'photon', name: '광탄', dmg: 209, radius: 40, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'plasma', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
-        { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 150, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
+        { id: 'orbital', name: '궤도 낙하', dmg: 244, radius: 48, crater: [0.8, 1.35], windMul: 1, gravityMul: 1, pattern: { kind: 'orbital', ticks: 72 }, cooldownTurns: 2, extraDelay: 180, look: { shape: 'beacon', color: '#FF3D7A', size: 1, glow: '#FF7FA8' } },
       ],
     },
     // K tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Pickable since 2026-11 (demo); "?" still gives one of them with randomTank.chance.
@@ -1101,7 +1109,7 @@ const CONFIG = {
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
         { id: 'kbounce', name: 'K-바운스탄', dmg: 230, radius: 34, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
-        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 110, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 210, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
     kgreen: {
@@ -1112,7 +1120,7 @@ const CONFIG = {
         // 성장탄: the longer it flies, the bigger it grows (x0.75 at the muzzle → x1.4 after 3.2 s; radius grows with the square root)
         { id: 'kgrow', name: '성장탄', dmg: 205, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 0.75, max: 1.4, secs: 3.2 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
         // 뿌리탄: a small blast, then roots run along the ground the way it flew and burst up twice
-        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 110, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
+        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 230, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
       ],
     },
   },
@@ -1131,13 +1139,15 @@ const CONFIG = {
     pillar: { w: 46, drift: 14, mul: 1.5 },
   },
   items: {
-    double: { name: '더블샷', label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
-    heal: { name: '회복', label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
-    tele: { name: '텔레포트', label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
-    shield: { name: '실드', label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
-    amplify: { name: '증폭', label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
-    fuel: { name: '연료', label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
-    calm: { name: '무풍탄', label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },
+    // delay = what using it adds to the tank's turn delay (2026-11, by strength: a second shot 300, x1.5 damage 200,
+    // 250 hp or a blocked hit 160, utility 60~100; it was 80 for every item)
+    double: { name: '더블샷', delay: 300, label: '×2', effect: 'doubleShot', dropWeight: 1, color: '#FFD24A', bg: '#3A2A12', gapTicks: 60 , desc: '두 번 발사' },
+    heal: { name: '회복', delay: 160, label: '+HP', effect: 'heal', amount: 250, dropWeight: 1, color: '#6EF0C8', bg: '#12302A' , desc: '체력 250 회복' },
+    tele: { name: '텔레포트', delay: 100, label: '순간', effect: 'teleport', dropWeight: 1, color: '#9CC6F7', bg: '#1E2A44' , desc: '떨어진 곳으로 순간이동' },
+    shield: { name: '실드', delay: 160, label: '실드', effect: 'shield', rounds: 2, dropWeight: 1, color: '#C8B4FF', bg: '#241E44' , desc: '피해 1번을 완전히 막고 깨짐 · 적 공격 2바퀴 뒤 사라짐 · 서든데스는 못 막음' },
+    amplify: { name: '증폭', delay: 200, label: '증폭', effect: 'amplify', mul: 1.5, dropWeight: 1, color: '#FF9A86', bg: '#3A1A16' , desc: '이번 발사 피해 1.5배' },
+    fuel: { name: '연료', delay: 60, label: '연료', effect: 'fuel', dropWeight: 1, color: '#FFE08A', bg: '#3A3212' , desc: '이번 턴 한 번 더 이동' },
+    calm: { name: '무풍탄', delay: 60, label: '무풍', effect: 'calm', dropWeight: 1, color: '#B8F0FF', bg: '#123038' , desc: '이번 발사 바람 무시' },
   },
 
   // Map shapes are generated in pure JS (mapgen.js) so every device builds the same mask.
@@ -1884,7 +1894,7 @@ function cmdItem(m, slot, tx, ty) {
   else if (it.effect === 'fuel') { t.fuel += CONFIG.tanks[t.tankId].movePx; }
   else if (it.effect === 'calm') { m.turn.calm = true; }
   t.items.splice(slot, 1);
-  m.turn.itemUsed = true;
+  m.turn.itemUsed = true; m.turn.itemCost = it.delay != null ? it.delay : CONFIG.turn.itemDelay;
   m.events.push({ type: 'item', idx: t.idx, item: id });
   recordAction(m, { t: 'i', s: slot });
   return true;
@@ -1919,7 +1929,7 @@ function cmdFire(m, angle, power, weapon, used) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele, calm: !!m.turn.calm });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemCost || 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon });
@@ -1933,11 +1943,13 @@ function cmdForfeit(m, team) {
   m.events.push({ type: 'over', winner: m.winner, forfeit: team });
   return input;
 }
-function cmdTimeout(m) {
+// used: only for the host's automatic skip of a player who is gone (the seconds really waited); a real timeout = the whole limit
+function cmdTimeout(m, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t) return null;
-  const input = inputOf(m, { timeout: true });
-  m.clock = (m.clock || 0) + CONFIG.turn.timeLimitTicks;
+  const auto = typeof used === 'number';
+  const input = inputOf(m, auto ? { timeout: true, auto: true, used: clampN(Math.round(used), 0, CONFIG.turn.timeLimitTicks) } : { timeout: true });
+  m.clock = (m.clock || 0) + (auto ? input.used : CONFIG.turn.timeLimitTicks);
   const d = CONFIG.tanks[t.tankId];
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
     + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
@@ -1948,7 +1960,7 @@ function cmdTimeout(m) {
 // Pass (턴 넘기기, 원작식): no shot, only a light delay. Turn order stays pure delay.
 function passCost(m, t, used) {
   const d = CONFIG.tanks[t.tankId];
-  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemCost || 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
 }
 // would this tank get the very next turn again if it passed now? (same rule as beginTurn: lowest delay, then lowest idx)
@@ -1982,7 +1994,7 @@ function applyTurnInput(m, input) {
   }
   if (m.phase === 'aim') {
     if (input.forfeit) cmdForfeit(m, input.forfeit);
-    else if (input.timeout) cmdTimeout(m);
+    else if (input.timeout) cmdTimeout(m, input.auto ? input.used || 0 : undefined);
     else if (input.pass) cmdPass(m, input.used);
     else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
@@ -2128,7 +2140,14 @@ function runScheduled(m) {
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
 function beginTurn(m) {
   const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
-  if (!red || !blue) { m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw'; m.events.push({ type: 'over', winner: m.winner }); return; }
+  if (!red || !blue) {
+    m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw';
+    if (m.winner === 'draw') { // both teams gone in the same turn (sudden death, a shared blast): the team that dealt more damage to the enemy wins
+      const sum = team => m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0), r = sum('red'), b = sum('blue');
+      m.tiebreak = { red: r, blue: b }; if (r !== b) m.winner = r > b ? 'red' : 'blue';
+    }
+    m.events.push({ type: 'over', winner: m.winner }); return;
+  }
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
   let t = alive[0];
   const base = t.delay;
@@ -2153,7 +2172,7 @@ function beginTurn(m) {
   const d = CONFIG.tanks[t.tankId];
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
-  m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
+  m.turn = { actions: [], itemUsed: false, itemCost: 0, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
   const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
   if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
@@ -2210,9 +2229,9 @@ function beginTurn(m) {
 function matchClock(m) { return (m.clock || 0) + m.tick; }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
-// drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
-// (ties: random), so every tank gets the same number of crates near it, give or take one.
-// Nowhere like that near anyone: anywhere, as before (counts for nobody).
+// drive there and take it on that tank's next turn. Fair share by TEAM first (2026-11): the team that got fewer crates so far
+// gets this one (ties: random) — so a team that lost a tank still gets half of them — and inside the team the living tank
+// that got the fewest. No spot near that team: the other team. Nowhere near anyone: anywhere, as before (counts for nobody).
 function dropCrate(m) {
   const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
   if (m.crates.length >= T.crateMax) return;
@@ -2221,8 +2240,10 @@ function dropCrate(m) {
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
   if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  // fewest so far first; ties broken by the match's own random numbers
-  const order = alive.map(t => ({ t, k: m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
+  if (!m.crateTeam) m.crateTeam = { red: 0, blue: 0 };
+  // team with fewer crates first, then the tank with the fewest; ties broken by the match's own random numbers
+  const tr = rngNext(m) < 0.5 ? 0.25 : -0.25, tk = team => m.crateTeam[team] + (team === 'red' ? tr : -tr);
+  const order = alive.map(t => ({ t, k: tk(t.team) * 1e6 + m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
   // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
   for (const t of order) for (let tries = 0; tries < 48; tries++) {
     const loose = tries >= 24, dyMax = T.crateNearDy * (loose ? 2 : 1), side = rngNext(m) < 0.5 ? -1 : 1;
@@ -2239,7 +2260,7 @@ function dropCrate(m) {
     if (y < 0 || Math.abs(y - t.y) > dyMax) continue;
     if (alive.some(o => Math.abs(o.x - x) < (loose && o !== t ? 30 : lo) && Math.abs(o.y - y) < T.crateNearDy)) continue;
     if (m.crates.some(c => Math.abs(c.x - x) < 50)) continue;
-    m.crateGot[t.idx]++; put(x, y, pick()); return;
+    m.crateGot[t.idx]++; m.crateTeam[t.team]++; put(x, y, pick()); return;
   }
   for (let tries = 0; tries < 20; tries++) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();
@@ -2318,6 +2339,7 @@ function createController(match, opts) {
   };
   // cap: longest real-time gap to catch up in one call (a hidden tab catches up in bigger chunks)
   c.frame = function (dtSec, cap, maxSteps) {
+    if (c.paused) return;
     c.acc += Math.min(dtSec, cap || 0.25);
     let n = 0; const lim = maxSteps || c.maxStepsPerFrame;
     while (c.acc >= TICK && n < lim) { c.tickOnce(); c.acc -= TICK; n++; }
@@ -2354,9 +2376,16 @@ function createController(match, opts) {
     c.timeLeft = Math.max(0, CONFIG.turn.timeLimitTicks - Math.max(c.tickUsed, wall));
   };
   // called by a timer even while the page is hidden: the local player's turn still runs out on time
+  // pause (online, a spectator's button): nothing ticks; the turn clock and the map-card hold are pushed back by the pause
+  c.paused = false; c.pausedAt = 0;
+  c.setPaused = function (on) {
+    on = !!on; if (on === c.paused) return; c.paused = on;
+    if (on) { c.pausedAt = c.clock(); c.charging = false; c.powerF = 0; }
+    else { const d = c.clock() - c.pausedAt; c.turnT0 += d; if (c.holdUntil) c.holdUntil += d; c.acc = 0; }
+  };
   c.held = function () { return c.holdUntil > 0 && c.clock() < c.holdUntil; };
   c.checkTime = function () {
-    if (!c.activeLocal() || c.match.turnNo !== c.lastTurnSeen || c.held()) return;
+    if (c.paused || !c.activeLocal() || c.match.turnNo !== c.lastTurnSeen || c.held()) return;
     c.syncTime();
     if (c.timeLeft <= 0) { c.charging = false; c.emit(cmdTimeout(c.match)); }
   };
@@ -2386,9 +2415,9 @@ function createController(match, opts) {
     c.syncTime(); c.emit(cmdFire(m, t.aim, Math.round(c.powerF), c.weapon, CONFIG.turn.timeLimitTicks - c.timeLeft));
   };
   // 턴 넘기기 (only for the local active tank, never mid-charge)
-  c.pass = function () { if (!c.activeLocal() || c.charging || c.held()) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
+  c.pass = function () { if (c.paused || !c.activeLocal() || c.charging || c.held()) return false; c.syncTime(); c.emit(cmdPass(c.match, CONFIG.turn.timeLimitTicks - c.timeLeft)); return true; };
   c.selectWeapon = function (w) { const t = curTank(c.match); if (!t || (c.remote && !c.activeLocal())) return; if (w === 1 && t.cd > 0) return; c.weapon = w; };
-  c.useItem = function (slot, tx, ty) { if (c.charging || c.held()) return false; return cmdItem(c.match, slot, tx, ty); };
+  c.useItem = function (slot, tx, ty) { if (c.paused || c.charging || c.held()) return false; return cmdItem(c.match, slot, tx, ty); };
   c.activeLocal = function () { const m = c.match; return m.phase === 'aim' && !c.replay && c.isLocal(m.cur); };
   return c;
 }
@@ -5184,7 +5213,7 @@ function createRoomLink(o) {
     const late = !cur; // a game that started while we were connected (start or rematch) is not a late join
     r.room = msg;
     if (msg.state === 'game' && msg.game && msg.game.gid !== prevGid) {
-      r.gid = msg.game.gid; r.log = []; r.hashes = {};
+      r.gid = msg.game.gid; r.log = []; r.hashes = {}; r.gameOver = false;
       cb('onGame', msg.game, late);
     }
     if (msg.state === 'lobby') r.gid = null;
@@ -5257,6 +5286,11 @@ function createRoomLink(o) {
   function onReq(q) {
     const room = r.room; if (!room) return;
     const p = room.players.find(x => x.id === q.id), w = watchersOf(room).find(x => x.id === q.id);
+    // tournament helpers (2026-11): a spectator pauses / resumes the game; anyone in the room sends everyone back to the
+    // lobby once the game is over; anyone in the room picks the next map in the lobby (starting stays with the host)
+    if (q.type === 'pause') { if (w && room.state === 'game') r.setPause(!!q.on, q.id, w.nick); return; }
+    if (q.type === 'lobby') { if ((p || w) && room.state === 'game' && r.gameOver) r.backToLobby(); return; }
+    if (q.type === 'map') { if ((p || w) && room.state === 'lobby' && CONFIG.maps[q.map] && room.map !== q.map) { room.map = q.map; publishRoom(); } return; }
     if (q.type === 'join' && q.watch) {
       if (p || r.banned[q.id] || room.state !== 'lobby') return;
       if (w) { if (w.nick !== q.nick) { w.nick = String(q.nick || '').slice(0, 8) || '관전자'; publishRoom(); } return; }
@@ -5309,6 +5343,13 @@ function createRoomLink(o) {
   r.requestTeam = team => { if (r.isHost()) return r.setTeam(r.myId, team); pub('req', { type: 'team', id: r.myId, team }); };
   r.requestTank = tank => { o.tank = tank; if (r.isHost()) { const p = r.me(); if (p) { p.tank = tank; publishRoom(); } return; } pub('req', { type: 'tank', id: r.myId, tank }); };
   r.setMap = map => { if (r.isHost() && CONFIG.maps[map]) { r.room.map = map; publishRoom(); } };
+  r.requestMap = map => { if (r.isHost()) return r.setMap(map); if (r.me() || r.meW()) pub('req', { type: 'map', id: r.myId, map }); };
+  // pause: kept in the room state (retained), so a reload or a late spectator sees it too. Only the host writes it.
+  r.setPause = function (on, by, nick) { if (!r.isHost() || r.room.state !== 'game' || !!r.room.paused === !!on) return; r.room.paused = on ? { by, nick: String(nick || '').slice(0, 8), at: Date.now() } : null; publishRoom(); };
+  r.canPause = () => !!r.room && r.room.state === 'game' && (!!r.meW() || r.isHost());
+  r.requestPause = on => { if (!r.canPause()) return; if (r.isHost()) return r.setPause(on, r.myId, r.nick); pub('req', { type: 'pause', id: r.myId, on: !!on }); };
+  r.gameOver = false; // set by the game screen when this device's match is over (the host needs it to accept a 'lobby' request)
+  r.requestLobby = () => { if (r.isHost()) return r.backToLobby(); if (r.me() || r.meW()) pub('req', { type: 'lobby', id: r.myId }); };
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
   r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
@@ -5321,7 +5362,7 @@ function createRoomLink(o) {
       gid: genId(), seed: (Math.random() * 4294967296) >>> 0, mapId: r.room.map, at: Date.now(),
       players: r.room.players.map(p => ({ id: p.id, nick: p.nick, team: p.team, tankId: pickable(p.tank) && p.tank !== 'random' ? p.tank : rollRandomTank(Math.random) })), // the host rolls "?" once, everyone gets the result
     };
-    r.room.state = 'game';
+    r.room.state = 'game'; r.room.paused = null; r.gameOver = false;
     r.gid = r.room.game.gid; r.log = []; r.hashes = {}; r.myHash = {};
     publishRoom();
     cb('onGame', r.room.game, false); // our own echo is ignored, so start locally
@@ -5329,7 +5370,7 @@ function createRoomLink(o) {
   };
   r.backToLobby = function () {
     if (!r.isHost() || r.room.state !== 'game') return;
-    r.room.state = 'lobby';
+    r.room.state = 'lobby'; r.room.paused = null;
     r.room.players = r.room.players.filter(p => r.online(p.id) || p.id === r.myId);
     r.room.watchers = watchersOf(r.room).filter(p => r.online(p.id) || p.id === r.myId);
     for (const p of r.room.players) p.ready = false;
@@ -5472,7 +5513,7 @@ function showScreen(name) {
   $('solo').hidden = name !== 'solo'; $('fame').hidden = name !== 'fame';
   if (name !== 'game') { $('soloOver').hidden = true; SOLOPLAY.active = false; }
   const g = name === 'game';
-  $('gchat').hidden = !(g && ON.active); if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
+  $('gchat').hidden = !(g && ON.active); if (!g || !ON.active) { $('pauseBtn').hidden = true; $('pauseOv').hidden = true; } if (!g) { closeGameChat(); $('gameMsgs').innerHTML = ''; }
   $('diag').hidden = !g; if (!g) $('diag').textContent = '';
   $('hudTop').hidden = !g; $('hud').hidden = !g; $('hint').hidden = !g; $('touch').hidden = !g;
   if (!g) { $('over').hidden = true; AU.setCharge(false, 0); AU.setEngine(false); TUT.on = false; showCoach(); }
@@ -5698,11 +5739,11 @@ function renderLobby() {
     b.append(cloneCanvas(previews[k] || (previews[k] = mapPreview(k))));
     const inner = document.createElement('div'); inner.className = 'in';
     inner.innerHTML = (meta.special ? `<span class="kb">${meta.special}</span>` : '') + `<span class="t">${meta.name}</span><span class="g">${meta.tag}</span>`;
-    b.append(inner); b.disabled = !isHost && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
-    if (isHost) b.onclick = () => { AU.play('ui'); L.setMap(k); };
+    b.append(inner); b.disabled = !(me || meW) && room.map !== k; b.setAttribute('aria-pressed', String(room.map === k));
+    if (me || meW) b.onclick = () => { AU.play('ui'); L.requestMap(k); };
     maps.append(b);
   }
-  $('mapNote').textContent = isHost ? '(방장이 고릅니다 · 눌러서 변경)' : '(방장이 고릅니다)';
+  $('mapNote').textContent = '(참가자 · 관전자 누구나 눌러서 바꿀 수 있어요 · 시작은 방장)';
   $('pubTog').hidden = !isHost; $('pubChk').checked = !!room.pub;
   $('pubNote').hidden = isHost || !room.pub; $('pubNote').textContent = '열린 방 목록에 공개된 방';
   const st = $('lobbyStart');
@@ -5745,7 +5786,7 @@ function onlineCtrlOpts() {
     onInput: inp => { ON.applied[inp.turnNo] = inp; if (ON.link) ON.link.sendInput(inp); },
   };
 }
-function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.ended, x.forfeit || '']); }
+function inputKey(x) { return JSON.stringify([x.turnNo, x.seat, x.actions, x.angle, x.power, x.weapon, x.used || 0, !!x.timeout, !!x.auto, !!x.ended, x.forfeit || '']); }
 function onNetInput(inp) {
   if (!ON.active) return;
   const mine = ON.applied[inp.turnNo];
@@ -5789,7 +5830,7 @@ function remoteTick(m, t) {
     if (fin.seat !== t.id || !applyPartial(m, fin.actions || [])) { requestRebuild('seat'); return; }
     if (m.phase === 'aim') {
       if (fin.forfeit) cmdForfeit(m, fin.forfeit);
-      else if (fin.timeout) cmdTimeout(m);
+      else if (fin.timeout) cmdTimeout(m, fin.auto ? fin.used || 0 : undefined);
       else if (fin.pass) cmdPass(m, fin.used);
       else if (fin.ended) { requestRebuild('ended'); return; }
       else cmdFire(m, fin.angle, fin.power, fin.weapon, fin.used);
@@ -5837,6 +5878,14 @@ function rebuildFrom(log) {
 // called from the main loop every frame while an online game is on screen
 function onlineFrame(now) {
   const L = ON.link, m = match; if (!L || !m || !ON.active) return;
+  // pause: follow the room state; while paused nothing below runs (no stall requests, auto-skips or forfeit countdown)
+  const pz = L.room && L.room.state === 'game' && L.room.paused && m.phase !== 'over' ? L.room.paused : null;
+  if (ctrl && ctrl.paused !== !!pz) {
+    ctrl.setPaused(!!pz);
+    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; ON.gone_red = 0; ON.gone_blue = 0; banner('경기 재개'); }
+  }
+  renderPause(pz, L);
+  if (pz) return;
   if (now - (ON.diagAt || 0) > 500) {
     ON.diagAt = now;
     const st = { online: '●', reconnecting: '재연결 중', connecting: '연결 중', failed: '끊김' }[L.status] || L.status;
@@ -5873,7 +5922,7 @@ function onlineFrame(now) {
     const gone = ON.goneSince && now - ON.goneSince > 8000;
     if (gone || waited > (CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate + 15) * 1000) {
       ON.autoSent[m.turnNo] = true;
-      L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true });
+      L.sendInput({ turnNo: m.turnNo, seat: t.id, actions: JSON.parse(JSON.stringify(m.turn.actions)), timeout: true, auto: true, used: Math.min(CONFIG.turn.timeLimitTicks, Math.round(waited / 1000 * CONFIG.physics.tickRate)) });
     }
   }
 }
@@ -5909,12 +5958,22 @@ setInterval(() => {
   onlineFrame(now);
 }, 500);
 
+// pause button (spectators and the host) and the pause overlay (everyone)
+function renderPause(pz, L) {
+  const btn = $('pauseBtn'), ov = $('pauseOv'), can = L.canPause() && match && match.phase !== 'over';
+  if (btn.hidden === can) btn.hidden = !can;
+  const label = pz ? '▶ 경기 계속' : 'Ⅱ 일시정지'; if (btn.textContent !== label) btn.textContent = label;
+  if (ov.hidden === !!pz) ov.hidden = !pz;
+  if (pz) { const s = `${pz.nick || '관전자'} 님이 경기를 멈췄습니다` + (L.canPause() ? ' · 「경기 계속」을 누르면 이어집니다' : ' · 관전자가 「경기 계속」을 누르면 이어집니다'); if ($('pauseWho').textContent !== s) $('pauseWho').textContent = s; }
+}
 function onlineOver() {
-  const L = ON.link, isHost = L && L.isHost();
+  const L = ON.link, isHost = L && L.isHost(); if (L) L.gameOver = true;
+  $('pauseBtn').hidden = true; $('pauseOv').hidden = true;
   $('again').hidden = true; $('toSetup').hidden = true;
-  $('toLobby').hidden = !isHost; $('leaveGame').hidden = false;
+  $('toLobby').hidden = false; $('leaveGame').hidden = false; // anyone (players and spectators) may send the room back to the lobby
   $('rematchBtn').hidden = !isHost; $('rematchBtn').disabled = !(L && L.canRematch());
-  $('overWait').hidden = isHost;
+  $('overWait').hidden = false;
+  $('overWait').textContent = isHost ? '「대기방으로」: 멤버 그대로 대기방으로 돌아가 다른 맵을 골라 다음 경기를 합니다' : '「대기방으로」는 누구나 누를 수 있어요 — 멤버 그대로 대기방으로 돌아가 다른 맵으로 다음 경기를 합니다 (바로 재대결은 방장만)';
 }
 // ---------------------------------------------------------------- code cells (5 boxes, one letter each)
 const cells = () => [...document.querySelectorAll('#codeCells .cc')];
@@ -6028,7 +6087,8 @@ function bindOnlineUi() {
   };
   $('lobbyStart').onclick = () => { AU.unlock(); if (ON.link && ON.link.start()) $('lobbyStart').disabled = true; };
   $('leaveBtn').onclick = () => leaveOnline();
-  $('toLobby').onclick = () => { if (ON.link) ON.link.backToLobby(); };
+  $('toLobby').onclick = () => { if (ON.link) { ON.link.requestLobby(); $('toLobby').disabled = true; setTimeout(() => { $('toLobby').disabled = false; }, 3000); } };
+  $('pauseBtn').onclick = () => { const L = ON.link; if (L && L.canPause()) L.requestPause(!(L.room && L.room.paused)); };
   $('rematchBtn').onclick = () => { AU.unlock(); if (ON.link && ON.link.rematch()) $('rematchBtn').disabled = true; };
   $('readyBtn').onclick = () => { AU.play('ui'); const me = ON.link && ON.link.me(); if (me) ON.link.setReady(!me.ready); };
   $('leaveGame').onclick = () => leaveOnline();
@@ -6251,6 +6311,48 @@ function matchAwards(m) {
   for (const t of T) if (t.st.dealt === 0 && t.st.shots >= 3) add(t, '🕊️ 평화주의자', 'bad');
   return { mvp, out };
 }
+// both teams fell in the same turn: the sim picked the team that dealt more damage (m.tiebreak)
+function tiebreakNote(m) { const tb = m.tiebreak; return tb ? ` · 동시 탈락 — 준 피해 레드 ${tb.red} : 블루 ${tb.blue}` + (tb.red === tb.blue ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+// 결과 이미지: the result screen drawn as one PNG (date, map, winner, both rosters with their numbers) for the tournament record
+function resultCanvas() {
+  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const rows = Math.max(...['red', 'blue'].map(tm => m.tanks.filter(t => t.team === tm).length)), W = 1200, H = 330 + rows * 86 + 150;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const tx = (s, px, py, size, col, weight, align) => { x.font = `${weight || 700} ${size}px ${F}`; x.fillStyle = col; x.textAlign = align || 'left'; x.textBaseline = 'middle'; x.fillText(s, px, py); };
+  const fit = (s, px, py, size, col, weight, maxW, align) => { for (; size > 10; size--) { x.font = `${weight || 700} ${size}px ${F}`; if (x.measureText(s).width <= maxW) break; } tx(s, px, py, size, col, weight, align); };
+  x.fillStyle = '#0B1626'; x.fillRect(0, 0, W, H); x.fillStyle = '#12223A'; x.fillRect(0, 0, W, 92);
+  tx('케이요새 경기 결과', 40, 46, 30, '#E8F1FA', 900);
+  const d = new Date(), p2 = n => String(n).padStart(2, '0'), when = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
+  const secs = Math.round(matchClock(m) / CONFIG.physics.tickRate);
+  tx(`${when}  ·  ${CONFIG.maps[m.mapId].name}  ·  ${m.turnNo}턴  ·  경기 시간 ${Math.floor(secs / 60)}:${p2(secs % 60)}` + (ON.active && ON.code ? `  ·  방 ${ON.code}` : ''), W - 40, 46, 20, '#9FB8CC', 700, 'right');
+  const win = m.winner, col = { red: '#FF6B5A', blue: '#5AA9FF', draw: '#E7C77A' }[win] || '#E8F1FA';
+  tx(win === 'draw' ? '무승부' : teamName(win) + ' 승리', W / 2, 160, 64, col, 900, 'center');
+  const sum = tm => m.tanks.reduce((a, t) => a + (t.team === tm ? t.st.dealt : 0), 0);
+  const note = (m.forfeit ? `${teamName(m.forfeit)}이 모두 나가 기권` : m.tiebreak ? `양 팀 동시 탈락 — 준 피해로 판정 (레드 ${m.tiebreak.red} : 블루 ${m.tiebreak.blue})` : m.sudden ? '서든데스까지 진행' : '') ;
+  if (note) tx(note, W / 2, 218, 22, '#E7C77A', 700, 'center');
+  const aw = matchAwards(m), top = 262;
+  ['red', 'blue'].forEach((tm, k) => {
+    const a = 40 + k * 570, w = 550, tc = tm === 'red' ? '#FF6B5A' : '#5AA9FF';
+    x.fillStyle = tm === win ? 'rgba(231,199,122,0.16)' : 'rgba(255,255,255,0.05)'; x.fillRect(a, top, w, 56 + rows * 86 + 12);
+    x.fillStyle = tc; x.fillRect(a, top, w, 6);
+    tx(teamName(tm) + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
+    m.tanks.filter(t => t.team === tm).forEach((t, i) => {
+      const y = top + 62 + i * 86; x.fillStyle = 'rgba(255,255,255,0.06)'; x.fillRect(a + 10, y, w - 20, 78);
+      fit(t.nick + (aw.mvp === t ? '  ★MVP' : ''), a + 26, y + 26, 26, t.alive ? '#FFFFFF' : '#8FA6C0', 900, 300);
+      const state = m.forfeit === tm ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
+      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive ? '#B6F25A' : '#8FA6C0', 700, 'right');
+      tx(`피해 ${t.st.dealt}  ·  격파 ${t.st.kills}  ·  명중 ${t.st.hitTurns}/${t.st.shots}` + (t.st.friendly ? `  ·  팀킬 ${t.st.friendly}` : ''), a + 26, y + 58, 19, '#CFE0F2', 500);
+    });
+  });
+  tx('KIRD 케이요새  ·  Made by tykim(KIRD)', W / 2, H - 40, 18, '#6E839A', 500, 'center');
+  return c;
+}
+function saveResultImage() {
+  if (!match || match.phase !== 'over') return;
+  const c = resultCanvas(), d = new Date(), p2 = n => String(n).padStart(2, '0');
+  const name = `kyosae_result_${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}_${p2(d.getHours())}${p2(d.getMinutes())}_${match.mapId}.png`; // ASCII: some browsers drop non-ASCII download names
+  c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); banner('결과 이미지를 저장했습니다'); }, 'image/png');
+}
 R.onOver = (winner, forfeit) => {
   if (SOLOPLAY.active) { tipRecap('sooTips'); soloOver(winner); return; }
   tipRecap('overTips');
@@ -6261,7 +6363,7 @@ R.onOver = (winner, forfeit) => {
   else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
-  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '');
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '') + tiebreakNote(match);
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
   if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
@@ -6353,7 +6455,7 @@ function updateHud() {
       if (it) {
         const meta = CONFIG.items[it]; b.style.background = meta.bg; b.style.borderColor = meta.color;
         b.innerHTML = `<span class="key">${i + 3}</span><span class="ic" style="color:${meta.color}">${meta.label}</span><span class="t">${esc(itemName(m, it))}</span>`;
-        b.title = `${itemName(m, it)} — ${meta.desc || meta.name}`; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
+        b.title = `${itemName(m, it)} — ${meta.desc || meta.name} · 딜레이 +${meta.delay != null ? meta.delay : CONFIG.turn.itemDelay}`; b.disabled = used || !mineNow; if (used || !mineNow) b.style.opacity = 0.45;
         b.onclick = () => useItemSlot(i);
       } else { b.disabled = true; b.setAttribute('aria-label', '빈 칸'); }
       box.appendChild(b);
@@ -6713,7 +6815,9 @@ function tipRecap(id) {
   el.innerHTML = '<div class="trh">💡 이번 판에서 본 문장</div><ul></ul>';
   const ul = el.querySelector('ul'); for (const t of top) { const li = document.createElement('li'); li.textContent = t[0]; ul.append(li); }
 }
+$('saveResult').onclick = saveResultImage;
 window.__tmap = { F: TMAP_F, TOP: TMAP_TOP, ART: TMAP_ART }; // tests/layout_check.js
+window.__result = { resultCanvas, saveResultImage };
 window.__tips = { get TIP_POOLS() { return TIP_POOLS; }, TIPS, TIP_RULE, pickTip, drawTip, resetTips, tipRecap }; // tests
 // KIRD 주제 맵: a card at the start of the match — the map's line, every box name and what it does, the map's happenings
 let guideTimer = 0, introTimer = 0;
@@ -6721,7 +6825,7 @@ const GUIDE_MS = 9500;
 function showMapGuide() {
   const meta = mapMetaOf(match), el = $('mguide'); if (!el) return false;
   if (!meta.guide) { el.hidden = true; return false; }
-  const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)}</span></li>`).join('');
+  const rows = ITEM_KEYS.map(k => `<li><span class="nm" style="border-color:${CONFIG.items[k].color}">${esc(itemName(match, k))}</span><span class="ef">${esc(CONFIG.items[k].desc || CONFIG.items[k].name)} · 딜레이 +${CONFIG.items[k].delay}</span></li>`).join('');
   const hap = meta.happen ? ['meteor', 'quake', 'tornado', 'pillar'].map(k => `<b>${esc(happenName(match, k, 0))}</b> ${esc((happenName(match, k, 1) || '').replace(/\s*\(.*\)$/, ''))}`).join(' · ') : '';
   el.innerHTML = `<div class="mg-card"><div class="mg-top"><span class="mg-kb">${esc(meta.special || '')}</span><span class="mg-x">클릭하면 닫힘</span></div><h2>${esc(meta.guide.title)}</h2><p class="mg-line">${esc(meta.guide.line)}</p><ul>${rows}</ul>${hap ? `<div class="mg-hap"><span>이 맵의 사건</span>${hap}</div>` : ''}${tipPoolOf(meta) ? `<div class="mg-tip"><b>💡 알고 계셨나요?</b> ${esc((pickTip(meta) || [''])[0])}</div>` : ''}<div class="mg-bar"><i></i></div></div>`;
   el.hidden = false; el.onclick = () => { el.hidden = true; };

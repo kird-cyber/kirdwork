@@ -224,3 +224,14 @@
 - 서든데스: 모든 판(`suddenChance` 1, 혼자 하기만 끔). 턴 수가 아니라 경기 시간 — `m.clock`(턴 입력의 조준 시간 `used` 합, 시간 초과 = 60초) + `m.tick`(포탄 비행·정착) = `matchClock(m)`, 모든 기기에서 같음. `suddenAtSec` 420(7분)에 발동, 1분 전 `suddenSoon` 예고. 피해는 매 턴 5%부터 2%p씩 커짐(최대 25%) → 체력 가득이어도 약 8턴. 시작 안내 카드 9.5초는 시간에 안 들어감.
 - 화면: 서든데스 3분 전부터 바람 칸에 「서든데스 m:ss」 카운트다운(main.js).
 - tests/m5.js는 islands 맵 단계에서 원래부터 실패(이번 변경과 무관) — 서든데스는 spec.test.js와 브라우저 확인으로 검증.
+
+## 2026-11-14 대회(3:3) 준비 패치
+- 턴 40초(`timeLimitTicks` 4800). 혼자 하기의 턴 제한도 같이 40초가 됨.
+- 딜레이: 차례는 원래대로 "딜레이 최저 → 번호"(spec에 3:3 60턴 불변식 추가). 비용을 세기에 맞춤 — 특수 무기 `extraDelay` 150~230(≈ 400 × (최대 피해/기본 무기 피해 − 1)), 아이템별 `CONFIG.items[k].delay`(더블샷 300 · 증폭 200 · 회복/실드 160 · 텔레포트 100 · 연료/무풍 60, 예전엔 전부 80) → `m.turn.itemCost`. 아이템 툴팁·안내 카드에 「딜레이 +N」 표시.
+- 보급 상자: 팀 먼저(`m.crateTeam`, 덜 받은 팀 → 그 팀에서 덜 받은 탱크). 인원이 줄어도 팀 몫 반반. tests/crate_fair.js 기준도 팀 단위로.
+- 동시 전멸(서든데스 등): 준 피해 합이 큰 팀 승리(`m.tiebreak`), 같으면 무승부. 결과 화면·결과 이미지에 표시.
+- 나간 사람 자동 넘김은 실제 기다린 시간만 경기 시계에 더함(`cmdTimeout(m, used)`, 입력에 `auto`/`used`).
+- 결과 이미지: 결과 화면 「결과 이미지 저장」 → `resultCanvas()` PNG(`kyosae_result_날짜_시간_맵.png`, 파일 이름은 ASCII).
+- 일시정지: 관전자(와 방장)의 버튼 → `req pause` → 방장이 `room.paused` 기록(retained) → 모든 기기 `ctrl.setPaused`(틱·턴 시계 정지, 재개 때 `turnT0`를 밀어 줌). 멈춘 동안 자동 넘김·기권 카운트 없음.
+- 다음 경기: 결과 화면 「대기방으로」를 참가자·관전자 누구나(`req lobby`, 방장 기기가 경기 종료 확인 후 실행) → 멤버·팀 그대로 대기방 → 맵은 방 안 누구나 변경(`req map`), 시작은 방장.
+- 온라인 테스트가 다시 돎: `NODE_PATH=/opt/npm-tools/node_modules node tests/broker.js 9001` + `python3 -m http.server 8765 -d dist` 후 `tests/online.js`(35), 새 `tests/tourney.js`(3:3+관전자 대회 흐름 19).

@@ -302,7 +302,7 @@ function cmdItem(m, slot, tx, ty) {
   else if (it.effect === 'fuel') { t.fuel += CONFIG.tanks[t.tankId].movePx; }
   else if (it.effect === 'calm') { m.turn.calm = true; }
   t.items.splice(slot, 1);
-  m.turn.itemUsed = true;
+  m.turn.itemUsed = true; m.turn.itemCost = it.delay != null ? it.delay : CONFIG.turn.itemDelay;
   m.events.push({ type: 'item', idx: t.idx, item: id });
   recordAction(m, { t: 'i', s: slot });
   return true;
@@ -337,7 +337,7 @@ function cmdFire(m, angle, power, weapon, used) {
   // +1: scheduled events run after the tick counter advances, so offsets stay exact between shots
   for (const s of shots) schedule(m, s.at + 1, { kind: 'shot', idx: t.idx, wIdx: weapon, angle, power, extra: s.extra, pj: s.pj, amp: m.turn.amp, berserk, tele: !!m.turn.tele, calm: !!m.turn.calm });
   if (w.cooldownTurns && !m.turn.tele) t.cd = w.cooldownTurns;
-  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  t.delay += CONFIG.turn.baseDelay[d.speedClass] + (w.extraDelay || 0) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemCost || 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
   m.phase = 'flight'; m.settle = 0;
   m.events.push({ type: 'fire', idx: t.idx, weapon });
@@ -351,11 +351,13 @@ function cmdForfeit(m, team) {
   m.events.push({ type: 'over', winner: m.winner, forfeit: team });
   return input;
 }
-function cmdTimeout(m) {
+// used: only for the host's automatic skip of a player who is gone (the seconds really waited); a real timeout = the whole limit
+function cmdTimeout(m, used) {
   const t = curTank(m);
   if (m.phase !== 'aim' || !t) return null;
-  const input = inputOf(m, { timeout: true });
-  m.clock = (m.clock || 0) + CONFIG.turn.timeLimitTicks;
+  const auto = typeof used === 'number';
+  const input = inputOf(m, auto ? { timeout: true, auto: true, used: clampN(Math.round(used), 0, CONFIG.turn.timeLimitTicks) } : { timeout: true });
+  m.clock = (m.clock || 0) + (auto ? input.used : CONFIG.turn.timeLimitTicks);
   const d = CONFIG.tanks[t.tankId];
   t.delay += CONFIG.turn.baseDelay[d.speedClass] + CONFIG.turn.skipDelay + m.turn.movedPx * CONFIG.turn.delayPerMovePx
     + Math.round(CONFIG.turn.timeLimitTicks / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec); // a timeout used the whole time
@@ -366,7 +368,7 @@ function cmdTimeout(m) {
 // Pass (턴 넘기기, 원작식): no shot, only a light delay. Turn order stays pure delay.
 function passCost(m, t, used) {
   const d = CONFIG.tanks[t.tankId];
-  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemUsed ? CONFIG.turn.itemDelay : 0)
+  return Math.round(CONFIG.turn.baseDelay[d.speedClass] * CONFIG.turn.pass.delayMul) + m.turn.movedPx * CONFIG.turn.delayPerMovePx + (m.turn.itemCost || 0)
     + Math.round(used / CONFIG.physics.tickRate * CONFIG.turn.delayPerSec);
 }
 // would this tank get the very next turn again if it passed now? (same rule as beginTurn: lowest delay, then lowest idx)
@@ -400,7 +402,7 @@ function applyTurnInput(m, input) {
   }
   if (m.phase === 'aim') {
     if (input.forfeit) cmdForfeit(m, input.forfeit);
-    else if (input.timeout) cmdTimeout(m);
+    else if (input.timeout) cmdTimeout(m, input.auto ? input.used || 0 : undefined);
     else if (input.pass) cmdPass(m, input.used);
     else cmdFire(m, input.angle, input.power, input.weapon, input.used);
   }
@@ -546,7 +548,14 @@ function runScheduled(m) {
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
 function beginTurn(m) {
   const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
-  if (!red || !blue) { m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw'; m.events.push({ type: 'over', winner: m.winner }); return; }
+  if (!red || !blue) {
+    m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw';
+    if (m.winner === 'draw') { // both teams gone in the same turn (sudden death, a shared blast): the team that dealt more damage to the enemy wins
+      const sum = team => m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0), r = sum('red'), b = sum('blue');
+      m.tiebreak = { red: r, blue: b }; if (r !== b) m.winner = r > b ? 'red' : 'blue';
+    }
+    m.events.push({ type: 'over', winner: m.winner }); return;
+  }
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
   let t = alive[0];
   const base = t.delay;
@@ -571,7 +580,7 @@ function beginTurn(m) {
   const d = CONFIG.tanks[t.tankId];
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
-  m.turn = { actions: [], itemUsed: false, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
+  m.turn = { actions: [], itemUsed: false, itemCost: 0, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
   const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
   if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
@@ -628,9 +637,9 @@ function beginTurn(m) {
 function matchClock(m) { return (m.clock || 0) + m.tick; }
 function crateLife(m) { return CONFIG.turn.crateLifeRounds * m.tanks.length; }
 // a crate lands 60 px ~ one turn of driving to the side of one tank (not much higher or lower, no tank nearer than 60):
-// drive there and take it on that tank's next turn. Fair share: the tank that got the fewest crates so far in this match
-// (ties: random), so every tank gets the same number of crates near it, give or take one.
-// Nowhere like that near anyone: anywhere, as before (counts for nobody).
+// drive there and take it on that tank's next turn. Fair share by TEAM first (2026-11): the team that got fewer crates so far
+// gets this one (ties: random) — so a team that lost a tank still gets half of them — and inside the team the living tank
+// that got the fewest. No spot near that team: the other team. Nowhere near anyone: anywhere, as before (counts for nobody).
 function dropCrate(m) {
   const T = CONFIG.turn, keys = Object.keys(CONFIG.items);
   if (m.crates.length >= T.crateMax) return;
@@ -639,8 +648,10 @@ function dropCrate(m) {
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
   if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  // fewest so far first; ties broken by the match's own random numbers
-  const order = alive.map(t => ({ t, k: m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
+  if (!m.crateTeam) m.crateTeam = { red: 0, blue: 0 };
+  // team with fewer crates first, then the tank with the fewest; ties broken by the match's own random numbers
+  const tr = rngNext(m) < 0.5 ? 0.25 : -0.25, tk = team => m.crateTeam[team] + (team === 'red' ? tr : -tr);
+  const order = alive.map(t => ({ t, k: tk(t.team) * 1e6 + m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
   // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
   for (const t of order) for (let tries = 0; tries < 48; tries++) {
     const loose = tries >= 24, dyMax = T.crateNearDy * (loose ? 2 : 1), side = rngNext(m) < 0.5 ? -1 : 1;
@@ -657,7 +668,7 @@ function dropCrate(m) {
     if (y < 0 || Math.abs(y - t.y) > dyMax) continue;
     if (alive.some(o => Math.abs(o.x - x) < (loose && o !== t ? 30 : lo) && Math.abs(o.y - y) < T.crateNearDy)) continue;
     if (m.crates.some(c => Math.abs(c.x - x) < 50)) continue;
-    m.crateGot[t.idx]++; put(x, y, pick()); return;
+    m.crateGot[t.idx]++; m.crateTeam[t.team]++; put(x, y, pick()); return;
   }
   for (let tries = 0; tries < 20; tries++) {
     const x = Math.round(200 + rngNext(m) * (m.W - 400)), y = surfaceAt(m, x, 0), item = pick();
