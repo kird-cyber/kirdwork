@@ -20,7 +20,12 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   ok(await P.evaluate(() => { const t = document.querySelector('#rules').textContent; return t.includes('경쟁입찰') && t.includes('모든 상품') && !t.includes('일반입찰') && !t.includes('50,000원 이상'); }), '규칙 안내: 모든 상품 경쟁입찰 (5만 원 기준·일반입찰 없음)');
   ok(await P.evaluate(() => document.querySelector('.card[data-id="1"] [data-top]').textContent === '92,000원'), '로봇청소기 현재 최고가 92,000원');
   ok(await P.evaluate(() => document.querySelector('.card[data-id="4"] [data-top]').textContent === '34,000원' && !document.body.textContent.includes('금액 비공개') && !!document.querySelector('.card[data-id="4"] .count') && !document.querySelector('.badge.solid-seal')), '키보드(3만)도 경쟁입찰 — 현재 최고가 34,000원·입찰 수 공개, 일반입찰 표시 없음');
-  ok(await P.evaluate(() => !document.querySelector('.tab[data-f="sealed"]') && !!document.querySelector('.tab[data-f="hot"]')), '탭: 일반입찰 탭 없음, 「경쟁 중」 탭');
+  ok(await P.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(t => t.dataset.f).join() === 'all,mine'), '탭: 전체 / 내 입찰 두 개');
+  await P.click('#sorts .so[data-s="high"]');
+  ok(await P.evaluate(() => { const v = [...document.querySelectorAll('.card [data-top]')].map(e => Number(e.textContent.replace(/[^\d]/g, ''))); return v.length > 3 && v.every((x, k) => !k || v[k - 1] >= x) && document.querySelector('#sorts .so[data-s="high"]').getAttribute('aria-pressed') === 'true'; }), '정렬: 현재가 높은 순');
+  await P.click('#sorts .so[data-s="low"]');
+  ok(await P.evaluate(() => { const v = [...document.querySelectorAll('.card [data-top]')].map(e => Number(e.textContent.replace(/[^\d]/g, ''))); return v.every((x, k) => !k || v[k - 1] <= x); }), '정렬: 현재가 낮은 순');
+  await P.click('#sorts .so[data-s="no"]');
   ok(await P.evaluate(() => document.querySelectorAll('#steps .step').length === 4 && document.querySelector('#steps').textContent.includes('최고가보다 높게 입찰 확정') && !document.querySelector('#steps').textContent.includes('일반')), '참여 방법 4단계 (경쟁입찰 안내)');
   ok(await P.evaluate(() => document.querySelector('#rules .rule').textContent.includes('공통 규칙')), '공통 규칙이 맨 앞');
   await shot(P, '01_home', { fullPage: false });

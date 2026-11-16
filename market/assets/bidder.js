@@ -64,10 +64,9 @@
   /* ── 목록 ── */
   function visible() {
     let a = S.items.slice();
-    if (S.filter === 'hot') a = a.filter(x => (x.count || 0) > 0 || x.top);
-    else if (S.filter === 'mine') a = a.filter(x => x.mine);
+    if (S.filter === 'mine') a = a.filter(x => x.mine);
     const q = S.q.trim().toLowerCase(); if (q) a = a.filter(x => (x.name + ' ' + x.descr + ' ' + x.no).toLowerCase().includes(q));
-    const by = { no: (x, y) => x.no - y.no, low: (x, y) => x.min_price - y.min_price, high: (x, y) => y.min_price - x.min_price, hot: (x, y) => (y.count || 0) - (x.count || 0) || (y.top || 0) - (x.top || 0) }[S.sort];
+    const by = { no: (x, y) => x.no - y.no, low: (x, y) => (x.top || x.min_price) - (y.top || y.min_price) || x.no - y.no, high: (x, y) => (y.top || y.min_price) - (x.top || x.min_price) || x.no - y.no, hot: (x, y) => (y.count || 0) - (x.count || 0) || (y.top || 0) - (x.top || 0) }[S.sort];
     return a.sort(by);
   }
   function mineLine(v) {
@@ -91,7 +90,7 @@
   }
   function renderGrid() {
     const g = $('#grid'), a = visible();
-    const counts = { all: S.items.length, hot: S.items.filter(x => (x.count || 0) > 0 || x.top).length, mine: S.items.filter(x => x.mine).length };
+    const counts = { all: S.items.length, mine: S.items.filter(x => x.mine).length };
     $$('[data-c]').forEach(el => el.textContent = counts[el.dataset.c] || (el.dataset.c === 'mine' && !S.tok ? '' : '0'));
     if (!a.length) {
       g.innerHTML = '<div class="empty" style="grid-column:1/-1">' + ic(S.filter === 'mine' ? 'gavel' : 'box', 48, 1.5) + '<div style="font-weight:700;color:var(--ink-2)">' + (S.filter === 'mine' ? (S.tok ? '아직 입찰한 상품이 없어요.' : '참가 코드를 넣으면 내 입찰을 볼 수 있어요.') : S.q ? '「' + esc(S.q) + '」에 맞는 상품이 없어요.' : '아직 올라온 상품이 없어요.') + '</div></div>';
@@ -273,7 +272,7 @@
   /* ── 도구줄 ── */
   $$('#tabs .tab').forEach(t => t.onclick = () => { S.filter = t.dataset.f; $$('#tabs .tab').forEach(x => x.setAttribute('aria-selected', x === t)); renderGrid(); });
   $('#q').addEventListener('input', e => { S.q = e.target.value; renderGrid(); });
-  $('#sort').addEventListener('change', e => { S.sort = e.target.value; renderGrid(); });
+  $$('#sorts .so').forEach(b => b.onclick = () => { S.sort = b.dataset.s; $$('#sorts .so').forEach(x => x.setAttribute('aria-pressed', x === b)); renderGrid(); });
   $('#grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openItem(Number(c.dataset.id)); });
 
   /* ── 불러오기 ── */

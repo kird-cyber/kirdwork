@@ -52,7 +52,14 @@
   .search { position: relative; flex: 1; min-width: 200px; max-width: 360px; margin-left: auto; }
   .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--faint); }
   .search input { padding-left: 38px; height: 44px; }
-  .sort { width: auto; height: 44px; }
+  .sorts { display: flex; align-items: center; gap: 6px; flex-basis: 100%; overflow-x: auto; scrollbar-width: none; padding: 2px 0; }
+  .sorts::-webkit-scrollbar { display: none; }
+  .sorts .sl { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-size: 14px; color: var(--ink); margin-right: 4px; white-space: nowrap; }
+  .sorts .sl svg { color: var(--kird); }
+  .so { flex: none; height: 38px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--ink-2); font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
+  .so:hover { border-color: var(--kird); color: var(--kird); }
+  .so .sm { display: none; }
+  .so[aria-pressed="true"] { background: var(--kird); border-color: var(--kird); color: #fff; box-shadow: 0 4px 12px rgba(31,111,178,.25); }
   /* 상품 */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; padding-top: 6px; padding-bottom: 60px; }
   .card { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: var(--sh-1); transition: transform .18s, box-shadow .18s, border-color .18s; cursor: pointer; text-align: left; padding: 0; }
@@ -162,6 +169,7 @@
     .me .btn { height: 38px; padding: 0 12px; font-size: 14px; }
     .search { max-width: none; order: 3; flex-basis: 100%; }
     .tabs { overflow-x: auto; max-width: 100%; }
+    .so { height: 34px; padding: 0 11px; font-size: 13px; } .so .lg { display: none; } .so .sm { display: inline; } .sorts { gap: 5px; } .sorts .sl { font-size: 13px; margin-right: 0; }
     .cells input { width: 36px; height: 50px; font-size: 20px; }
     .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .card .body { padding: 10px 12px 12px; } .card h3 { font-size: 14.5px; } .price .v { font-size: 17px; } .price .mn { display: none; }
@@ -200,18 +208,16 @@
   <div class="wrap">
     <div class="tabs" role="tablist" id="tabs">
       <button class="tab" role="tab" data-f="all" aria-selected="true">전체 <span class="c" data-c="all"></span></button>
-      <button class="tab" role="tab" data-f="hot">경쟁 중 <span class="c" data-c="hot"></span></button>
       <button class="tab" role="tab" data-f="mine">내 입찰 <span class="c" data-c="mine"></span></button>
     </div>
     <label class="search"><span class="sr">상품 검색</span><span data-ic="search"></span><input class="inp" id="q" type="search" placeholder="상품 이름으로 찾기"></label>
-    <label><span class="sr">정렬</span>
-      <select class="inp sort" id="sort">
-        <option value="no">번호순</option>
-        <option value="low">최소가 낮은 순</option>
-        <option value="high">최소가 높은 순</option>
-        <option value="hot">입찰 많은 순</option>
-      </select>
-    </label>
+    <div class="sorts" id="sorts" role="group" aria-label="정렬">
+      <span class="sl"><span data-ic="sort"></span>정렬</span>
+      <button class="so" data-s="no" aria-pressed="true">번호순</button>
+      <button class="so" data-s="low" aria-pressed="false"><span class="lg">현재가 낮은 순</span><span class="sm">낮은 가격</span></button>
+      <button class="so" data-s="high" aria-pressed="false"><span class="lg">현재가 높은 순</span><span class="sm">높은 가격</span></button>
+      <button class="so" data-s="hot" aria-pressed="false">입찰 많은 순</button>
+    </div>
   </div>
 </div>
 
