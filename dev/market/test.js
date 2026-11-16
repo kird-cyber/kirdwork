@@ -53,26 +53,24 @@ function scenario(name, mk) {
   ok(v.top === 90000 && v.mine.amount === 80000 && v.mine.leading === false && v.count === 2, name + ': A 화면 — 최고가 9만, 내 8만, 추월됨, 2명');
   ok(!('code_id' in v) && JSON.stringify(v).indexOf('홍길동') < 0, name + ': 직원 화면에 누가 입찰했는지 없음');
   r = M.call('bid', { itemId: i1, amount: 91000 }, a); ok(r.ok && r.rebid, name + ': A 재입찰 9.1만');
-  // 일반입찰 (5천 → sealed)
-  r = M.call('bid', { itemId: i2, amount: 7300 }, a); ok(r.ok && r.amount === 7000, name + ': 일반 7,300 → 7,000');
-  r = M.call('bid', { itemId: i2, amount: 6000 }, b); ok(r.ok, name + ': 일반 — 남보다 낮아도 접수');
-  v = M.call('items', {}, b).items.find(x => x.id === i2);
-  ok(v.top === undefined && v.count === undefined && v.mine.amount === 6000 && v.mine.leading === undefined, name + ': 일반 — 최고가·인원·순위 숨김');
-  r = M.call('bid', { itemId: i2, amount: 5000 }, a); ok(r.ok, name + ': 일반 replace — 낮춰서 교체 가능');
-  ok(!M.call('bid', { itemId: i2, amount: 5000 }, a).ok, name + ': 같은 금액 다시 거절');
-  // 관리자 옵션: 일반 올리기만
-  M.call('admin.saveSettings', { settings: { sealed_rebid: 'raise' } }, A);
-  ok(!M.call('bid', { itemId: i2, amount: 4000 + 1000 }, a).ok, name + ': raise — 같거나 낮게 거절');
-  ok(M.call('bid', { itemId: i2, amount: 8000 }, a).ok, name + ': raise — 높게 접수');
+  // 5만 원 미만도 경쟁입찰 (2026.11 — 모든 상품 경쟁입찰, 최고가 실시간 공개)
+  r = M.call('bid', { itemId: i2, amount: 7300 }, a); ok(r.ok && r.amount === 7000 && r.item.mode === 'comp' && r.item.top === 7000, name + ': 5천 원 상품도 경쟁 — 7,300 → 7,000, 최고가 공개');
+  r = M.call('bid', { itemId: i2, amount: 6000 }, b); ok(!r.ok && r.need === 8000, name + ': 저가 상품도 최고가 이하 거절, 필요 8,000');
+  r = M.call('bid', { itemId: i2, amount: 8000 }, b); ok(r.ok && r.item.mine.leading === true, name + ': 저가 상품 B 8천 최고');
+  v = M.call('items', {}, a).items.find(x => x.id === i2);
+  ok(v.mode === 'comp' && v.top === 8000 && v.count === 2 && v.mine.amount === 7000 && v.mine.leading === false, name + ': 저가 상품 — 최고가·인원·순위 실시간 공개');
+  r = M.call('bid', { itemId: i2, amount: 9000 }, a); ok(r.ok && r.rebid, name + ': 저가 상품 A 재입찰 9천');
+  ok(!M.call('bid', { itemId: i2, amount: 9000 }, b).ok, name + ': 최고가와 같은 금액 거절');
   // 한 번만
-  M.call('admin.saveSettings', { settings: { sealed_rebid: 'none', comp_rebid: 'none' } }, A);
-  ok(!M.call('bid', { itemId: i2, amount: 9000 }, a).ok, name + ': 일반 none — 재입찰 거절');
+  M.call('admin.saveSettings', { settings: { comp_rebid: 'none' } }, A);
+  ok(!M.call('bid', { itemId: i2, amount: 12000 }, a).ok, name + ': 경쟁 none — 저가 상품 재입찰 거절');
   ok(!M.call('bid', { itemId: i1, amount: 120000 }, b).ok, name + ': 경쟁 none — 재입찰 거절');
   ok(M.call('bid', { itemId: i1, amount: 100000 }, c).ok, name + ': 경쟁 none — 첫 입찰은 OK');
-  M.call('admin.saveSettings', { settings: { sealed_rebid: 'replace', comp_rebid: 'raise', allow_cancel: true } }, A);
-  // 강제 sealed (6만이지만 일반)
-  r = M.call('bid', { itemId: i3, amount: 60000 }, a); ok(r.ok && r.item.mode === 'sealed' && r.item.top === undefined, name + ': 관리자가 지정한 일반입찰');
-  ok(M.call('cancel', { itemId: i3 }, a).ok, name + ': 일반 입찰 취소(옵션 켬)');
+  M.call('admin.saveSettings', { settings: { comp_rebid: 'raise', allow_cancel: true } }, A);
+  // 예전에 「일반입찰로 지정」한 상품도 경쟁입찰
+  r = M.call('bid', { itemId: i3, amount: 60000 }, a); ok(r.ok && r.item.mode === 'comp' && r.item.top === 60000, name + ': 일반입찰로 지정했던 상품도 경쟁입찰');
+  ok(!M.call('cancel', { itemId: i3 }, a).ok, name + ': 경쟁입찰은 취소 불가 (취소 옵션과 상관없이)');
+  ok(M.call('admin.state', {}, A).items.every(x => x.mode_resolved === 'comp'), name + ': 관리자 화면 — 모든 상품 경쟁');
   ok(!M.call('cancel', { itemId: i1 }, a).ok, name + ': 경쟁 입찰은 취소 불가');
   // 단위 변경
   M.call('admin.saveSettings', { settings: { unit: 100 } }, A);
@@ -96,7 +94,7 @@ function scenario(name, mk) {
   const re = M.call('admin.reissueCode', { id: codes[1].id }, A);
   ok(M.call('admin.codes', {}, A).codes.find(x => x.id === codes[1].id).code === re.code, name + ': 재발급하면 목록에도 새 코드');
   ok(M.call('bid', { itemId: i2, amount: 9000 }, b).code === 'auth', name + ': 재발급하면 옛 로그인 끊김');
-  const b2 = lg(re.code); ok(!!b2 && M.call('items', {}, b2).items.find(x => x.id === i2).mine.amount === 6000, name + ': 새 코드로 기존 입찰 그대로');
+  const b2 = lg(re.code); ok(!!b2 && M.call('items', {}, b2).items.find(x => x.id === i2).mine.amount === 8000, name + ': 새 코드로 기존 입찰 그대로');
   ok(!M.call('login', { code: made[1].code }).ok, name + ': 옛 코드 로그인 거절');
   // 코드 지우기: 입찰 없는 코드만
   { const extra = M.call('admin.createCodes', { count: 2 }, A).codes; const r = M.call('admin.deleteCodes', { ids: [extra[0].id, extra[1].id, codes[0].id] }, A);
@@ -110,7 +108,7 @@ function scenario(name, mk) {
   ok(r.ok && r.item.close_at === T0 + 48 * 3600e3 - 60e3 + 5 * 60e3, name + ': 마감 1분 전 경쟁입찰 → 5분 연장');
   M.setNow(T0 + 48 * 3600e3 + 60e3);
   ok(M.call('info').phase === 'open', name + ': 연장 중이면 전체는 아직 진행');
-  ok(!M.call('bid', { itemId: i2, amount: 12000 }, a).ok, name + ': 연장 안 된 일반입찰은 마감');
+  ok(!M.call('bid', { itemId: i2, amount: 12000 }, a).ok, name + ': 연장 안 된 상품은 마감');
   ok(M.call('bid', { itemId: i1, amount: 160000 }, a).ok, name + ': 연장된 경쟁입찰은 입찰 가능');
   M.setNow(T0 + 49 * 3600e3);
   ok(M.call('info').phase === 'closed', name + ': 연장도 끝나면 마감');
@@ -139,7 +137,7 @@ function scenario(name, mk) {
     return { call: (a, p, t) => mk().call(a, p, t), setNow: t => now = t };
   });
 }
-// 1-b) 담당자 기본 규칙 그대로 (100원 단위 · 입찰 수 공개 · 일반 깜깜이 수정 · 경쟁 최고가여도 더 올리기)
+// 1-b) 담당자 기본 규칙 (100원 단위 · 입찰 수 공개 · 모든 상품 경쟁 · 최고가여도 더 올리기)
 {
   let now = Date.UTC(2026, 10, 3); const M = C.createMarket(C.LocalStore('d', memStorage()), { adminPassword: 'pw', now: () => now });
   const A = M.call('adminLogin', { password: 'pw' }).token;
@@ -149,11 +147,11 @@ function scenario(name, mk) {
   let r = M.call('bid', { itemId: comp, amount: 50070 }, cs[0]); ok(r.ok && r.amount === 50000, '기본: 50,070 → 50,000 (십원 단위 절사)');
   r = M.call('bid', { itemId: comp, amount: 50199 }, cs[0]); ok(r.ok && r.amount === 50100 && r.item.mine.leading, '기본: 내가 최고가여도 100원 더 올리기');
   r = M.call('bid', { itemId: comp, amount: 50150 }, cs[1]); ok(!r.ok && r.need === 50200, '기본: 남은 최고가+100 이상');
-  r = M.call('bid', { itemId: seal, amount: 4250 }, cs[0]); ok(r.ok && r.amount === 4200, '기본: 일반 4,250 → 4,200');
-  M.call('bid', { itemId: seal, amount: 3500 }, cs[1]);
-  r = M.call('bid', { itemId: seal, amount: 3900 }, cs[0]); ok(r.ok, '기본: 일반 금액 낮춰 수정');
-  const v = M.call('items', {}, cs[1]).items.find(x => x.id === seal);
-  ok(v.count === undefined && v.top === undefined && v.mine.leading === undefined, '기본: 일반 — 최고가·입찰 수·순위 모두 비공개');
+  r = M.call('bid', { itemId: seal, amount: 4250 }, cs[0]); ok(r.ok && r.amount === 4200 && r.item.top === 4200, '기본: 3천 원 상품도 경쟁 — 4,250 → 4,200, 최고가 공개');
+  r = M.call('bid', { itemId: seal, amount: 4200 }, cs[1]); ok(!r.ok && r.need === 4300, '기본: 저가 상품도 최고가+100 이상');
+  M.call('bid', { itemId: seal, amount: 4300 }, cs[1]);
+  const v = M.call('items', {}, cs[0]).items.find(x => x.id === seal);
+  ok(v.mode === 'comp' && v.count === 2 && v.top === 4300 && v.mine.leading === false, '기본: 저가 상품 — 최고가·입찰 수·순위 실시간 공개');
   const w = M.call('items', {}, cs[1]).items.find(x => x.id === comp); ok(w.count === 1 && w.top === 50100, '기본: 경쟁 — 최고가·입찰 수 공개');
 }
 // 2) Apps Script (Code.gs 그대로)

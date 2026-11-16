@@ -51,10 +51,27 @@
     const rs = await Promise.all(tasks);
     if (!rs[0].ok) { if (rs[0].code !== 'auth') toast(rs[0].error, 'bad'); return; }
     S.st = rs[0]; MK.setServerNow(rs[0].info.now);
+    if (await allComp(rs[0])) return load(p, loud);
     rs.slice(1).forEach(r => { if (r.ok && r.codes) S.codes = r.codes; if (r.ok && r.logs) S.logs = r.logs; });
     if (p === S.page) render();
     if (S.scrollTo && p === S.page) { const el = document.getElementById(S.scrollTo); S.scrollTo = ''; if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); el.style.transition = 'background .6s'; el.style.background = 'var(--kird-50)'; setTimeout(() => { el.style.background = ''; }, 1400); } }
     if (loud) toast('새로 불러왔어요.');
+  }
+  // 2026.11 — 모든 상품 경쟁입찰. 서버(Apps Script)가 예전 판이어도 같은 결과가 나오게
+  // 경쟁입찰 기준을 0원으로, 「일반입찰로 지정」된 상품을 경쟁입찰로 한 번 맞춘다. (새 Code.gs 는 원래 모두 경쟁입찰)
+  async function allComp(st) {
+    if (S.compFixed) return false;
+    const sealed = (st.items || []).filter(x => x.mode === 'sealed' || x.mode_resolved === 'sealed');
+    if (!(Number(st.settings.competitive_min) > 0) && !sealed.length) { S.compFixed = true; return false; }
+    S.compFixed = true;
+    const r = await call('admin.saveSettings', { settings: { competitive_min: 0 } });
+    if (!r.ok) { toast(r.error, 'bad'); return false; }
+    for (const x of sealed) {
+      const q = await call('admin.saveItem', { item: { id: x.id, no: x.no, name: x.name, descr: x.descr, min_price: x.min_price, mode: 'comp', hidden: !!x.hidden, photos: x.photos || [], close_at: x.close_at || 0 } });
+      if (!q.ok) toast('No.' + x.no + ' 경쟁입찰 전환 실패: ' + q.error, 'bad');
+    }
+    toast('모든 상품을 경쟁입찰로 맞췄어요. 직원 화면에 현재 최고가가 실시간으로 보여요.', 'ok');
+    return true;
   }
   function head() {
     const st = S.st; if (!st) return;
@@ -106,7 +123,7 @@
       tile('heart', ['var(--seal-50)', 'var(--seal)'], '예상 모금액', won(sum), '상품별 현재 1위 금액 합계') + '</div>' +
       '<div class="two"><div class="panel"><div class="ph"><h2>입찰이 많은 상품</h2><div class="x"><button class="btn sm" data-go="results">전체 보기' + ic('chev', 14, 2.4) + '</button></div></div><div class="scroll">' +
       (hot.length ? '<table class="tbl"><thead><tr><th></th><th>상품</th><th>방식</th><th class="r">입찰</th><th class="r">현재 1위</th></tr></thead><tbody>' + hot.map(x => '<tr class="click" data-bids="' + x.id + '"><td style="width:64px">' + thumb(x) + '</td><td><div class="nm">' + esc(x.name) + '<small>No.' + x.no + ' · 최소 ' + won(x.min_price) + '</small></div></td><td>' + modeBadge(x.mode_resolved) + '</td><td class="r num">' + x.count + '</td><td class="r num lead-c">' + (x.top ? won(x.top.amount) : '-') + '</td></tr>').join('') + '</tbody></table>' : '<div class="empty">' + ic('box', 40, 1.5) + '<div>아직 상품이 없어요. <a href="#items" data-go="items">상품을 등록</a>해 보세요.</div></div>') +
-      '</div></div><div style="display:flex;flex-direction:column;gap:20px"><div class="panel"><div class="ph"><h2>지금 적용 중인 규칙</h2><div class="x"><button class="btn sm" data-go="settings" data-scroll="guideSet">문구·규칙 고치기</button></div></div><div class="pb"><div class="preview" style="border-style:solid;background:#fff"><p><b>공통</b> — ' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (최소가 ' + won(i.competitive_min) + ' 이상) — ' + esc(r.c).replace(/\n/g, '<br>') + '</p><p><b>일반입찰</b> — ' + esc(r.s).replace(/\n/g, '<br>') + '</p></div>' +
+      '</div></div><div style="display:flex;flex-direction:column;gap:20px"><div class="panel"><div class="ph"><h2>지금 적용 중인 규칙</h2><div class="x"><button class="btn sm" data-go="settings" data-scroll="guideSet">문구·규칙 고치기</button></div></div><div class="pb"><div class="preview" style="border-style:solid;background:#fff"><p><b>공통</b> — ' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (모든 상품) — ' + esc(r.c).replace(/\n/g, '<br>') + '</p></div>' +
       '<div style="display:flex;gap:16px;margin-top:12px;font-size:13px;color:var(--mute);flex-wrap:wrap"><span>' + ic('clock', 14, 2) + ' 시작 ' + (i.open_at ? esc(fmtDate(i.open_at)) : '바로') + '</span><span>마감 ' + (i.close_at ? esc(fmtDate(i.close_at)) : '미정') + '</span></div></div></div>' +
       '<div class="panel"><div class="ph"><h2>최근 기록</h2><div class="x"><button class="btn sm" data-go="logs">전체</button></div></div><div class="pb" style="padding:8px 20px 14px">' + ((S.logs || []).slice(0, 7).map(l => '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-2);font-size:13.5px"><span style="color:var(--mute);width:62px;flex:none">' + esc(ago(l.at)) + '</span><span><b>' + esc(l.action) + '</b> <span class="log-d">' + esc(logDetail(l)) + '</span></span></div>').join('') || '<div class="empty" style="padding:20px">기록이 없어요.</div>') + '</div></div></div></div>';
     $$('[data-go]', c).forEach(b => b.onclick = e => { e.preventDefault(); S.scrollTo = b.dataset.scroll || ''; go(b.dataset.go); });
@@ -123,7 +140,7 @@
     const list = st.items.filter(x => !q || (x.name + ' ' + x.no + ' ' + x.descr).toLowerCase().includes(q));
     c.innerHTML = '<div class="panel"><div class="ph"><h2>상품 ' + st.items.length + '개</h2><span class="badge mute">공개 ' + st.totals.items + ' · 숨김 ' + st.totals.hidden + '</span><div class="x"><input class="inp" id="itemQ" placeholder="이름·번호로 찾기" value="' + esc(S.itemQ) + '" style="height:38px;width:200px"><button class="btn primary" id="addItem">' + ic('plus', 16, 2.4) + '상품 등록</button></div></div><div class="scroll">' +
       (list.length ? '<table class="tbl"><thead><tr><th></th><th>No.</th><th>상품</th><th class="r">최소 입찰가</th><th>방식</th><th class="r">입찰</th><th class="r">현재 1위</th><th>공개</th><th></th></tr></thead><tbody>' +
-        list.map(x => '<tr class="' + (x.hidden ? 'hid' : '') + '"><td style="width:64px">' + thumb(x) + '</td><td class="num">' + x.no + '</td><td><div class="nm">' + esc(x.name) + '<small>' + esc(x.descr || '') + '</small></div></td><td class="r num">' + won(x.min_price) + '</td><td>' + modeBadge(x.mode_resolved, x.mode !== 'auto') + '</td><td class="r num">' + x.count + '</td><td class="r num">' + (x.top ? (x.mode_resolved === 'comp' ? '<span class="lead-c">' + won(x.top.amount) + '</span>' : won(x.top.amount)) : '-') + '</td>' +
+        list.map(x => '<tr class="' + (x.hidden ? 'hid' : '') + '"><td style="width:64px">' + thumb(x) + '</td><td class="num">' + x.no + '</td><td><div class="nm">' + esc(x.name) + '<small>' + esc(x.descr || '') + '</small></div></td><td class="r num">' + won(x.min_price) + '</td><td>' + modeBadge(x.mode_resolved) + '</td><td class="r num">' + x.count + '</td><td class="r num">' + (x.top ? (x.mode_resolved === 'comp' ? '<span class="lead-c">' + won(x.top.amount) + '</span>' : won(x.top.amount)) : '-') + '</td>' +
           '<td><label class="sw" title="직원 화면에 보이기"><input type="checkbox" data-vis="' + x.id + '"' + (x.hidden ? '' : ' checked') + '><span class="tr"></span></label></td><td style="white-space:nowrap"><button class="btn sm" data-edit="' + x.id + '">' + ic('edit', 15) + '편집</button> <button class="btn sm ghost" data-bids="' + x.id + '" title="입찰 기록">' + ic('history', 15) + '</button></td></tr>').join('') + '</tbody></table>'
         : '<div class="empty">' + ic('box', 44, 1.4) + '<div style="font-weight:700;color:var(--ink-2)">' + (q ? '찾는 상품이 없어요.' : '첫 상품을 등록해 보세요.') + '</div><div style="margin-top:4px">사진 · 상품명 · 최소 입찰가만 있으면 돼요.</div></div>') + '</div></div>';
     $('#addItem').onclick = () => openItem(null);
@@ -146,22 +163,15 @@
       '<div class="row2" style="grid-template-columns:110px 1fr"><div class="field"><label for="fNo">번호</label><input class="inp num" id="fNo" inputmode="numeric" value="' + esc(d.no) + '"></div><div class="field"><label for="fName">상품명 <span style="color:var(--bad)">*</span></label><input class="inp" id="fName" maxlength="80" placeholder="예: 로봇청소기 (물걸레 겸용)" value="' + esc(d.name) + '"></div></div>' +
       '<div class="field"><label for="fDescr">설명</label><textarea class="inp" id="fDescr" maxlength="2000" placeholder="상태, 구성품, 사용 기간, 받는 방법 등">' + esc(d.descr) + '</textarea></div>' +
       '<div class="row2"><div class="field"><label for="fMin">최소 입찰가 <span style="color:var(--bad)">*</span></label><div class="amt" style="position:relative"><input class="inp num" id="fMin" inputmode="numeric" placeholder="예: 30,000" value="' + (d.min_price ? num(d.min_price) : '') + '" style="padding-right:40px;text-align:right;font-weight:700"><span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mute);font-weight:600">원</span></div>' + (d.count ? '<span class="help">입찰이 ' + d.count + '건 있어 기존 입찰보다 높게는 못 올려요.</span>' : '') + '</div>' +
-      '<div class="field"><label for="fMode">입찰 방식</label><select class="inp" id="fMode"><option value="auto">자동 (' + won(st.settings.competitive_min) + ' 기준)</option><option value="comp">경쟁입찰로 지정</option><option value="sealed">일반입찰로 지정</option></select></div></div>' +
-      '<div class="modeNote" id="modeNote"></div>' +
+      '<div class="field"><span class="lbl">입찰 방식</span><div class="modeNote comp" id="modeNote" style="margin:0">' + ic('trend', 15, 2.2) + ' <b>경쟁입찰</b> — 금액과 상관없이 현재 최고가가 직원들에게 실시간으로 공개돼요.</div></div></div>' +
       '<div class="row2"><div class="field"><label for="fClose">이 상품만 마감 시각 따로 <span style="font-weight:500;color:var(--mute)">(선택)</span></label><input class="inp" id="fClose" type="datetime-local" value="' + esc(toDT(d.close_at)) + '"><span class="help">비우면 전체 마감 시각(' + (st.settings.close_at ? esc(fmtDate(st.settings.close_at)) : '미정') + ')을 따라요.</span></div>' +
       '<div class="field"><span class="lbl">직원 화면에 보이기</span><div class="swrow"><div><b>' + (d.hidden ? '숨김' : '공개') + '</b><span class="d">끄면 숨김 — 입찰 기록은 남아요</span></div><label class="sw"><input type="checkbox" id="fVis"' + (d.hidden ? '' : ' checked') + '><span class="tr"></span><span class="sr">공개</span></label></div></div></div>' +
       '</div><div class="r"><div class="lbl">사진 <span style="font-weight:500;color:var(--mute)">최대 8장 · 첫 장이 대표</span></div><label class="drop" id="drop">' + ic('upload', 26, 1.8) + '<b>사진을 끌어다 놓거나 눌러서 고르기</b>JPG·PNG · 자동으로 줄여서 올려요<input type="file" id="fFile" accept="image/*" multiple hidden></label><div class="phs" id="phs"></div></div></div>' +
       '<div class="foot">' + (d.id && !d.count ? '<button type="button" class="btn danger" id="edDel" style="margin-right:auto">' + ic('trash', 16) + '삭제</button>' : '') + '<button type="button" class="btn" data-x>취소</button><button type="submit" class="btn primary" id="edSave">' + ic('check', 16, 2.4) + (d.id ? '저장' : '등록') + '</button></div></form>';
-    $('#fMode').value = d.mode;
     $$('[data-x]', itemDlg).forEach(b => b.onclick = () => itemDlg.close());
-    const modeNote = () => {
-      const min = Number(String($('#fMin').value).replace(/[^\d]/g, '')) || 0, m = $('#fMode').value;
-      const r = m === 'auto' ? (min >= st.settings.competitive_min ? 'comp' : 'sealed') : m;
-      const el = $('#modeNote'); el.className = 'modeNote ' + r;
-      el.innerHTML = r === 'comp' ? ic('trend', 15, 2.2) + ' <b>경쟁입찰</b>로 올라가요 — 현재 최고가가 직원들에게 공개돼요.' : ic('lock', 15, 2.2) + ' <b>일반입찰</b>로 올라가요 — 다른 사람 금액은 보이지 않아요.';
-    };
+    const modeNote = () => { };
     $('#fMin').addEventListener('input', e => { const n = String(e.target.value).replace(/[^\d]/g, ''); e.target.value = n ? num(n) : ''; modeNote(); });
-    $('#fMode').onchange = modeNote; modeNote();
+    modeNote();
     $('#fVis').onchange = e => { e.target.closest('.swrow').querySelector('b').textContent = e.target.checked ? '공개' : '숨김'; };
     drawPhotos();
     const drop = $('#drop'), file = $('#fFile');
@@ -199,7 +209,7 @@
   async function saveItem(e) {
     e.preventDefault(); const d = S.draft;
     if (d.photos.some(p => p.up)) { toast('사진을 올리는 중이에요. 잠시만요.'); return; }
-    const item = { id: d.id, no: Number($('#fNo').value) || d.no, name: $('#fName').value.trim(), descr: $('#fDescr').value, min_price: Number(String($('#fMin').value).replace(/[^\d]/g, '')), mode: $('#fMode').value, hidden: !$('#fVis').checked, close_at: fromDT($('#fClose').value), photos: d.photos.map(p => p.ref) };
+    const item = { id: d.id, no: Number($('#fNo').value) || d.no, name: $('#fName').value.trim(), descr: $('#fDescr').value, min_price: Number(String($('#fMin').value).replace(/[^\d]/g, '')), mode: 'comp', hidden: !$('#fVis').checked, close_at: fromDT($('#fClose').value), photos: d.photos.map(p => p.ref) };
     if (!item.name) { toast('상품명을 입력해 주세요.', 'bad'); $('#fName').focus(); return; }
     if (!item.min_price) { toast('최소 입찰가를 입력해 주세요.', 'bad'); $('#fMin').focus(); return; }
     if (!item.photos.length && !confirm('사진 없이 등록할까요?')) return;
@@ -319,10 +329,10 @@
   function rResults(c) {
     const st = S.st, i = st.info, q = S.resQ.trim().toLowerCase();
     let list = st.items.filter(x => !q || (x.name + ' ' + x.no).toLowerCase().includes(q));
-    if (S.resF === 'comp') list = list.filter(x => x.mode_resolved === 'comp'); else if (S.resF === 'sealed') list = list.filter(x => x.mode_resolved === 'sealed'); else if (S.resF === 'none') list = list.filter(x => !x.count);
+    if (S.resF === 'bid') list = list.filter(x => x.count); else if (S.resF === 'none') list = list.filter(x => !x.count);
     const t = now();
     c.innerHTML = '<div class="panel"><div class="ph"><h2>' + (i.phase === 'closed' ? '최종 결과' : '실시간 현황') + '</h2>' + (i.phase === 'closed' ? '<span class="badge ok">마감</span>' : '<span class="badge warn">진행 중 — 순위가 바뀔 수 있어요</span>') +
-      '<div class="x"><div class="seg">' + [['all', '전체'], ['comp', '경쟁'], ['sealed', '일반'], ['none', '입찰 없음']].map(([k, n]) => '<button data-rf="' + k + '" aria-pressed="' + (S.resF === k) + '">' + n + '</button>').join('') + '</div><input class="inp" id="resQ" placeholder="상품 찾기" value="' + esc(S.resQ) + '" style="height:38px;width:160px"><button class="btn sm" id="csvRes">' + ic('download', 15) + '결과 CSV</button><button class="btn sm" id="csvAll">' + ic('download', 15) + '전체 입찰 기록 CSV</button></div></div>' +
+      '<div class="x"><div class="seg">' + [['all', '전체'], ['bid', '입찰 있음'], ['none', '입찰 없음']].map(([k, n]) => '<button data-rf="' + k + '" aria-pressed="' + (S.resF === k) + '">' + n + '</button>').join('') + '</div><input class="inp" id="resQ" placeholder="상품 찾기" value="' + esc(S.resQ) + '" style="height:38px;width:160px"><button class="btn sm" id="csvRes">' + ic('download', 15) + '결과 CSV</button><button class="btn sm" id="csvAll">' + ic('download', 15) + '전체 입찰 기록 CSV</button></div></div>' +
       '<div class="pb" style="padding:14px 20px;border-bottom:1px solid var(--line-2);display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="swrow" style="flex:1;min-width:280px;border:0;padding:0"><div><b>직원에게 낙찰 여부 보여 주기</b><span class="d">켜면 마감된 상품에서 각자 「낙찰 / 미낙찰」만 보여요. 다른 사람 정보는 계속 비공개예요.</span></div><label class="sw"><input type="checkbox" id="pubRes"' + (st.settings.results_public ? ' checked' : '') + '><span class="tr"></span><span class="sr">결과 공개</span></label></div></div><div class="scroll">' +
       (list.length ? '<table class="tbl"><thead><tr><th>No.</th><th>상품</th><th>방식</th><th class="r">최소가</th><th class="r">입찰</th><th class="r">1위 금액</th><th>1위 (관리자만)</th><th class="r">2위 금액</th><th>상태</th><th></th></tr></thead><tbody>' +
         list.map(x => {
@@ -360,12 +370,11 @@
     return '<div class="set" id="guideSet"><div class="t"><h3>직원 화면 안내 문구</h3><p>직원 첫 화면의 「참여 방법」과 규칙 설명을 직접 고칠 수 있어요. 줄을 바꾸면 화면에서도 줄이 바뀌어요.<br><br>손대지 않은 칸은 위 설정(단위·재입찰 등)에 맞춰 <b>자동으로</b> 만들어져요. 고친 칸은 쓴 그대로 보여요.</p></div><div class="f">' +
       box('steps', 'gSteps', '참여 방법 <span style="font-weight:500;color:var(--mute)">(한 줄에 한 단계)</span>', 4) +
       box('rules_common', 'gCommon', '공통 규칙', 3) +
-      box('rules_comp', 'gComp', '경쟁입찰 설명 <span style="font-weight:500;color:var(--mute)">(최소가 ' + won(s.competitive_min) + ' 이상)</span>', 3) +
-      box('rules_sealed', 'gSealed', '일반입찰 설명 <span style="font-weight:500;color:var(--mute)">(최소가 ' + won(s.competitive_min) + ' 미만)</span>', 3) +
+      box('rules_comp', 'gComp', '경쟁입찰 설명 <span style="font-weight:500;color:var(--mute)">(모든 상품)</span>', 3) +
       '<div class="preview" id="prev"></div></div></div>';
   }
   function rSettings(c) {
-    const s = Object.assign({}, S.st.settings, S.dirty);
+    const s = Object.assign({}, S.st.settings, S.dirty); if (s.show_count === 'all') s.show_count = 'comp';
     const radio = (k, opts) => '<div class="opts">' + opts.map(([v, b, d]) => '<label class="opt"><input type="radio" name="' + k + '" value="' + v + '"' + (String(s[k]) === String(v) ? ' checked' : '') + '><b>' + b + '</b><span>' + d + '</span></label>').join('') + '</div>';
     const sw = (k, b, d) => '<div class="swrow"><div><b>' + b + '</b><span class="d">' + d + '</span></div><label class="sw"><input type="checkbox" data-k="' + k + '"' + (s[k] ? ' checked' : '') + '><span class="tr"></span><span class="sr">' + b + '</span></label></div>';
     const n = Object.keys(S.dirty).length;
@@ -373,22 +382,20 @@
       '<div class="set"><div class="t"><h3>행사 정보</h3><p>직원 화면 맨 위에 보여요.</p></div><div class="f"><div class="field"><label for="sTitle">행사 이름</label><input class="inp" id="sTitle" data-k="title" maxlength="60" value="' + esc(s.title) + '"></div><div class="field"><label for="sNotice">안내 문구</label><textarea class="inp" id="sNotice" data-k="notice" rows="3" maxlength="600">' + esc(s.notice) + '</textarea><span class="help">수익금 사용처, 물건 받는 방법·장소 등을 적어 주세요.</span></div></div></div>' +
       '<div class="set"><div class="t"><h3>일정</h3><p>시작 전에는 상품만 둘러볼 수 있고, 마감 시각이 지나면 입찰이 자동으로 막혀요.</p></div><div class="f"><div class="row2"><div class="field"><label for="sOpen">입찰 시작</label><input class="inp" id="sOpen" type="datetime-local" data-k="open_at" data-dt value="' + esc(toDT(s.open_at)) + '"><span class="help">비우면 바로 시작</span></div><div class="field"><label for="sClose">입찰 마감</label><input class="inp" id="sClose" type="datetime-local" data-k="close_at" data-dt value="' + esc(toDT(s.close_at)) + '"><span class="help">비우면 「지금 마감」을 누를 때까지 계속</span></div></div>' +
       '<div class="danger-zone">' + (S.st.settings.ended ? '<button class="btn" id="unEnd">' + ic('play', 15, 2.2) + '마감 해제 (다시 열기)</button><span class="badge mute" style="align-self:center">지금 마감 상태예요</span>' : '<button class="btn danger" id="endNow">' + ic('clock', 15, 2.2) + '지금 전체 마감</button>') + '</div></div></div>' +
-      '<div class="set"><div class="t"><h3>입찰 방식 기준</h3><p>최소가가 기준 금액 이상이면 경쟁입찰, 미만이면 일반입찰이에요. 상품마다 따로 지정할 수도 있어요.</p></div><div class="f"><div class="row2"><div class="field"><label for="sCm">경쟁입찰 기준 (최소가)</label><input class="inp num" id="sCm" data-k="competitive_min" data-num inputmode="numeric" value="' + num(s.competitive_min) + '"><span class="help">이 금액 이상 → 경쟁입찰</span></div><div class="field"><label for="sUnit">입찰 단위</label><select class="inp" id="sUnit" data-k="unit" data-num>' + [100, 500, 1000, 5000, 10000].map(u => '<option value="' + u + '"' + (Number(s.unit) === u ? ' selected' : '') + '>' + won(u) + ' 단위' + (u === 100 ? ' (십원 단위 절사)' : u === 1000 ? ' (백원 단위 절사)' : '') + '</option>').join('') + '</select><span class="help">이 단위 미만은 버리고 접수돼요</span></div></div></div></div>' +
-      '<div class="set"><div class="t"><h3>경쟁입찰 규칙</h3><p>현재 최고가가 공개되는 상품이에요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">재입찰</div>' + radio('comp_rebid', [['raise', '최고가보다 높게 계속 가능', '누가 더 높게 내면 다시 올려 낼 수 있어요 (보통 경매)'], ['none', '한 번만', '한 사람당 한 번만 입찰할 수 있어요']]) + '</div>' +
+      '<div class="set"><div class="t"><h3>입찰 방식 · 단위</h3><p>모든 상품이 <b>경쟁입찰</b>이에요. 최소가와 상관없이 현재 최고가가 직원들에게 실시간으로 공개되고, 더 높게 내며 경쟁해요.</p></div><div class="f"><div class="row2"><div class="field"><label for="sUnit">입찰 단위</label><select class="inp" id="sUnit" data-k="unit" data-num>' + [100, 500, 1000, 5000, 10000].map(u => '<option value="' + u + '"' + (Number(s.unit) === u ? ' selected' : '') + '>' + won(u) + ' 단위' + (u === 100 ? ' (십원 단위 절사)' : u === 1000 ? ' (백원 단위 절사)' : '') + '</option>').join('') + '</select><span class="help">이 단위 미만은 버리고 접수돼요</span></div></div></div></div>' +
+      '<div class="set"><div class="t"><h3>경쟁입찰 규칙</h3><p>모든 상품에 적용돼요. 현재 최고가가 실시간으로 공개돼요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">재입찰</div>' + radio('comp_rebid', [['raise', '최고가보다 높게 계속 가능', '누가 더 높게 내면 다시 올려 낼 수 있어요 (보통 경매)'], ['none', '한 번만', '한 사람당 한 번만 입찰할 수 있어요']]) + '</div>' +
       '<div class="row2"><div class="field"><label for="sStep">최고가보다 최소 얼마 더</label><input class="inp num" id="sStep" data-k="comp_step" data-num inputmode="numeric" value="' + num(s.comp_step) + '"><span class="help">입찰 단위보다 작으면 입찰 단위로 계산</span></div><div class="field"><label for="sExt">마감 직전 자동 연장</label><select class="inp" id="sExt" data-k="extend_min" data-num>' + [[0, '안 함'], [3, '3분'], [5, '5분'], [10, '10분']].map(([v, t]) => '<option value="' + v + '"' + (Number(s.extend_min) === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select><span class="help">마감 N분 전 입찰이 들어오면 그 상품만 N분 연장 (막판 눈치싸움 방지)</span></div></div>' +
       sw('show_leading', '「내가 최고가」 표시', '입찰한 사람에게 지금 1위인지 알려 줘요 (누가 1위인지는 안 보여요)') + '</div></div>' +
-      '<div class="set"><div class="t"><h3>일반입찰 규칙</h3><p>다른 사람 금액이 보이지 않는 상품이에요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">재입찰</div>' + radio('sealed_rebid', [['replace', '금액 바꾸기 (낮춰도 됨)', '마감 전까지 새 금액으로 교체 — 담당자 설명 기준'], ['raise', '올리기만', '다시 낼 땐 내 이전 금액보다 높게만'], ['none', '한 번만', '한 번 내면 못 바꿔요']]) + '</div>' +
-      sw('allow_cancel', '입찰 취소 허용', '마감 전에 자기 입찰을 취소할 수 있어요') + '</div></div>' +
-      '<div class="set"><div class="t"><h3>직원 화면 표시</h3><p>누가 입찰했는지는 어떤 설정에서도 공개되지 않아요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">입찰 인원 표시</div>' + radio('show_count', [['none', '안 보여 줌', '몇 명이 입찰했는지 숨겨요'], ['comp', '경쟁입찰만', '경쟁입찰 상품에만 「n명 입찰」'], ['all', '모두', '일반입찰도 입찰 수는 보여요 — 금액은 비공개']]) + '</div>' +
+      '<div class="set"><div class="t"><h3>직원 화면 표시</h3><p>누가 입찰했는지는 어떤 설정에서도 공개되지 않아요.</p></div><div class="f"><div><div class="lbl" style="margin-bottom:8px">입찰 인원 표시</div>' + radio('show_count', [['none', '안 보여 줌', '몇 명이 입찰했는지 숨겨요'], ['comp', '보여 줌', '상품마다 「n명 입찰」']]) + '</div>' +
       sw('results_public', '마감 후 낙찰 여부 보여 주기', '각자 자기 결과(낙찰/미낙찰)만 봐요') + '</div></div>' +
       guideSection(s) +
       '<div class="set"><div class="t"><h3>백업</h3><p>상품·참가 코드·입찰 전부를 파일로 받아요 (참가 코드가 들어 있으니 잘 보관하세요). 행사 끝나면 꼭 받아 두세요.</p></div><div class="f"><div class="danger-zone"><button class="btn" id="dump">' + ic('download', 16) + '전체 백업 (JSON)</button>' + (DEMO ? '<button class="btn danger" id="demoReset">' + ic('refresh', 16) + '데모 초기화</button>' : '') + '</div></div></div>' +
       '</div>' + (n ? '<div class="savebar"><span>' + ic('edit', 16) + ' 바꾼 설정 ' + n + '개</span><button class="btn ghost" id="undo" style="color:#fff;margin-left:auto">되돌리기</button><button class="btn primary" id="save" style="margin-left:0">' + ic('check', 16, 2.4) + '저장</button></div>' : '');
     const prev = () => {
       const x = Object.assign({}, S.st.info, S.st.settings, S.dirty), r = MK.rulesText(x), auto = MK.rulesText(x, true);
-      $('#prev').innerHTML = '<span class="h">직원 화면에 이렇게 보여요</span><p><b>참여 방법</b> — ' + MK.stepsOf(x).map((t, k) => (k + 1) + ' ' + esc(t)).join(' · ') + '</p><p><b>공통 규칙</b><br>' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (최소가 ' + won(x.competitive_min) + ' 이상)<br>' + esc(r.c).replace(/\n/g, '<br>') + '</p><p><b>일반입찰</b> (최소가 ' + won(x.competitive_min) + ' 미만)<br>' + esc(r.s).replace(/\n/g, '<br>') + '</p>';
+      $('#prev').innerHTML = '<span class="h">직원 화면에 이렇게 보여요</span><p><b>참여 방법</b> — ' + MK.stepsOf(x).map((t, k) => (k + 1) + ' ' + esc(t)).join(' · ') + '</p><p><b>공통 규칙</b><br>' + esc(r.p).replace(/\n/g, '<br>') + '</p><p><b>경쟁입찰</b> (모든 상품)<br>' + esc(r.c).replace(/\n/g, '<br>') + '</p>';
       // 비어 있는 칸은 지금 설정으로 만든 자동 문장을 보여 준다
-      [['rules_common', auto.p], ['rules_comp', auto.c], ['rules_sealed', auto.s], ['steps', MK.STEPS.join('\n')]].forEach(([k, a]) => {
+      [['rules_common', auto.p], ['rules_comp', auto.c], ['steps', MK.STEPS.join('\n')]].forEach(([k, a]) => {
         const el = document.querySelector('[data-guide="' + k + '"]'); if (!el) return;
         const own = String(x[k] || '').trim(); if (!own && document.activeElement !== el) el.value = a;
         el.dataset.auto = a;

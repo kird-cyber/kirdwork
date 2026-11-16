@@ -106,13 +106,13 @@
     open_at: 0,             // 0 = 바로 시작
     close_at: 0,            // 0 = 마감 시각 미정 (관리자가 「마감」을 누를 때까지)
     paused: false,          // 일시 정지
-    competitive_min: 50000, // 최소가가 이 금액 이상이면 경쟁입찰
+    competitive_min: 0,     // (더는 쓰지 않음) 2026.11부터 모든 상품이 경쟁입찰
     unit: 100,              // 입찰 단위 (이 단위 미만은 버림 — 100 = 십원 단위 절사)
     comp_rebid: 'raise',    // 경쟁입찰 재입찰: raise = 현재 최고가보다 높게 / none = 한 번만
     comp_step: 100,         // 경쟁입찰: 현재 최고가보다 최소 얼마 더
     sealed_rebid: 'replace',// 일반입찰 재입찰: replace = 새 금액으로 교체(낮춰도 됨) / raise = 올리기만 / none = 한 번만
     allow_cancel: false,    // 일반입찰 입찰 취소 허용
-    show_count: 'comp',     // 입찰자 수 표시: none / comp(경쟁만) / all — 담당자 정의: 경쟁만 표시
+    show_count: 'comp',     // 입찰자 수 표시: none / comp·all(보임) — 모든 상품이 경쟁입찰이라 comp 와 all 은 같음
     show_leading: true,     // 경쟁입찰에서 「내가 최고가」 표시
     extend_min: 0,          // 경쟁입찰: 마감 N분 전 입찰이 들어오면 N분 연장 (0 = 끔)
     results_public: false,  // 마감 후 각자 낙찰 여부 확인
@@ -128,7 +128,8 @@
   /* ───────── 순수 규칙 ───────── */
   const won = n => Math.round(Number(n) || 0).toLocaleString('ko-KR') + '원';
   function floorUnit(v, unit) { const n = Math.floor(Number(v)); if (!isFinite(n) || n <= 0) return 0; return Math.floor(n / unit) * unit; }
-  function resolveMode(item, s) { if (item.mode === 'comp' || item.mode === 'sealed') return item.mode; return Number(item.min_price) >= Number(s.competitive_min) ? 'comp' : 'sealed'; }
+  // 2026.11 — 금액과 상관없이 모든 상품이 경쟁입찰 (현재 최고가 실시간 공개). 예전 일반입찰 지정·5만 원 기준은 무시한다.
+  function resolveMode(item, s) { return 'comp'; }
   function closeOf(item, s) { return Number(item.close_at) || Number(s.close_at) || 0; }
   function phaseOf(s, now) {
     if (s.ended) return 'closed';
@@ -369,7 +370,7 @@
         const min = Math.floor(Number(x.min_price)); if (!(min > 0)) throw err('최소 입찰가를 입력해 주세요.');
         const row = {
           name: name.slice(0, 80), descr: String(x.descr || '').slice(0, 2000), min_price: min,
-          mode: ['auto', 'comp', 'sealed'].indexOf(x.mode) >= 0 ? x.mode : 'auto', hidden: x.hidden ? 1 : 0,
+          mode: 'comp', hidden: x.hidden ? 1 : 0,
           photos: (Array.isArray(x.photos) ? x.photos : []).slice(0, 8).map(String), close_at: Number(x.close_at) || 0, updated_at: now()
         };
         if (x.id) {

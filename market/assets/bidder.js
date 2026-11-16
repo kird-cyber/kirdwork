@@ -33,8 +33,7 @@
     const r = rulesText(i);
     $('#rules').innerHTML =
       '<div class="rule p"><div class="i">' + ic('shield', 22, 2) + '</div><div><h3>공통 규칙</h3><p>' + esc(r.p) + '</p></div></div>' +
-      '<div class="rule c"><div class="i">' + ic('trend', 22, 2) + '</div><div><h3>경쟁입찰 <small>최소가 ' + won(i.competitive_min) + ' 이상</small></h3><p>' + esc(r.c) + '</p></div></div>' +
-      '<div class="rule s"><div class="i">' + ic('lock', 22, 2) + '</div><div><h3>일반입찰 <small>최소가 ' + won(i.competitive_min) + ' 미만</small></h3><p>' + esc(r.s) + '</p></div></div>';
+      '<div class="rule c"><div class="i">' + ic('trend', 22, 2) + '</div><div><h3>경쟁입찰 <small>모든 상품 · 금액 상관없이</small></h3><p>' + esc(r.c) + '</p></div></div>';
     $('#eyebrow').innerHTML = i.close_at ? ic('clock', 15, 2.2) + ' 마감 ' + esc(fmtDate(i.close_at)) : '직원 온라인 나눔 경매';
     const cn = $('#closedNote');
     if (i.phase === 'closed') cn.innerHTML = '<div class="notice-closed">' + ic('trophy', 20) + '<span>입찰이 모두 마감됐어요. ' + (i.results_public ? '「내 입찰」에서 낙찰 결과를 확인하세요.' : '낙찰 결과는 담당자가 따로 안내해 드려요.') + '</span></div>';
@@ -65,8 +64,7 @@
   /* ── 목록 ── */
   function visible() {
     let a = S.items.slice();
-    if (S.filter === 'comp') a = a.filter(x => x.mode === 'comp');
-    else if (S.filter === 'sealed') a = a.filter(x => x.mode === 'sealed');
+    if (S.filter === 'hot') a = a.filter(x => (x.count || 0) > 0 || x.top);
     else if (S.filter === 'mine') a = a.filter(x => x.mine);
     const q = S.q.trim().toLowerCase(); if (q) a = a.filter(x => (x.name + ' ' + x.descr + ' ' + x.no).toLowerCase().includes(q));
     const by = { no: (x, y) => x.no - y.no, low: (x, y) => x.min_price - y.min_price, high: (x, y) => y.min_price - x.min_price, hot: (x, y) => (y.count || 0) - (x.count || 0) || (y.top || 0) - (x.top || 0) }[S.sort];
@@ -93,7 +91,7 @@
   }
   function renderGrid() {
     const g = $('#grid'), a = visible();
-    const counts = { all: S.items.length, comp: S.items.filter(x => x.mode === 'comp').length, sealed: S.items.filter(x => x.mode === 'sealed').length, mine: S.items.filter(x => x.mine).length };
+    const counts = { all: S.items.length, hot: S.items.filter(x => (x.count || 0) > 0 || x.top).length, mine: S.items.filter(x => x.mine).length };
     $$('[data-c]').forEach(el => el.textContent = counts[el.dataset.c] || (el.dataset.c === 'mine' && !S.tok ? '' : '0'));
     if (!a.length) {
       g.innerHTML = '<div class="empty" style="grid-column:1/-1">' + ic(S.filter === 'mine' ? 'gavel' : 'box', 48, 1.5) + '<div style="font-weight:700;color:var(--ink-2)">' + (S.filter === 'mine' ? (S.tok ? '아직 입찰한 상품이 없어요.' : '참가 코드를 넣으면 내 입찰을 볼 수 있어요.') : S.q ? '「' + esc(S.q) + '」에 맞는 상품이 없어요.' : '아직 올라온 상품이 없어요.') + '</div></div>';
@@ -152,7 +150,7 @@
     if (S.stage === 'done') {
       const lead = v.mode === 'comp' ? (m && m.leading ? '지금 <b>최고가</b>예요. 더 높은 입찰이 들어오면 카드에 표시돼요.' : '') : '마감 전까지 다른 사람에게 금액은 보이지 않아요.';
       return '<div class="done"><div class="ck">' + ic('check', 32, 2.6) + '</div><h4>' + won(m ? m.amount : 0) + '으로 입찰했어요</h4><p>' + lead + (S.floored ? '<br><small style="color:var(--mute)">' + won(i.unit) + ' 미만은 버려서 접수됐어요.</small>' : '') + '</p></div>' +
-        (once ? '' : '<button class="btn block" data-again>' + ic('edit', 16) + '금액 바꿔 다시 입찰</button>') + hist;
+        (once ? '' : '<button class="btn block" data-again>' + ic('edit', 16) + (v.mode === 'comp' ? '더 높게 다시 입찰' : '금액 바꿔 다시 입찰') + '</button>') + hist;
     }
     if (once) return '<div class="mine ' + (v.mode === 'comp' ? (m.leading ? 'lead' : 'out') : 'seal') + '" style="margin:0">' + ic('check', 16, 2.4) + '내 입찰<span class="num">' + won(m.amount) + '</span></div><p class="hint">이 상품은 한 번만 입찰할 수 있어요.</p>' + hist;
     if (S.stage === 'confirm') {

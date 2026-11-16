@@ -17,10 +17,11 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await P.goto(BASE + 'index.html');
   ok(await until(() => P.evaluate(() => document.querySelectorAll('.card').length === 8)), '데모 상품 8개 보임');
   ok(await P.isVisible('#demoBar'), '데모 띠');
-  ok((await P.textContent('#rules')).includes('경쟁입찰') && (await P.textContent('#rules')).includes('5만'.replace('5만', '50,000원')), '규칙 안내: 경쟁입찰 기준 50,000원');
+  ok(await P.evaluate(() => { const t = document.querySelector('#rules').textContent; return t.includes('경쟁입찰') && t.includes('모든 상품') && !t.includes('일반입찰') && !t.includes('50,000원 이상'); }), '규칙 안내: 모든 상품 경쟁입찰 (5만 원 기준·일반입찰 없음)');
   ok(await P.evaluate(() => document.querySelector('.card[data-id="1"] [data-top]').textContent === '92,000원'), '로봇청소기 현재 최고가 92,000원');
-  ok(await P.evaluate(() => !document.querySelector('.card[data-id="4"] [data-top]') && document.querySelector('.card[data-id="4"]').textContent.includes('금액 비공개') && !document.querySelector('.card[data-id="4"] .count') && !!document.querySelector('.card[data-id="1"] .count')), '키보드(3만) 일반입찰 — 금액·입찰 수 비공개, 경쟁입찰은 입찰 수 보임');
-  ok(await P.evaluate(() => document.querySelectorAll('#steps .step').length === 4 && document.querySelector('#steps').textContent.includes('금액 입력 후 입찰 확정')), '참여 방법 4단계');
+  ok(await P.evaluate(() => document.querySelector('.card[data-id="4"] [data-top]').textContent === '34,000원' && !document.body.textContent.includes('금액 비공개') && !!document.querySelector('.card[data-id="4"] .count') && !document.querySelector('.badge.solid-seal')), '키보드(3만)도 경쟁입찰 — 현재 최고가 34,000원·입찰 수 공개, 일반입찰 표시 없음');
+  ok(await P.evaluate(() => !document.querySelector('.tab[data-f="sealed"]') && !!document.querySelector('.tab[data-f="hot"]')), '탭: 일반입찰 탭 없음, 「경쟁 중」 탭');
+  ok(await P.evaluate(() => document.querySelectorAll('#steps .step').length === 4 && document.querySelector('#steps').textContent.includes('최고가보다 높게 입찰 확정') && !document.querySelector('#steps').textContent.includes('일반')), '참여 방법 4단계 (경쟁입찰 안내)');
   ok(await P.evaluate(() => document.querySelector('#rules .rule').textContent.includes('공통 규칙')), '공통 규칙이 맨 앞');
   await shot(P, '01_home', { fullPage: false });
   await P.screenshot({ path: '/dev/null' }).catch(() => { });
@@ -69,11 +70,13 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await P.click('#meIn'); await P.click('#cells input >> nth=0'); await P.keyboard.type('TESTAAAA'); await P.click('#lgBtn');
   await until(() => P.evaluate(() => !!document.querySelector('.chip-me')));
   ok(await until(() => P.evaluate(() => { const c = document.querySelector('.card[data-id="1"]'); return c.querySelector('.mine.out') && c.querySelector('[data-top]').textContent === '101,000원'; })), 'A 화면: 추월됨 + 최고가 101,000원');
-  // 일반입찰 재입찰(교체, 낮춤)
+  // 1만 원 상품도 경쟁입찰 — 재입찰은 더 높게만
   await P.click('.card[data-id="5"]'); await until(() => P.isVisible('#amt'));
   await P.fill('#amt', '15000'); await P.click('#bidBtn'); await P.click('[data-go]'); await until(() => P.isVisible('#detail .done'));
-  await P.click('[data-again]'); await P.fill('#amt', '11000'); await P.click('#bidBtn'); await P.click('[data-go]');
-  ok(await until(async () => (await P.textContent('#detail .done')).includes('11,000원')), '일반입찰: 낮춰서 교체 (15,000 → 11,000)');
+  ok(await P.evaluate(() => document.querySelector('#detail [data-top]') && document.querySelector('#detail [data-top]').textContent === '15,000원'), '1만 원 상품 — 내 입찰이 현재 최고가로 바로 공개');
+  await P.click('[data-again]'); await P.fill('#amt', '11000'); ok(await P.evaluate(() => document.querySelector('#bidBtn').disabled), '1만 원 상품 — 최고가보다 낮은 재입찰 막힘');
+  await P.fill('#amt', '16000'); await P.click('#bidBtn'); await P.click('[data-go]');
+  ok(await until(async () => (await P.textContent('#detail .done')).includes('16,000원')), '1만 원 상품 — 더 높게 재입찰 (15,000 → 16,000)');
   await P.keyboard.press('Escape');
   await P.click('.tab[data-f="mine"]'); ok(await P.evaluate(() => document.querySelectorAll('.card').length === 2), '「내 입찰」 탭 2개');
   await shot(P, '06_mine');
@@ -94,7 +97,7 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await shot(A, '11_admin_items', { fullPage: true });
   await A.click('#addItem'); await until(() => A.isVisible('#fName')); await sleep(150);
   await A.fill('#fName', '무선 이어폰 (새것)'); await A.fill('#fMin', '45000'); await A.fill('#fDescr', '선물 받고 미개봉.');
-  ok((await A.textContent('#modeNote')).includes('일반입찰'), '4.5만 → 일반입찰 안내');
+  ok((await A.textContent('#modeNote')).includes('경쟁입찰') && !(await A.isVisible('#fMode')), '4.5만도 경쟁입찰 안내 (방식 선택 없음)');
   await A.fill('#fMin', '55000'); ok((await A.textContent('#modeNote')).includes('경쟁입찰'), '5.5만 → 경쟁입찰 안내');
   const png = require('fs').readFileSync(__dirname + '/sample.jpg'); const _x = ('iVBORw0KGgoAAAANSUhEUgAAAEAAAAAwCAIAAADMxQCMAAAAQ0lEQVR42u3OMQEAAAgDoK1/6WngDhRAbiZERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERHxsGcZgH0BLz1ZbgAAAABJRU5ErkJggg==', 'base64');
   await A.setInputFiles('#fFile', { name: 'earbuds.jpg', mimeType: 'image/jpeg', buffer: png });
@@ -131,9 +134,10 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await R.close();
   await P.evaluate(() => { localStorage.removeItem('mk_tok'); }); await P.reload(); await until(() => P.isVisible('#meIn'));
   await P.click('#meIn'); await P.click('#cells input >> nth=0'); await P.keyboard.type('TESTAAAA'); await P.click('#lgBtn'); await until(() => P.evaluate(() => !!document.querySelector('.chip-me')));
-  // 설정: 일반입찰 한 번만
+  // 설정: 경쟁입찰 한 번만 (일반입찰 설정·5만 원 기준 칸은 없음)
   await A.click('[data-p="settings"]'); await until(() => A.isVisible('#prev'));
-  await A.click('input[name="sealed_rebid"][value="none"]', { force: true });
+  ok(await A.evaluate(() => !document.querySelector('#sCm') && !document.querySelector('input[name="sealed_rebid"]') && !document.querySelector('#gSealed')), '설정: 일반입찰·기준 금액 칸 없음');
+  await A.click('input[name="comp_rebid"][value="none"]', { force: true });
   ok(await until(() => A.isVisible('.savebar')), '바꾸면 저장 막대');
   ok((await A.textContent('#prev')).includes('한 번만'), '미리보기 문장 바뀜');
   await A.selectOption('#sExt', '5');
@@ -144,9 +148,8 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   ok(await A.evaluate(() => document.activeElement && document.activeElement.id === 'gSteps'), '쓰는 중 커서 유지');
   await A.click('#save'); ok(await until(async () => !(await A.isVisible('.savebar'))), '설정 저장');
   await P.reload(); await until(() => P.evaluate(() => document.querySelectorAll('.card').length > 0));
-  ok((await P.textContent('#rules')).includes('한 사람당 한 번만'), '직원 화면 규칙 문구 반영');
   ok((await P.textContent('#rules')).includes('최고가 공개, 입찰자 수 표시, 재입찰 가능') && (await P.textContent('#steps')).includes('상품 고르기'), '관리자가 쓴 안내 문구가 직원 화면에');
-  await P.click('.card[data-id="5"]'); ok(await until(async () => (await P.textContent('#bidbox')).includes('한 번만 입찰')), '일반입찰 한 번만 → 재입찰 막힘');
+  await P.click('.card[data-id="5"]'); ok(await until(async () => (await P.textContent('#bidbox')).includes('한 번만 입찰')), '경쟁입찰 한 번만 → 재입찰 막힘');
   await P.keyboard.press('Escape');
   // 결과
   await A.click('[data-p="results"]'); await until(() => A.isVisible('#csvRes'));
