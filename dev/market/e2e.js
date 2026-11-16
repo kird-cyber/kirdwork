@@ -17,9 +17,9 @@ async function until(fn, ms) { const t = Date.now(); while (Date.now() - t < (ms
   await P.goto(BASE + 'index.html');
   ok(await until(() => P.evaluate(() => document.querySelectorAll('.card').length === 8)), '데모 상품 8개 보임');
   ok(await P.isVisible('#demoBar'), '데모 띠');
-  ok(await P.evaluate(() => { const t = document.querySelector('#rules').textContent; return t.includes('경쟁입찰') && t.includes('모든 상품') && !t.includes('일반입찰') && !t.includes('50,000원 이상'); }), '규칙 안내: 모든 상품 경쟁입찰 (5만 원 기준·일반입찰 없음)');
+  ok(await P.evaluate(() => { const t = document.querySelector('#rules').textContent; return t.includes('실시간') && t.includes('모든 상품') && !t.includes('일반입찰') && !t.includes('경쟁입찰') && !t.includes('50,000원 이상'); }), '규칙 안내: 모든 상품 경쟁입찰 (5만 원 기준·일반입찰 없음)');
   ok(await P.evaluate(() => document.querySelector('.card[data-id="1"] [data-top]').textContent === '92,000원'), '로봇청소기 현재 최고가 92,000원');
-  ok(await P.evaluate(() => document.querySelector('.card[data-id="4"] [data-top]').textContent === '34,000원' && !document.body.textContent.includes('금액 비공개') && !!document.querySelector('.card[data-id="4"] .count') && !document.querySelector('.badge.solid-seal')), '키보드(3만)도 경쟁입찰 — 현재 최고가 34,000원·입찰 수 공개, 일반입찰 표시 없음');
+  ok(await P.evaluate(() => document.querySelector('.card[data-id="4"] [data-top]').textContent === '34,000원' && !document.body.textContent.includes('금액 비공개') && !!document.querySelector('.card[data-id="4"] .count') && !document.querySelector('.card .badge.solid-comp, .card .badge.solid-seal')), '키보드(3만)도 경쟁입찰 — 현재 최고가 34,000원·입찰 수 공개, 일반입찰 표시 없음');
   ok(await P.evaluate(() => [...document.querySelectorAll('#tabs .tab')].map(t => t.dataset.f).join() === 'all,mine'), '탭: 전체 / 내 입찰 두 개');
   await P.click('#sorts .so[data-s="high"]');
   ok(await P.evaluate(() => { const v = [...document.querySelectorAll('.card [data-top]')].map(e => Number(e.textContent.replace(/[^\d]/g, ''))); return v.length > 3 && v.every((x, k) => !k || v[k - 1] >= x) && document.querySelector('#sorts .so[data-s="high"]').getAttribute('aria-pressed') === 'true'; }), '정렬: 현재가 높은 순');

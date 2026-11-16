@@ -33,7 +33,7 @@
     const r = rulesText(i);
     $('#rules').innerHTML =
       '<div class="rule p"><div class="i">' + ic('shield', 22, 2) + '</div><div><h3>공통 규칙</h3><p>' + esc(r.p) + '</p></div></div>' +
-      '<div class="rule c"><div class="i">' + ic('trend', 22, 2) + '</div><div><h3>경쟁입찰 <small>모든 상품 · 금액 상관없이</small></h3><p>' + esc(r.c) + '</p></div></div>';
+      '<div class="rule c"><div class="i">' + ic('trend', 22, 2) + '</div><div><h3>입찰 방식 <small>모든 상품 같은 방식</small></h3><p>' + esc(r.c) + '</p></div></div>';
     $('#eyebrow').innerHTML = i.close_at ? ic('clock', 15, 2.2) + ' 마감 ' + esc(fmtDate(i.close_at)) : '직원 온라인 나눔 경매';
     const cn = $('#closedNote');
     if (i.phase === 'closed') cn.innerHTML = '<div class="notice-closed">' + ic('trophy', 20) + '<span>입찰이 모두 마감됐어요. ' + (i.results_public ? '「내 입찰」에서 낙찰 결과를 확인하세요.' : '낙찰 결과는 담당자가 따로 안내해 드려요.') + '</span></div>';
@@ -79,7 +79,7 @@
   }
   function cardHTML(v) {
     const ph = v.photos[0] ? '<img src="' + esc(v.photos[0]) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<div style="display:grid;place-items:center;height:100%;color:#B9C4D0">' + ic('image', 44, 1.4) + '</div>';
-    const badge = v.mode === 'comp' ? '<span class="badge solid-comp">' + ic('trend', 14, 2.4) + '경쟁입찰</span>' : '<span class="badge solid-seal">' + ic('lock', 14, 2.4) + '일반입찰</span>';
+    const badge = ''; // 입찰 방식 배지 없음 — 모든 상품이 같은 방식
     const price = v.mode === 'comp'
       ? '<div class="price"><div><div class="k">' + (v.top ? '현재 최고가' : '시작가') + '</div><div class="v comp" data-top="' + v.id + '">' + won(v.top || v.min_price) + '</div></div>' + (v.top ? '<div class="mn">최소가<b>' + won(v.min_price) + '</b></div>' : '') + '</div>'
       : '<div class="price"><div><div class="k">최소 입찰가</div><div class="v">' + won(v.min_price) + '</div></div><div class="mn"><span class="sealed-v">' + ic('eyeoff', 15, 2) + '금액 비공개</span></div></div>';
@@ -114,7 +114,7 @@
   dlg.addEventListener('close', () => { S.open = 0; if (/^#item-/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search); });
   function howText(v) {
     const i = S.info, r = rulesText(i);
-    return v.mode === 'comp' ? '<div class="how c">' + ic('trend', 18, 2.2) + '<div><b>경쟁입찰</b> · ' + esc(r.c) + '</div></div>' : '<div class="how s">' + ic('lock', 18, 2.2) + '<div><b>일반입찰</b> · ' + esc(r.s) + '</div></div>';
+    return v.mode === 'comp' ? '<div class="how c">' + ic('trend', 18, 2.2) + '<div><b>입찰 방식</b> · ' + esc(r.c) + '</div></div>' : '<div class="how s">' + ic('lock', 18, 2.2) + '<div><b>일반입찰</b> · ' + esc(r.s) + '</div></div>';
   }
   function renderDetail() {
     const v = cur(); if (!v) { dlg.close(); return; }
@@ -122,7 +122,7 @@
     const main = ph.length ? '<img src="' + esc(ph[S.photo] || ph[0]) + '" alt="' + esc(v.name) + ' 사진 ' + (S.photo + 1) + '" referrerpolicy="no-referrer">' : '<div style="color:#B9C4D0">' + ic('image', 64, 1.3) + '</div>';
     const thumbs = ph.length > 1 ? '<div class="thumbs">' + ph.map((u, k) => '<button data-ph="' + k + '" aria-current="' + (k === S.photo) + '" aria-label="사진 ' + (k + 1) + '"><img src="' + esc(u) + '" alt="" referrerpolicy="no-referrer"></button>').join('') + '</div>' : '';
     const navs = ph.length > 1 ? '<button class="nav l" data-step="-1" aria-label="이전 사진">' + ic('chevl', 20, 2.4) + '</button><button class="nav r" data-step="1" aria-label="다음 사진">' + ic('chev', 20, 2.4) + '</button>' : '';
-    const badge = v.mode === 'comp' ? '<span class="badge comp">' + ic('trend', 14, 2.4) + '경쟁입찰</span>' : '<span class="badge seal">' + ic('lock', 14, 2.4) + '일반입찰</span>';
+    const badge = ''; // 입찰 방식 배지 없음 — 모든 상품이 같은 방식
     const closeTxt = v.closed ? '<span class="badge mute">마감</span>' : v.close_at ? '<span>' + ic('clock', 14, 2.2) + ' 마감 ' + esc(fmtDate(v.close_at)) + ' · ' + left(v.close_at - now()) + ' 남음</span>' : '';
     const stat = v.mode === 'comp'
       ? '<div class="stat"><div><div class="k">' + (v.top ? '현재 최고가' : '아직 입찰 없음 · 시작가') + '</div><div class="v comp" data-top="' + v.id + '">' + won(v.top || v.min_price) + '</div>' + (v.count !== undefined ? '<div class="s">' + v.count + '명 입찰</div>' : '') + '</div><div><div class="k">최소 입찰가</div><div class="v">' + won(v.min_price) + '</div><div class="s">' + won(i.unit) + ' 단위</div></div></div>'
@@ -155,7 +155,7 @@
     if (S.stage === 'confirm') {
       const amt = S.pending;
       const notes = v.mode === 'comp'
-        ? (i.comp_rebid === 'raise' ? '경쟁입찰은 취소할 수 없어요. 누가 더 높게 내면 다시 입찰할 수 있어요.' : '경쟁입찰은 취소할 수 없고, 한 번만 입찰할 수 있어요.')
+        ? (i.comp_rebid === 'raise' ? '입찰은 취소할 수 없어요. 누가 더 높게 내면 다시 입찰할 수 있어요.' : '입찰은 취소할 수 없고, 한 번만 입찰할 수 있어요.')
         : ({ replace: '마감 전까지 금액을 다시 바꿀 수 있어요.', raise: '다시 입찰할 땐 이 금액보다 높게만 낼 수 있어요.', none: '한 번만 입찰할 수 있어 바꿀 수 없어요.' }[i.sealed_rebid]);
       return '<div class="confirm" role="alertdialog" aria-label="입찰 확인"><div class="big"><b>' + won(amt) + '</b>으로 입찰할까요?</div>' + (m ? '<div class="hint">이전 입찰 ' + won(m.amount) + ' → 새 금액으로 바뀌어요.</div>' : '') + '<div class="hint">' + esc(notes) + '</div><div class="row"><button class="btn lg" data-back>돌아가기</button><button class="btn lg ' + (v.mode === 'comp' ? 'comp' : 'seal') + '" data-go>' + ic('gavel', 18, 2) + '입찰 확정</button></div></div>';
     }

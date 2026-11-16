@@ -58,7 +58,7 @@
   .sorts .sl svg { color: var(--kird); }
   .so { flex: none; height: 38px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--ink-2); font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; transition: background .15s, border-color .15s, color .15s; }
   .so:hover { border-color: var(--kird); color: var(--kird); }
-  .so .sm { display: none; }
+  .so .so-s { display: none; }
   .so[aria-pressed="true"] { background: var(--kird); border-color: var(--kird); color: #fff; box-shadow: 0 4px 12px rgba(31,111,178,.25); }
   /* 상품 */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; padding-top: 6px; padding-bottom: 60px; }
@@ -169,7 +169,7 @@
     .me .btn { height: 38px; padding: 0 12px; font-size: 14px; }
     .search { max-width: none; order: 3; flex-basis: 100%; }
     .tabs { overflow-x: auto; max-width: 100%; }
-    .so { height: 34px; padding: 0 11px; font-size: 13px; } .so .lg { display: none; } .so .sm { display: inline; } .sorts { gap: 5px; } .sorts .sl { font-size: 13px; margin-right: 0; }
+    .so { height: 34px; padding: 0 11px; font-size: 13px; } .so .so-l { display: none; } .so .so-s { display: inline; } .sorts { gap: 5px; } .sorts .sl { font-size: 13px; margin-right: 0; }
     .cells input { width: 36px; height: 50px; font-size: 20px; }
     .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
     .card .body { padding: 10px 12px 12px; } .card h3 { font-size: 14.5px; } .price .v { font-size: 17px; } .price .mn { display: none; }
@@ -214,8 +214,8 @@
     <div class="sorts" id="sorts" role="group" aria-label="정렬">
       <span class="sl"><span data-ic="sort"></span>정렬</span>
       <button class="so" data-s="no" aria-pressed="true">번호순</button>
-      <button class="so" data-s="low" aria-pressed="false"><span class="lg">현재가 낮은 순</span><span class="sm">낮은 가격</span></button>
-      <button class="so" data-s="high" aria-pressed="false"><span class="lg">현재가 높은 순</span><span class="sm">높은 가격</span></button>
+      <button class="so" data-s="low" aria-pressed="false"><span class="so-l">현재가 낮은 순</span><span class="so-s">낮은 가격</span></button>
+      <button class="so" data-s="high" aria-pressed="false"><span class="so-l">현재가 높은 순</span><span class="so-s">높은 가격</span></button>
       <button class="so" data-s="hot" aria-pressed="false">입찰 많은 순</button>
     </div>
   </div>

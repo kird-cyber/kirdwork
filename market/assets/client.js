@@ -200,7 +200,7 @@
   // auto=true 면 관리자가 적은 문장 대신 설정에서 자동으로 만든 문장
   function rulesText(i, auto) {
     const unit = won(i.unit);
-    const c = '모든 상품이 경쟁입찰이에요. 현재 최고가가 실시간으로 보여요. ' + (i.comp_rebid === 'raise' ? '최고가보다 ' + won(Math.max(i.unit, i.comp_step)) + ' 이상 높게 몇 번이든 다시 입찰할 수 있어요. (내가 최고가여도 더 올릴 수 있어요)' : '한 사람당 한 번만 입찰할 수 있어요.') + (i.extend_min ? ' 마감 ' + i.extend_min + '분 전에 입찰이 들어오면 ' + i.extend_min + '분 연장돼요.' : '');
+    const c = '모든 상품의 현재 최고가가 실시간으로 보여요. ' + (i.comp_rebid === 'raise' ? '최고가보다 ' + won(Math.max(i.unit, i.comp_step)) + ' 이상 높게 몇 번이든 다시 입찰할 수 있어요. (내가 최고가여도 더 올릴 수 있어요)' : '한 사람당 한 번만 입찰할 수 있어요.') + (i.extend_min ? ' 마감 ' + i.extend_min + '분 전에 입찰이 들어오면 ' + i.extend_min + '분 연장돼요.' : '');
     const s = '다른 사람의 금액은 보이지 않아요' + (i.show_count === 'all' ? ' (입찰 수만 보여요)' : '') + '. 최소가 이상으로 적어 내면 마감 때 가장 높은 금액이 낙찰돼요. ' +
       ({ replace: '마감 전까지 금액을 다시 적어 바꿀 수 있어요. (낮춰도 돼요)', raise: '다시 입찰할 땐 내 이전 금액보다 높게만 낼 수 있어요.', none: '한 사람당 한 번만 입찰할 수 있어요.' }[i.sealed_rebid]) + (i.allow_cancel ? ' 입찰 취소도 할 수 있어요.' : '');
     const p = unit + ' 단위로 접수돼요. (' + unit + ' 미만은 버림 — 예: ' + num(52000 + i.unit * 3.5) + '원 → ' + num(52000 + i.unit * 3) + '원) 같은 금액이면 먼저 낸 사람이 앞서요. 누가 입찰했는지는 다른 직원에게 공개되지 않아요.';
