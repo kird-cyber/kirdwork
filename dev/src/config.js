@@ -74,11 +74,11 @@ const CONFIG = {
       ],
     },
     viper: {
-      name: '바이퍼', era: 'classic', hp: 900, dmgTaken: 1.05, movePx: 198, speedClass: 2, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '바이퍼', era: 'classic', hp: 980, dmgTaken: 1.05, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: { ampPoison: true },
       sprite: { pivot: [130, 80], baseAngle: 0, dir: -1, muzzleLen: 108, behind: false },
       weapons: [
-        { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 30, crater: [0.9, 1.1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
+        { id: 'poisonArrow', name: '독화살', dmg: 216, radius: 34, crater: [0.9, 1.1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 55, turns: 3 } }, look: { shape: 'arrow', color: '#8EDB3A', size: 1.25 } },
         { id: 'venomBolt', name: '맹독 볼트', dmg: 249, radius: 34, crater: [0.95, 1.05], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { poison: { dmg: 90, turns: 3, healCut: 0.5 } }, extraDelay: 170, look: { shape: 'bolt', color: '#6CC23A', size: 1.3, glow: '#B6F07A' } },
       ],
     },
@@ -116,7 +116,7 @@ const CONFIG = {
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
         { id: 'missile', name: '유도 미사일', dmg: 228, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 82, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-40, -24, -8, 8, 24, 40], powerJitter: 16, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 90, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-25, -15, -5, 5, 15, 25], powerJitter: 10, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
@@ -139,16 +139,16 @@ const CONFIG = {
     },
     // K tanks in company colours (logo blue #2E86D6 · lime #8CC63F). Pickable since 2026-11 (demo); "?" still gives one of them with randomTank.chance.
     kblue: {
-      name: 'K-블루', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: 'K-블루', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.9, movePx: 187, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', dmg: 278, radius: 38, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
+        { id: 'kbounce', name: 'K-바운스탄', dmg: 278, radius: 44, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
         { id: 'ksplit', name: 'K-분열탄', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 160, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
     kgreen: {
-      name: 'K-그린', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.95, movePx: 187, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: 'K-그린', era: 'modern', hidden: true, hp: 1050, dmgTaken: 0.9, movePx: 187, speedClass: 4, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
