@@ -57,7 +57,7 @@ const WEAPON_DESC = {
   orbital: '떨어진 자리에 잠시 뒤 하늘에서 광선이 내리꽂힙니다. 엄폐물 뒤도 맨 윗면을 때립니다.',
   kbounce: '땅에 한 번 통 튕긴 뒤 터집니다. 엄폐물 너머를 노리기 좋아요.',
   ksplit: '가장 높이 올라간 지점에서 두 갈래로 갈라집니다.',
-  kgrow: '멀리 날아갈수록 커집니다. 가까이는 작고 약하게(×0.75), 3초 넘게 날면 최대 ×1.4 위력·범위.',
+  kgrow: '쏘는 순간부터 제 크기(×1.0)이고, 날아갈수록 더 커집니다. 2.6초 넘게 날면 최대 ×1.5 위력·범위.',
   kroot: '터진 뒤 날아온 방향으로 뿌리가 땅을 따라 뻗어 두 번 더 솟아오릅니다. 언덕 너머·숨은 상대에 좋아요.',
 };
 const ERA_LABEL = { classic: '클래식', modern: '모던', present: '현대', future: '미래' };
@@ -116,8 +116,14 @@ function tankCardHTML(k) {
 function renderTankCard(el, k) { if (el) { el.innerHTML = tankCardHTML(k); el.dataset.tank = k; } }
 
 // ---------------------------------------------------------------- banner / over
-let bannerTimer = 0;
-function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
+let bannerTimer = 0, bannerHold = 0, bannerNext = 0;
+// hold (ms): this banner stays up that long — one that comes meanwhile waits for it (a team going out in a 3팀전 is not wiped by the next turn's banner)
+function banner(s, team, turnin, hold) {
+  const now = performance.now();
+  if (now < bannerHold && !hold) { clearTimeout(bannerNext); bannerNext = setTimeout(() => banner(s, team, turnin), bannerHold - now + 30); return; }
+  clearTimeout(bannerNext); bannerHold = hold ? now + hold : 0;
+  const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = teamName(team); b.appendChild(sm); } b.style.color = CONFIG.teams[team] ? teamCol(team, 'lite') : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), Math.max(1500, hold || 0));
+}
 R.onBanner = banner;
 // my turn: a big notice in the middle of the screen for 2 s (the camera already jumps to my tank)
 let myTurnTimer = 0;
@@ -125,8 +131,8 @@ function myTurnFlash(t, again) {
   const el = $('myTurn'); if (!el) return;
   const mine = ON.active || SOLOPLAY.active || !match || match.tanks.filter(x => !PRACTICE.bots[x.id]).length <= 1;
   el.querySelector('b').textContent = again ? (mine ? '또 내 차례!' : `${t.nick} 연속 턴!`) : mine ? '내 차례!' : `${t.nick} 차례!`;
-  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${t.team === 'red' ? '레드 팀' : '블루 팀'}`;
-  el.dataset.team = t.team;
+  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${teamName(t.team)}`;
+  el.dataset.team = t.team; el.style.borderColor = teamCol(t.team, 'edge');
   el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(myTurnTimer); myTurnTimer = setTimeout(() => { el.classList.remove('on'); el.hidden = true; }, 2000);
 }
@@ -149,11 +155,15 @@ function matchAwards(m) {
   return { mvp, out };
 }
 // both teams fell in the same turn: the sim picked the team that dealt more damage (m.tiebreak)
-function tiebreakNote(m) { const tb = m.tiebreak; return tb ? ` · 동시 탈락 — 준 피해 레드 ${tb.red} : 블루 ${tb.blue}` + (tb.red === tb.blue ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+function tiebreakText(m) { return m.teams.filter(k => k in m.tiebreak).map(k => `${teamLabel(k)} ${m.tiebreak[k]}`).join(' : '); }
+function tiebreakNote(m) { return m.tiebreak ? ` · 동시 탈락 — 준 피해 ${tiebreakText(m)}` + (m.winner === 'draw' ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+// three-team matches: 1위 · 2위 · 3위 (the winner, then the later a team went out the higher it stands)
+function rankOf(m, team) { return m.teams.length > 2 && m.rank && m.winner !== 'draw' ? m.rank.indexOf(team) + 1 : 0; }
+function goneTeams(m) { return m.forfeits || []; }
 // 결과 이미지: the result screen drawn as one PNG (date, map, winner, both rosters with their numbers) for the tournament record
 function resultCanvas() {
-  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
-  const rows = Math.max(...['red', 'blue'].map(tm => m.tanks.filter(t => t.team === tm).length)), W = 1200, H = 330 + rows * 86 + 150;
+  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teams = m.teams;
+  const rows = Math.max(...teams.map(tm => m.tanks.filter(t => t.team === tm).length)), W = 60 + teams.length * 570, H = 330 + rows * 86 + 150; // 1200 wide for two teams, 1770 for three
   const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const tx = (s, px, py, size, col, weight, align) => { x.font = `${weight || 700} ${size}px ${F}`; x.fillStyle = col; x.textAlign = align || 'left'; x.textBaseline = 'middle'; x.fillText(s, px, py); };
   const fit = (s, px, py, size, col, weight, maxW, align) => { for (; size > 10; size--) { x.font = `${weight || 700} ${size}px ${F}`; if (x.measureText(s).width <= maxW) break; } tx(s, px, py, size, col, weight, align); };
@@ -162,22 +172,23 @@ function resultCanvas() {
   const d = new Date(), p2 = n => String(n).padStart(2, '0'), when = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
   const secs = Math.round(matchClock(m) / CONFIG.physics.tickRate);
   tx(`${when}  ·  ${CONFIG.maps[m.mapId].name}  ·  ${m.turnNo}턴  ·  경기 시간 ${Math.floor(secs / 60)}:${p2(secs % 60)}` + (ON.active && ON.code ? `  ·  방 ${ON.code}` : ''), W - 40, 46, 20, '#9FB8CC', 700, 'right');
-  const win = m.winner, col = { red: '#FF6B5A', blue: '#5AA9FF', draw: '#E7C77A' }[win] || '#E8F1FA';
+  const win = m.winner, col = win === 'draw' ? '#E7C77A' : CONFIG.teams[win] ? teamCol(win, 'vivid') : '#E8F1FA';
   tx(win === 'draw' ? '무승부' : teamName(win) + ' 승리', W / 2, 160, 64, col, 900, 'center');
   const sum = tm => m.tanks.reduce((a, t) => a + (t.team === tm ? t.st.dealt : 0), 0);
-  const note = (m.forfeit ? `${teamName(m.forfeit)}이 모두 나가 기권` : m.tiebreak ? `양 팀 동시 탈락 — 준 피해로 판정 (레드 ${m.tiebreak.red} : 블루 ${m.tiebreak.blue})` : m.sudden ? '서든데스까지 진행' : '') ;
+  const note = [teams.length > 2 ? '3팀전' : '', goneTeams(m).length ? `${goneTeams(m).map(teamName).join(' · ')}이 모두 나가 기권` : '', m.tiebreak ? `동시 탈락 — 준 피해로 판정 (${tiebreakText(m)})` : m.sudden ? '서든데스까지 진행' : ''].filter(Boolean).join('  ·  ');
   if (note) tx(note, W / 2, 218, 22, '#E7C77A', 700, 'center');
   const aw = matchAwards(m), top = 262;
-  ['red', 'blue'].forEach((tm, k) => {
-    const a = 40 + k * 570, w = 550, tc = tm === 'red' ? '#FF6B5A' : '#5AA9FF';
+  teams.forEach((tm, k) => {
+    const a = 40 + k * 570, w = 550, tc = teamCol(tm, 'vivid'), rk = rankOf(m, tm);
     x.fillStyle = tm === win ? 'rgba(231,199,122,0.16)' : 'rgba(255,255,255,0.05)'; x.fillRect(a, top, w, 56 + rows * 86 + 12);
     x.fillStyle = tc; x.fillRect(a, top, w, 6);
-    tx(teamName(tm) + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
+    tx(teamName(tm) + (rk ? `  ${rk}위` : '') + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
     m.tanks.filter(t => t.team === tm).forEach((t, i) => {
       const y = top + 62 + i * 86; x.fillStyle = 'rgba(255,255,255,0.06)'; x.fillRect(a + 10, y, w - 20, 78);
       fit(t.nick + (aw.mvp === t ? '  ★MVP' : ''), a + 26, y + 26, 26, t.alive ? '#FFFFFF' : '#8FA6C0', 900, 300);
-      const state = m.forfeit === tm ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
-      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive ? '#B6F25A' : '#8FA6C0', 700, 'right');
+      const left = goneTeams(m).indexOf(tm) >= 0 && (t.alive || t.deathCause === 'forfeit');
+      const state = left ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
+      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive && !left ? '#B6F25A' : '#8FA6C0', 700, 'right');
       tx(`피해 ${t.st.dealt}  ·  격파 ${t.st.kills}  ·  명중 ${t.st.hitTurns}/${t.st.shots}` + (t.st.friendly ? `  ·  팀킬 ${t.st.friendly}` : ''), a + 26, y + 58, 19, '#CFE0F2', 500);
     });
   });
@@ -193,25 +204,26 @@ function saveResultImage() {
 R.onOver = (winner, forfeit) => {
   if (SOLOPLAY.active) { tipRecap('sooTips'); soloOver(winner); return; }
   tipRecap('overTips');
-  const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const t = $('overTitle'), three = match.teams.length > 2;
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
   let title, cls;
   if (winner === 'draw') { title = '무승부'; cls = 'draw'; }
   else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
-  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '') + tiebreakNote(match);
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (three && winner !== 'draw' ? ' · ' + match.rank.slice(1).map((k, i) => `${i + 2}위 ${teamName(k)}`).join(' · ') : '')
+    + (goneTeams(match).length ? ` · ${goneTeams(match).map(teamName).join(' · ')}이 모두 나가 기권` : '') + tiebreakNote(match);
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
   if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
-  const ros = $('overRoster'); ros.innerHTML = '';
-  for (const team of ['red', 'blue']) {
-    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
-    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (team === winner ? ' · 승리' : ''); col.append(h);
+  const ros = $('overRoster'); ros.innerHTML = ''; ros.classList.toggle('three', three);
+  for (const team of match.teams) {
+    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : ''); const rk = rankOf(match, team);
+    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (rk ? ` · ${rk}위` : '') + (team === winner ? ' · 승리' : ''); col.append(h);
     for (const x of match.tanks.filter(k => k.team === team)) {
       const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
       const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
-      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
+      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${goneTeams(match).indexOf(team) >= 0 && (x.alive || x.deathCause === 'forfeit') ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
       const st = document.createElement('span'); st.className = 'ost';
       st.textContent = `피해 ${x.st.dealt} · 격파 ${x.st.kills} · 명중 ${x.st.hitTurns}/${x.st.shots}` + (x.st.friendly ? ` · 팀킬 ${x.st.friendly}` : '');
       const bd = document.createElement('div'); bd.className = 'obd';
@@ -246,7 +258,7 @@ function updateHud() {
   const d = CONFIG.tanks[t.tankId];
   setTxt('whoName', t.nick + ' · ' + d.name);
   setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : '') : '격파됨 · 관전 중');
-  $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
+  $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = teamCol(t.team);
   $('fuelBar').style.width = (100 * t.fuel / d.movePx) + '%';
   const tiltDeg = Math.round(Math.atan2(t.ts, t.tc) * 180 / Math.PI);
   const real = t.aim - t.facing * tiltDeg;
@@ -304,7 +316,7 @@ function updateHud() {
     p.save(); p.translate(86, 120); const sc = 172 / (S_.w * S_.scale) * 0.95; p.scale(sc, sc); drawTankLocal(p, t.tankId, d.sprite.baseAngle || 0); p.restore();
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
-  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
+  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${teamName(ON.goneTeam.team)}이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 ${ON.goneTeam.more ? '탈락 처리 (경기는 계속)' : '기권 처리'}` : '';
   const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';
   const waitTxt = gone ? gone : botTurn ? botTurn : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
@@ -314,7 +326,7 @@ function updateStatus(m, cur) {
   const box = $('status');
   if (hudCache.statusFor !== m) {
     hudCache.statusFor = m; box.innerHTML = '';
-    for (const team of ['red', 'blue']) {
+    for (const team of m.teams) {
       const row = document.createElement('div'); row.className = 'srow ' + team;
       for (const x of m.tanks.filter(k => k.team === team)) {
         const c = document.createElement('div'); c.className = 'sc ' + team; c.dataset.idx = x.idx;
@@ -340,7 +352,7 @@ function updateStatus(m, cur) {
     c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
     c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
     c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
-    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : x.deathCause === 'forfeit' ? '나감' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
   }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
@@ -425,12 +437,17 @@ document.querySelectorAll('[data-k]').forEach(b => {
 window.addEventListener('resize', () => R.resize());
 
 // ---------------------------------------------------------------- setup
-const setup = { map: 'temple', red: 2, blue: 2, slots: { red: [], blue: [] } };
+const setup = { map: 'temple', red: 2, blue: 2, green: 0, slots: { red: [], blue: [], green: [] } }; // green 0 = the usual two-team game
 let thumbs = {};
-function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
+function slotDefault(team, i) { return { nick: teamLabel(team) + ' ' + (i + 1), tank: TANK_KEYS[(i * 2 + { red: 0, blue: 5, green: 3 }[team]) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
 const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
-for (const team of ['red', 'blue']) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
-try { const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null'); if (sv && sv.slots) Object.assign(setup, sv); } catch (e) {}
+for (const team of TEAM_KEYS) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
+try { // a setup saved before the third team existed has no green slots: keep the defaults for whatever is missing
+  const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null');
+  if (sv && sv.slots) { const slots = Object.assign({}, setup.slots, sv.slots); Object.assign(setup, sv, { slots }); }
+  for (const team of TEAM_KEYS) { if (!Array.isArray(setup.slots[team]) || setup.slots[team].length < 4) { setup.slots[team] = []; for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i)); } }
+  setup.red = clampN(setup.red | 0, 1, 4); setup.blue = clampN(setup.blue | 0, 1, 4); setup.green = clampN(setup.green | 0, 0, 4);
+} catch (e) {}
 function saveSetup() { try { localStorage.setItem('pg.setup', JSON.stringify(setup)); } catch (e) {} }
 function cloneCanvas(c) { const n = document.createElement('canvas'); n.width = c.width; n.height = c.height; n.getContext('2d').drawImage(c, 0, 0); return n; }
 function mapPreview(id) {
@@ -464,10 +481,10 @@ function renderSetup() {
   }
   document.querySelectorAll('.seg[data-team]').forEach(s => s.classList.toggle('sel', +s.dataset.n === setup[s.dataset.team]));
   const slots = $('slots'); slots.innerHTML = '';
-  for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
+  for (const team of TEAM_KEYS) for (let i = 0; i < setup[team]; i++) {
     const sl = setup.slots[team][i], row = document.createElement('div'); row.className = 'slot';
     const tag = document.createElement('label'); tag.className = 'tag ' + team;
-    const sp = document.createElement('span'); sp.textContent = (team === 'red' ? '레드 ' : '블루 ') + (i + 1);
+    const sp = document.createElement('span'); sp.textContent = teamLabel(team) + ' ' + (i + 1);
     const inp = document.createElement('input'); inp.id = `nick-${team}-${i}`; inp.maxLength = 8; inp.value = sl.nick; inp.placeholder = '닉네임';
     inp.oninput = () => { sl.nick = inp.value; saveSetup(); };
     const sel = document.createElement('select'); sel.className = 'ctl'; sel.setAttribute('aria-label', `${sp.textContent} 조작`);
@@ -485,7 +502,7 @@ function renderSetup() {
 }
 let setupInfo = null;
 document.querySelectorAll('.seg[data-team]').forEach(s => s.onclick = () => { setup[s.dataset.team] = +s.dataset.n; saveSetup(); renderSetup(); });
-$('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
+$('rand').onclick = () => { for (const team of TEAM_KEYS) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
 $('start').onclick = startGame;
 $('again').onclick = () => { $('over').hidden = true; startGame(); };
 $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
@@ -683,10 +700,10 @@ function startGame() {
   $('loading').hidden = false;
   setTimeout(() => {
     const players = [];
-    for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
+    for (const team of TEAM_KEYS) for (let i = 0; i < setup[team]; i++) {
       const sl = setup.slots[team][i];
       const ctl = sl.ctl || (team === 'red' ? 'human' : 'easy');
-      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
+      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || teamLabel(team) + ' ' + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
     }
     const seed = (Math.random() * 4294967296) >>> 0;
     const bots = {}; for (const p of players) if (p.bot) bots[p.id] = p.bot;
@@ -725,7 +742,7 @@ function loop(now) {
   }
   requestAnimationFrame(loop);
 }
-window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, botPlan, cmdFire, cmdPass, soloReplay, get screen() { return screen; } };
+window.__pg = { CONFIG, R, AU, createMatch, step, stateHash, ON, botPlan, cmdFire, cmdPass, soloReplay, get screen() { return screen; } };
 (async () => {
   R.resize();
   await loadSprites();

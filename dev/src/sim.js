@@ -5,7 +5,7 @@
 const TICK = 1 / CONFIG.physics.tickRate;
 
 function createMatch(opts) {
-  // opts: { seed, mapId, players: [{ id, nick, team: 'red'|'blue', tankId }] }
+  // opts: { seed, mapId, players: [{ id, nick, team: 'red'|'blue'|'green', tankId }] } — two or three teams
   const map = buildMap(opts.mapId);
   const m = {
     cfgVersion: CONFIG.version, seed: opts.seed >>> 0, rng: opts.seed >>> 0,
@@ -68,6 +68,8 @@ function createMatch(opts) {
     m.tanks.push(t);
   });
   m.tanks.forEach(t => updateTilt(m, t));
+  m.teams = teamsOf(opts.players); // the teams in this match (2 or 3), in slot order
+  m.fallen = [];                   // teams in the order they went out: [{ team, turnNo }]
   // happening for this match
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
@@ -102,7 +104,9 @@ function carve(m, cx, cy, r, sx, sy) {
 // ---------------------------------------------------------------- tank geometry
 function groundUnder(m, t) {
   for (const dx of [-10, -4, 0, 4, 10]) if (solidAt(m, t.x + dx, t.y + 1)) return true;
-  return false;
+  // a one-pixel sliver left by a crater right under the tank's centre (air below it): the tank stands on it. Without this the
+  // tank dropped 1 px into it, was pushed back up (physTank lifts a tank out of solid ground) and "fell" for ever — the shot never ended (2026-11)
+  return solidAt(m, t.x, t.y);
 }
 function updateTilt(m, t) {
   const yl = surfaceAt(m, t.x - 16, t.y - 26), yr = surfaceAt(m, t.x + 16, t.y - 26);
@@ -343,12 +347,22 @@ function cmdFire(m, angle, power, weapon, used) {
   m.events.push({ type: 'fire', idx: t.idx, weapon });
   return input;
 }
-// A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
+// A team that left the game is out (online: the host records it as a TurnInput so every device agrees).
+// One team left after that: it wins and the match is over. Two teams left (a three-team match): the leavers' tanks are
+// taken off the field and the match goes on; the turn that was running costs nothing.
 function cmdForfeit(m, team) {
-  if (m.phase !== 'aim' || (team !== 'red' && team !== 'blue')) return null;
+  if (m.phase !== 'aim' || m.teams.indexOf(team) < 0 || !teamAlive(m, team)) return null;
   const input = inputOf(m, { forfeit: team });
-  m.phase = 'over'; m.winner = team === 'red' ? 'blue' : 'red'; m.forfeit = team;
-  m.events.push({ type: 'over', winner: m.winner, forfeit: team });
+  const rest = aliveTeams(m).filter(k => k !== team);
+  (m.forfeits = m.forfeits || []).push(team);
+  if (rest.length <= 1) {
+    m.phase = 'over'; m.winner = rest[0] || 'draw'; m.forfeit = team;
+    m.fallen.push({ team, turnNo: m.turnNo }); m.liveTeams = rest; setRank(m);
+    m.events.push({ type: 'over', winner: m.winner, forfeit: team });
+    return input;
+  }
+  for (const t of m.tanks) if (t.alive && t.team === team) { t.alive = false; t.hp = 0; t.poison = null; t.shield = 0; t.deathCause = 'forfeit'; m.events.push({ type: 'gone', idx: t.idx, x: t.x, y: t.y }); }
+  m.phase = 'settle'; m.settle = 0;
   return input;
 }
 // used: only for the host's automatic skip of a player who is gone (the seconds really waited); a real timeout = the whole limit
@@ -546,16 +560,32 @@ function runScheduled(m) {
 
 // ---------------------------------------------------------------- turns
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
+function aliveTeams(m) { return m.teams.filter(k => teamAlive(m, k)); }
+function teamDealt(m, team) { return m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0); }
+// final standing: the winner, then the others from the last one out to the first one out
+function setRank(m) {
+  const r = m.winner && m.winner !== 'draw' ? [m.winner] : [];
+  for (let i = m.fallen.length - 1; i >= 0; i--) if (r.indexOf(m.fallen[i].team) < 0) r.push(m.fallen[i].team);
+  for (const k of m.teams) if (r.indexOf(k) < 0) r.push(k);
+  m.rank = r;
+}
 function beginTurn(m) {
-  const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
-  if (!red || !blue) {
-    m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw';
-    if (m.winner === 'draw') { // both teams gone in the same turn (sudden death, a shared blast): the team that dealt more damage to the enemy wins
-      const sum = team => m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0), r = sum('red'), b = sum('blue');
-      m.tiebreak = { red: r, blue: b }; if (r !== b) m.winner = r > b ? 'red' : 'blue';
+  // teams that went out during the turn that just ended (several in one turn: the one that dealt less damage counts as out first)
+  const live = aliveTeams(m), was = m.liveTeams || m.teams;
+  const down = was.filter(k => live.indexOf(k) < 0).sort((a, b) => teamDealt(m, a) - teamDealt(m, b) || m.teams.indexOf(b) - m.teams.indexOf(a));
+  for (const k of down) m.fallen.push({ team: k, turnNo: m.turnNo });
+  m.liveTeams = live;
+  if (live.length <= 1) { // one team left: it wins (two-team matches end here the first time; three-team matches after two teams are out)
+    m.phase = 'over'; m.winner = live[0] || 'draw';
+    if (!live.length) { // the last teams went out in the same turn (sudden death, a shared blast): the one that dealt the most damage to its enemies wins
+      const tb = {}; let top = -1, n = 0;
+      for (const k of m.teams) if (down.indexOf(k) >= 0) { tb[k] = teamDealt(m, k); if (tb[k] > top) { top = tb[k]; n = 1; m.winner = k; } else if (tb[k] === top) n++; }
+      m.tiebreak = tb; if (n !== 1) m.winner = 'draw';
     }
+    setRank(m);
     m.events.push({ type: 'over', winner: m.winner }); return;
   }
+  for (const k of down) m.events.push({ type: 'teamOut', team: k, left: live.length, forfeit: !!(m.forfeits && m.forfeits.indexOf(k) >= 0) });
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
   let t = alive[0];
   const base = t.delay;
@@ -648,9 +678,13 @@ function dropCrate(m) {
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
   if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  if (!m.crateTeam) m.crateTeam = { red: 0, blue: 0 };
+  if (!m.crateTeam) { m.crateTeam = {}; for (const k of m.teams) m.crateTeam[k] = 0; }
   // team with fewer crates first, then the tank with the fewest; ties broken by the match's own random numbers
-  const tr = rngNext(m) < 0.5 ? 0.25 : -0.25, tk = team => m.crateTeam[team] + (team === 'red' ? tr : -tr);
+  // (a random order of the teams each drop: with three teams every one of them is first a third of the time)
+  const ord = m.teams.slice(), tie = {};
+  for (let i = ord.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)), s = ord[i]; ord[i] = ord[j]; ord[j] = s; }
+  ord.forEach((k, i) => { tie[k] = i / (ord.length * 2); });
+  const tk = team => m.crateTeam[team] + tie[team];
   const order = alive.map(t => ({ t, k: tk(t.team) * 1e6 + m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
   // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
   for (const t of order) for (let tries = 0; tries < 48; tries++) {

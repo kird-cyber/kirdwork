@@ -60,7 +60,7 @@ function createAudio() {
         break;
       }
       case 'hit': if (ok('hit', 0.05)) { tone('square', 420, 180, 0.12, 0.18); noise(0.06, 0.2, 'bandpass', 2500, null, 3); } break;
-      case 'turn': if (ok('turn', 0.3)) { const b = p.team === 'blue' ? 660 : 523; tone('triangle', b, null, 0.14, 0.35); tone('triangle', b * 1.5, null, 0.22, 0.35, 0.12); } break;
+      case 'turn': if (ok('turn', 0.3)) { const b = p.team === 'blue' ? 660 : p.team === 'green' ? 587 : 523; tone('triangle', b, null, 0.14, 0.35); tone('triangle', b * 1.5, null, 0.22, 0.35, 0.12); } break;
       case 'pickup': if (ok('pickup', 0.1)) { [523, 659, 784, 1046].forEach((f, i) => tone('square', f, null, 0.08, 0.16, i * 0.06)); } break;
       case 'heal': if (ok('heal', 0.1)) { tone('sine', 440, 880, 0.45, 0.35); tone('sine', 660, 1320, 0.45, 0.2, 0.05); } break;
       case 'tele': if (ok('tele', 0.1)) { tone('sine', 300, 2400, 0.35, 0.3); noise(0.3, 0.15, 'bandpass', 1000, 6000, 4); } break;

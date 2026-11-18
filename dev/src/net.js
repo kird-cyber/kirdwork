@@ -14,6 +14,9 @@ function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_A
 function genId() { return genCode(10).toLowerCase(); }
 function pickable(t) { return t === 'random' || !!CONFIG.tanks[t]; } // K 탱크(히든)도 직접 고를 수 있음 (2026-11, 시연용)
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
+// a newcomer goes to the smaller of red / blue (the usual two-team game); the third team (green) is filled by moving there,
+// or by itself only once red and blue are both full
+function autoTeam(room) { const T = CONFIG.turn.teamMax, r = teamCount(room, 'red'), b = teamCount(room, 'blue'); return r >= T && b >= T ? 'green' : r <= b ? 'red' : 'blue'; }
 function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 
 // o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
@@ -193,7 +196,7 @@ function createRoomLink(o) {
       if (p) { if (p.nick !== q.nick) { p.nick = q.nick; publishRoom(); } return; }
       if (room.state !== 'lobby' || r.banned[q.id]) return;
       if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
-      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      const team = autoTeam(room);
       room.players.push({ id: q.id, nick: String(q.nick || '').slice(0, 8) || '손님', team, tank: pickable(q.tank) ? q.tank : 'rookie' });
       publishRoom();
     } else if (!p || room.state !== 'lobby') return;
@@ -213,7 +216,7 @@ function createRoomLink(o) {
       room.watchers = watchersOf(room).concat([{ id, nick: p.nick }]);
     } else if (role === 'play' && w) {
       if (room.players.length >= CONFIG.turn.maxPlayers) return false;
-      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      const team = autoTeam(room);
       room.watchers = watchersOf(room).filter(x => x.id !== id);
       room.players.push({ id, nick: w.nick, team, tank: pickable(tank) ? tank : 'rookie' });
     } else return false;
@@ -222,7 +225,7 @@ function createRoomLink(o) {
   };
   r.setTeam = function (id, team, noPublish) {
     const p = r.room.players.find(x => x.id === id);
-    if (!p || (team !== 'red' && team !== 'blue') || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
+    if (!p || TEAM_KEYS.indexOf(team) < 0 || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
     p.team = team; if (!noPublish) publishRoom(); return true;
   };
 
@@ -241,7 +244,7 @@ function createRoomLink(o) {
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
   r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
-  r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamCount(r.room, 'red') > 0 && teamCount(r.room, 'blue') > 0;
+  r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamsOf(r.room.players).length >= 2; // two or three teams with someone in them
   r.start = function () {
     if (!r.canStart()) return false;
     const old = r.room.game;
@@ -269,7 +272,7 @@ function createRoomLink(o) {
   r.canRematch = function () {
     if (!r.isHost() || r.room.state !== 'game') return false;
     const ps = r.rematchPlayers();
-    return ps.some(p => p.team === 'red') && ps.some(p => p.team === 'blue');
+    return teamsOf(ps).length >= 2;
   };
   r.rematch = function () {
     if (!r.canRematch()) return false;

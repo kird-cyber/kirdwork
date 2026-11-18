@@ -42,7 +42,7 @@ const CONFIG = {
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
-    maxPlayers: 8,
+    maxPlayers: 9,         // 3 teams of 3 fit (2026-11: was 8)
     maxWatchers: 20,       // 관전자 (게임에 참여하지 않고 보기·채팅)
     teamMax: 4,
     inventoryMax: 4,
@@ -53,6 +53,14 @@ const CONFIG = {
     // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
     suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
+  // teams: a room has three team slots. Usually two are filled (A:B); with all three filled the match is a three-way fight
+  // that goes on until one team is left (2026-11, for the tournament's 패자부활전). Colours: bar = health bars and markers,
+  // soft = headings on dark panels, pale = name labels over tanks, lite = banner text, vivid = the result image.
+  teams: {
+    red: { name: '레드', bar: '#F0583E', deep: '#8A2E22', soft: '#FF9A86', pale: '#FFC2B6', lite: '#FFB4A4', vivid: '#FF6B5A', edge: '#FF8A73' },
+    blue: { name: '블루', bar: '#3E94F0', deep: '#1F4E8A', soft: '#8CC2FF', pale: '#C2DEFF', lite: '#A9D0FF', vivid: '#5AA9FF', edge: '#7FB8FF' },
+    green: { name: '그린', bar: '#2FB36A', deep: '#1B6B40', soft: '#86E0A6', pale: '#C6F2D3', lite: '#B0ECC2', vivid: '#52D088', edge: '#6FDD9C' },
+  },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 
   tanks: {
@@ -62,7 +70,7 @@ const CONFIG = {
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, crater: [1.45, 0.7], windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 220, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 360, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
@@ -84,7 +92,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1000, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -106,8 +114,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
-        { id: 'missile', name: '유도 미사일', dmg: 191, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 210, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'missile', name: '유도 미사일', dmg: 228, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 82, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-40, -24, -8, 8, 24, 40], powerJitter: 16, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
@@ -134,8 +142,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', dmg: 230, radius: 34, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
-        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 210, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+        { id: 'kbounce', name: 'K-바운스탄', dmg: 278, radius: 38, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 160, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
     kgreen: {
@@ -143,10 +151,11 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
-        // 성장탄: the longer it flies, the bigger it grows (x0.75 at the muzzle → x1.4 after 3.2 s; radius grows with the square root)
-        { id: 'kgrow', name: '성장탄', dmg: 205, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 0.75, max: 1.4, secs: 3.2 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
+        // 성장탄: the longer it flies, the bigger it grows (x1.0 at the muzzle → x1.5 after 2.6 s; radius grows with the square root).
+        // 2026-11: it started at x0.75 and took 3.2 s — at fighting range it never got going, so it starts full size now
+        { id: 'kgrow', name: '성장탄', dmg: 215, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 1, max: 1.5, secs: 2.6 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
         // 뿌리탄: a small blast, then roots run along the ground the way it flew and burst up twice
-        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 230, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
+        { id: 'kroot', name: '뿌리탄', dmg: 165, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 105, radius: 28, ticks: 22 }, extraDelay: 170, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
       ],
     },
   },
@@ -208,3 +217,9 @@ const CONFIG = {
     moon: { name: '달 기지', tag: '저중력 · 장거리', desc: '중력이 약해 포탄이 멀리, 오래 날아갑니다. 분화구와 평평한 고원.', W: 5600, H: 1600, theme: 'moon', gravity: 0.62 },
   },
 };
+// team helpers (used by the simulation and every screen)
+const TEAM_KEYS = Object.keys(CONFIG.teams);
+function teamLabel(k) { return CONFIG.teams[k] ? CONFIG.teams[k].name : String(k || ''); }   // 레드
+function teamName(k) { return teamLabel(k) + ' 팀'; }                                          // 레드 팀
+function teamCol(k, kind) { return (CONFIG.teams[k] || CONFIG.teams.blue)[kind || 'bar']; }
+function teamsOf(list) { return TEAM_KEYS.filter(k => list.some(p => p.team === k)); }         // the teams that have someone, in slot order

@@ -711,6 +711,9 @@ function createRenderer(cv, mini) {
           if (R.isLocalTurn && R.isLocalTurn(t) && R.onMyTurn) { R.onMyTurn(t, e.again); R.onSfx('turn', { team: t.team }); break; }
           R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
+        // three-team matches: a team is out and the match goes on / a team that left has its tanks taken off the field
+        case 'teamOut': R.onBanner(e.forfeit ? `${teamName(e.team)}이 모두 나가 탈락 · ${e.left}팀 남음` : `${teamName(e.team)} 탈락! · ${e.left}팀 남음`, e.team, false, 2200); R.onSfx('death'); break;
+        case 'gone': burst(e.x, e.y - 24, '#FFFFFF', 14); break;
         case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
       }
@@ -1037,9 +1040,9 @@ function createRenderer(cv, mini) {
     ctx.font = '800 14px "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'; ctx.lineJoin = 'round';
     const mine = R.isMine && R.isMine(t), label = mine ? t.nick + ' (나)' : t.nick;
     ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.strokeText(label, x, y - 6);
-    ctx.fillStyle = mine ? '#FFE79A' : t.team === 'red' ? '#FFC2B6' : '#C2DEFF'; ctx.fillText(label, x, y - 6);
+    ctx.fillStyle = mine ? '#FFE79A' : teamCol(t.team, 'pale'); ctx.fillText(label, x, y - 6);
     ctx.fillStyle = '#10141F'; ctx.fillRect(x - w / 2 - 2, y - 2, w + 4, 10);
-    ctx.fillStyle = t.team === 'red' ? '#F0583E' : '#3E94F0'; ctx.fillRect(x - w / 2, y, w * (t.hp / t.maxhp), 6);
+    ctx.fillStyle = teamCol(t.team); ctx.fillRect(x - w / 2, y, w * (t.hp / t.maxhp), 6);
     if (t.poison) { ctx.fillStyle = '#8EDB3A'; ctx.beginPath(); ctx.arc(x + w / 2 + 9, y + 3, 4, 0, 7); ctx.fill(); }
     const bb = R.bubbles[t.idx];
     if (bb) { // chat / emote bubble
@@ -1207,7 +1210,7 @@ function createRenderer(cv, mini) {
     for (const o of list) {
       const t = o.t, a = Math.atan2(o.sy - o.ey, o.sx - o.ex);
       ctx.save(); ctx.translate(o.ex, o.ey);
-      ctx.fillStyle = t.team === 'red' ? '#F0583E' : '#3E94F0';
+      ctx.fillStyle = teamCol(t.team);
       ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill();
       ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(16, -8); ctx.lineTo(16, 8); ctx.fill(); ctx.restore();
       ctx.fillStyle = '#fff'; ctx.font = '900 11px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
@@ -1222,7 +1225,7 @@ function createRenderer(cv, mini) {
     mctx.clearRect(0, 0, mw, mh);
     mctx.drawImage(R.terrain, 0, 0, mw, mh);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 4, 4, 4); }
-    for (const t of m.tanks) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, (t.y - 10) * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
+    for (const t of m.tanks) if (t.alive) { mctx.fillStyle = teamCol(t.team, 'vivid'); mctx.beginPath(); mctx.arc(t.x * sx, (t.y - 10) * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
     mctx.strokeStyle = 'rgba(255,255,255,0.9)'; mctx.lineWidth = 1.5; mctx.strokeRect(left * sx, top * sy, v.w * sx, v.h * sy);
   }
   R.screenToWorld = function (cx, cy) {

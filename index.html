@@ -31,6 +31,8 @@
   --red-deep: #8A2E22;
   --blue: #3E94F0;
   --blue-deep: #1F4E8A;
+  --green: #2FB36A;
+  --green-deep: #1B6B40;
   --good: #3EC86A;
   --font-display: 'Black Han Sans', 'Noto Sans KR', system-ui, sans-serif;
   --font-body: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
@@ -51,15 +53,15 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .chipbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 10px; border-radius: 12px; background: var(--panel); max-width: 44vw; }
 .chipbar .lbl { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em; margin-right: 2px; }
 .chip { padding: 4px 9px; border-radius: 7px; font-size: 13px; font-weight: 700; white-space: nowrap; }
-.chip.red { background: var(--red-deep); } .chip.blue { background: var(--blue-deep); }
-.chip.now.red { background: var(--red); } .chip.now.blue { background: var(--blue); }
+.chip.red { background: var(--red-deep); } .chip.blue { background: var(--blue-deep); } .chip.green { background: var(--green-deep); }
+.chip.now.red { background: var(--red); } .chip.now.blue { background: var(--blue); } .chip.now.green { background: var(--green); }
 .chip.dead { opacity: 0.35; text-decoration: line-through; }
 .sep { color: var(--muted); font-size: 12px; }
 /* top status bar: one row per team */
 .statusbar { display: flex; flex-direction: column; gap: 4px; padding: 6px; border-radius: 12px; background: var(--panel); max-width: 46vw; }
 .srow { display: flex; gap: 4px; }
 .sc { position: relative; display: flex; align-items: center; gap: 5px; width: 128px; padding: 3px 6px 3px 4px; border-radius: 8px; background: rgba(255,255,255,0.04); border-left: 3px solid; min-width: 0; }
-.sc.red { border-color: var(--red); } .sc.blue { border-color: var(--blue); }
+.sc.red { border-color: var(--red); } .sc.blue { border-color: var(--blue); } .sc.green { border-color: var(--green); }
 .sc.now { background: rgba(255,210,74,0.16); box-shadow: inset 0 0 0 1.5px var(--gold); }
 .sc.me b { color: var(--gold); }
 .sc .no { width: 14px; font-size: 11px; font-weight: 900; color: var(--muted); text-align: center; flex-shrink: 0; }
@@ -69,7 +71,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .sc b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.1; }
 .sc .hp { display: block; height: 4px; border-radius: 2px; background: #2A3348; overflow: hidden; }
 .sc .hp > i { display: block; height: 100%; transition: width .3s; }
-.sc.red .hp > i { background: var(--red); } .sc.blue .hp > i { background: var(--blue); }
+.sc.red .hp > i { background: var(--red); } .sc.blue .hp > i { background: var(--blue); } .sc.green .hp > i { background: var(--green); }
 .sc .st { font-size: 10px; color: var(--muted); line-height: 1; font-variant-numeric: tabular-nums; }
 .sc.dead { opacity: 0.45; } .sc.dead .sth { filter: grayscale(1); } .sc.dead b { text-decoration: line-through; }
 .sc.off .st { color: #FFB4A4; }
@@ -94,6 +96,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 #myTurn { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; pointer-events: none; text-align: center; padding: 18px 44px 16px; border-radius: 20px; background: rgba(14, 20, 38, .88); border: 3px solid #FFD24A; box-shadow: 0 0 0 6px rgba(255, 210, 74, .25), 0 18px 40px rgba(0, 0, 0, .45); white-space: nowrap; }
 #myTurn[data-team="red"] { border-color: #FF8A73; box-shadow: 0 0 0 6px rgba(255, 138, 115, .25), 0 18px 40px rgba(0, 0, 0, .45); }
 #myTurn[data-team="blue"] { border-color: #7FB8FF; box-shadow: 0 0 0 6px rgba(127, 184, 255, .25), 0 18px 40px rgba(0, 0, 0, .45); }
+#myTurn[data-team="green"] { border-color: #6FDD9C; box-shadow: 0 0 0 6px rgba(111, 221, 156, .25), 0 18px 40px rgba(0, 0, 0, .45); }
 #myTurn b { display: block; font-family: var(--font-display); font-size: 56px; line-height: 1.1; color: #FFE07A; text-shadow: 0 3px 0 #6A4A00; }
 #myTurn small { display: block; margin-top: 6px; font-size: 15px; font-weight: 800; color: #DCE6F2; }
 #myTurn.on { animation: myTurnIn 2s ease forwards; }
@@ -190,8 +193,8 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .slot .tag input { width: 100%; box-sizing: border-box; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: #0E1220; color: var(--fg); font: 700 14px var(--font-body); }
 .slot .tag input:focus-visible { outline: 2px solid var(--gold); }
 .teamlbl { font-weight: 900; font-size: 14px; margin: 0 2px 0 8px; align-self: center; }
-.teamlbl.red { color: #FF9A86; } .teamlbl.blue { color: #8CC2FF; }
-.slot .tag.red span { color: #FF9A86; } .slot .tag.blue span { color: #8CC2FF; }
+.teamlbl.red { color: #FF9A86; } .teamlbl.blue { color: #8CC2FF; } .teamlbl.green { color: #86E0A6; }
+.slot .tag.red span { color: #FF9A86; } .slot .tag.blue span { color: #8CC2FF; } .slot .tag.green span { color: #86E0A6; }
 .picks { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .pick { width: 74px; padding: 4px 2px 5px; border-radius: 10px; border: 2px solid transparent; background: #1A2030; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .pick canvas { width: 66px; height: 49px; }
@@ -238,15 +241,17 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .overbox { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 30px 40px; border-radius: 20px; background: var(--panel-solid); border: 1px solid var(--line); text-align: center; }
 .overbox h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 48px; }
 .overbox .ot { font-size: clamp(56px, 12vw, 88px); line-height: 1; }
-.ot.win { color: var(--gold); text-shadow: 0 0 30px rgba(255,210,74,0.45); } .ot.lose { color: #9AA4B8; } .ot.red { color: #FF9A86; } .ot.blue { color: #8CC2FF; } .ot.draw { color: #FFFFFF; }
+.ot.win { color: var(--gold); text-shadow: 0 0 30px rgba(255,210,74,0.45); } .ot.lose { color: #9AA4B8; } .ot.red { color: #FF9A86; } .ot.blue { color: #8CC2FF; } .ot.green { color: #86E0A6; } .ot.draw { color: #FFFFFF; }
 .roster { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(560px, 80vw); text-align: left; }
+.roster.three { grid-template-columns: repeat(3, 1fr); width: min(840px, 90vw); } /* 3팀전 */
+@media (max-width: 700px) { .roster.three { grid-template-columns: 1fr; } }
 .orcol { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px; background: #0E1220; border: 2px solid var(--line); }
-.orcol.red { border-color: var(--red-deep); } .orcol.blue { border-color: var(--blue-deep); } .orcol.won { box-shadow: 0 0 0 2px rgba(255,210,74,0.35); }
-.orh { font-size: 13px; font-weight: 900; } .orcol.red .orh { color: #FF9A86; } .orcol.blue .orh { color: #8CC2FF; }
+.orcol.red { border-color: var(--red-deep); } .orcol.blue { border-color: var(--blue-deep); } .orcol.green { border-color: var(--green-deep); } .orcol.won { box-shadow: 0 0 0 2px rgba(255,210,74,0.35); }
+.orh { font-size: 13px; font-weight: 900; } .orcol.red .orh { color: #FF9A86; } .orcol.blue .orh { color: #8CC2FF; } .orcol.green .orh { color: #86E0A6; }
 .orr { display: flex; flex-direction: column; padding: 6px 8px; border-radius: 8px; background: var(--panel-solid); }
 .orr b { font-size: 14px; } .orr span { font-size: 12px; color: var(--muted); }
 .ovmvp { display: flex; align-items: baseline; gap: 10px; padding: 8px 16px; border-radius: 12px; background: rgba(255,210,74,0.12); border: 1px solid rgba(255,210,74,0.5); }
-.ovmvp .mk { font-family: var(--font-display); color: var(--gold); font-size: 20px; } .ovmvp b { font-size: 20px; } .ovmvp b.red { color: #FF9A86; } .ovmvp b.blue { color: #8CC2FF; } .ovmvp .ms { font-size: 13px; color: var(--muted); }
+.ovmvp .mk { font-family: var(--font-display); color: var(--gold); font-size: 20px; } .ovmvp b { font-size: 20px; } .ovmvp b.red { color: #FF9A86; } .ovmvp b.blue { color: #8CC2FF; } .ovmvp b.green { color: #86E0A6; } .ovmvp .ms { font-size: 13px; color: var(--muted); }
 .orr .ost { font-size: 11.5px; color: #C9D3E6; font-variant-numeric: tabular-nums; }
 .obd { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
 .badge { font-size: 11px; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: #2A3348; white-space: nowrap; }
@@ -312,11 +317,14 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .share { display: flex; gap: 8px; flex: 1; min-width: 280px; max-width: 560px; }
 .share input { font-size: 13px; font-weight: 500; color: var(--muted); }
 .start.sm { padding: 10px 16px; font-size: 16px; white-space: nowrap; }
-.teams { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.teams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; } /* three team slots: fill two for A:B, all three for a 3팀전 */
+@media (max-width: 1100px) { .teams .pc { flex-wrap: wrap; } .teams .pa { width: 100%; justify-content: flex-start; } }
 .teamcol { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(20, 26, 43, 0.7); border: 2px solid; }
-.teamcol.red { border-color: var(--red-deep); } .teamcol.blue { border-color: var(--blue-deep); }
+.teamcol.red { border-color: var(--red-deep); } .teamcol.blue { border-color: var(--blue-deep); } .teamcol.green { border-color: var(--green-deep); }
+.teamcol h3 small { font-size: 11px; font-weight: 700; color: var(--muted); margin: 0 auto 0 8px; align-self: center; }
 .teamcol h3 { margin: 0 0 2px; font-size: 15px; font-weight: 900; display: flex; justify-content: space-between; }
-.teamcol.red h3 { color: #FF9A86; } .teamcol.blue h3 { color: #8CC2FF; }
+.teamcol.red h3 { color: #FF9A86; } .teamcol.blue h3 { color: #8CC2FF; } .teamcol.green h3 { color: #86E0A6; }
+.mini.tm.red { color: #FF9A86; } .mini.tm.blue { color: #8CC2FF; } .mini.tm.green { color: #86E0A6; }
 .teamcol h3 span { color: var(--muted); font-weight: 700; }
 .pc { display: flex; align-items: center; gap: 10px; padding: 6px 10px 6px 6px; border-radius: 12px; background: var(--panel-solid); border: 1px solid var(--line); min-height: 52px; }
 .pc canvas { width: 62px; height: 46px; flex-shrink: 0; }
@@ -383,7 +391,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 /* chat */
 .chatbox { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 16px; background: rgba(20, 26, 43, 0.7); border: 1px solid var(--line); }
 .msgs { height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; font-size: 13px; -webkit-user-select: text; user-select: text; }
-.msgs .m b, .gmsgs .m b { margin-right: 6px; } .m.red b { color: #FF9A86; } .m.blue b { color: #8CC2FF; } .m.sys { color: var(--muted); font-size: 12px; }
+.msgs .m b, .gmsgs .m b { margin-right: 6px; } .m.red b { color: #FF9A86; } .m.blue b { color: #8CC2FF; } .m.green b { color: #86E0A6; } .m.sys { color: var(--muted); font-size: 12px; }
 .chatin { display: flex; gap: 6px; }
 .chatin input { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 10px; border: 1px solid var(--line); background: #0E1220; color: var(--fg); font: 500 14px var(--font-body); -webkit-user-select: text; user-select: text; }
 .chatin input:focus-visible { outline: 2px solid var(--gold); }
@@ -846,6 +854,7 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       <div class="teams">
         <div class="teamcol red"><h3>레드 팀 <span id="redN"></span></h3><div class="slots" id="redList"></div></div>
         <div class="teamcol blue"><h3>블루 팀 <span id="blueN"></span></h3><div class="slots" id="blueList"></div></div>
+        <div class="teamcol green"><h3>그린 팀 <small>채우면 3팀전</small><span id="greenN"></span></h3><div class="slots" id="greenList"></div></div>
       </div>
       <div class="watchrow" aria-label="관전자"><b>관전자 <span id="watchN"></span></b><div class="wlist" id="watchList"></div><button class="mini" id="roleBtn" type="button">관전으로 이동</button></div>
       <div class="chatbox" id="lobbyChat">
@@ -889,12 +898,14 @@ button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
       </div>
 
       <div class="sec">
-        <h2>인원 (팀당 1~4명)</h2>
+        <h2>인원 (팀당 1~4명 · 그린 팀을 넣으면 3팀전)</h2>
         <div class="modes">
           <span class="teamlbl red">레드</span>
           <button class="seg" data-team="red" data-n="1" type="button">1</button><button class="seg" data-team="red" data-n="2" type="button">2</button><button class="seg" data-team="red" data-n="3" type="button">3</button><button class="seg" data-team="red" data-n="4" type="button">4</button>
           <span class="teamlbl blue">블루</span>
           <button class="seg" data-team="blue" data-n="1" type="button">1</button><button class="seg" data-team="blue" data-n="2" type="button">2</button><button class="seg" data-team="blue" data-n="3" type="button">3</button><button class="seg" data-team="blue" data-n="4" type="button">4</button>
+          <span class="teamlbl green">그린</span>
+          <button class="seg" data-team="green" data-n="0" type="button">없음</button><button class="seg" data-team="green" data-n="1" type="button">1</button><button class="seg" data-team="green" data-n="2" type="button">2</button><button class="seg" data-team="green" data-n="3" type="button">3</button><button class="seg" data-team="green" data-n="4" type="button">4</button>
           <button class="ghost" id="rand" type="button">탱크 랜덤</button>
         </div>
       </div>
@@ -1016,7 +1027,7 @@ const CONFIG = {
     crateLifeRounds: 4,     // a crate nobody took is gone after every tank had about this many own turns (turns = this x players)
     windMax: 10,
     windDrift: { step: 3, gust: 0.1 }, // 바람: 지난 턴에서 ±3까지만 변함, 10% 확률로 돌풍(새 바람)
-    maxPlayers: 8,
+    maxPlayers: 9,         // 3 teams of 3 fit (2026-11: was 8)
     maxWatchers: 20,       // 관전자 (게임에 참여하지 않고 보기·채팅)
     teamMax: 4,
     inventoryMax: 4,
@@ -1027,6 +1038,14 @@ const CONFIG = {
     // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
     suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
+  // teams: a room has three team slots. Usually two are filled (A:B); with all three filled the match is a three-way fight
+  // that goes on until one team is left (2026-11, for the tournament's 패자부활전). Colours: bar = health bars and markers,
+  // soft = headings on dark panels, pale = name labels over tanks, lite = banner text, vivid = the result image.
+  teams: {
+    red: { name: '레드', bar: '#F0583E', deep: '#8A2E22', soft: '#FF9A86', pale: '#FFC2B6', lite: '#FFB4A4', vivid: '#FF6B5A', edge: '#FF8A73' },
+    blue: { name: '블루', bar: '#3E94F0', deep: '#1F4E8A', soft: '#8CC2FF', pale: '#C2DEFF', lite: '#A9D0FF', vivid: '#5AA9FF', edge: '#7FB8FF' },
+    green: { name: '그린', bar: '#2FB36A', deep: '#1B6B40', soft: '#86E0A6', pale: '#C6F2D3', lite: '#B0ECC2', vivid: '#52D088', edge: '#6FDD9C' },
+  },
   sprite: { scale: 0.42, anchorX: 128, anchorY: 178, w: 256, h: 192 },
 
   tanks: {
@@ -1036,7 +1055,7 @@ const CONFIG = {
       sprite: { pivot: [132, 92], baseAngle: 46, dir: 1, muzzleLen: 62, behind: true, catapult: true },
       weapons: [
         { id: 'rock', name: '바위탄', dmg: 345, radius: 40, crater: [1.45, 0.7], windMul: 0.5, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'rock', color: '#9A8F78', size: 1.3 } },
-        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 220, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
+        { id: 'boulder', name: '불바위', dmg: 484, radius: 48, crater: [1.5, 0.68], windMul: 0.5, gravityMul: 1, pattern: { kind: 'roll', dmg: 95, radius: 32, dist: 80, ticks: 66 }, extraDelay: 360, look: { shape: 'firerock', color: '#4A362A', size: 1.45, glow: '#FF8A30' } },
       ],
     },
     viper: {
@@ -1058,7 +1077,7 @@ const CONFIG = {
       ],
     },
     rookie: {
-      name: '루키', era: 'modern', hp: 1050, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
+      name: '루키', era: 'modern', hp: 1000, dmgTaken: 0.9, movePx: 198, speedClass: 3, angleMin: 20, angleMax: 88, powerMul: 1,
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
@@ -1080,8 +1099,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
-        { id: 'missile', name: '유도 미사일', dmg: 191, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 72, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-60, -36, -12, 12, 36, 60], powerJitter: 25, gapTicks: 6 }, extraDelay: 210, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'missile', name: '유도 미사일', dmg: 228, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 82, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-40, -24, -8, 8, 24, 40], powerJitter: 16, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
@@ -1108,8 +1127,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 86, behind: true },
       weapons: [
-        { id: 'kbounce', name: 'K-바운스탄', dmg: 230, radius: 34, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
-        { id: 'ksplit', name: 'K-분열탄', dmg: 174, radius: 30, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 210, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
+        { id: 'kbounce', name: 'K-바운스탄', dmg: 278, radius: 38, crater: [1.2, 0.85], windMul: 1, gravityMul: 1, pattern: { kind: 'bounce', keep: 0.55 }, look: { shape: 'kball', color: '#2E86D6', size: 1, glow: '#8CC8FF' } },
+        { id: 'ksplit', name: 'K-분열탄', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'split', spread: 100 }, extraDelay: 160, look: { shape: 'ksplit', color: '#8CC63F', size: 1.1, glow: '#D8F59A' } },
       ],
     },
     kgreen: {
@@ -1117,10 +1136,11 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
-        // 성장탄: the longer it flies, the bigger it grows (x0.75 at the muzzle → x1.4 after 3.2 s; radius grows with the square root)
-        { id: 'kgrow', name: '성장탄', dmg: 205, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 0.75, max: 1.4, secs: 3.2 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
+        // 성장탄: the longer it flies, the bigger it grows (x1.0 at the muzzle → x1.5 after 2.6 s; radius grows with the square root).
+        // 2026-11: it started at x0.75 and took 3.2 s — at fighting range it never got going, so it starts full size now
+        { id: 'kgrow', name: '성장탄', dmg: 215, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'grow', min: 1, max: 1.5, secs: 2.6 }, look: { shape: 'seed', color: '#8CC63F', size: 1, glow: '#D8F59A' } },
         // 뿌리탄: a small blast, then roots run along the ground the way it flew and burst up twice
-        { id: 'kroot', name: '뿌리탄', dmg: 150, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 95, radius: 28, ticks: 22 }, extraDelay: 230, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
+        { id: 'kroot', name: '뿌리탄', dmg: 165, radius: 28, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'root', steps: [75, 150], dmg: 105, radius: 28, ticks: 22 }, extraDelay: 170, look: { shape: 'rootseed', color: '#6AA22E', size: 1, glow: '#D8F59A' } },
       ],
     },
   },
@@ -1182,6 +1202,12 @@ const CONFIG = {
     moon: { name: '달 기지', tag: '저중력 · 장거리', desc: '중력이 약해 포탄이 멀리, 오래 날아갑니다. 분화구와 평평한 고원.', W: 5600, H: 1600, theme: 'moon', gravity: 0.62 },
   },
 };
+// team helpers (used by the simulation and every screen)
+const TEAM_KEYS = Object.keys(CONFIG.teams);
+function teamLabel(k) { return CONFIG.teams[k] ? CONFIG.teams[k].name : String(k || ''); }   // 레드
+function teamName(k) { return teamLabel(k) + ' 팀'; }                                          // 레드 팀
+function teamCol(k, kind) { return (CONFIG.teams[k] || CONFIG.teams.blue)[kind || 'bar']; }
+function teamsOf(list) { return TEAM_KEYS.filter(k => list.some(p => p.team === k)); }         // the teams that have someone, in slot order
 
 // ---- core.js
 // ============================================================== CORE: deterministic math
@@ -1597,7 +1623,7 @@ function buildMap(mapId) {
 const TICK = 1 / CONFIG.physics.tickRate;
 
 function createMatch(opts) {
-  // opts: { seed, mapId, players: [{ id, nick, team: 'red'|'blue', tankId }] }
+  // opts: { seed, mapId, players: [{ id, nick, team: 'red'|'blue'|'green', tankId }] } — two or three teams
   const map = buildMap(opts.mapId);
   const m = {
     cfgVersion: CONFIG.version, seed: opts.seed >>> 0, rng: opts.seed >>> 0,
@@ -1660,6 +1686,8 @@ function createMatch(opts) {
     m.tanks.push(t);
   });
   m.tanks.forEach(t => updateTilt(m, t));
+  m.teams = teamsOf(opts.players); // the teams in this match (2 or 3), in slot order
+  m.fallen = [];                   // teams in the order they went out: [{ team, turnNo }]
   // happening for this match
   const HP = CONFIG.happenings;
   m.happening = rngNext(m) < HP.chance ? HP.list[Math.floor(rngNext(m) * HP.list.length)] : null;
@@ -1694,7 +1722,9 @@ function carve(m, cx, cy, r, sx, sy) {
 // ---------------------------------------------------------------- tank geometry
 function groundUnder(m, t) {
   for (const dx of [-10, -4, 0, 4, 10]) if (solidAt(m, t.x + dx, t.y + 1)) return true;
-  return false;
+  // a one-pixel sliver left by a crater right under the tank's centre (air below it): the tank stands on it. Without this the
+  // tank dropped 1 px into it, was pushed back up (physTank lifts a tank out of solid ground) and "fell" for ever — the shot never ended (2026-11)
+  return solidAt(m, t.x, t.y);
 }
 function updateTilt(m, t) {
   const yl = surfaceAt(m, t.x - 16, t.y - 26), yr = surfaceAt(m, t.x + 16, t.y - 26);
@@ -1935,12 +1965,22 @@ function cmdFire(m, angle, power, weapon, used) {
   m.events.push({ type: 'fire', idx: t.idx, weapon });
   return input;
 }
-// A team that left the game loses (online: the host records it as a TurnInput so every device agrees)
+// A team that left the game is out (online: the host records it as a TurnInput so every device agrees).
+// One team left after that: it wins and the match is over. Two teams left (a three-team match): the leavers' tanks are
+// taken off the field and the match goes on; the turn that was running costs nothing.
 function cmdForfeit(m, team) {
-  if (m.phase !== 'aim' || (team !== 'red' && team !== 'blue')) return null;
+  if (m.phase !== 'aim' || m.teams.indexOf(team) < 0 || !teamAlive(m, team)) return null;
   const input = inputOf(m, { forfeit: team });
-  m.phase = 'over'; m.winner = team === 'red' ? 'blue' : 'red'; m.forfeit = team;
-  m.events.push({ type: 'over', winner: m.winner, forfeit: team });
+  const rest = aliveTeams(m).filter(k => k !== team);
+  (m.forfeits = m.forfeits || []).push(team);
+  if (rest.length <= 1) {
+    m.phase = 'over'; m.winner = rest[0] || 'draw'; m.forfeit = team;
+    m.fallen.push({ team, turnNo: m.turnNo }); m.liveTeams = rest; setRank(m);
+    m.events.push({ type: 'over', winner: m.winner, forfeit: team });
+    return input;
+  }
+  for (const t of m.tanks) if (t.alive && t.team === team) { t.alive = false; t.hp = 0; t.poison = null; t.shield = 0; t.deathCause = 'forfeit'; m.events.push({ type: 'gone', idx: t.idx, x: t.x, y: t.y }); }
+  m.phase = 'settle'; m.settle = 0;
   return input;
 }
 // used: only for the host's automatic skip of a player who is gone (the seconds really waited); a real timeout = the whole limit
@@ -2138,16 +2178,32 @@ function runScheduled(m) {
 
 // ---------------------------------------------------------------- turns
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
+function aliveTeams(m) { return m.teams.filter(k => teamAlive(m, k)); }
+function teamDealt(m, team) { return m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0); }
+// final standing: the winner, then the others from the last one out to the first one out
+function setRank(m) {
+  const r = m.winner && m.winner !== 'draw' ? [m.winner] : [];
+  for (let i = m.fallen.length - 1; i >= 0; i--) if (r.indexOf(m.fallen[i].team) < 0) r.push(m.fallen[i].team);
+  for (const k of m.teams) if (r.indexOf(k) < 0) r.push(k);
+  m.rank = r;
+}
 function beginTurn(m) {
-  const red = teamAlive(m, 'red'), blue = teamAlive(m, 'blue');
-  if (!red || !blue) {
-    m.phase = 'over'; m.winner = red ? 'red' : blue ? 'blue' : 'draw';
-    if (m.winner === 'draw') { // both teams gone in the same turn (sudden death, a shared blast): the team that dealt more damage to the enemy wins
-      const sum = team => m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0), r = sum('red'), b = sum('blue');
-      m.tiebreak = { red: r, blue: b }; if (r !== b) m.winner = r > b ? 'red' : 'blue';
+  // teams that went out during the turn that just ended (several in one turn: the one that dealt less damage counts as out first)
+  const live = aliveTeams(m), was = m.liveTeams || m.teams;
+  const down = was.filter(k => live.indexOf(k) < 0).sort((a, b) => teamDealt(m, a) - teamDealt(m, b) || m.teams.indexOf(b) - m.teams.indexOf(a));
+  for (const k of down) m.fallen.push({ team: k, turnNo: m.turnNo });
+  m.liveTeams = live;
+  if (live.length <= 1) { // one team left: it wins (two-team matches end here the first time; three-team matches after two teams are out)
+    m.phase = 'over'; m.winner = live[0] || 'draw';
+    if (!live.length) { // the last teams went out in the same turn (sudden death, a shared blast): the one that dealt the most damage to its enemies wins
+      const tb = {}; let top = -1, n = 0;
+      for (const k of m.teams) if (down.indexOf(k) >= 0) { tb[k] = teamDealt(m, k); if (tb[k] > top) { top = tb[k]; n = 1; m.winner = k; } else if (tb[k] === top) n++; }
+      m.tiebreak = tb; if (n !== 1) m.winner = 'draw';
     }
+    setRank(m);
     m.events.push({ type: 'over', winner: m.winner }); return;
   }
+  for (const k of down) m.events.push({ type: 'teamOut', team: k, left: live.length, forfeit: !!(m.forfeits && m.forfeits.indexOf(k) >= 0) });
   const alive = m.tanks.filter(t => t.alive).sort((a, b) => a.delay - b.delay || a.idx - b.idx);
   let t = alive[0];
   const base = t.delay;
@@ -2240,9 +2296,13 @@ function dropCrate(m) {
   const put = (x, y, item) => { m.crates.push({ x, y, item, dead: false, id: m.schedSeq++, born: m.turnNo }); m.events.push({ type: 'crate', x, y, item, id: m.crates[m.crates.length - 1].id }); };
   if (!m.crateGot) m.crateGot = m.tanks.map(() => 0);
   const alive = m.tanks.filter(t => t.alive), lo = T.crateNear[0];
-  if (!m.crateTeam) m.crateTeam = { red: 0, blue: 0 };
+  if (!m.crateTeam) { m.crateTeam = {}; for (const k of m.teams) m.crateTeam[k] = 0; }
   // team with fewer crates first, then the tank with the fewest; ties broken by the match's own random numbers
-  const tr = rngNext(m) < 0.5 ? 0.25 : -0.25, tk = team => m.crateTeam[team] + (team === 'red' ? tr : -tr);
+  // (a random order of the teams each drop: with three teams every one of them is first a third of the time)
+  const ord = m.teams.slice(), tie = {};
+  for (let i = ord.length - 1; i > 0; i--) { const j = Math.floor(rngNext(m) * (i + 1)), s = ord[i]; ord[i] = ord[j]; ord[j] = s; }
+  ord.forEach((k, i) => { tie[k] = i / (ord.length * 2); });
+  const tk = team => m.crateTeam[team] + tie[team];
   const order = alive.map(t => ({ t, k: tk(t.team) * 1e6 + m.crateGot[t.idx] * 1000 + rngNext(m) })).sort((a, b) => a.k - b.k).map(o => o.t);
   // strict spot first; if this tank has none (crowded, cliff, map edge), a looser one (higher/lower, others may be close) before the next tank
   for (const t of order) for (let tries = 0; tries < 48; tries++) {
@@ -2485,7 +2545,7 @@ function createAudio() {
         break;
       }
       case 'hit': if (ok('hit', 0.05)) { tone('square', 420, 180, 0.12, 0.18); noise(0.06, 0.2, 'bandpass', 2500, null, 3); } break;
-      case 'turn': if (ok('turn', 0.3)) { const b = p.team === 'blue' ? 660 : 523; tone('triangle', b, null, 0.14, 0.35); tone('triangle', b * 1.5, null, 0.22, 0.35, 0.12); } break;
+      case 'turn': if (ok('turn', 0.3)) { const b = p.team === 'blue' ? 660 : p.team === 'green' ? 587 : 523; tone('triangle', b, null, 0.14, 0.35); tone('triangle', b * 1.5, null, 0.22, 0.35, 0.12); } break;
       case 'pickup': if (ok('pickup', 0.1)) { [523, 659, 784, 1046].forEach((f, i) => tone('square', f, null, 0.08, 0.16, i * 0.06)); } break;
       case 'heal': if (ok('heal', 0.1)) { tone('sine', 440, 880, 0.45, 0.35); tone('sine', 660, 1320, 0.45, 0.2, 0.05); } break;
       case 'tele': if (ok('tele', 0.1)) { tone('sine', 300, 2400, 0.35, 0.3); noise(0.3, 0.15, 'bandpass', 1000, 6000, 4); } break;
@@ -2808,9 +2868,9 @@ const SHELLS = (() => {
     c.beginPath(); c.moveTo(14, 0); c.lineTo(-6, -10); c.lineTo(-12, -6); c.lineTo(-4, 0); c.lineTo(-12, 6); c.lineTo(-6, 10); c.closePath(); c.fill(); c.stroke();
     c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.moveTo(10, 0); c.lineTo(-4, -6); c.lineTo(-2, 0); c.closePath(); c.fill();
   };
-  // K-그린 1번 성장탄: a seed that swells into a leafy ball the longer it flies (x0.75 → x1.4 over 3.2 s, same as the sim)
+  // K-그린 1번 성장탄: a seed that swells into a leafy ball the longer it flies (x1.0 → x1.5 over 2.6 s, read from the weapon's pattern: same as the sim)
   D.seed = (c, look, p, s) => {
-    const g = Math.min(1, (p.age || 0) / 3.2), k = (0.75 + 0.65 * g) * s, r = 11 * k;
+    const G = CONFIG.tanks.kgreen.weapons[0].pattern, g = Math.min(1, (p.age || 0) / G.secs), k = (G.min + (G.max - G.min) * g) * s, r = 11 * k;
     if (g > 0.5) { c.fillStyle = `rgba(216,245,154,${0.25 + 0.35 * (g - 0.5)})`; c.beginPath(); c.arc(0, 0, r * 1.9, 0, TAU); c.fill(); }
     shadedBall(c, r, '#F4FFD0', '#8CC63F', '#3E6E14', '#1F3A0A');
     c.save(); c.rotate((p.age || 0) * 3 * (p.vx < 0 ? -1 : 1));
@@ -4253,6 +4313,9 @@ function createRenderer(cv, mini) {
           if (R.isLocalTurn && R.isLocalTurn(t) && R.onMyTurn) { R.onMyTurn(t, e.again); R.onSfx('turn', { team: t.team }); break; }
           R.onBanner(e.again ? (R.isMine && R.isMine(t) ? '또 내 차례! 연속 턴' : `${t.nick} 연속 턴!`) : R.isMine && R.isMine(t) ? '내 차례!' : `${t.nick} 차례`, t.team, true); R.onSfx('turn', { team: t.team }); break;
         case 'timeout': R.onBanner('시간 초과'); break;
+        // three-team matches: a team is out and the match goes on / a team that left has its tanks taken off the field
+        case 'teamOut': R.onBanner(e.forfeit ? `${teamName(e.team)}이 모두 나가 탈락 · ${e.left}팀 남음` : `${teamName(e.team)} 탈락! · ${e.left}팀 남음`, e.team, false, 2200); R.onSfx('death'); break;
+        case 'gone': burst(e.x, e.y - 24, '#FFFFFF', 14); break;
         case 'pass': R.onBanner(`${t.nick} 턴 넘기기`, t.team, true); text(t.x, t.y - 130, '턴 넘김', '#FFB347'); R.onSfx('turn', { team: t.team }); break;
         case 'over': R.onOver(e.winner, e.forfeit); break;
       }
@@ -4579,9 +4642,9 @@ function createRenderer(cv, mini) {
     ctx.font = '800 14px "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'; ctx.lineJoin = 'round';
     const mine = R.isMine && R.isMine(t), label = mine ? t.nick + ' (나)' : t.nick;
     ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.strokeText(label, x, y - 6);
-    ctx.fillStyle = mine ? '#FFE79A' : t.team === 'red' ? '#FFC2B6' : '#C2DEFF'; ctx.fillText(label, x, y - 6);
+    ctx.fillStyle = mine ? '#FFE79A' : teamCol(t.team, 'pale'); ctx.fillText(label, x, y - 6);
     ctx.fillStyle = '#10141F'; ctx.fillRect(x - w / 2 - 2, y - 2, w + 4, 10);
-    ctx.fillStyle = t.team === 'red' ? '#F0583E' : '#3E94F0'; ctx.fillRect(x - w / 2, y, w * (t.hp / t.maxhp), 6);
+    ctx.fillStyle = teamCol(t.team); ctx.fillRect(x - w / 2, y, w * (t.hp / t.maxhp), 6);
     if (t.poison) { ctx.fillStyle = '#8EDB3A'; ctx.beginPath(); ctx.arc(x + w / 2 + 9, y + 3, 4, 0, 7); ctx.fill(); }
     const bb = R.bubbles[t.idx];
     if (bb) { // chat / emote bubble
@@ -4749,7 +4812,7 @@ function createRenderer(cv, mini) {
     for (const o of list) {
       const t = o.t, a = Math.atan2(o.sy - o.ey, o.sx - o.ex);
       ctx.save(); ctx.translate(o.ex, o.ey);
-      ctx.fillStyle = t.team === 'red' ? '#F0583E' : '#3E94F0';
+      ctx.fillStyle = teamCol(t.team);
       ctx.beginPath(); ctx.arc(0, 0, 17, 0, 7); ctx.fill();
       ctx.save(); ctx.rotate(a); ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(16, -8); ctx.lineTo(16, 8); ctx.fill(); ctx.restore();
       ctx.fillStyle = '#fff'; ctx.font = '900 11px "Noto Sans KR", sans-serif'; ctx.textAlign = 'center';
@@ -4764,7 +4827,7 @@ function createRenderer(cv, mini) {
     mctx.clearRect(0, 0, mw, mh);
     mctx.drawImage(R.terrain, 0, 0, mw, mh);
     for (const c of m.crates) { mctx.fillStyle = '#FFD24A'; mctx.fillRect(c.x * sx - 2, c.y * sy - 4, 4, 4); }
-    for (const t of m.tanks) if (t.alive) { mctx.fillStyle = t.team === 'red' ? '#FF6A50' : '#5AA8FF'; mctx.beginPath(); mctx.arc(t.x * sx, (t.y - 10) * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
+    for (const t of m.tanks) if (t.alive) { mctx.fillStyle = teamCol(t.team, 'vivid'); mctx.beginPath(); mctx.arc(t.x * sx, (t.y - 10) * sy, m.cur === t.idx ? 4.5 : 3.2, 0, 7); mctx.fill(); if (m.cur === t.idx) { mctx.strokeStyle = '#fff'; mctx.lineWidth = 1.5; mctx.stroke(); } }
     mctx.strokeStyle = 'rgba(255,255,255,0.9)'; mctx.lineWidth = 1.5; mctx.strokeRect(left * sx, top * sy, v.w * sx, v.h * sy);
   }
   R.screenToWorld = function (cx, cy) {
@@ -5126,6 +5189,9 @@ function genCode(n) { let s = ''; for (let i = 0; i < (n || 5); i++) s += CODE_A
 function genId() { return genCode(10).toLowerCase(); }
 function pickable(t) { return t === 'random' || !!CONFIG.tanks[t]; } // K 탱크(히든)도 직접 고를 수 있음 (2026-11, 시연용)
 function teamCount(room, team) { return room.players.filter(p => p.team === team).length; }
+// a newcomer goes to the smaller of red / blue (the usual two-team game); the third team (green) is filled by moving there,
+// or by itself only once red and blue are both full
+function autoTeam(room) { const T = CONFIG.turn.teamMax, r = teamCount(room, 'red'), b = teamCount(room, 'blue'); return r >= T && b >= T ? 'green' : r <= b ? 'red' : 'blue'; }
 function watchersOf(room) { return (room && room.watchers) || []; } // 관전자: 게임에 참여하지 않고 보기·채팅만
 
 // o: { code, url, myId, nick, tank, create, onChange, onStatus(kind, text), onGame(game), onInput(inp), onLive(live), onLog(log), onCmd(cmd), onKicked }
@@ -5305,7 +5371,7 @@ function createRoomLink(o) {
       if (p) { if (p.nick !== q.nick) { p.nick = q.nick; publishRoom(); } return; }
       if (room.state !== 'lobby' || r.banned[q.id]) return;
       if (room.players.length >= CONFIG.turn.maxPlayers) { pub('cmd', { type: 'full', id: q.id }); return; }
-      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      const team = autoTeam(room);
       room.players.push({ id: q.id, nick: String(q.nick || '').slice(0, 8) || '손님', team, tank: pickable(q.tank) ? q.tank : 'rookie' });
       publishRoom();
     } else if (!p || room.state !== 'lobby') return;
@@ -5325,7 +5391,7 @@ function createRoomLink(o) {
       room.watchers = watchersOf(room).concat([{ id, nick: p.nick }]);
     } else if (role === 'play' && w) {
       if (room.players.length >= CONFIG.turn.maxPlayers) return false;
-      const team = teamCount(room, 'red') <= teamCount(room, 'blue') ? 'red' : 'blue';
+      const team = autoTeam(room);
       room.watchers = watchersOf(room).filter(x => x.id !== id);
       room.players.push({ id, nick: w.nick, team, tank: pickable(tank) ? tank : 'rookie' });
     } else return false;
@@ -5334,7 +5400,7 @@ function createRoomLink(o) {
   };
   r.setTeam = function (id, team, noPublish) {
     const p = r.room.players.find(x => x.id === id);
-    if (!p || (team !== 'red' && team !== 'blue') || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
+    if (!p || TEAM_KEYS.indexOf(team) < 0 || p.team === team || teamCount(r.room, team) >= CONFIG.turn.teamMax) return false;
     p.team = team; if (!noPublish) publishRoom(); return true;
   };
 
@@ -5353,7 +5419,7 @@ function createRoomLink(o) {
   r.moveOther = (id, team) => r.isHost() && r.setTeam(id, team);
   r.banned = {};
   r.kick = id => { if (!r.isHost() || id === r.myId) return; r.banned[id] = 1; pub('cmd', { type: 'kick', id }); r.room.players = r.room.players.filter(p => p.id !== id); r.room.watchers = watchersOf(r.room).filter(p => p.id !== id); publishRoom(); };
-  r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamCount(r.room, 'red') > 0 && teamCount(r.room, 'blue') > 0;
+  r.canStart = () => r.isHost() && r.room.state === 'lobby' && teamsOf(r.room.players).length >= 2; // two or three teams with someone in them
   r.start = function () {
     if (!r.canStart()) return false;
     const old = r.room.game;
@@ -5381,7 +5447,7 @@ function createRoomLink(o) {
   r.canRematch = function () {
     if (!r.isHost() || r.room.state !== 'game') return false;
     const ps = r.rematchPlayers();
-    return ps.some(p => p.team === 'red') && ps.some(p => p.team === 'blue');
+    return teamsOf(ps).length >= 2;
   };
   r.rematch = function () {
     if (!r.canRematch()) return false;
@@ -5617,7 +5683,7 @@ function openLink(code, idx, create) {
       onInput: inp => onNetInput(inp),
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
-      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명). 「관전자로 입장」으로는 들어갈 수 있어요.', true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
+      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`방이 가득 찼습니다 (최대 ${CONFIG.turn.maxPlayers}명). 「관전자로 입장」으로는 들어갈 수 있어요.`, true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
       onChat: c => onChat(c),
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
     });
@@ -5682,13 +5748,15 @@ function playerCard(p, room) {
   info.append(tags); el.append(info);
   const act = document.createElement('div'); act.className = 'pa';
   if (me || isHost) {
-    const other = p.team === 'red' ? 'blue' : 'red';
-    const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mini';
-    mv.textContent = other === 'blue' ? '블루로 →' : '← 레드로';
-    mv.setAttribute('aria-label', `${p.nick}을(를) ${other === 'blue' ? '블루' : '레드'} 팀으로`);
-    mv.disabled = teamCount(room, other) >= CONFIG.turn.teamMax;
-    mv.onclick = () => { AU.play('ui'); if (me) L.requestTeam(other); else L.moveOther(p.id, other); };
-    act.append(mv);
+    for (const other of TEAM_KEYS) { // one button per other team (three team slots: red · blue · green)
+      if (other === p.team) continue;
+      const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mini tm ' + other;
+      mv.textContent = teamLabel(other) + '로';
+      mv.setAttribute('aria-label', `${p.nick}을(를) ${teamLabel(other)} 팀으로`);
+      mv.disabled = teamCount(room, other) >= CONFIG.turn.teamMax;
+      mv.onclick = () => { AU.play('ui'); if (me) L.requestTeam(other); else L.moveOther(p.id, other); };
+      act.append(mv);
+    }
   }
   if (isHost && !me) {
     const k = document.createElement('button'); k.type = 'button'; k.className = 'mini warn'; k.textContent = '내보내기';
@@ -5703,7 +5771,7 @@ function renderLobby() {
   const room = L.room, isHost = L.isHost(), me = L.me();
   $('roomCode').textContent = ON.code;
   $('shareLink').value = inviteUrl();
-  for (const team of ['red', 'blue']) {
+  for (const team of TEAM_KEYS) {
     const list = $(team + 'List'); list.innerHTML = '';
     const ps = room.players.filter(p => p.team === team);
     ps.forEach(p => list.append(playerCard(p, room)));
@@ -5751,12 +5819,13 @@ function renderLobby() {
   st.disabled = !L.canStart();
   const rb = $('readyBtn'); rb.hidden = isHost || !me;
   if (me) { rb.textContent = me.ready ? '준비 취소' : '준비 완료'; rb.className = me.ready ? 'ghost big' : 'start'; }
-  const red = teamCount(room, 'red'), blue = teamCount(room, 'blue');
+  const filled = teamsOf(room.players), versus = filled.map(k => teamCount(room, k)).join(' 대 ') + (filled.length > 2 ? ' · 3팀전 (한 팀이 남을 때까지)' : '');
+  const uneven = filled.some(k => teamCount(room, k) !== teamCount(room, filled[0])) ? ' · 팀 인원이 다릅니다' : '';
   const others = room.players.filter(p => p.id !== room.host), readyN = others.filter(p => p.ready).length;
   $('startNote').textContent = isHost
-    ? (L.canStart() ? `${red} 대 ${blue} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
+    ? (L.canStart() ? `${versus}${uneven} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '두 팀 이상에 1명씩 있어야 시작할 수 있습니다 (세 팀을 다 채우면 3팀전)')
     : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : meW ? '관전 중 — 방장이 시작하면 경기 화면을 함께 봅니다 (채팅 가능)' : '방에 들어가는 중…');
-  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${red} 대 ${blue} · 준비 ${readyN}/${others.length}`;
+  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${versus}${uneven} · 준비 ${readyN}/${others.length}`;
   updateNetStatus();
 }
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
@@ -5882,7 +5951,7 @@ function onlineFrame(now) {
   const pz = L.room && L.room.state === 'game' && L.room.paused && m.phase !== 'over' ? L.room.paused : null;
   if (ctrl && ctrl.paused !== !!pz) {
     ctrl.setPaused(!!pz);
-    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; ON.gone_red = 0; ON.gone_blue = 0; banner('경기 재개'); }
+    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; for (const k of TEAM_KEYS) ON['gone_' + k] = 0; banner('경기 재개'); }
   }
   renderPause(pz, L);
   if (pz) return;
@@ -5926,18 +5995,22 @@ function onlineFrame(now) {
     }
   }
 }
-// A whole team gone for 30 s loses. Every device shows the countdown; the host records the result as a TurnInput.
+// A whole team gone for 30 s is out. Every device shows the countdown; the host records the result as a TurnInput.
+// Two teams left: the other one wins on the spot. Three teams left: the match goes on without the leavers, and the host
+// waits for one of their tanks' turns to record it, so nobody who is still playing loses a turn to it.
 const FORFEIT_MS = 30000;
 function forfeitWatch(now, m, L) {
   ON.goneTeam = null;
   if (m.phase === 'over') return;
-  for (const team of ['red', 'blue']) {
+  const live = aliveTeams(m);
+  for (const team of m.teams) {
     const members = ON.game.players.filter(p => p.team === team);
-    const away = members.every(p => p.id !== ON.myId && !L.online(p.id));
+    const away = live.indexOf(team) >= 0 && members.every(p => p.id !== ON.myId && !L.online(p.id)); // a team already out has nothing to forfeit
     const k = 'gone_' + team;
     if (!away) { ON[k] = 0; continue; }
     if (!ON[k]) ON[k] = now;
-    ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
+    if (!ON.goneTeam) ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)), more: live.length > 2 };
+    if (live.length > 2 && m.cur >= 0 && m.tanks[m.cur].team !== team) continue;
     if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
       ON.autoSent['f' + m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: m.tanks[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });
@@ -6220,7 +6293,7 @@ const WEAPON_DESC = {
   orbital: '떨어진 자리에 잠시 뒤 하늘에서 광선이 내리꽂힙니다. 엄폐물 뒤도 맨 윗면을 때립니다.',
   kbounce: '땅에 한 번 통 튕긴 뒤 터집니다. 엄폐물 너머를 노리기 좋아요.',
   ksplit: '가장 높이 올라간 지점에서 두 갈래로 갈라집니다.',
-  kgrow: '멀리 날아갈수록 커집니다. 가까이는 작고 약하게(×0.75), 3초 넘게 날면 최대 ×1.4 위력·범위.',
+  kgrow: '쏘는 순간부터 제 크기(×1.0)이고, 날아갈수록 더 커집니다. 2.6초 넘게 날면 최대 ×1.5 위력·범위.',
   kroot: '터진 뒤 날아온 방향으로 뿌리가 땅을 따라 뻗어 두 번 더 솟아오릅니다. 언덕 너머·숨은 상대에 좋아요.',
 };
 const ERA_LABEL = { classic: '클래식', modern: '모던', present: '현대', future: '미래' };
@@ -6279,8 +6352,14 @@ function tankCardHTML(k) {
 function renderTankCard(el, k) { if (el) { el.innerHTML = tankCardHTML(k); el.dataset.tank = k; } }
 
 // ---------------------------------------------------------------- banner / over
-let bannerTimer = 0;
-function banner(s, team, turnin) { const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = team === 'red' ? '레드 팀' : '블루 팀'; b.appendChild(sm); } b.style.color = team === 'red' ? '#FFB4A4' : team === 'blue' ? '#A9D0FF' : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 1500); }
+let bannerTimer = 0, bannerHold = 0, bannerNext = 0;
+// hold (ms): this banner stays up that long — one that comes meanwhile waits for it (a team going out in a 3팀전 is not wiped by the next turn's banner)
+function banner(s, team, turnin, hold) {
+  const now = performance.now();
+  if (now < bannerHold && !hold) { clearTimeout(bannerNext); bannerNext = setTimeout(() => banner(s, team, turnin), bannerHold - now + 30); return; }
+  clearTimeout(bannerNext); bannerHold = hold ? now + hold : 0;
+  const b = $('banner'); b.textContent = s; if (team && turnin) { const sm = document.createElement('small'); sm.textContent = teamName(team); b.appendChild(sm); } b.style.color = CONFIG.teams[team] ? teamCol(team, 'lite') : ''; b.classList.remove('turnin'); void b.offsetWidth; if (turnin) b.classList.add('turnin'); b.classList.add('show'); clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), Math.max(1500, hold || 0));
+}
 R.onBanner = banner;
 // my turn: a big notice in the middle of the screen for 2 s (the camera already jumps to my tank)
 let myTurnTimer = 0;
@@ -6288,8 +6367,8 @@ function myTurnFlash(t, again) {
   const el = $('myTurn'); if (!el) return;
   const mine = ON.active || SOLOPLAY.active || !match || match.tanks.filter(x => !PRACTICE.bots[x.id]).length <= 1;
   el.querySelector('b').textContent = again ? (mine ? '또 내 차례!' : `${t.nick} 연속 턴!`) : mine ? '내 차례!' : `${t.nick} 차례!`;
-  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${t.team === 'red' ? '레드 팀' : '블루 팀'}`;
-  el.dataset.team = t.team;
+  el.querySelector('small').textContent = `${t.nick} · ${CONFIG.tanks[t.tankId].name} · ${teamName(t.team)}`;
+  el.dataset.team = t.team; el.style.borderColor = teamCol(t.team, 'edge');
   el.hidden = false; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
   clearTimeout(myTurnTimer); myTurnTimer = setTimeout(() => { el.classList.remove('on'); el.hidden = true; }, 2000);
 }
@@ -6312,11 +6391,15 @@ function matchAwards(m) {
   return { mvp, out };
 }
 // both teams fell in the same turn: the sim picked the team that dealt more damage (m.tiebreak)
-function tiebreakNote(m) { const tb = m.tiebreak; return tb ? ` · 동시 탈락 — 준 피해 레드 ${tb.red} : 블루 ${tb.blue}` + (tb.red === tb.blue ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+function tiebreakText(m) { return m.teams.filter(k => k in m.tiebreak).map(k => `${teamLabel(k)} ${m.tiebreak[k]}`).join(' : '); }
+function tiebreakNote(m) { return m.tiebreak ? ` · 동시 탈락 — 준 피해 ${tiebreakText(m)}` + (m.winner === 'draw' ? ' (같아서 무승부)' : ' 로 판정') : ''; }
+// three-team matches: 1위 · 2위 · 3위 (the winner, then the later a team went out the higher it stands)
+function rankOf(m, team) { return m.teams.length > 2 && m.rank && m.winner !== 'draw' ? m.rank.indexOf(team) + 1 : 0; }
+function goneTeams(m) { return m.forfeits || []; }
 // 결과 이미지: the result screen drawn as one PNG (date, map, winner, both rosters with their numbers) for the tournament record
 function resultCanvas() {
-  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
-  const rows = Math.max(...['red', 'blue'].map(tm => m.tanks.filter(t => t.team === tm).length)), W = 1200, H = 330 + rows * 86 + 150;
+  const m = match, F = '"Noto Sans KR", "Malgun Gothic", sans-serif', teams = m.teams;
+  const rows = Math.max(...teams.map(tm => m.tanks.filter(t => t.team === tm).length)), W = 60 + teams.length * 570, H = 330 + rows * 86 + 150; // 1200 wide for two teams, 1770 for three
   const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const tx = (s, px, py, size, col, weight, align) => { x.font = `${weight || 700} ${size}px ${F}`; x.fillStyle = col; x.textAlign = align || 'left'; x.textBaseline = 'middle'; x.fillText(s, px, py); };
   const fit = (s, px, py, size, col, weight, maxW, align) => { for (; size > 10; size--) { x.font = `${weight || 700} ${size}px ${F}`; if (x.measureText(s).width <= maxW) break; } tx(s, px, py, size, col, weight, align); };
@@ -6325,22 +6408,23 @@ function resultCanvas() {
   const d = new Date(), p2 = n => String(n).padStart(2, '0'), when = `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
   const secs = Math.round(matchClock(m) / CONFIG.physics.tickRate);
   tx(`${when}  ·  ${CONFIG.maps[m.mapId].name}  ·  ${m.turnNo}턴  ·  경기 시간 ${Math.floor(secs / 60)}:${p2(secs % 60)}` + (ON.active && ON.code ? `  ·  방 ${ON.code}` : ''), W - 40, 46, 20, '#9FB8CC', 700, 'right');
-  const win = m.winner, col = { red: '#FF6B5A', blue: '#5AA9FF', draw: '#E7C77A' }[win] || '#E8F1FA';
+  const win = m.winner, col = win === 'draw' ? '#E7C77A' : CONFIG.teams[win] ? teamCol(win, 'vivid') : '#E8F1FA';
   tx(win === 'draw' ? '무승부' : teamName(win) + ' 승리', W / 2, 160, 64, col, 900, 'center');
   const sum = tm => m.tanks.reduce((a, t) => a + (t.team === tm ? t.st.dealt : 0), 0);
-  const note = (m.forfeit ? `${teamName(m.forfeit)}이 모두 나가 기권` : m.tiebreak ? `양 팀 동시 탈락 — 준 피해로 판정 (레드 ${m.tiebreak.red} : 블루 ${m.tiebreak.blue})` : m.sudden ? '서든데스까지 진행' : '') ;
+  const note = [teams.length > 2 ? '3팀전' : '', goneTeams(m).length ? `${goneTeams(m).map(teamName).join(' · ')}이 모두 나가 기권` : '', m.tiebreak ? `동시 탈락 — 준 피해로 판정 (${tiebreakText(m)})` : m.sudden ? '서든데스까지 진행' : ''].filter(Boolean).join('  ·  ');
   if (note) tx(note, W / 2, 218, 22, '#E7C77A', 700, 'center');
   const aw = matchAwards(m), top = 262;
-  ['red', 'blue'].forEach((tm, k) => {
-    const a = 40 + k * 570, w = 550, tc = tm === 'red' ? '#FF6B5A' : '#5AA9FF';
+  teams.forEach((tm, k) => {
+    const a = 40 + k * 570, w = 550, tc = teamCol(tm, 'vivid'), rk = rankOf(m, tm);
     x.fillStyle = tm === win ? 'rgba(231,199,122,0.16)' : 'rgba(255,255,255,0.05)'; x.fillRect(a, top, w, 56 + rows * 86 + 12);
     x.fillStyle = tc; x.fillRect(a, top, w, 6);
-    tx(teamName(tm) + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
+    tx(teamName(tm) + (rk ? `  ${rk}위` : '') + (tm === win ? '  승리' : ''), a + 20, top + 34, 26, tc, 900); tx(`준 피해 합 ${sum(tm)}`, a + w - 20, top + 34, 20, '#CFE0F2', 700, 'right');
     m.tanks.filter(t => t.team === tm).forEach((t, i) => {
       const y = top + 62 + i * 86; x.fillStyle = 'rgba(255,255,255,0.06)'; x.fillRect(a + 10, y, w - 20, 78);
       fit(t.nick + (aw.mvp === t ? '  ★MVP' : ''), a + 26, y + 26, 26, t.alive ? '#FFFFFF' : '#8FA6C0', 900, 300);
-      const state = m.forfeit === tm ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
-      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive ? '#B6F25A' : '#8FA6C0', 700, 'right');
+      const left = goneTeams(m).indexOf(tm) >= 0 && (t.alive || t.deathCause === 'forfeit');
+      const state = left ? '나감' : t.alive ? `생존 ${t.hp}` : t.deathCause === 'fall' ? '낙사' : '격파';
+      tx(`${CONFIG.tanks[t.tankId].name} · ${state}`, a + w - 26, y + 26, 20, t.alive && !left ? '#B6F25A' : '#8FA6C0', 700, 'right');
       tx(`피해 ${t.st.dealt}  ·  격파 ${t.st.kills}  ·  명중 ${t.st.hitTurns}/${t.st.shots}` + (t.st.friendly ? `  ·  팀킬 ${t.st.friendly}` : ''), a + 26, y + 58, 19, '#CFE0F2', 500);
     });
   });
@@ -6356,25 +6440,26 @@ function saveResultImage() {
 R.onOver = (winner, forfeit) => {
   if (SOLOPLAY.active) { tipRecap('sooTips'); soloOver(winner); return; }
   tipRecap('overTips');
-  const t = $('overTitle'), teamName = w => w === 'red' ? '레드 팀' : '블루 팀';
+  const t = $('overTitle'), three = match.teams.length > 2;
   const me = ON.active ? match.tanks.find(x => x.id === ON.myId) : null;
   let title, cls;
   if (winner === 'draw') { title = '무승부'; cls = 'draw'; }
   else if (me) { title = me.team === winner ? '승리!' : '패배'; cls = me.team === winner ? 'win' : 'lose'; }
   else { title = teamName(winner) + ' 승리'; cls = winner; }
   t.textContent = title; t.className = 'ot ' + cls;
-  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (forfeit ? ` · ${teamName(forfeit)}이 모두 나가 기권` : '') + tiebreakNote(match);
+  $('overSub').textContent = (winner === 'draw' ? '' : teamName(winner) + ' 승리 · ') + `${match.turnNo}턴 · ${CONFIG.maps[match.mapId].name}` + (three && winner !== 'draw' ? ' · ' + match.rank.slice(1).map((k, i) => `${i + 2}위 ${teamName(k)}`).join(' · ') : '')
+    + (goneTeams(match).length ? ` · ${goneTeams(match).map(teamName).join(' · ')}이 모두 나가 기권` : '') + tiebreakNote(match);
   const aw = matchAwards(match), mv = aw.mvp;
   $('overMvp').hidden = !mv;
   if (mv) $('overMvp').innerHTML = `<span class="mk">MVP</span><b class="${mv.team}"></b><span class="ms">피해 ${mv.st.dealt} · 격파 ${mv.st.kills}${mv.st.falls ? ` (낙사 ${mv.st.falls})` : ''}</span>`, $('overMvp').querySelector('b').textContent = mv.nick;
-  const ros = $('overRoster'); ros.innerHTML = '';
-  for (const team of ['red', 'blue']) {
-    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : '');
-    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (team === winner ? ' · 승리' : ''); col.append(h);
+  const ros = $('overRoster'); ros.innerHTML = ''; ros.classList.toggle('three', three);
+  for (const team of match.teams) {
+    const col = document.createElement('div'); col.className = 'orcol ' + team + (team === winner ? ' won' : ''); const rk = rankOf(match, team);
+    const h = document.createElement('div'); h.className = 'orh'; h.textContent = teamName(team) + (rk ? ` · ${rk}위` : '') + (team === winner ? ' · 승리' : ''); col.append(h);
     for (const x of match.tanks.filter(k => k.team === team)) {
       const r = document.createElement('div'); r.className = 'orr' + (x.alive ? '' : ' dead') + (me && x.id === me.id ? ' me' : '');
       const nm = document.createElement('b'); nm.textContent = x.nick + (me && x.id === me.id ? ' (나)' : '');
-      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${forfeit === team ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
+      const sub = document.createElement('span'); sub.textContent = `${CONFIG.tanks[x.tankId].name} · ${goneTeams(match).indexOf(team) >= 0 && (x.alive || x.deathCause === 'forfeit') ? '나감' : x.alive ? '생존 ' + x.hp : x.deathCause === 'fall' ? '낙사' : '격파'}`;
       const st = document.createElement('span'); st.className = 'ost';
       st.textContent = `피해 ${x.st.dealt} · 격파 ${x.st.kills} · 명중 ${x.st.hitTurns}/${x.st.shots}` + (x.st.friendly ? ` · 팀킬 ${x.st.friendly}` : '');
       const bd = document.createElement('div'); bd.className = 'obd';
@@ -6409,7 +6494,7 @@ function updateHud() {
   const d = CONFIG.tanks[t.tankId];
   setTxt('whoName', t.nick + ' · ' + d.name);
   setTxt('whoHp', t.alive ? `체력 ${t.hp} / ${t.maxhp}` + (t.poison ? ' · 중독' : '') + (t.shield ? ' · 실드' : '') : '격파됨 · 관전 중');
-  $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = t.team === 'red' ? '#F0583E' : '#3E94F0';
+  $('hpBar').style.width = (100 * t.hp / t.maxhp) + '%'; $('hpBar').style.background = teamCol(t.team);
   $('fuelBar').style.width = (100 * t.fuel / d.movePx) + '%';
   const tiltDeg = Math.round(Math.atan2(t.ts, t.tc) * 180 / Math.PI);
   const real = t.aim - t.facing * tiltDeg;
@@ -6467,7 +6552,7 @@ function updateHud() {
     p.save(); p.translate(86, 120); const sc = 172 / (S_.w * S_.scale) * 0.95; p.scale(sc, sc); drawTankLocal(p, t.tankId, d.sprite.baseAngle || 0); p.restore();
   }
   const hb = $('hud').offsetHeight; if (hudCache.hb !== hb) { hudCache.hb = hb; $('touch').style.bottom = `calc(${hb + 24}px + env(safe-area-inset-bottom, 0px))`; }
-  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${ON.goneTeam.team === 'red' ? '레드' : '블루'} 팀이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 기권 처리` : '';
+  const gone = ON.active && ON.goneTeam && m.phase !== 'over' ? `${teamName(ON.goneTeam.team)}이 모두 나갔습니다 · ${ON.goneTeam.left}초 뒤 ${ON.goneTeam.more ? '탈락 처리 (경기는 계속)' : '기권 처리'}` : '';
   const botTurn = !ON.active && m.phase === 'aim' && PRACTICE.bots[cur.id] ? `${cur.nick} 생각 중…` : '';
   const waitTxt = gone ? gone : botTurn ? botTurn : ON.active && m.phase === 'aim' && !mineNow ? (ON.syncing ? '진행 중인 게임에 맞추는 중…' : ON.spectator || !t.alive ? `관전 중 · ${cur.nick}의 차례` : `${cur.nick}의 차례 — 기다리는 중`) : '';
   if (hudCache.wait !== waitTxt) { hudCache.wait = waitTxt; $('waitTag').textContent = waitTxt; $('waitTag').hidden = !waitTxt; }
@@ -6477,7 +6562,7 @@ function updateStatus(m, cur) {
   const box = $('status');
   if (hudCache.statusFor !== m) {
     hudCache.statusFor = m; box.innerHTML = '';
-    for (const team of ['red', 'blue']) {
+    for (const team of m.teams) {
       const row = document.createElement('div'); row.className = 'srow ' + team;
       for (const x of m.tanks.filter(k => k.team === team)) {
         const c = document.createElement('div'); c.className = 'sc ' + team; c.dataset.idx = x.idx;
@@ -6503,7 +6588,7 @@ function updateStatus(m, cur) {
     c.classList.toggle('me', !!(ON.active && x.id === ON.myId));
     c.querySelector('.no').textContent = !x.alive ? '✕' : pos === 0 ? '▶' : String(pos + 1);
     c.querySelector('.hp > i').style.width = (100 * Math.max(0, x.hp) / x.maxhp) + '%';
-    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
+    c.querySelector('.st').textContent = !x.alive ? (x.deathCause === 'fall' ? '낙사' : x.deathCause === 'forfeit' ? '나감' : '격파') : off ? '연결 끊김' : `${x.hp}` + (x.poison ? ' · 독' : '') + (x.shield ? ' · 실드' : '');
   }
 }
 // HUD dial: the allowed range, current aim, last shot, and the real launch angle after terrain tilt
@@ -6588,12 +6673,17 @@ document.querySelectorAll('[data-k]').forEach(b => {
 window.addEventListener('resize', () => R.resize());
 
 // ---------------------------------------------------------------- setup
-const setup = { map: 'temple', red: 2, blue: 2, slots: { red: [], blue: [] } };
+const setup = { map: 'temple', red: 2, blue: 2, green: 0, slots: { red: [], blue: [], green: [] } }; // green 0 = the usual two-team game
 let thumbs = {};
-function slotDefault(team, i) { return { nick: (team === 'red' ? '레드' : '블루') + ' ' + (i + 1), tank: TANK_KEYS[(team === 'red' ? i * 2 : i * 2 + 5) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
+function slotDefault(team, i) { return { nick: teamLabel(team) + ' ' + (i + 1), tank: TANK_KEYS[(i * 2 + { red: 0, blue: 5, green: 3 }[team]) % TANK_KEYS.length], ctl: team === 'red' ? 'human' : 'easy' }; }
 const CTL = [['human', '사람'], ['easy', '봇 · 쉬움'], ['normal', '봇 · 보통'], ['hard', '봇 · 어려움']];
-for (const team of ['red', 'blue']) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
-try { const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null'); if (sv && sv.slots) Object.assign(setup, sv); } catch (e) {}
+for (const team of TEAM_KEYS) for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i));
+try { // a setup saved before the third team existed has no green slots: keep the defaults for whatever is missing
+  const sv = JSON.parse(localStorage.getItem('pg.setup') || 'null');
+  if (sv && sv.slots) { const slots = Object.assign({}, setup.slots, sv.slots); Object.assign(setup, sv, { slots }); }
+  for (const team of TEAM_KEYS) { if (!Array.isArray(setup.slots[team]) || setup.slots[team].length < 4) { setup.slots[team] = []; for (let i = 0; i < 4; i++) setup.slots[team].push(slotDefault(team, i)); } }
+  setup.red = clampN(setup.red | 0, 1, 4); setup.blue = clampN(setup.blue | 0, 1, 4); setup.green = clampN(setup.green | 0, 0, 4);
+} catch (e) {}
 function saveSetup() { try { localStorage.setItem('pg.setup', JSON.stringify(setup)); } catch (e) {} }
 function cloneCanvas(c) { const n = document.createElement('canvas'); n.width = c.width; n.height = c.height; n.getContext('2d').drawImage(c, 0, 0); return n; }
 function mapPreview(id) {
@@ -6627,10 +6717,10 @@ function renderSetup() {
   }
   document.querySelectorAll('.seg[data-team]').forEach(s => s.classList.toggle('sel', +s.dataset.n === setup[s.dataset.team]));
   const slots = $('slots'); slots.innerHTML = '';
-  for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
+  for (const team of TEAM_KEYS) for (let i = 0; i < setup[team]; i++) {
     const sl = setup.slots[team][i], row = document.createElement('div'); row.className = 'slot';
     const tag = document.createElement('label'); tag.className = 'tag ' + team;
-    const sp = document.createElement('span'); sp.textContent = (team === 'red' ? '레드 ' : '블루 ') + (i + 1);
+    const sp = document.createElement('span'); sp.textContent = teamLabel(team) + ' ' + (i + 1);
     const inp = document.createElement('input'); inp.id = `nick-${team}-${i}`; inp.maxLength = 8; inp.value = sl.nick; inp.placeholder = '닉네임';
     inp.oninput = () => { sl.nick = inp.value; saveSetup(); };
     const sel = document.createElement('select'); sel.className = 'ctl'; sel.setAttribute('aria-label', `${sp.textContent} 조작`);
@@ -6648,7 +6738,7 @@ function renderSetup() {
 }
 let setupInfo = null;
 document.querySelectorAll('.seg[data-team]').forEach(s => s.onclick = () => { setup[s.dataset.team] = +s.dataset.n; saveSetup(); renderSetup(); });
-$('rand').onclick = () => { for (const team of ['red', 'blue']) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
+$('rand').onclick = () => { for (const team of TEAM_KEYS) for (const sl of setup.slots[team]) sl.tank = 'random'; saveSetup(); renderSetup(); };
 $('start').onclick = startGame;
 $('again').onclick = () => { $('over').hidden = true; startGame(); };
 $('toSetup').onclick = () => { $('over').hidden = true; showScreen('setup'); };
@@ -6846,10 +6936,10 @@ function startGame() {
   $('loading').hidden = false;
   setTimeout(() => {
     const players = [];
-    for (const team of ['red', 'blue']) for (let i = 0; i < setup[team]; i++) {
+    for (const team of TEAM_KEYS) for (let i = 0; i < setup[team]; i++) {
       const sl = setup.slots[team][i];
       const ctl = sl.ctl || (team === 'red' ? 'human' : 'easy');
-      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || (team === 'red' ? '레드 ' : '블루 ') + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
+      players.push({ id: team[0] + i, nick: ((sl.nick || '').trim().slice(0, 8) || teamLabel(team) + ' ' + (i + 1)) + (ctl === 'human' ? '' : '·봇'), team, tankId: sl.tank === 'random' || !CONFIG.tanks[sl.tank] ? rollRandomTank(Math.random) : sl.tank, bot: ctl === 'human' ? null : ctl });
     }
     const seed = (Math.random() * 4294967296) >>> 0;
     const bots = {}; for (const p of players) if (p.bot) bots[p.id] = p.bot;
@@ -6888,7 +6978,7 @@ function loop(now) {
   }
   requestAnimationFrame(loop);
 }
-window.__pg = { CONFIG, R, AU, createMatch, stateHash, ON, botPlan, cmdFire, cmdPass, soloReplay, get screen() { return screen; } };
+window.__pg = { CONFIG, R, AU, createMatch, step, stateHash, ON, botPlan, cmdFire, cmdPass, soloReplay, get screen() { return screen; } };
 (async () => {
   R.resize();
   await loadSprites();

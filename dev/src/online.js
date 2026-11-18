@@ -137,7 +137,7 @@ function openLink(code, idx, create) {
       onInput: inp => onNetInput(inp),
       onLive: lv => { ON.live = lv; lv.n = ++ON.liveN; ON.liveAt = performance.now(); },
       onLog: log => onNetLog(log),
-      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg('방이 가득 찼습니다 (최대 8명). 「관전자로 입장」으로는 들어갈 수 있어요.', true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
+      onCmd: cmd => { if (cmd.type === 'resync' && (cmd.id === ON.myId || cmd.id === '*')) requestRebuild('hash'); if (cmd.type === 'full' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`방이 가득 찼습니다 (최대 ${CONFIG.turn.maxPlayers}명). 「관전자로 입장」으로는 들어갈 수 있어요.`, true); } if (cmd.type === 'wfull' && cmd.id === ON.myId) { leaveOnline(); homeMsg(`관전자 자리가 가득 찼습니다 (최대 ${CONFIG.turn.maxWatchers}명).`, true); } },
       onChat: c => onChat(c),
       onKicked: () => { leaveOnline(); homeMsg('방장이 나를 내보냈습니다.', true); },
     });
@@ -202,13 +202,15 @@ function playerCard(p, room) {
   info.append(tags); el.append(info);
   const act = document.createElement('div'); act.className = 'pa';
   if (me || isHost) {
-    const other = p.team === 'red' ? 'blue' : 'red';
-    const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mini';
-    mv.textContent = other === 'blue' ? '블루로 →' : '← 레드로';
-    mv.setAttribute('aria-label', `${p.nick}을(를) ${other === 'blue' ? '블루' : '레드'} 팀으로`);
-    mv.disabled = teamCount(room, other) >= CONFIG.turn.teamMax;
-    mv.onclick = () => { AU.play('ui'); if (me) L.requestTeam(other); else L.moveOther(p.id, other); };
-    act.append(mv);
+    for (const other of TEAM_KEYS) { // one button per other team (three team slots: red · blue · green)
+      if (other === p.team) continue;
+      const mv = document.createElement('button'); mv.type = 'button'; mv.className = 'mini tm ' + other;
+      mv.textContent = teamLabel(other) + '로';
+      mv.setAttribute('aria-label', `${p.nick}을(를) ${teamLabel(other)} 팀으로`);
+      mv.disabled = teamCount(room, other) >= CONFIG.turn.teamMax;
+      mv.onclick = () => { AU.play('ui'); if (me) L.requestTeam(other); else L.moveOther(p.id, other); };
+      act.append(mv);
+    }
   }
   if (isHost && !me) {
     const k = document.createElement('button'); k.type = 'button'; k.className = 'mini warn'; k.textContent = '내보내기';
@@ -223,7 +225,7 @@ function renderLobby() {
   const room = L.room, isHost = L.isHost(), me = L.me();
   $('roomCode').textContent = ON.code;
   $('shareLink').value = inviteUrl();
-  for (const team of ['red', 'blue']) {
+  for (const team of TEAM_KEYS) {
     const list = $(team + 'List'); list.innerHTML = '';
     const ps = room.players.filter(p => p.team === team);
     ps.forEach(p => list.append(playerCard(p, room)));
@@ -271,12 +273,13 @@ function renderLobby() {
   st.disabled = !L.canStart();
   const rb = $('readyBtn'); rb.hidden = isHost || !me;
   if (me) { rb.textContent = me.ready ? '준비 취소' : '준비 완료'; rb.className = me.ready ? 'ghost big' : 'start'; }
-  const red = teamCount(room, 'red'), blue = teamCount(room, 'blue');
+  const filled = teamsOf(room.players), versus = filled.map(k => teamCount(room, k)).join(' 대 ') + (filled.length > 2 ? ' · 3팀전 (한 팀이 남을 때까지)' : '');
+  const uneven = filled.some(k => teamCount(room, k) !== teamCount(room, filled[0])) ? ' · 팀 인원이 다릅니다' : '';
   const others = room.players.filter(p => p.id !== room.host), readyN = others.filter(p => p.ready).length;
   $('startNote').textContent = isHost
-    ? (L.canStart() ? `${red} 대 ${blue} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '양 팀에 1명 이상 있어야 시작할 수 있습니다')
+    ? (L.canStart() ? `${versus}${uneven} · 준비 ${readyN}/${others.length}` + (readyN < others.length ? ' (준비 안 해도 시작할 수 있어요)' : ' · 모두 준비 완료!') : '두 팀 이상에 1명씩 있어야 시작할 수 있습니다 (세 팀을 다 채우면 3팀전)')
     : (me ? (me.ready ? '준비 완료! 방장이 시작하면 바로 전투가 시작됩니다' : '준비되면 "준비 완료"를 눌러 주세요') : meW ? '관전 중 — 방장이 시작하면 경기 화면을 함께 봅니다 (채팅 가능)' : '방에 들어가는 중…');
-  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${red} 대 ${blue} · 준비 ${readyN}/${others.length}`;
+  if (isHost && meW && L.canStart()) $('startNote').textContent = `관전 중인 방장 · ${versus}${uneven} · 준비 ${readyN}/${others.length}`;
   updateNetStatus();
 }
 function renderTankInfo(k) { renderTankCard($('tankInfo'), k); }
@@ -402,7 +405,7 @@ function onlineFrame(now) {
   const pz = L.room && L.room.state === 'game' && L.room.paused && m.phase !== 'over' ? L.room.paused : null;
   if (ctrl && ctrl.paused !== !!pz) {
     ctrl.setPaused(!!pz);
-    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; ON.gone_red = 0; ON.gone_blue = 0; banner('경기 재개'); }
+    if (!pz) { ON.aimSince = now; ON.liveAt = now; ON.needAt = now; ON.goneSince = 0; for (const k of TEAM_KEYS) ON['gone_' + k] = 0; banner('경기 재개'); }
   }
   renderPause(pz, L);
   if (pz) return;
@@ -446,18 +449,22 @@ function onlineFrame(now) {
     }
   }
 }
-// A whole team gone for 30 s loses. Every device shows the countdown; the host records the result as a TurnInput.
+// A whole team gone for 30 s is out. Every device shows the countdown; the host records the result as a TurnInput.
+// Two teams left: the other one wins on the spot. Three teams left: the match goes on without the leavers, and the host
+// waits for one of their tanks' turns to record it, so nobody who is still playing loses a turn to it.
 const FORFEIT_MS = 30000;
 function forfeitWatch(now, m, L) {
   ON.goneTeam = null;
   if (m.phase === 'over') return;
-  for (const team of ['red', 'blue']) {
+  const live = aliveTeams(m);
+  for (const team of m.teams) {
     const members = ON.game.players.filter(p => p.team === team);
-    const away = members.every(p => p.id !== ON.myId && !L.online(p.id));
+    const away = live.indexOf(team) >= 0 && members.every(p => p.id !== ON.myId && !L.online(p.id)); // a team already out has nothing to forfeit
     const k = 'gone_' + team;
     if (!away) { ON[k] = 0; continue; }
     if (!ON[k]) ON[k] = now;
-    ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)) };
+    if (!ON.goneTeam) ON.goneTeam = { team, left: Math.max(0, Math.ceil((FORFEIT_MS - (now - ON[k])) / 1000)), more: live.length > 2 };
+    if (live.length > 2 && m.cur >= 0 && m.tanks[m.cur].team !== team) continue;
     if (now - ON[k] > FORFEIT_MS && L.isHost() && m.phase === 'aim' && !ON.inputs[m.turnNo] && !ON.autoSent['f' + m.turnNo]) {
       ON.autoSent['f' + m.turnNo] = true;
       L.sendInput({ turnNo: m.turnNo, seat: m.tanks[m.cur].id, actions: JSON.parse(JSON.stringify(m.turn.actions)), forfeit: team });

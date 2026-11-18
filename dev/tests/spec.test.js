@@ -321,7 +321,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   // 성장탄: a short lob vs a long flight
   const grow = (ang, pw) => { const mg = field([{ tank: 'kgreen', x: 1000 }, { tank: 'rookie', x: 4500 }]); const r = fireAndTrace(mg, ang, pw, 0); const bo = r.evs.find(e => e.type === 'boom'), tx = r.evs.find(e => e.type === 'text' && /성장/.test(e.text)); return { r: bo ? bo.r : 0, text: tx ? tx.text : '-' }; };
   const gs = grow(30, 300), gl = grow(70, 900), W0 = CONFIG.tanks.kgreen.weapons[0];
-  check('K-그린', '성장탄: 오래 날수록 커짐 (가까이 ×0.75 ~ 멀리 최대 ×1.4)', `짧게 < ${W0.radius} < 길게`, `짧게 ${gs.text} 반경 ${gs.r.toFixed(1)} · 길게 ${gl.text} 반경 ${gl.r.toFixed(1)}`, gs.r < W0.radius && gl.r > W0.radius && gl.r <= W0.radius * Math.sqrt(1.4) + 0.01);
+  check('K-그린', '성장탄: 처음부터 제 크기, 오래 날수록 커짐 (×1.0 ~ 최대 ×1.5)', `${W0.radius} <= 짧게 < 길게`, `짧게 ${gs.text} 반경 ${gs.r.toFixed(1)} · 길게 ${gl.text} 반경 ${gl.r.toFixed(1)}`, gs.r >= W0.radius && gl.r > gs.r && gl.r <= W0.radius * Math.sqrt(1.5) + 0.01);
   // 뿌리탄: main blast + two bursts further along the flight direction
   const mr = field([{ tank: 'kgreen', x: 1000 }, { tank: 'rookie', x: 3500 }]);
   const rr = fireAndTrace(mr, 45, 600, 1);

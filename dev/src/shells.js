@@ -234,9 +234,9 @@ const SHELLS = (() => {
     c.beginPath(); c.moveTo(14, 0); c.lineTo(-6, -10); c.lineTo(-12, -6); c.lineTo(-4, 0); c.lineTo(-12, 6); c.lineTo(-6, 10); c.closePath(); c.fill(); c.stroke();
     c.fillStyle = 'rgba(255,255,255,0.5)'; c.beginPath(); c.moveTo(10, 0); c.lineTo(-4, -6); c.lineTo(-2, 0); c.closePath(); c.fill();
   };
-  // K-그린 1번 성장탄: a seed that swells into a leafy ball the longer it flies (x0.75 → x1.4 over 3.2 s, same as the sim)
+  // K-그린 1번 성장탄: a seed that swells into a leafy ball the longer it flies (x1.0 → x1.5 over 2.6 s, read from the weapon's pattern: same as the sim)
   D.seed = (c, look, p, s) => {
-    const g = Math.min(1, (p.age || 0) / 3.2), k = (0.75 + 0.65 * g) * s, r = 11 * k;
+    const G = CONFIG.tanks.kgreen.weapons[0].pattern, g = Math.min(1, (p.age || 0) / G.secs), k = (G.min + (G.max - G.min) * g) * s, r = 11 * k;
     if (g > 0.5) { c.fillStyle = `rgba(216,245,154,${0.25 + 0.35 * (g - 0.5)})`; c.beginPath(); c.arc(0, 0, r * 1.9, 0, TAU); c.fill(); }
     shadedBall(c, r, '#F4FFD0', '#8CC63F', '#3E6E14', '#1F3A0A');
     c.save(); c.rotate((p.age || 0) * 3 * (p.vx < 0 ? -1 : 1));
