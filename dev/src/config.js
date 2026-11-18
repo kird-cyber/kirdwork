@@ -97,8 +97,8 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [150, 77], baseAngle: 0, dir: -1, muzzleLen: 82, behind: true },
       weapons: [
-        { id: 'std', name: '표준탄', dmg: 264, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'shell', color: '#5F7A30', size: 1.15 } },
-        { id: 'twin', name: '2연발', dmg: 206, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 230, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
+        { id: 'std', name: '표준탄', dmg: 250, radius: 35, windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'shell', color: '#5F7A30', size: 1.15 } },
+        { id: 'twin', name: '2연발', dmg: 190, radius: 32, windMul: 1, gravityMul: 1, pattern: { kind: 'burst', count: 2, gapTicks: 36 }, extraDelay: 230, look: { shape: 'shell', color: '#6E8A3A', size: 1 } },
       ],
     },
     trapper: {
