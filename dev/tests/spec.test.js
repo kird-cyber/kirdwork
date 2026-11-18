@@ -126,11 +126,12 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   check('바이퍼', '증폭이 독에도 적용', `${PD}×1.5=${Math.round(PD * 1.5)}`, m3.tanks[1].poison.dmg, m3.tanks[1].poison.dmg === Math.round(PD * 1.5));
 }
 { // hammer crit and cooldown
-  const w = CONFIG.tanks.hammer.weapons[0];
+  const w = CONFIG.tanks.hammer.weapons[1], w0 = CONFIG.tanks.hammer.weapons[0]; // 정타는 홍염탄(2번)에만 (2026-11)
   const hit = off => { const m = field([{ tank: 'hammer', x: 1000 }, { tank: 'rookie', x: 2500 }]); const v = m.tanks[1], c = A.tankCenter(v), h = v.hp; A.explode(m, c.x + off, c.y, w.radius, w.dmg, m.tanks[0], w, false); return h - v.hp; };
   const a = hit(5), b = hit(5.0001);
   const base = Math.round(w.dmg * fall(5, w.radius) * 0.9), crit = Math.round(w.dmg * fall(5, w.radius) * 1.2 * 0.9);
-  check('해머', '정타(10px 안) 피해 +20%', crit, a, a === crit && a > base);
+  check('해머', '홍염탄 정타(10px 안) 피해 +20%', crit, a, a === crit && a > base);
+  check('해머', '철갑 포탄(1번)에는 정타 없음 · 범위는 홍염탄보다 넓음', '정타 없음 · 넓음', `${w0.onHit && w0.onHit.crit ? '정타 있음' : '정타 없음'} · ${w0.radius} > ${w.radius}`, !(w0.onHit && w0.onHit.crit) && w0.radius > w.radius && w0.dmg < w.dmg);
   const off = hit(12), plain = Math.round(w.dmg * fall(12, w.radius) * 0.9);
   check('해머', '10px 밖은 정타 아님', plain, off, off === plain);
   const m = field([{ tank: 'hammer', x: 1000 }, { tank: 'rookie', x: 3000 }]);
@@ -138,7 +139,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const t = m.tanks[0];
   const cds = [t.cd];
   for (let k = 0; k < 3; k++) { t.delay = 0; m.tanks[1].delay = 9999; m.phase = 'settle'; m.settle = 9999; m.proj = []; m.sched = []; A.step(m); cds.push(t.cd); if (m.phase === 'aim') { const inp = A.cmdFire(m, 45, 300, 1); cds.push('w' + inp.weapon); } }
-  check('해머', '홍염탄 3턴 재충전', '3 → 2 → 1 → 0(사용 가능)', cds.join(' '), cds[0] === 3 && cds[2] === 'w0' && cds[cds.length - 1] === 'w1');
+  check('해머', '홍염탄 2턴 재충전', '2 → 1(1번으로 나감) → 0(사용 가능)', cds.join(' '), cds[0] === 2 && cds[2] === 'w0' && cds[4] === 'w1');
 }
 { // rookie twin
   const m = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);

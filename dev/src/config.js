@@ -87,8 +87,9 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
-        { id: 'ap', name: '철갑 포탄', dmg: 438, radius: 35, crater: [0.85, 1.25], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
+        // 2026-11: 철갑 포탄 438 r35 +정타 → 330 r44 (wide and plain; crater kept about the same), 홍염탄 650 cd3 → 540 cd2 (the finisher; 정타 only here)
+        { id: 'ap', name: '철갑 포탄', dmg: 330, radius: 44, crater: [0.8, 1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
+        { id: 'redflare', name: '홍염탄', dmg: 540, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 2, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
       ],
     },
     rookie: {

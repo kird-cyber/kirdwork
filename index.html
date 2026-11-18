@@ -1072,8 +1072,9 @@ const CONFIG = {
       traits: {},
       sprite: { pivot: [112, 104], baseAngle: 36, dir: -1, muzzleLen: 100, behind: true },
       weapons: [
-        { id: 'ap', name: '철갑 포탄', dmg: 438, radius: 35, crater: [0.85, 1.25], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
-        { id: 'redflare', name: '홍염탄', dmg: 650, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 3, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
+        // 2026-11: 철갑 포탄 438 r35 +정타 → 330 r44 (wide and plain; crater kept about the same), 홍염탄 650 cd3 → 540 cd2 (the finisher; 정타 only here)
+        { id: 'ap', name: '철갑 포탄', dmg: 330, radius: 44, crater: [0.8, 1], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'cannonball', color: '#16181B', size: 1 } },
+        { id: 'redflare', name: '홍염탄', dmg: 540, radius: 24, crater: [0.8, 1.3], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, onHit: { crit: { within: 10, mul: 1.2 } }, cooldownTurns: 2, extraDelay: 230, look: { shape: 'redshell', color: '#F02A1C', size: 1, glow: '#FF5A3A' } },
       ],
     },
     rookie: {
@@ -6279,8 +6280,8 @@ const WEAPON_DESC = {
   boulder: '불붙은 큰 바위. 터진 뒤 비탈 아래로 굴러가 한 번 더 폭발합니다.',
   poisonArrow: '맞은 상대를 중독시켜 3턴 동안 매 턴 피해를 줍니다.',
   venomBolt: '더 독한 화살. 중독된 동안 상대의 회복 효과가 절반이 됩니다.',
-  ap: '크고 검은 쇠공(검콩). 정통으로 맞히면 1.2배 치명타.',
-  redflare: '작고 빨간 고폭탄(빨콩). 폭발 범위는 좁지만 위력이 매우 큽니다. 정타 1.2배.',
+  ap: '크고 검은 쇠공(검콩). 폭발 범위가 넓어 맞히기 쉬운 기본기.',
+  redflare: '작고 빨간 고폭탄(빨콩). 폭발 범위는 좁지만 위력이 매우 큰 결정타. 정통으로 맞히면 1.2배.',
   std: '평범하고 믿음직한 기본 포탄.',
   twin: '같은 궤도로 두 발을 연달아 쏩니다.',
   low: '핀이 튀는 수류탄. 무난한 위력의 기본기.',
