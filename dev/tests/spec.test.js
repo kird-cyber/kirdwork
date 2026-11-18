@@ -159,7 +159,7 @@ for (const [id, d] of Object.entries(CONFIG.tanks)) d.weapons.forEach((w, wi) =>
   const m3 = field([{ tank: 'rookie', x: 1000 }, { tank: 'trapper', x: 3500 }]);
   m3.mines.push({ x: 1040, y: GROUND, owner: m3.tanks[1], dead: false, id: 1 });
   const hp0 = m3.tanks[0].hp; let s = 0; while (A.cmdMove(m3, 1) && s < 200 && m3.mines.length && !m3.mines[0].dead) s++;
-  check('트래퍼', '지뢰 밟으면 폭발(최대 250)', '≤250, >0', hp0 - m3.tanks[0].hp, hp0 - m3.tanks[0].hp > 0 && hp0 - m3.tanks[0].hp <= 250);
+  { const MD = CONFIG.tanks.trapper.weapons[1].pattern.mineDmg; check('트래퍼', `지뢰 밟으면 폭발(최대 ${MD})`, `≤${MD}, >0`, hp0 - m3.tanks[0].hp, hp0 - m3.tanks[0].hp > 0 && hp0 - m3.tanks[0].hp <= MD); }
 }
 { // swarm power and spread
   const sp = tank => { const m = field([{ tank, x: 1000 }, { tank: 'rookie', x: 3500 }]); const r = fireAndTrace(m, 45, 1000, 0); return Math.sqrt(r.firstProj.vx ** 2 + r.firstProj.vy ** 2); };

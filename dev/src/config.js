@@ -107,7 +107,7 @@ const CONFIG = {
       sprite: { pivot: [154, 88], baseAngle: 0, dir: -1, muzzleLen: 62, behind: true },
       weapons: [
         { id: 'low', name: '수류탄', dmg: 228, radius: 35, crater: [1.1, 0.9], windMul: 1, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'grenade', color: '#5B6B2E', size: 1.2 } },
-        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 250, mineRadius: 40 }, extraDelay: 150, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
+        { id: 'mines', name: '지뢰 사출', dmg: 58, radius: 14, windMul: 1, gravityMul: 1, pattern: { kind: 'mine', offset: 28, mineDmg: 200, mineRadius: 40 }, extraDelay: 250, look: { shape: 'minecase', color: '#3A3A3A', size: 1.2 } },
       ],
     },
     swarm: {
@@ -116,7 +116,7 @@ const CONFIG = {
       sprite: { pivot: [104, 116], baseAngle: 24, dir: -1, muzzleLen: 74, behind: true },
       weapons: [
         { id: 'missile', name: '유도 미사일', dmg: 228, radius: 38, crater: [1.35, 0.75], windMul: 0.7, gravityMul: 1, pattern: { kind: 'single' }, look: { shape: 'missile', color: '#E8402E', size: 1.05 } },
-        { id: 'mlrs', name: '다연장 6연발', dmg: 90, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-25, -15, -5, 5, 15, 25], powerJitter: 10, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
+        { id: 'mlrs', name: '다연장 6연발', dmg: 85, radius: 26, crater: [1.4, 0.7], windMul: 0.7, gravityMul: 1, pattern: { kind: 'spread', angles: [-25, -15, -5, 5, 15, 25], powerJitter: 10, gapTicks: 6 }, extraDelay: 180, look: { shape: 'rocket', color: '#FF7A3A', size: 1.15 } },
       ],
     },
     prism: {
