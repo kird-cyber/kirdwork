@@ -291,7 +291,7 @@ function updateHud() {
   const wd = Math.abs(m.wind);
   // countdown to sudden death in the last 3 minutes before it (the match clock + this turn's aiming so far)
   let sdLeft = '';
-  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((CONFIG.turn.suddenAtSec * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
+  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((suddenAtSec(m) * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
   setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : '', sdLeft].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });

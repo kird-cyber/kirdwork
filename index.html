@@ -1036,6 +1036,8 @@ const CONFIG = {
     // the aiming time each turn's input carries (a timeout = the full minute) + the ticks shells fly and the ground settles,
     // so it is the same on every device. Each turn from then on every tank loses suddenDmg of its max hp, +suddenDmgStep more
     // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
+    // three-team matches (2026-11): 10 min 30 s — six tanks share the clock, so this gives each player about as many shots as a 2:2 gets in 7 min
+    suddenAtSec3: 630,
     suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
   // teams: a room has three team slots. Usually two are filled (A:B); with all three filled the match is a three-way fight
@@ -2178,6 +2180,8 @@ function runScheduled(m) {
 }
 
 // ---------------------------------------------------------------- turns
+// when sudden death starts: later in a match that began with three teams (fixed at the start — it does not move when a team goes out)
+function suddenAtSec(m) { return m.teams && m.teams.length > 2 ? CONFIG.turn.suddenAtSec3 : CONFIG.turn.suddenAtSec; }
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
 function aliveTeams(m) { return m.teams.filter(k => teamAlive(m, k)); }
 function teamDealt(m, team) { return m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0); }
@@ -2230,7 +2234,7 @@ function beginTurn(m) {
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, itemCost: 0, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
-  const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
+  const T = CONFIG.turn, now = matchClock(m), at = suddenAtSec(m) * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
   if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)
@@ -6528,7 +6532,7 @@ function updateHud() {
   const wd = Math.abs(m.wind);
   // countdown to sudden death in the last 3 minutes before it (the match clock + this turn's aiming so far)
   let sdLeft = '';
-  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((CONFIG.turn.suddenAtSec * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
+  if (m.suddenOn && !m.sudden) { const TR = CONFIG.physics.tickRate, now = matchClock(m) + (m.phase === 'aim' ? CONFIG.turn.timeLimitTicks - ctrl.timeLeft : 0), left = Math.max(0, Math.ceil((suddenAtSec(m) * TR - now) / TR)); if (left <= 180) sdLeft = `서든데스 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
   setTxt('windLbl', ['바람', m.happening ? (happenName(m, m.happening) || HAPPEN[m.happening][0]) : '', m.column ? `${happenName(m, m.column.kind) || HAPPEN[m.column.kind][0]} ${m.column.life}턴` : '', sdLeft].filter(Boolean).join(' · '));
   setTxt('windTxt', (m.sudden ? '서든데스 · ' : '') + (m.wind === 0 ? '없음' : (m.wind < 0 ? '← ' : '') + wd + (m.wind > 0 ? ' →' : '')));
   $('windBar').querySelectorAll('i').forEach((el, i) => { const on = m.wind < 0 ? (i < 5 && i >= 5 - Math.ceil(wd / 2)) : (i >= 5 && i < 5 + Math.ceil(wd / 2)); el.classList.toggle('on', on); });

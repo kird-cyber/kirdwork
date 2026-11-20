@@ -559,6 +559,8 @@ function runScheduled(m) {
 }
 
 // ---------------------------------------------------------------- turns
+// when sudden death starts: later in a match that began with three teams (fixed at the start — it does not move when a team goes out)
+function suddenAtSec(m) { return m.teams && m.teams.length > 2 ? CONFIG.turn.suddenAtSec3 : CONFIG.turn.suddenAtSec; }
 function teamAlive(m, team) { return m.tanks.some(t => t.alive && t.team === team); }
 function aliveTeams(m) { return m.teams.filter(k => teamAlive(m, k)); }
 function teamDealt(m, team) { return m.tanks.reduce((a, t) => a + (t.team === team ? t.st.dealt : 0), 0); }
@@ -611,7 +613,7 @@ function beginTurn(m) {
   t.fuel = d.movePx;
   if (t.cd > 0) t.cd--;
   m.turn = { actions: [], itemUsed: false, itemCost: 0, double: false, amp: false, tele: false, calm: false, movedPx: 0 };
-  const T = CONFIG.turn, now = matchClock(m), at = T.suddenAtSec * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
+  const T = CONFIG.turn, now = matchClock(m), at = suddenAtSec(m) * CONFIG.physics.tickRate, sudden = !!m.suddenOn && now >= at;
   if (m.suddenOn && !m.suddenWarned && !sudden && now >= at - T.suddenWarnSec * CONFIG.physics.tickRate) { m.suddenWarned = true; m.events.push({ type: 'suddenSoon' }); }
   const W = Math.round(T.windMax * (sudden ? T.suddenWindMul : 1));
   // wind drifts a little from the last turn; now and then a gust blows a new one (the first turn always draws one)

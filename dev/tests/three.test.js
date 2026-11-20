@@ -1,10 +1,20 @@
 // 3팀전 규칙 테스트 (순수 시뮬레이션): 2:2:2 봇 경기를 끝까지 — 한 팀만 남으면 종료, 순위, 동시 탈락 판정, 중도 기권 후 계속, 기록 재생 일치
 // run: node tests/three.test.js [판 수] [팀당 인원]
 const fs = require('fs'), path = require('path'), SRC = path.join(__dirname, '..', 'src');
-const A = new Function(['config.js', 'core.js', 'mapgen.js', 'sim.js', 'bot.js'].map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('\n') + ';return {CONFIG,createMatch,step,botPlan,cmdFire,cmdTimeout,cmdForfeit,curTank,matchClock,aliveTeams,stateHash,applyTurnInput};')();
+const A = new Function(['config.js', 'core.js', 'mapgen.js', 'sim.js', 'bot.js'].map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('\n') + ';return {CONFIG,createMatch,step,botPlan,cmdFire,cmdTimeout,cmdForfeit,curTank,matchClock,aliveTeams,stateHash,applyTurnInput,suddenAtSec};')();
 function lcg(seed) { let s = seed >>> 0; return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296); }
 const T = Object.keys(A.CONFIG.tanks), MAPS = ['ridge', 'scale', 'notebook', 'lab', 'archive', 'temple', 'snow', 'valley'];
 let ok = 0, bad = 0; const chk = (c, msg) => { if (c) ok++; else { bad++; console.log('FAIL', msg); } };
+{ // sudden death time: 7 min for two teams, 10 min 30 s for a match that starts with three (and it stays there after a team is out)
+  const mk = ts => A.createMatch({ seed: 1, mapId: 'ridge', players: ts.map((t, i) => ({ id: 'p' + i, nick: 'p' + i, team: t, tankId: 'rookie' })) });
+  const at = m => { let g = 0; m.suddenOn = true; while (m.phase !== 'aim' && g++ < 9000) A.step(m); const run = c => { m.clock = c * 120 - m.tick - 4800; g = 0; A.cmdTimeout(m); while (m.phase !== 'aim' && m.phase !== 'over' && g++ < 9000) A.step(m); return !!m.sudden; }; return run; };
+  const m2 = mk(['red', 'blue']), m3 = mk(['red', 'blue', 'green']);
+  chk(A.suddenAtSec(m2) === 420 && A.suddenAtSec(m3) === 630, 'sudden death at 420 s (2 teams) / 630 s (3 teams)');
+  chk(at(mk(['red', 'blue']))(421) === true, '2 teams: on after 7:00');
+  chk(at(mk(['red', 'blue', 'green']))(421) === false, '3 teams: not yet at 7:00');
+  chk(at(mk(['red', 'blue', 'green']))(631) === true, '3 teams: on after 10:30');
+  const mo = mk(['red', 'blue', 'green']); mo.tanks[2].alive = false; chk(A.suddenAtSec(mo) === 630, '3-team match keeps 10:30 after a team is out');
+}
 const stat = { win: {}, tb: 0, draw: 0, sudden: 0, turns: 0, clock: 0, crates: { red: 0, blue: 0, green: 0 }, out1: {} };
 const N = +process.argv[2] || 60, per = +process.argv[3] || 2;
 for (let g = 0; g < N; g++) {

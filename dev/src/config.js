@@ -51,6 +51,8 @@ const CONFIG = {
     // the aiming time each turn's input carries (a timeout = the full minute) + the ticks shells fly and the ground settles,
     // so it is the same on every device. Each turn from then on every tank loses suddenDmg of its max hp, +suddenDmgStep more
     // each turn (5%, 7%, 9%... up to suddenDmgMax): from full health a tank is gone in about 8 turns (a 3:3 game ends ~10 min).
+    // three-team matches (2026-11): 10 min 30 s — six tanks share the clock, so this gives each player about as many shots as a 2:2 gets in 7 min
+    suddenAtSec3: 630,
     suddenChance: 1, suddenAtSec: 420, suddenWarnSec: 60, suddenDmg: 0.05, suddenDmgStep: 0.02, suddenDmgMax: 0.25, suddenWindMul: 1.5,
   },
   // teams: a room has three team slots. Usually two are filled (A:B); with all three filled the match is a three-way fight
